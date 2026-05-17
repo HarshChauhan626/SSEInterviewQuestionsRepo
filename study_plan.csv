@@ -1,0 +1,221 @@
+Day,Pattern,Difficulty Level,Problem Name
+Day 1,Heap,Medium,Top K Frequent Elements
+Day 1,Sliding Window,Hard,Sliding Window Maximum
+Day 1,Heap,Medium,Task Scheduler
+Day 1,Two Pointers,Easy,Merge Sorted Array
+Day 1,Prefix Sum,Medium,Contiguous Array (Equal 0s and 1s)
+Day 1,Binary Search,Hard,Find in Mountain Array (Unknown Size / Double Binary Search)
+Day 1,Two Pointers,Easy,Two Sum II (Sorted Array)
+Day 1,Recursion,Medium,Validate Binary Search Tree
+Day 1,Linked List,Medium,LRU Cache
+Day 1,Dynamic Programming,Medium,Best Time to Buy and Sell Stock (with Cooldown)
+Day 2,Bit Manipulation,Easy,Counting Bits — Number of 1s for 0 to N (DP + Bit)
+Day 2,Recursion,Easy,Binary Search (Recursive)
+Day 2,Intervals,Medium,Meeting Rooms II (Minimum Rooms Required)
+Day 2,Heap,Medium,Minimum Cost to Connect Ropes (Huffman-style)
+Day 2,Greedy,Medium,Gas Station
+Day 2,Greedy,Medium,Minimum Number of Platforms (Trains)
+Day 2,Trees,Medium,Count Good Nodes in a Binary Tree
+Day 2,Binary Search,Hard,Aggressive Cows / Allocate Books (Maximize Minimum)
+Day 2,Intervals,Medium,Merge Intervals
+Day 2,Trees,Hard,Morris Inorder Traversal (O(1) Space)
+Day 3,Prefix Sum,Medium,Product of Array Except Self
+Day 3,Recursion,Medium,Word Search in Grid
+Day 3,Linked List,Hard,Merge K Sorted Linked Lists
+Day 3,Monotonic Stack,Medium,Sum of Subarray Minimums
+Day 3,Trie,Hard,Word Break II
+Day 3,Graph,Medium,Number of Connected Components
+Day 3,Two Pointers,Easy,Remove Duplicates from Sorted Array
+Day 3,Trees,Medium,Kth Smallest Element in a BST
+Day 3,Trees,Easy,Diameter of Binary Tree
+Day 3,Dynamic Programming,Medium,Coin Change (Min Coins)
+Day 4,Bit Manipulation,Easy,Reverse Bits of an Integer
+Day 4,Graph,Hard,Swim in Rising Water
+Day 4,Bit Manipulation,Easy,Find the Single Number (XOR Trick)
+Day 4,Queue,Hard,Sliding Window Minimum with Deque
+Day 4,Dynamic Programming,Medium,Minimum Path Sum
+Day 4,Greedy,Medium,Meeting Rooms II — Minimum Meeting Rooms
+Day 4,Prefix Sum,Medium,Subarray Sums Divisible by K
+Day 4,Greedy,Medium,Fractional Knapsack
+Day 4,Monotonic Stack,Medium,Daily Temperatures
+Day 4,Backtracking,Medium,Permutations
+Day 5,Intervals,Medium,Non-Overlapping Intervals (Minimum Removals)
+Day 5,Dynamic Programming,Medium,Maximal Square
+Day 5,Prefix Sum,Easy,Range Sum Query (1D)
+Day 5,Recursion,Hard,Regular Expression Matching
+Day 5,Monotonic Stack,Medium,Largest Rectangle in Buildings / Skyline (132 Pattern)
+Day 5,Sliding Window,Medium,Longest Substring with At Most K Distinct Characters
+Day 5,Binary Search,Hard,Median of Two Sorted Arrays
+Day 5,Bit Manipulation,Medium,Single Number III — Element Appearing Once When Others Appear Three Times
+Day 5,Linked List,Easy,Intersection of Two Linked Lists
+Day 5,Two Pointers,Medium,3Sum
+Day 6,Trie,Hard,Autocomplete System
+Day 6,Greedy,Medium,Jump Game II — Minimum Jumps
+Day 6,Heap,Medium,Kth Largest Element in an Array
+Day 6,Recursion,Easy,Factorial
+Day 6,Trie,Medium,Implement Trie
+Day 6,Linked List,Easy,Palindrome Linked List
+Day 6,Bit Manipulation,Medium,Subsets Generation using Bitmask
+Day 6,Dynamic Programming,Hard,Russian Doll Envelopes / 2D LIS
+Day 6,Sliding Window,Medium,Maximum Consecutive Ones III
+Day 6,Sliding Window,Medium,Subarray Product Less Than K
+Day 7,Trees,Hard,Binary Tree Maximum Path Sum
+Day 7,Trie,Medium,Maximum XOR of Two Numbers
+Day 7,Disjoint Set,Medium,Detect Cycle in Undirected Graph / Number of Operations to Make Network Connected
+Day 7,Linked List,Easy,Find the Middle of a Linked List
+Day 7,Backtracking,Medium,Subsets II (With Duplicates)
+Day 7,Dynamic Programming,Medium,House Robber
+Day 7,Dynamic Programming,Easy,Fibonacci / Climbing Stairs
+Day 7,Trees,Hard,Fenwick Tree — Count of Smaller Numbers After Self
+Day 7,Dynamic Programming,Medium,Palindromic Substrings / LPS
+Day 7,Recursion,Medium,Letter Combinations of a Phone Number
+Day 8,Linked List,Medium,Sort a Linked List (Merge Sort)
+Day 8,Disjoint Set,Medium,Minimum Spanning Tree — Kruskal's Algorithm
+Day 8,Heap,Medium,Find K Pairs with Smallest Sums
+Day 8,Heap,Medium,Reorganize String
+Day 8,Recursion,Hard,Sudoku Solver
+Day 8,Linked List,Easy,Reverse a Linked List
+Day 8,Dynamic Programming,Medium,0/1 Knapsack
+Day 8,Recursion,Easy,Height of Binary Tree
+Day 8,Two Pointers,Medium,Linked List Cycle Detection (Floyd's Algorithm)
+Day 8,Two Pointers,Hard,Trapping Rain Water
+Day 9,Recursion,Easy,Fibonacci Number
+Day 9,Dynamic Programming,Medium,Coin Change II (Count Ways)
+Day 9,Linked List,Medium,Remove Nth Node from End of List
+Day 9,Bit Manipulation,Easy,Count Set Bits (Hamming Weight / Popcount)
+Day 9,Prefix Sum,Medium,Range Sum Query 2D (Immutable)
+Day 9,Disjoint Set,Medium,Redundant Connection
+Day 9,Dynamic Programming,Medium,Longest Increasing Subsequence
+Day 9,Recursion,Hard,N-Queens
+Day 9,Disjoint Set,Hard,Swim in Rising Water
+Day 9,Graph,Medium,Walls and Gates
+Day 10,Sliding Window,Hard,Count Distinct Subarrays with At Most K Distinct
+Day 10,Binary Search,Easy,Classic Binary Search
+Day 10,Dynamic Programming,Hard,Distinct Subsequences
+Day 10,Bit Manipulation,Medium,Maximum XOR of Two Numbers in an Array (Trie / Greedy Bit)
+Day 10,Graph,Medium,Course Schedule
+Day 10,Disjoint Set,Medium,Number of Connected Components in an Undirected Graph
+Day 10,Linked List,Easy,Detect Cycle in a Linked List
+Day 10,Graph,Medium,Shortest Path in Binary Matrix
+Day 10,Sliding Window,Medium,Find All Anagrams in a String
+Day 10,Bit Manipulation,Medium,Find Two Non-Repeating Numbers
+Day 11,Heap,Medium,K Closest Points to Origin
+Day 11,Heap,Hard,Find Median from Data Stream
+Day 11,Bit Manipulation,Easy,Check if a Number is a Power of Two
+Day 11,Sliding Window,Easy,Maximum Sum Subarray of Size K
+Day 11,Recursion,Medium,Combination Sum
+Day 11,Trie,Medium,Longest Word in Dictionary
+Day 11,Sliding Window,Medium,Minimum Size Subarray Sum
+Day 11,Monotonic Stack,Hard,Maximal Rectangle (Binary Matrix)
+Day 11,Sliding Window,Medium,Longest Subarray with Ones After Deletion
+Day 11,Greedy,Medium,Minimum Cost to Connect Ropes (Kruskal-style Greedy)
+Day 12,Prefix Sum,Easy,Find Pivot Index
+Day 12,Dynamic Programming,Hard,Burst Balloons
+Day 12,Graph,Medium,Redundant Connection
+Day 12,Linked List,Easy,Merge Two Sorted Linked Lists
+Day 12,Trees,Hard,Serialize and Deserialize Binary Tree
+Day 12,Recursion,Medium,Power Function (Fast Exponentiation)
+Day 12,Trees,Medium,Binary Tree Level Order Traversal
+Day 12,Disjoint Set,Medium,Number of Islands
+Day 12,Trees,Medium,Fenwick Tree (Binary Indexed Tree) — Range Sum Queries
+Day 12,Queue,Medium,Design Hit Counter (Sliding Window Queue)
+Day 13,Intervals,Easy,Meeting Rooms I (Can Attend All?)
+Day 13,Graph,Hard,Alien Dictionary
+Day 13,Trees,Medium,Flatten Binary Tree to Linked List
+Day 13,Graph,Medium,Network Delay Time
+Day 13,Queue,Medium,Design Snake Game (Deque Simulation)
+Day 13,Trie,Hard,Palindrome Pairs
+Day 13,Recursion,Easy,Diameter of Binary Tree
+Day 13,Disjoint Set,Medium,Accounts Merge
+Day 13,Graph,Medium,Graph Valid Tree
+Day 13,Queue,Medium,Rotten Oranges – Multi-Source BFS
+Day 14,Disjoint Set,Medium,Smallest String With Swaps
+Day 14,Dynamic Programming,Hard,Edit Distance
+Day 14,Monotonic Stack,Hard,Trapping Rain Water
+Day 14,Sliding Window,Medium,Fruits Into Baskets
+Day 14,Trees,Medium,Binary Tree Right Side View
+Day 14,Monotonic Stack,Medium,Next Greater Element II (Circular Array)
+Day 14,Sliding Window,Medium,Longest Repeating Character Replacement
+Day 14,Prefix Sum,Easy,Maximum Sum of Subarray of Size K (Sliding Window + Prefix)
+Day 14,Bit Manipulation,Easy,Find the Missing Number
+Day 14,Queue,Medium,Task Scheduler (Greedy + Queue)
+Day 15,Graph,Medium,Course Schedule II
+Day 15,Intervals,Medium,Maximum CPU Load / Peak Overlap Count
+Day 15,Trie,Medium,Design Add and Search Words
+Day 15,Trie,Medium,Count Distinct Substrings
+Day 15,Monotonic Stack,Easy,Next Greater Element I
+Day 15,Trie,Hard,Word Search II
+Day 15,Prefix Sum,Medium,Subarray Sum Equals K
+Day 15,Greedy,Medium,Task Scheduler
+Day 15,Linked List,Hard,Reverse Nodes in k-Group
+Day 15,Recursion,Medium,Decode Ways
+Day 16,Two Pointers,Medium,Sort Colors (Dutch National Flag)
+Day 16,Dynamic Programming,Medium,Unique Paths
+Day 16,Dynamic Programming,Medium,Partition Equal Subset Sum
+Day 16,Trie,Medium,Replace Words
+Day 16,Backtracking,Medium,Palindrome Partitioning
+Day 16,Heap,Hard,Merge K Sorted Lists
+Day 16,Greedy,Hard,Candy Distribution
+Day 16,Intervals,Medium,Minimum Number of Arrows to Burst Balloons
+Day 16,Graph,Medium,Pacific Atlantic Water Flow
+Day 16,Linked List,Medium,Reorder List
+Day 17,Backtracking,Medium,Word Search
+Day 17,Monotonic Stack,Hard,Largest Rectangle in Histogram
+Day 17,Dynamic Programming,Medium,Decode Ways
+Day 17,Linked List,Medium,Flatten a Multilevel Doubly Linked List
+Day 17,Graph,Medium,Clone Graph
+Day 17,Graph,Medium,Number of Islands
+Day 17,Trees,Medium,Lowest Common Ancestor (LCA) of a Binary Tree
+Day 17,Graph,Hard,Word Ladder
+Day 17,Binary Search,Medium,Koko Eating Bananas (Binary Search on Answer)
+Day 17,Backtracking,Medium,Permutations II (With Duplicates)
+Day 18,Sliding Window,Hard,Minimum Window Substring
+Day 18,Binary Search,Medium,Search a 2D Matrix
+Day 18,Queue,Medium,BFS – Shortest Path in Binary Matrix
+Day 18,Binary Search,Medium,Find Minimum in Rotated Sorted Array
+Day 18,Intervals,Medium,Insert Interval
+Day 18,Monotonic Stack,Medium,Stock Span Problem
+Day 18,Dynamic Programming,Hard,Matrix Chain Multiplication
+Day 18,Dynamic Programming,Medium,Longest Common Subsequence
+Day 18,Recursion,Medium,Permutations of a String/Array
+Day 18,Recursion,Medium,Tower of Hanoi
+Day 19,Two Pointers,Medium,Longest Substring Without Repeating Characters
+Day 19,Recursion,Medium,Merge Sort
+Day 19,Backtracking,Medium,Combination Sum II (Each element used once)
+Day 19,Queue,Hard,Sliding Window Maximum (Monotonic Deque)
+Day 19,Disjoint Set,Medium,Graph Valid Tree
+Day 19,Prefix Sum,Medium,Minimum Size Subarray Sum (Prefix Sum + Binary Search)
+Day 19,Sliding Window,Medium,Permutation in String
+Day 19,Queue,Medium,Design Circular Queue
+Day 19,Intervals,Hard,Summary Ranges / Data Stream as Disjoint Intervals
+Day 19,Recursion,Medium,Generate All Subsets (Power Set)
+Day 20,Backtracking,Hard,N-Queens
+Day 20,Dynamic Programming,Medium,Word Break
+Day 20,Intervals,Hard,Employee Free Time
+Day 20,Linked List,Medium,Copy List with Random Pointer
+Day 20,Trees,Medium,Path Sum II (All Root-to-Leaf Paths with Target Sum)
+Day 20,Graph,Medium,Cheapest Flights Within K Stops
+Day 20,Monotonic Stack,Medium,Remove K Digits to Make Smallest Number
+Day 20,Binary Search,Medium,Find Peak Element
+Day 20,Linked List,Medium,Linked List Cycle II — Find Cycle Start
+Day 20,Binary Search,Medium,Search in Rotated Sorted Array
+Day 21,Trees,Medium,Validate Binary Search Tree
+Day 21,Heap,Medium,Dijkstra's Shortest Path
+Day 21,Two Pointers,Medium,Minimum Size Subarray Sum
+Day 21,Queue,Hard,Largest Rectangle in Histogram (Monotonic Stack + Queue intuition)
+Day 21,Sliding Window,Hard,Minimum Window Subsequence
+Day 21,Trees,Medium,Construct Binary Tree from Preorder and Inorder Traversal
+Day 21,Recursion,Medium,Lowest Common Ancestor (LCA)
+Day 21,Disjoint Set,Medium,Satisfiability of Equality Equations
+Day 21,Recursion,Medium,Flatten Nested List (Recursive Structures)
+Day 21,Intervals,Medium,Interval List Intersections
+Day 22,Binary Search,Medium,Find First and Last Position (Search Range)
+Day 22,Greedy,Medium,Activity Selection / Interval Scheduling
+Day 22,Greedy,Medium,Huffman Encoding (Greedy + Heap)
+Day 22,Backtracking,Medium,Combination Sum
+Day 22,Two Pointers,Medium,Container With Most Water
+Day 22,Sliding Window,Medium,Longest Substring Without Repeating Characters
+Day 22,Backtracking,Hard,Sudoku Solver
+Day 22,Prefix Sum,Hard,Count of Range Sum
+Day 22,Queue,Medium,First Non-Repeating Character in Stream
+Day 22,Backtracking,Medium,Subsets (Power Set)

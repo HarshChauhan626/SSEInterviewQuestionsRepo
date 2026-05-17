@@ -1,0 +1,221 @@
+Pattern,Difficulty Level,Problem Name
+Disjoint Set,Medium,Number of Connected Components in an Undirected Graph
+Disjoint Set,Medium,Number of Islands
+Disjoint Set,Medium,Redundant Connection
+Disjoint Set,Medium,Accounts Merge
+Disjoint Set,Medium,Graph Valid Tree
+Disjoint Set,Medium,Smallest String With Swaps
+Disjoint Set,Medium,Satisfiability of Equality Equations
+Disjoint Set,Medium,Minimum Spanning Tree — Kruskal's Algorithm
+Disjoint Set,Medium,Detect Cycle in Undirected Graph / Number of Operations to Make Network Connected
+Disjoint Set,Hard,Swim in Rising Water
+Sliding Window,Easy,Maximum Sum Subarray of Size K
+Sliding Window,Medium,Longest Substring Without Repeating Characters
+Sliding Window,Hard,Minimum Window Substring
+Sliding Window,Medium,Longest Substring with At Most K Distinct Characters
+Sliding Window,Medium,Fruits Into Baskets
+Sliding Window,Medium,Longest Repeating Character Replacement
+Sliding Window,Medium,Permutation in String
+Sliding Window,Medium,Find All Anagrams in a String
+Sliding Window,Medium,Maximum Consecutive Ones III
+Sliding Window,Medium,Subarray Product Less Than K
+Sliding Window,Medium,Minimum Size Subarray Sum
+Sliding Window,Hard,Sliding Window Maximum
+Sliding Window,Hard,Count Distinct Subarrays with At Most K Distinct
+Sliding Window,Medium,Longest Subarray with Ones After Deletion
+Sliding Window,Hard,Minimum Window Subsequence
+Graph,Medium,Number of Islands
+Graph,Medium,Clone Graph
+Graph,Medium,Course Schedule
+Graph,Medium,Course Schedule II
+Graph,Medium,Number of Connected Components
+Graph,Medium,Pacific Atlantic Water Flow
+Graph,Medium,Walls and Gates
+Graph,Medium,Shortest Path in Binary Matrix
+Graph,Hard,Word Ladder
+Graph,Medium,Network Delay Time
+Graph,Medium,Cheapest Flights Within K Stops
+Graph,Medium,Redundant Connection
+Graph,Hard,Alien Dictionary
+Graph,Medium,Graph Valid Tree
+Graph,Hard,Swim in Rising Water
+Dynamic Programming,Easy,Fibonacci / Climbing Stairs
+Dynamic Programming,Medium,House Robber
+Dynamic Programming,Medium,Longest Increasing Subsequence
+Dynamic Programming,Medium,Longest Common Subsequence
+Dynamic Programming,Hard,Edit Distance
+Dynamic Programming,Medium,0/1 Knapsack
+Dynamic Programming,Medium,Coin Change (Min Coins)
+Dynamic Programming,Medium,Coin Change II (Count Ways)
+Dynamic Programming,Medium,Partition Equal Subset Sum
+Dynamic Programming,Medium,Word Break
+Dynamic Programming,Hard,Matrix Chain Multiplication
+Dynamic Programming,Hard,Burst Balloons
+Dynamic Programming,Medium,Unique Paths
+Dynamic Programming,Medium,Minimum Path Sum
+Dynamic Programming,Medium,Maximal Square
+Dynamic Programming,Medium,Best Time to Buy and Sell Stock (with Cooldown)
+Dynamic Programming,Medium,Palindromic Substrings / LPS
+Dynamic Programming,Medium,Decode Ways
+Dynamic Programming,Hard,Distinct Subsequences
+Dynamic Programming,Hard,Russian Doll Envelopes / 2D LIS
+Trie,Medium,Implement Trie
+Trie,Hard,Word Search II
+Trie,Medium,Replace Words
+Trie,Medium,Design Add and Search Words
+Trie,Medium,Longest Word in Dictionary
+Trie,Medium,Maximum XOR of Two Numbers
+Trie,Hard,Palindrome Pairs
+Trie,Hard,Word Break II
+Trie,Hard,Autocomplete System
+Trie,Medium,Count Distinct Substrings
+Queue,Hard,Sliding Window Maximum (Monotonic Deque)
+Queue,Medium,First Non-Repeating Character in Stream
+Queue,Medium,BFS – Shortest Path in Binary Matrix
+Queue,Medium,Design Circular Queue
+Queue,Medium,Rotten Oranges – Multi-Source BFS
+Queue,Medium,Design Hit Counter (Sliding Window Queue)
+Queue,Hard,Largest Rectangle in Histogram (Monotonic Stack + Queue intuition)
+Queue,Hard,Sliding Window Minimum with Deque
+Queue,Medium,Task Scheduler (Greedy + Queue)
+Queue,Medium,Design Snake Game (Deque Simulation)
+Linked List,Easy,Reverse a Linked List
+Linked List,Easy,Detect Cycle in a Linked List
+Linked List,Easy,Find the Middle of a Linked List
+Linked List,Easy,Merge Two Sorted Linked Lists
+Linked List,Medium,Remove Nth Node from End of List
+Linked List,Medium,Linked List Cycle II — Find Cycle Start
+Linked List,Medium,Reorder List
+Linked List,Hard,Merge K Sorted Linked Lists
+Linked List,Easy,Intersection of Two Linked Lists
+Linked List,Easy,Palindrome Linked List
+Linked List,Medium,Flatten a Multilevel Doubly Linked List
+Linked List,Medium,Copy List with Random Pointer
+Linked List,Medium,Sort a Linked List (Merge Sort)
+Linked List,Medium,LRU Cache
+Linked List,Hard,Reverse Nodes in k-Group
+Bit Manipulation,Easy,Check if a Number is a Power of Two
+Bit Manipulation,Easy,Count Set Bits (Hamming Weight / Popcount)
+Bit Manipulation,Easy,Find the Single Number (XOR Trick)
+Bit Manipulation,Medium,Find Two Non-Repeating Numbers
+Bit Manipulation,Easy,Reverse Bits of an Integer
+Bit Manipulation,Easy,Find the Missing Number
+Bit Manipulation,Medium,Subsets Generation using Bitmask
+Bit Manipulation,Medium,Maximum XOR of Two Numbers in an Array (Trie / Greedy Bit)
+Bit Manipulation,Easy,Counting Bits — Number of 1s for 0 to N (DP + Bit)
+Bit Manipulation,Medium,Single Number III — Element Appearing Once When Others Appear Three Times
+Backtracking,Medium,Subsets (Power Set)
+Backtracking,Medium,Subsets II (With Duplicates)
+Backtracking,Medium,Permutations
+Backtracking,Medium,Permutations II (With Duplicates)
+Backtracking,Medium,Combination Sum
+Backtracking,Medium,Combination Sum II (Each element used once)
+Backtracking,Hard,N-Queens
+Backtracking,Medium,Word Search
+Backtracking,Medium,Palindrome Partitioning
+Backtracking,Hard,Sudoku Solver
+Binary Search,Easy,Classic Binary Search
+Binary Search,Medium,Find First and Last Position (Search Range)
+Binary Search,Medium,Search in Rotated Sorted Array
+Binary Search,Medium,Find Minimum in Rotated Sorted Array
+Binary Search,Medium,Koko Eating Bananas (Binary Search on Answer)
+Binary Search,Hard,Median of Two Sorted Arrays
+Binary Search,Medium,Find Peak Element
+Binary Search,Medium,Search a 2D Matrix
+Binary Search,Hard,Aggressive Cows / Allocate Books (Maximize Minimum)
+Binary Search,Hard,Find in Mountain Array (Unknown Size / Double Binary Search)
+Heap,Medium,Kth Largest Element in an Array
+Heap,Medium,Top K Frequent Elements
+Heap,Hard,Merge K Sorted Lists
+Heap,Hard,Find Median from Data Stream
+Heap,Medium,Task Scheduler
+Heap,Medium,K Closest Points to Origin
+Heap,Medium,Reorganize String
+Heap,Medium,Dijkstra's Shortest Path
+Heap,Medium,Minimum Cost to Connect Ropes (Huffman-style)
+Heap,Medium,Find K Pairs with Smallest Sums
+Intervals,Medium,Merge Intervals
+Intervals,Medium,Insert Interval
+Intervals,Easy,Meeting Rooms I (Can Attend All?)
+Intervals,Medium,Meeting Rooms II (Minimum Rooms Required)
+Intervals,Medium,Non-Overlapping Intervals (Minimum Removals)
+Intervals,Medium,Minimum Number of Arrows to Burst Balloons
+Intervals,Medium,Maximum CPU Load / Peak Overlap Count
+Intervals,Hard,Employee Free Time
+Intervals,Medium,Interval List Intersections
+Intervals,Hard,Summary Ranges / Data Stream as Disjoint Intervals
+Monotonic Stack,Easy,Next Greater Element I
+Monotonic Stack,Medium,Daily Temperatures
+Monotonic Stack,Hard,Largest Rectangle in Histogram
+Monotonic Stack,Hard,Trapping Rain Water
+Monotonic Stack,Hard,Maximal Rectangle (Binary Matrix)
+Monotonic Stack,Medium,Stock Span Problem
+Monotonic Stack,Medium,Remove K Digits to Make Smallest Number
+Monotonic Stack,Medium,Next Greater Element II (Circular Array)
+Monotonic Stack,Medium,Sum of Subarray Minimums
+Monotonic Stack,Medium,Largest Rectangle in Buildings / Skyline (132 Pattern)
+Prefix Sum,Easy,Range Sum Query (1D)
+Prefix Sum,Medium,Subarray Sum Equals K
+Prefix Sum,Medium,Product of Array Except Self
+Prefix Sum,Easy,Find Pivot Index
+Prefix Sum,Medium,Contiguous Array (Equal 0s and 1s)
+Prefix Sum,Medium,Range Sum Query 2D (Immutable)
+Prefix Sum,Medium,Subarray Sums Divisible by K
+Prefix Sum,Easy,Maximum Sum of Subarray of Size K (Sliding Window + Prefix)
+Prefix Sum,Hard,Count of Range Sum
+Prefix Sum,Medium,Minimum Size Subarray Sum (Prefix Sum + Binary Search)
+Recursion,Easy,Factorial
+Recursion,Easy,Fibonacci Number
+Recursion,Medium,Power Function (Fast Exponentiation)
+Recursion,Easy,Binary Search (Recursive)
+Recursion,Medium,Merge Sort
+Recursion,Medium,Tower of Hanoi
+Recursion,Medium,Generate All Subsets (Power Set)
+Recursion,Medium,Permutations of a String/Array
+Recursion,Medium,Combination Sum
+Recursion,Hard,N-Queens
+Recursion,Medium,Word Search in Grid
+Recursion,Medium,Flatten Nested List (Recursive Structures)
+Recursion,Easy,Height of Binary Tree
+Recursion,Easy,Diameter of Binary Tree
+Recursion,Medium,Validate Binary Search Tree
+Recursion,Medium,Lowest Common Ancestor (LCA)
+Recursion,Medium,Decode Ways
+Recursion,Medium,Letter Combinations of a Phone Number
+Recursion,Hard,Regular Expression Matching
+Recursion,Hard,Sudoku Solver
+Trees,Hard,Binary Tree Maximum Path Sum
+Trees,Easy,Diameter of Binary Tree
+Trees,Medium,Lowest Common Ancestor (LCA) of a Binary Tree
+Trees,Medium,Binary Tree Level Order Traversal
+Trees,Hard,Serialize and Deserialize Binary Tree
+Trees,Medium,Validate Binary Search Tree
+Trees,Medium,Binary Tree Right Side View
+Trees,Medium,Construct Binary Tree from Preorder and Inorder Traversal
+Trees,Medium,Kth Smallest Element in a BST
+Trees,Medium,Flatten Binary Tree to Linked List
+Trees,Medium,Path Sum II (All Root-to-Leaf Paths with Target Sum)
+Trees,Hard,Morris Inorder Traversal (O(1) Space)
+Trees,Medium,Count Good Nodes in a Binary Tree
+Trees,Medium,Fenwick Tree (Binary Indexed Tree) — Range Sum Queries
+Trees,Hard,Fenwick Tree — Count of Smaller Numbers After Self
+Greedy,Medium,Activity Selection / Interval Scheduling
+Greedy,Medium,Fractional Knapsack
+Greedy,Medium,Jump Game II — Minimum Jumps
+Greedy,Medium,Gas Station
+Greedy,Medium,Meeting Rooms II — Minimum Meeting Rooms
+Greedy,Medium,Task Scheduler
+Greedy,Hard,Candy Distribution
+Greedy,Medium,Huffman Encoding (Greedy + Heap)
+Greedy,Medium,Minimum Number of Platforms (Trains)
+Greedy,Medium,Minimum Cost to Connect Ropes (Kruskal-style Greedy)
+Two Pointers,Easy,Two Sum II (Sorted Array)
+Two Pointers,Medium,Container With Most Water
+Two Pointers,Medium,3Sum
+Two Pointers,Easy,Remove Duplicates from Sorted Array
+Two Pointers,Medium,Linked List Cycle Detection (Floyd's Algorithm)
+Two Pointers,Hard,Trapping Rain Water
+Two Pointers,Medium,Minimum Size Subarray Sum
+Two Pointers,Medium,Longest Substring Without Repeating Characters
+Two Pointers,Medium,Sort Colors (Dutch National Flag)
+Two Pointers,Easy,Merge Sorted Array
