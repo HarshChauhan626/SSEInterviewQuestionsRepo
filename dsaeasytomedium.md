@@ -30,6 +30,9 @@ Input:  nums = [3, 2, 4],      target = 6   →  Output: [1, 2]
 Input:  nums = [3, 3],         target = 6   →  Output: [0, 1]
 ```
 
+**Complexity:**
+- Time: O(N) | Space: O(N)
+
 **Java Solution:**
 ```java
 import java.util.HashMap;
@@ -64,6 +67,9 @@ Input:  prices = [7, 6, 4, 3, 1]     →  Output: 0  (no profit possible)
 Input:  prices = [2, 4, 1]           →  Output: 2
 ```
 
+**Complexity:**
+- Time: O(N) | Space: O(1)
+
 **Java Solution:**
 ```java
 public class BestTimeToBuyAndSellStock {
@@ -97,6 +103,9 @@ Input:  nums = [1, 2, 3, 4]        →  Output: false
 Input:  nums = [1, 1, 1, 3, 3, 4]  →  Output: true
 ```
 
+**Complexity:**
+- Time: O(N) | Space: O(N)
+
 **Java Solution:**
 ```java
 import java.util.HashSet;
@@ -125,6 +134,9 @@ Given an integer array `nums`, return an array `answer` such that `answer[i]` is
 Input:  nums = [1, 2, 3, 4]   →  Output: [24, 12, 8, 6]
 Input:  nums = [-1, 1, 0, -3, 3]  →  Output: [0, 0, 9, 0, 0]
 ```
+
+**Complexity:**
+- Time: O(N) | Space: O(1)
 
 **Java Solution:**
 ```java
@@ -161,6 +173,9 @@ Input:  nums = [1]                                →  Output: 1
 Input:  nums = [5, 4, -1, 7, 8]                  →  Output: 23
 ```
 
+**Complexity:**
+- Time: O(N) | Space: O(1)
+
 **Java Solution:**
 ```java
 public class MaximumSubarray {
@@ -190,6 +205,9 @@ Input:  nums = [0, 1, 0, 3, 12]  →  Output: [1, 3, 12, 0, 0]
 Input:  nums = [0]               →  Output: [0]
 Input:  nums = [1, 0, 1]         →  Output: [1, 1, 0]
 ```
+
+**Complexity:**
+- Time: O(N) | Space: O(1)
 
 **Java Solution:**
 ```java
@@ -221,6 +239,9 @@ Input:  nums1 = [1], m=1, nums2 = [], n=0                  →  Output: [1]
 Input:  nums1 = [0], m=0, nums2 = [1], n=1                 →  Output: [1]
 ```
 
+**Complexity:**
+- Time: O(m + n) | Space: O(1)
+
 **Java Solution:**
 ```java
 public class MergeSortedArray {
@@ -249,6 +270,9 @@ Given an array `nums` of size `n`, return the majority element — the element t
 Input:  nums = [3, 2, 3]              →  Output: 3
 Input:  nums = [2, 2, 1, 1, 1, 2, 2]  →  Output: 2
 ```
+
+**Complexity:**
+- Time: O(N) | Space: O(1)
 
 **Java Solution:**
 ```java
@@ -280,6 +304,9 @@ Input:  nums = [0, 1]        →  Output: 2
 Input:  nums = [9,6,4,2,3,5,7,0,1]  →  Output: 8
 ```
 
+**Complexity:**
+- Time: O(N) | Space: O(1)
+
 **Java Solution:**
 ```java
 public class MissingNumber {
@@ -307,6 +334,9 @@ Input:  nums = [1,1,1,2,2,3], k = 2  →  Output: [1, 2]
 Input:  nums = [1], k = 1            →  Output: [1]
 ```
 
+**Complexity:**
+- Time: O(N log K) | Space: O(N)
+
 **Java Solution:**
 ```java
 import java.util.*;
@@ -316,21 +346,20 @@ public class TopKFrequentElements {
         Map<Integer, Integer> freq = new HashMap<>();
         for (int n : nums) freq.merge(n, 1, Integer::sum);
 
-        List<Integer>[] bucket = new List[nums.length + 1];
+        PriorityQueue<Integer> pq = new PriorityQueue<>(
+            (a, b) -> freq.get(a) - freq.get(b)
+        );
+
         for (int key : freq.keySet()) {
-            int f = freq.get(key);
-            if (bucket[f] == null) bucket[f] = new ArrayList<>();
-            bucket[f].add(key);
+            pq.add(key);
+            if (pq.size() > k) {
+                pq.poll();
+            }
         }
 
         int[] result = new int[k];
-        int idx = 0;
-        for (int i = bucket.length - 1; i >= 0 && idx < k; i--) {
-            if (bucket[i] != null) {
-                for (int val : bucket[i]) {
-                    if (idx < k) result[idx++] = val;
-                }
-            }
+        for (int i = k - 1; i >= 0; i--) {
+            result[i] = pq.poll();
         }
         return result;
     }
@@ -355,6 +384,9 @@ Input:  s = "anagram", t = "nagaram"  →  Output: true
 Input:  s = "rat",     t = "car"      →  Output: false
 Input:  s = "a",       t = "ab"       →  Output: false
 ```
+
+**Complexity:**
+- Time: O(N) | Space: O(1)
 
 **Java Solution:**
 ```java
@@ -387,6 +419,9 @@ Output: [["bat"],["nat","tan"],["ate","eat","tea"]]
 Input:  strs = [""]     →  Output: [[""]]
 Input:  strs = ["a"]    →  Output: [["a"]]
 ```
+
+**Complexity:**
+- Time: O(N * K log K) | Space: O(N * K)
 
 **Java Solution:**
 ```java
@@ -421,6 +456,9 @@ Input:  strs = ["dog","racecar","car"]     →  Output: ""
 Input:  strs = ["ab","a"]                 →  Output: "a"
 ```
 
+**Complexity:**
+- Time: O(S) | Space: O(1)
+
 **Java Solution:**
 ```java
 public class LongestCommonPrefix {
@@ -452,6 +490,9 @@ Input:  s = "A man, a plan, a canal: Panama"  →  Output: true
 Input:  s = "race a car"                      →  Output: false
 Input:  s = " "                               →  Output: true
 ```
+
+**Complexity:**
+- Time: O(N) | Space: O(1)
 
 **Java Solution:**
 ```java
@@ -485,6 +526,9 @@ Input:  s = "  hello world  "    →  Output: "world hello"
 Input:  s = "a good   example"   →  Output: "example good a"
 ```
 
+**Complexity:**
+- Time: O(N) | Space: O(N)
+
 **Java Solution:**
 ```java
 public class ReverseWordsInString {
@@ -514,6 +558,9 @@ Input:  s = "abcabcbb"  →  Output: 3  (substring "abc")
 Input:  s = "bbbbb"     →  Output: 1  (substring "b")
 Input:  s = "pwwkew"    →  Output: 3  (substring "wke")
 ```
+
+**Complexity:**
+- Time: O(N) | Space: O(min(M, N))
 
 **Java Solution:**
 ```java
@@ -552,6 +599,9 @@ Input:  chars = ['a','b','b','b','b','b','b','b','b','b','b','b','b']
         Output: 4  → chars = ['a','b','1','2']
 ```
 
+**Complexity:**
+- Time: O(N) | Space: O(1)
+
 **Java Solution:**
 ```java
 public class StringCompression {
@@ -587,6 +637,9 @@ Input:  s = "III"    →  Output: 3
 Input:  s = "LVIII"  →  Output: 58
 Input:  s = "MCMXCIV"  →  Output: 1994
 ```
+
+**Complexity:**
+- Time: O(N) | Space: O(1)
 
 **Java Solution:**
 ```java
@@ -624,6 +677,9 @@ Input:  haystack = "aaaaa",  needle = "bba"  →  Output: -1
 Input:  haystack = "",       needle = ""     →  Output: 0
 ```
 
+**Complexity:**
+- Time: O(N * M) | Space: O(1)
+
 **Java Solution:**
 ```java
 public class ImplementStrStr {
@@ -651,6 +707,9 @@ Given a string `s`, return the number of palindromic substrings in it. A string 
 Input:  s = "abc"   →  Output: 3   ("a", "b", "c")
 Input:  s = "aaa"   →  Output: 6   ("a","a","a","aa","aa","aaa")
 ```
+
+**Complexity:**
+- Time: O(N^2) | Space: O(1)
 
 **Java Solution:**
 ```java
@@ -693,6 +752,9 @@ Input:  height = [1,8,6,2,5,4,8,3,7]  →  Output: 49
 Input:  height = [1,1]                 →  Output: 1
 ```
 
+**Complexity:**
+- Time: O(N) | Space: O(1)
+
 **Java Solution:**
 ```java
 public class ContainerWithMostWater {
@@ -724,6 +786,9 @@ Input:  target = 4, nums = [1,4,4]        →  Output: 1
 Input:  target = 11, nums = [1,1,1,1,1]   →  Output: 0
 ```
 
+**Complexity:**
+- Time: O(N) | Space: O(1)
+
 **Java Solution:**
 ```java
 public class MinimumSizeSubarraySum {
@@ -754,6 +819,9 @@ Given two strings `s1` and `s2`, return `true` if `s2` contains a permutation of
 Input:  s1 = "ab", s2 = "eidbaooo"  →  Output: true  ("ba" is in s2)
 Input:  s1 = "ab", s2 = "eidboaoo"  →  Output: false
 ```
+
+**Complexity:**
+- Time: O(N) | Space: O(1)
 
 **Java Solution:**
 ```java
@@ -789,6 +857,9 @@ Input:  nums = [-1, 0, 1, 2, -1, -4]  →  Output: [[-1,-1,2],[-1,0,1]]
 Input:  nums = [0, 1, 1]              →  Output: []
 Input:  nums = [0, 0, 0]              →  Output: [[0,0,0]]
 ```
+
+**Complexity:**
+- Time: O(N^2) | Space: O(1)
 
 **Java Solution:**
 ```java
@@ -831,6 +902,9 @@ Input:  nums = [1,1,2]           →  Output: 2, nums = [1,2,_]
 Input:  nums = [0,0,1,1,1,2,2,3,3,4]  →  Output: 5, nums = [0,1,2,3,4,_,_,_,_,_]
 ```
 
+**Complexity:**
+- Time: O(N) | Space: O(1)
+
 **Java Solution:**
 ```java
 public class RemoveDuplicatesFromSortedArray {
@@ -858,6 +932,9 @@ Given an array `nums` with `n` objects colored red (0), white (1), or blue (2), 
 Input:  nums = [2,0,2,1,1,0]  →  Output: [0,0,1,1,2,2]
 Input:  nums = [2,0,1]        →  Output: [0,1,2]
 ```
+
+**Complexity:**
+- Time: O(N) | Space: O(1)
 
 **Java Solution:**
 ```java
@@ -894,6 +971,9 @@ Input:  s = "cbaebabacd", p = "abc"  →  Output: [0, 6]
 Input:  s = "abab",       p = "ab"   →  Output: [0, 1, 2]
 ```
 
+**Complexity:**
+- Time: O(N) | Space: O(1)
+
 **Java Solution:**
 ```java
 import java.util.*;
@@ -929,6 +1009,9 @@ Given an array of integers `nums` and an integer `k`, return the total number of
 Input:  nums = [1,1,1], k = 2  →  Output: 2
 Input:  nums = [1,2,3], k = 3  →  Output: 2
 ```
+
+**Complexity:**
+- Time: O(N) | Space: O(N)
 
 **Java Solution:**
 ```java
@@ -968,6 +1051,9 @@ Input:  s = "()[]{}"   →  Output: true
 Input:  s = "(]"       →  Output: false
 Input:  s = "([)]"     →  Output: false
 ```
+
+**Complexity:**
+- Time: O(N) | Space: O(N)
 
 **Java Solution:**
 ```java
@@ -1009,6 +1095,9 @@ stack.top();    → 0
 stack.getMin(); → -2
 ```
 
+**Complexity:**
+- Time: O(1) per operation | Space: O(N)
+
 **Java Solution:**
 ```java
 import java.util.Stack;
@@ -1049,6 +1138,9 @@ Input:  temperatures = [30,40,50,60]               →  Output: [1,1,1,0]
 Input:  temperatures = [30,60,90]                  →  Output: [1,1,0]
 ```
 
+**Complexity:**
+- Time: O(N) | Space: O(N)
+
 **Java Solution:**
 ```java
 import java.util.Stack;
@@ -1083,6 +1175,9 @@ Given two integer arrays `nums1` and `nums2` where `nums1` is a subset of `nums2
 Input:  nums1 = [4,1,2], nums2 = [1,3,4,2]  →  Output: [-1,3,-1]
 Input:  nums1 = [2,4],   nums2 = [1,2,3,4]  →  Output: [3,-1]
 ```
+
+**Complexity:**
+- Time: O(N) | Space: O(N)
 
 **Java Solution:**
 ```java
@@ -1123,6 +1218,9 @@ queue.peek();  → 1
 queue.pop();   → 1
 queue.empty(); → false
 ```
+
+**Complexity:**
+- Time: Amortized O(1) | Space: O(N)
 
 **Java Solution:**
 ```java
@@ -1173,6 +1271,9 @@ Input:  1→2         →  Output: 2→1
 Input:  []          →  Output: []
 ```
 
+**Complexity:**
+- Time: O(N) | Space: O(1)
+
 **Java Solution:**
 ```java
 public class ReverseLinkedList {
@@ -1210,6 +1311,9 @@ Input:  list1 = [],      list2 = []     →  Output: []
 Input:  list1 = [],      list2 = [0]    →  Output: [0]
 ```
 
+**Complexity:**
+- Time: O(N + M) | Space: O(1)
+
 **Java Solution:**
 ```java
 public class MergeTwoSortedLists {
@@ -1242,6 +1346,9 @@ Input:  1→2 (tail connects to node at index 0)        →  Output: true
 Input:  1 (no cycle)                                  →  Output: false
 ```
 
+**Complexity:**
+- Time: O(N) | Space: O(1)
+
 **Java Solution:**
 ```java
 public class LinkedListCycle {
@@ -1270,6 +1377,9 @@ Given the head of a singly linked list, return the middle node. If there are two
 Input:  1→2→3→4→5    →  Output: Node 3  (middle)
 Input:  1→2→3→4→5→6  →  Output: Node 4  (second middle)
 ```
+
+**Complexity:**
+- Time: O(N) | Space: O(1)
 
 **Java Solution:**
 ```java
@@ -1300,6 +1410,9 @@ Input:  [1], n=1         →  Output: []
 Input:  1→2, n=1         →  Output: [1]
 ```
 
+**Complexity:**
+- Time: O(N) | Space: O(1)
+
 **Java Solution:**
 ```java
 public class RemoveNthNodeFromEnd {
@@ -1328,6 +1441,9 @@ Given the heads of two singly linked lists `headA` and `headB`, return the node 
 Input:  A: a1→a2→c1→c2→c3, B: b1→b2→b3→c1→c2→c3  →  Output: c1
 Input:  No intersection  →  Output: null
 ```
+
+**Complexity:**
+- Time: O(N + M) | Space: O(1)
 
 **Java Solution:**
 ```java
@@ -1361,6 +1477,9 @@ Input:  [3,9,20,null,null,15,7]  →  Output: 3
 Input:  [1,null,2]               →  Output: 2
 ```
 
+**Complexity:**
+- Time: O(N) | Space: O(N) (Worst case call stack)
+
 **Java Solution:**
 ```java
 public class MaximumDepthBinaryTree {
@@ -1392,6 +1511,9 @@ Input:  [2,1,3]           →  Output: [2,3,1]
 Input:  []                →  Output: []
 ```
 
+**Complexity:**
+- Time: O(N) | Space: O(N)
+
 **Java Solution:**
 ```java
 public class InvertBinaryTree {
@@ -1420,6 +1542,9 @@ Input:  p = [1,2],   q = [1,null,2]   →  Output: false
 Input:  p = [1,2,1], q = [1,1,2]      →  Output: false
 ```
 
+**Complexity:**
+- Time: O(N) | Space: O(N)
+
 **Java Solution:**
 ```java
 public class SameTree {
@@ -1447,6 +1572,9 @@ Input:  [3,9,20,null,null,15,7]  →  Output: [[3],[9,20],[15,7]]
 Input:  [1]                      →  Output: [[1]]
 Input:  []                       →  Output: []
 ```
+
+**Complexity:**
+- Time: O(N) | Space: O(N)
 
 **Java Solution:**
 ```java
@@ -1488,6 +1616,9 @@ Input:  BST = [6,2,8,0,4,7,9], p=2, q=8  →  Output: 6
 Input:  BST = [6,2,8,0,4,7,9], p=2, q=4  →  Output: 2
 ```
 
+**Complexity:**
+- Time: O(H) | Space: O(1)
+
 **Java Solution:**
 ```java
 public class LowestCommonAncestorBST {
@@ -1515,6 +1646,9 @@ Given the root of a binary tree, determine if it is a valid binary search tree (
 Input:  [2,1,3]          →  Output: true
 Input:  [5,1,4,null,null,3,6]  →  Output: false  (4 in right subtree but 3 < 5)
 ```
+
+**Complexity:**
+- Time: O(N) | Space: O(N)
 
 **Java Solution:**
 ```java
@@ -1551,6 +1685,9 @@ Input:  nums = [-1,0,3,5,9,12], target = 2   →  Output: -1
 Input:  nums = [5], target = 5               →  Output: 0
 ```
 
+**Complexity:**
+- Time: O(log N) | Space: O(1)
+
 **Java Solution:**
 ```java
 public class BinarySearch {
@@ -1581,6 +1718,9 @@ Input:  nums = [4,5,6,7,0,1,2], target = 0  →  Output: 4
 Input:  nums = [4,5,6,7,0,1,2], target = 3  →  Output: -1
 Input:  nums = [1], target = 0              →  Output: -1
 ```
+
+**Complexity:**
+- Time: O(log N) | Space: O(1)
 
 **Java Solution:**
 ```java
@@ -1619,6 +1759,9 @@ Input:  tasks = ["A","A","A","B","B","B"], n=0  →  Output: 6
 Input:  tasks = ["A","A","A","A","A","A","B","C","D","E","F","G"], n=2  →  Output: 16
 ```
 
+**Complexity:**
+- Time: O(N) | Space: O(1)
+
 **Java Solution:**
 ```java
 public class TaskScheduler {
@@ -1647,6 +1790,9 @@ Given `n` non-negative integers representing an elevation map where the width of
 Input:  height = [0,1,0,2,1,0,1,3,2,1,2,1]  →  Output: 6
 Input:  height = [4,2,0,3,2,5]               →  Output: 9
 ```
+
+**Complexity:**
+- Time: O(N) | Space: O(1)
 
 **Java Solution:**
 ```java
@@ -1683,6 +1829,9 @@ Input:  nums = [1,3,-1,-3,5,3,6,7], k=3  →  Output: [3,3,5,5,6,7]
 Input:  nums = [1], k=1                  →  Output: [1]
 Input:  nums = [1,-1], k=1               →  Output: [1,-1]
 ```
+
+**Complexity:**
+- Time: O(N) | Space: O(K)
 
 **Java Solution:**
 ```java
