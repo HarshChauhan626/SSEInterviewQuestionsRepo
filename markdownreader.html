@@ -1,0 +1,592 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Markdown Reader</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@5.6.1/github-markdown-dark.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github-dark.min.css">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #070a0f;
+      --panel: rgba(16, 22, 31, 0.82);
+      --panel-strong: rgba(23, 32, 45, 0.96);
+      --text: #eef4ff;
+      --muted: #9aa9bf;
+      --line: rgba(255, 255, 255, 0.12);
+      --blue: #66d9ff;
+      --green: #7cf7bd;
+      --pink: #ff7ab6;
+      --yellow: #ffd166;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      overflow: hidden;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 20% 4%, rgba(102, 217, 255, 0.2), transparent 26rem),
+        radial-gradient(circle at 86% 16%, rgba(124, 247, 189, 0.11), transparent 26rem),
+        linear-gradient(135deg, #070a0f 0%, #111827 54%, #07131a 100%);
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.032) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.032) 1px, transparent 1px);
+      background-size: 36px 36px;
+      mask-image: linear-gradient(to bottom, black, transparent 82%);
+    }
+
+    .shell {
+      position: relative;
+      height: 100vh;
+      display: grid;
+      grid-template-columns: 280px minmax(0, 1fr) 260px;
+      gap: 1px;
+      background: var(--line);
+    }
+
+    aside,
+    .reader {
+      min-height: 0;
+      background: rgba(7, 10, 15, 0.78);
+      backdrop-filter: blur(22px);
+    }
+
+    aside {
+      display: flex;
+      flex-direction: column;
+      padding: 18px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .brand a,
+    .icon-btn {
+      display: inline-grid;
+      place-items: center;
+      width: 38px;
+      height: 38px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      color: var(--text);
+      background: rgba(255,255,255,0.07);
+      text-decoration: none;
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: 1rem;
+      letter-spacing: 0;
+    }
+
+    .search {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      flex: 0 0 auto;
+      height: 42px;
+      padding: 0 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255,255,255,0.06);
+    }
+
+    .search svg,
+    .icon-btn svg,
+    .brand svg {
+      width: 18px;
+      height: 18px;
+      flex: 0 0 auto;
+    }
+
+    input {
+      width: 100%;
+      border: 0;
+      outline: 0;
+      background: transparent;
+      color: var(--text);
+      font: inherit;
+    }
+
+    .file-list,
+    .toc {
+      min-height: 0;
+      overflow: auto;
+      margin-top: 14px;
+      padding-right: 4px;
+    }
+
+    .file-link,
+    .toc a {
+      display: block;
+      margin-bottom: 7px;
+      padding: 10px 11px;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+      line-height: 1.25;
+    }
+
+    .file-link:hover,
+    .file-link.active,
+    .toc a:hover {
+      color: var(--text);
+      border-color: rgba(102, 217, 255, 0.4);
+      background: rgba(102, 217, 255, 0.09);
+    }
+
+    .reader {
+      overflow: auto;
+      scroll-behavior: smooth;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      min-height: 76px;
+      padding: 14px 26px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(7, 10, 15, 0.76);
+      backdrop-filter: blur(20px);
+    }
+
+    .doc-title {
+      min-width: 0;
+    }
+
+    .doc-title strong {
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 1.1rem;
+    }
+
+    .doc-title span {
+      color: var(--muted);
+      font-size: 0.84rem;
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+      flex: 0 0 auto;
+    }
+
+    .content-wrap {
+      width: min(980px, calc(100% - 36px));
+      margin: 0 auto;
+      padding: 34px 0 72px;
+    }
+
+    .markdown-body {
+      padding: 36px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(13, 18, 26, 0.76);
+      box-shadow: 0 28px 80px rgba(0, 0, 0, 0.35);
+    }
+
+    .markdown-body h1,
+    .markdown-body h2,
+    .markdown-body h3 {
+      letter-spacing: 0;
+      border-bottom-color: rgba(255, 255, 255, 0.12);
+    }
+
+    .markdown-body a { color: var(--blue); }
+    .markdown-body code { border-radius: 6px; }
+    .markdown-body pre {
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
+      background: #0b1020;
+    }
+
+    .markdown-body table {
+      display: table;
+      width: 100%;
+    }
+
+    .mermaid {
+      display: flex;
+      justify-content: center;
+      overflow-x: auto;
+      padding: 18px;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
+      background: #0c111b;
+    }
+
+    .side-title {
+      margin: 10px 0 0;
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+    }
+
+    .toc a {
+      padding-left: calc(10px + var(--depth, 0) * 12px);
+      font-size: 0.86rem;
+    }
+
+    .empty,
+    .error {
+      padding: 24px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      color: var(--muted);
+      background: var(--panel);
+    }
+
+    .error strong { color: var(--pink); }
+
+    @media (max-width: 1100px) {
+      .shell { grid-template-columns: 240px minmax(0, 1fr); }
+      .toc-panel { display: none; }
+    }
+
+    @media (max-width: 760px) {
+      body { overflow: auto; }
+      .shell {
+        height: auto;
+        min-height: 100vh;
+        grid-template-columns: 1fr;
+      }
+      .file-panel {
+        max-height: 42vh;
+        border-bottom: 1px solid var(--line);
+      }
+      .reader { overflow: visible; }
+      .topbar {
+        position: static;
+        padding: 14px;
+      }
+      .content-wrap {
+        width: min(100% - 24px, 980px);
+        padding-top: 18px;
+      }
+      .markdown-body { padding: 22px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <aside class="file-panel">
+      <div class="brand">
+        <a href="index.html" title="Back to library" aria-label="Back to library">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="m15 18-6-6 6-6"></path>
+          </svg>
+        </a>
+        <h1>Library</h1>
+      </div>
+      <label class="search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <circle cx="11" cy="11" r="7"></circle>
+          <path d="m21 21-4.35-4.35"></path>
+        </svg>
+        <input id="fileSearch" type="search" placeholder="Find a file..." autocomplete="off">
+      </label>
+      <nav class="file-list" id="fileList" aria-label="Markdown files"></nav>
+    </aside>
+
+    <main class="reader" id="reader">
+      <header class="topbar">
+        <div class="doc-title">
+          <strong id="docTitle">Markdown Reader</strong>
+          <span id="docMeta">Loading...</span>
+        </div>
+        <div class="actions">
+          <a class="icon-btn" id="rawLink" href="#" target="_blank" rel="noopener" title="Open raw file" aria-label="Open raw file">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="M15 3h6v6"></path>
+              <path d="M10 14 21 3"></path>
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+            </svg>
+          </a>
+          <button class="icon-btn" id="themeBtn" type="button" title="Switch contrast" aria-label="Switch contrast">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path>
+            </svg>
+          </button>
+        </div>
+      </header>
+      <div class="content-wrap">
+        <article class="markdown-body" id="content">
+          <div class="empty">Choose a Markdown file from the library.</div>
+        </article>
+      </div>
+    </main>
+
+    <aside class="toc-panel">
+      <p class="side-title">On This Page</p>
+      <nav class="toc" id="toc" aria-label="Table of contents"></nav>
+    </aside>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/markdown-it@14.1.0/dist/markdown-it.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/common.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"></script>
+  <script>
+    const fallbackMarkdownFiles = [
+      "a2arag.md",
+      "agenticai.md",
+      "backtracking.md",
+      "binarysearch.md",
+      "bitmanipulation.md",
+      "databases.md",
+      "disjoinset.md",
+      "distributedsystems.md",
+      "dotnet.md",
+      "dp.md",
+      "dsaeasytomedium.md",
+      "golang.md",
+      "graph.md",
+      "greedy.md",
+      "heap.md",
+      "intervals.md",
+      "kubernetes.md",
+      "linkedlist.md",
+      "monotonicstack.md",
+      "nodejs.md",
+      "observability.md",
+      "prefixsum.md",
+      "puzzles.md",
+      "queue.md",
+      "react.md",
+      "recursion.md",
+      "slidingwindow.md",
+      "systemdesigneventdrivenetc.md",
+      "trees.md",
+      "trie.md",
+      "twopointer.md",
+      "websocket.md"
+    ];
+
+    const titleMap = {
+      "a2arag.md": "A2A RAG",
+      "agenticai.md": "Agentic AI",
+      "backtracking.md": "Backtracking",
+      "binarysearch.md": "Binary Search",
+      "bitmanipulation.md": "Bit Manipulation",
+      "databases.md": "Databases",
+      "disjoinset.md": "Disjoint Set",
+      "distributedsystems.md": "Distributed Systems",
+      "dotnet.md": ".NET",
+      "dp.md": "Dynamic Programming",
+      "dsaeasytomedium.md": "DSA Easy To Medium",
+      "golang.md": "Golang",
+      "graph.md": "Graph",
+      "greedy.md": "Greedy",
+      "heap.md": "Heap",
+      "intervals.md": "Intervals",
+      "kubernetes.md": "Kubernetes",
+      "linkedlist.md": "Linked List",
+      "monotonicstack.md": "Monotonic Stack",
+      "nodejs.md": "Node.js",
+      "observability.md": "Observability",
+      "prefixsum.md": "Prefix Sum",
+      "puzzles.md": "Puzzles",
+      "queue.md": "Queue",
+      "react.md": "React",
+      "recursion.md": "Recursion",
+      "slidingwindow.md": "Sliding Window",
+      "systemdesigneventdrivenetc.md": "System Design: Event Driven Etc",
+      "trees.md": "Trees",
+      "trie.md": "Trie",
+      "twopointer.md": "Two Pointer",
+      "websocket.md": "WebSocket"
+    };
+
+    const md = window.markdownit({
+      html: true,
+      linkify: true,
+      typographer: true,
+      highlight(code, lang) {
+        const language = lang && hljs.getLanguage(lang) ? lang : "plaintext";
+        return `<pre><code class="hljs language-${language}">${hljs.highlight(code, { language }).value}</code></pre>`;
+      }
+    });
+
+    mermaid.initialize({
+      startOnLoad: false,
+      theme: "dark",
+      securityLevel: "loose",
+      flowchart: { curve: "basis" },
+      themeVariables: {
+        background: "#0c111b",
+        primaryColor: "#102033",
+        primaryTextColor: "#eef4ff",
+        primaryBorderColor: "#66d9ff",
+        lineColor: "#7cf7bd",
+        secondaryColor: "#1f2937",
+        tertiaryColor: "#111827"
+      }
+    });
+
+    let markdownFiles = [...fallbackMarkdownFiles];
+    const params = new URLSearchParams(location.search);
+    let selectedFile = params.get("file");
+    const fileList = document.querySelector("#fileList");
+    const fileSearch = document.querySelector("#fileSearch");
+    const content = document.querySelector("#content");
+    const docTitle = document.querySelector("#docTitle");
+    const docMeta = document.querySelector("#docMeta");
+    const rawLink = document.querySelector("#rawLink");
+    const toc = document.querySelector("#toc");
+    const reader = document.querySelector("#reader");
+
+    function titleFromFile(file) {
+      if (titleMap[file]) return titleMap[file];
+      return file
+        .replace(/\.md$/i, "")
+        .replace(/([a-z])([A-Z])/g, "$1 $2")
+        .replace(/dsa/i, "DSA")
+        .replace(/ai/i, "AI")
+        .replace(/a2a/i, "A2A")
+        .replace(/rag/i, "RAG")
+        .replace(/dotnet/i, ".NET")
+        .replace(/\b\w/g, char => char.toUpperCase());
+    }
+
+    function slugify(text) {
+      return text.toLowerCase().trim().replace(/[^\w\s-]/g, "").replace(/\s+/g, "-");
+    }
+
+    function renderFiles() {
+      const term = fileSearch.value.trim().toLowerCase();
+      const files = markdownFiles.filter(file => {
+        return file.toLowerCase().includes(term) || titleFromFile(file).toLowerCase().includes(term);
+      });
+
+      fileList.innerHTML = files.map(file => `
+        <a class="file-link ${file === selectedFile ? "active" : ""}" href="markdownreader.html?file=${encodeURIComponent(file)}">${titleFromFile(file)}</a>
+      `).join("");
+    }
+
+    async function loadManifest() {
+      try {
+        const response = await fetch("md-files.json", { cache: "no-store" });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const manifest = await response.json();
+        const files = Array.isArray(manifest) ? manifest : manifest.files;
+        if (Array.isArray(files) && files.length) {
+          markdownFiles = files.filter(file => file.endsWith(".md")).sort((a, b) => a.localeCompare(b));
+        }
+      } catch (error) {
+        markdownFiles = [...fallbackMarkdownFiles];
+      }
+
+      selectedFile = selectedFile || markdownFiles[0];
+    }
+
+    function rewriteMermaidBlocks() {
+      content.querySelectorAll("pre code.language-mermaid").forEach((code, index) => {
+        const div = document.createElement("div");
+        div.className = "mermaid";
+        div.id = `mermaid-${index}`;
+        div.textContent = code.textContent;
+        code.closest("pre").replaceWith(div);
+      });
+    }
+
+    function buildToc() {
+      const headings = [...content.querySelectorAll("h1, h2, h3")];
+      const seen = new Map();
+      headings.forEach(heading => {
+        const base = slugify(heading.textContent) || "section";
+        const count = seen.get(base) || 0;
+        seen.set(base, count + 1);
+        heading.id = count ? `${base}-${count + 1}` : base;
+      });
+
+      toc.innerHTML = headings.length
+        ? headings.map(heading => `
+          <a href="#${heading.id}" style="--depth:${Number(heading.tagName.slice(1)) - 1}">${heading.textContent}</a>
+        `).join("")
+        : `<span class="empty">No headings found.</span>`;
+    }
+
+    async function loadMarkdown(file) {
+      if (!markdownFiles.includes(file)) {
+        content.innerHTML = `<div class="error"><strong>Unknown file.</strong><br>Select a file from the library.</div>`;
+        return;
+      }
+
+      docTitle.textContent = titleFromFile(file);
+      docMeta.textContent = file;
+      rawLink.href = file;
+
+      try {
+        const response = await fetch(file, { cache: "no-store" });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const source = await response.text();
+        const rendered = md.render(source);
+        content.innerHTML = DOMPurify.sanitize(rendered, {
+          ADD_TAGS: ["iframe"],
+          ADD_ATTR: ["allow", "allowfullscreen", "frameborder", "scrolling", "target"]
+        });
+        rewriteMermaidBlocks();
+        buildToc();
+        await mermaid.run({ querySelector: ".mermaid" });
+        docMeta.textContent = `${file} • ${source.split(/\s+/).filter(Boolean).length.toLocaleString()} words`;
+      } catch (error) {
+        content.innerHTML = `
+          <div class="error">
+            <strong>Could not load ${file}.</strong><br>
+            Open this through a local web server so the reader can fetch Markdown files.
+          </div>
+        `;
+        docMeta.textContent = "Load failed";
+        toc.innerHTML = "";
+      }
+    }
+
+    fileSearch.addEventListener("input", renderFiles);
+    document.querySelector("#themeBtn").addEventListener("click", () => {
+      document.body.classList.toggle("high-contrast");
+      content.style.background = document.body.classList.contains("high-contrast") ? "#020617" : "";
+    });
+
+    toc.addEventListener("click", event => {
+      const link = event.target.closest("a");
+      if (!link) return;
+      event.preventDefault();
+      reader.querySelector(link.getAttribute("href"))?.scrollIntoView({ behavior: "smooth", block: "start" });
+      history.replaceState(null, "", link.getAttribute("href"));
+    });
+
+    loadManifest().then(() => {
+      renderFiles();
+      loadMarkdown(selectedFile);
+    });
+  </script>
+</body>
+</html>
