@@ -45,7 +45,16 @@ jobs:
               for path in Path(".").glob(pattern):
                   shutil.copy2(path, site / path.name)
 
+          aliases = {
+              "a2rag.md": "a2arag.md",
+          }
+          for alias, target in aliases.items():
+              target_path = site / target
+              if target_path.exists():
+                  shutil.copy2(target_path, site / alias)
+
           files = sorted(path.name for path in site.glob("*.md"))
+          files = [name for name in files if name not in aliases]
           (site / "md-files.json").write_text(
               json.dumps({"files": files}, indent=2) + "\n",
               encoding="utf-8",
