@@ -3718,6 +3718,8 @@ Multi-region alerting requires careful design to avoid noise:
 - **Inhibition rules** that suppress regional alerts when a known global incident is ongoing
 - **Timezone-aware escalation paths** — who is on-call for ap-southeast-1 at 3am UTC?
 
+9129219476
+
 ```yaml
 # Alertmanager inhibition: suppress regional alerts during global incidents
 inhibit_rules:

@@ -531,6 +531,37 @@
       });
     }
 
+    function escapeHtml(value) {
+      return value
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    async function renderMermaidBlocks() {
+      const diagrams = [...content.querySelectorAll(".mermaid")];
+      for (const [index, diagram] of diagrams.entries()) {
+        const source = diagram.textContent.trim();
+        if (!source) continue;
+
+        try {
+          const renderId = `mermaid-render-${Date.now()}-${index}`;
+          const result = await mermaid.render(renderId, source);
+          diagram.innerHTML = result.svg;
+        } catch (error) {
+          diagram.innerHTML = `
+            <div class="error">
+              <strong>Diagram could not be rendered.</strong><br>
+              The Markdown content is still available below.
+              <pre><code>${escapeHtml(source)}</code></pre>
+            </div>
+          `;
+        }
+      }
+    }
+
     function buildToc() {
       const headings = [...content.querySelectorAll("h1, h2, h3")];
       const seen = new Map();
@@ -565,20 +596,11 @@
       docMeta.textContent = file;
       rawLink.href = file;
 
+      let source = "";
       try {
-        const fileUrl = new URL(encodeURIComponent(file), window.location.href);
-        const response = await fetch(fileUrl, { cache: "no-store" });
-        if (!response.ok) throw new Error(`${response.status} ${response.statusText || "Fetch failed"} at ${fileUrl.href}`);
-        const source = await response.text();
-        const rendered = md.render(source);
-        content.innerHTML = DOMPurify.sanitize(rendered, {
-          ADD_TAGS: ["iframe"],
-          ADD_ATTR: ["allow", "allowfullscreen", "frameborder", "scrolling", "target"]
-        });
-        rewriteMermaidBlocks();
-        buildToc();
-        await mermaid.run({ querySelector: ".mermaid" });
-        docMeta.textContent = `${file} • ${source.split(/\s+/).filter(Boolean).length.toLocaleString()} words`;
+        const response = await fetch(file, { cache: "no-store" });
+        if (!response.ok) throw new Error(`${response.status} ${response.statusText || "Fetch failed"} while fetching ${file}`);
+        source = await response.text();
       } catch (error) {
         content.innerHTML = `
           <div class="error">
@@ -589,7 +611,18 @@
         `;
         docMeta.textContent = "Load failed";
         toc.innerHTML = "";
+        return;
       }
+
+      const rendered = md.render(source);
+      content.innerHTML = DOMPurify.sanitize(rendered, {
+        ADD_TAGS: ["iframe"],
+        ADD_ATTR: ["allow", "allowfullscreen", "frameborder", "scrolling", "target"]
+      });
+      rewriteMermaidBlocks();
+      buildToc();
+      await renderMermaidBlocks();
+      docMeta.textContent = `${file} • ${source.split(/\s+/).filter(Boolean).length.toLocaleString()} words`;
     }
 
     fileSearch.addEventListener("input", renderFiles);

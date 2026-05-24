@@ -1,22 +1,28 @@
-name: Deploy static Markdown reader
+# Simple workflow for deploying static content to GitHub Pages
+name: Deploy static content to Pages
 
 on:
+  # Runs on pushes targeting the default branch
   push:
-    branches:
-      - main
-      - master
+    branches: ["master"]
+
+  # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
+# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
 permissions:
   contents: read
   pages: write
   id-token: write
 
+# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
+# However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
 concurrency:
-  group: pages
+  group: "pages"
   cancel-in-progress: false
 
 jobs:
+  # Single deploy job since we're just deploying
   deploy:
     environment:
       name: github-pages
@@ -26,46 +32,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Configure Pages
+      - name: Setup Pages
         uses: actions/configure-pages@v5
-
-      - name: Build static site
-        shell: python
-        run: |
-          import json
-          import shutil
-          from pathlib import Path
-
-          site = Path("_site")
-          if site.exists():
-              shutil.rmtree(site)
-          site.mkdir()
-
-          for pattern in ("*.html", "*.md"):
-              for path in Path(".").glob(pattern):
-                  shutil.copy2(path, site / path.name)
-
-          aliases = {
-              "a2rag.md": "a2arag.md",
-          }
-          for alias, target in aliases.items():
-              target_path = site / target
-              if target_path.exists():
-                  shutil.copy2(target_path, site / alias)
-
-          files = sorted(path.name for path in site.glob("*.md"))
-          files = [name for name in files if name not in aliases]
-          (site / "md-files.json").write_text(
-              json.dumps({"files": files}, indent=2) + "\n",
-              encoding="utf-8",
-          )
-          (site / ".nojekyll").write_text("", encoding="utf-8")
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: _site
-          retention-days: 1
+          # Upload entire repository
+          path: '.'
 
       - name: Deploy to GitHub Pages
         id: deployment
