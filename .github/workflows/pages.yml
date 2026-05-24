@@ -29,22 +29,33 @@ jobs:
       - name: Configure Pages
         uses: actions/configure-pages@v5
 
-      - name: Generate Markdown manifest
+      - name: Build static site
         shell: python
         run: |
           import json
+          import shutil
           from pathlib import Path
 
-          files = sorted(path.name for path in Path(".").glob("*.md"))
-          Path("md-files.json").write_text(
+          site = Path("_site")
+          if site.exists():
+              shutil.rmtree(site)
+          site.mkdir()
+
+          for pattern in ("*.html", "*.md"):
+              for path in Path(".").glob(pattern):
+                  shutil.copy2(path, site / path.name)
+
+          files = sorted(path.name for path in site.glob("*.md"))
+          (site / "md-files.json").write_text(
               json.dumps({"files": files}, indent=2) + "\n",
               encoding="utf-8",
           )
+          (site / ".nojekyll").write_text("", encoding="utf-8")
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: .
+          path: _site
           retention-days: 1
 
       - name: Deploy to GitHub Pages

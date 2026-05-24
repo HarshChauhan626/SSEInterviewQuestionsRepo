@@ -566,8 +566,9 @@
       rawLink.href = file;
 
       try {
-        const response = await fetch(file, { cache: "no-store" });
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const fileUrl = new URL(encodeURIComponent(file), window.location.href);
+        const response = await fetch(fileUrl, { cache: "no-store" });
+        if (!response.ok) throw new Error(`${response.status} ${response.statusText || "Fetch failed"} at ${fileUrl.href}`);
         const source = await response.text();
         const rendered = md.render(source);
         content.innerHTML = DOMPurify.sanitize(rendered, {
@@ -582,7 +583,8 @@
         content.innerHTML = `
           <div class="error">
             <strong>Could not load ${file}.</strong><br>
-            Open this through a local web server so the reader can fetch Markdown files.
+            The deployed site could not fetch the Markdown file.<br>
+            <small>${error.message}</small>
           </div>
         `;
         docMeta.textContent = "Load failed";
