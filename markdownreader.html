@@ -51,7 +51,7 @@
       position: relative;
       height: 100vh;
       display: grid;
-      grid-template-columns: 280px minmax(0, 1fr) 260px;
+      grid-template-columns: minmax(0, 1fr) 260px;
       gap: 1px;
       background: var(--line);
     }
@@ -67,6 +67,39 @@
       display: flex;
       flex-direction: column;
       padding: 18px;
+    }
+
+    .file-panel {
+      position: fixed;
+      z-index: 30;
+      inset: 0 auto 0 0;
+      width: min(320px, calc(100vw - 28px));
+      height: 100vh;
+      border-right: 1px solid var(--line);
+      box-shadow: 22px 0 70px rgba(0, 0, 0, 0.42);
+      transform: translateX(-104%);
+      transition: transform 180ms ease;
+    }
+
+    body.files-open .file-panel {
+      transform: translateX(0);
+    }
+
+    .drawer-backdrop {
+      position: fixed;
+      z-index: 20;
+      inset: 0;
+      border: 0;
+      padding: 0;
+      opacity: 0;
+      pointer-events: none;
+      background: rgba(2, 6, 23, 0.58);
+      transition: opacity 180ms ease;
+    }
+
+    body.files-open .drawer-backdrop {
+      opacity: 1;
+      pointer-events: auto;
     }
 
     .brand {
@@ -174,6 +207,13 @@
       backdrop-filter: blur(20px);
     }
 
+    .topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
     .doc-title {
       min-width: 0;
     }
@@ -267,26 +307,19 @@
     .error strong { color: var(--pink); }
 
     @media (max-width: 1100px) {
-      .shell { grid-template-columns: 240px minmax(0, 1fr); }
+      .shell { grid-template-columns: minmax(0, 1fr); }
       .toc-panel { display: none; }
     }
 
     @media (max-width: 760px) {
-      body { overflow: auto; }
       .shell {
-        height: auto;
-        min-height: 100vh;
+        height: 100vh;
         grid-template-columns: 1fr;
       }
-      .file-panel {
-        max-height: 42vh;
-        border-bottom: 1px solid var(--line);
-      }
-      .reader { overflow: visible; }
       .topbar {
-        position: static;
         padding: 14px;
       }
+      .topbar-left { gap: 10px; }
       .content-wrap {
         width: min(100% - 24px, 980px);
         padding-top: 18px;
@@ -315,12 +348,25 @@
       </label>
       <nav class="file-list" id="fileList" aria-label="Markdown files"></nav>
     </aside>
+    <button class="drawer-backdrop" id="drawerBackdrop" type="button" aria-label="Close file list"></button>
 
     <main class="reader" id="reader">
       <header class="topbar">
-        <div class="doc-title">
-          <strong id="docTitle">Markdown Reader</strong>
-          <span id="docMeta">Loading...</span>
+        <div class="topbar-left">
+          <button class="icon-btn" id="fileDrawerBtn" type="button" title="Open file list" aria-label="Open file list" aria-expanded="false">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="M8 6h13"></path>
+              <path d="M8 12h13"></path>
+              <path d="M8 18h13"></path>
+              <path d="M3 6h.01"></path>
+              <path d="M3 12h.01"></path>
+              <path d="M3 18h.01"></path>
+            </svg>
+          </button>
+          <div class="doc-title">
+            <strong id="docTitle">Markdown Reader</strong>
+            <span id="docMeta">Loading...</span>
+          </div>
         </div>
         <div class="actions">
           <a class="icon-btn" id="rawLink" href="#" target="_blank" rel="noopener" title="Open raw file" aria-label="Open raw file">
@@ -466,6 +512,8 @@
     const rawLink = document.querySelector("#rawLink");
     const toc = document.querySelector("#toc");
     const reader = document.querySelector("#reader");
+    const fileDrawerBtn = document.querySelector("#fileDrawerBtn");
+    const drawerBackdrop = document.querySelector("#drawerBackdrop");
 
     function titleFromFile(file) {
       if (titleMap[file]) return titleMap[file];
@@ -503,6 +551,14 @@
       fileList.innerHTML = files.map(file => `
         <a class="file-link ${file === selectedFile ? "active" : ""}" href="markdownreader.html?file=${encodeURIComponent(file)}">${titleFromFile(file)}</a>
       `).join("");
+    }
+
+    function setFileDrawer(open) {
+      document.body.classList.toggle("files-open", open);
+      fileDrawerBtn.setAttribute("aria-expanded", String(open));
+      fileDrawerBtn.setAttribute("aria-label", open ? "Close file list" : "Open file list");
+      fileDrawerBtn.setAttribute("title", open ? "Close file list" : "Open file list");
+      if (open) fileSearch.focus({ preventScroll: true });
     }
 
     async function loadManifest() {
@@ -626,6 +682,13 @@
     }
 
     fileSearch.addEventListener("input", renderFiles);
+    fileDrawerBtn.addEventListener("click", () => {
+      setFileDrawer(!document.body.classList.contains("files-open"));
+    });
+    drawerBackdrop.addEventListener("click", () => setFileDrawer(false));
+    document.addEventListener("keydown", event => {
+      if (event.key === "Escape") setFileDrawer(false);
+    });
     document.querySelector("#themeBtn").addEventListener("click", () => {
       document.body.classList.toggle("high-contrast");
       content.style.background = document.body.classList.contains("high-contrast") ? "#020617" : "";
