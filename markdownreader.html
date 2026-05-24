@@ -425,6 +425,10 @@
       "websocket.md": "WebSocket"
     };
 
+    const fileAliases = {
+      "a2rag.md": "a2arag.md"
+    };
+
     const md = window.markdownit({
       html: true,
       linkify: true,
@@ -476,6 +480,16 @@
         .replace(/\b\w/g, char => char.toUpperCase());
     }
 
+    function resolveFile(file) {
+      if (!file) return markdownFiles[0];
+      const decoded = decodeURIComponent(file).split("/").pop();
+      if (markdownFiles.includes(decoded)) return decoded;
+      if (fileAliases[decoded] && markdownFiles.includes(fileAliases[decoded])) return fileAliases[decoded];
+
+      const lowerMatch = markdownFiles.find(candidate => candidate.toLowerCase() === decoded.toLowerCase());
+      return lowerMatch || decoded;
+    }
+
     function slugify(text) {
       return text.toLowerCase().trim().replace(/[^\w\s-]/g, "").replace(/\s+/g, "-");
     }
@@ -504,7 +518,7 @@
         markdownFiles = [...fallbackMarkdownFiles];
       }
 
-      selectedFile = selectedFile || markdownFiles[0];
+      selectedFile = resolveFile(selectedFile || markdownFiles[0]);
     }
 
     function rewriteMermaidBlocks() {
@@ -535,9 +549,16 @@
     }
 
     async function loadMarkdown(file) {
+      file = resolveFile(file);
       if (!markdownFiles.includes(file)) {
         content.innerHTML = `<div class="error"><strong>Unknown file.</strong><br>Select a file from the library.</div>`;
         return;
+      }
+
+      selectedFile = file;
+      const currentParam = new URLSearchParams(location.search).get("file");
+      if (currentParam !== file) {
+        history.replaceState(null, "", `markdownreader.html?file=${encodeURIComponent(file)}`);
       }
 
       docTitle.textContent = titleFromFile(file);
