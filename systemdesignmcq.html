@@ -1,0 +1,1012 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>System Design Quiz — 300 Questions</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0c10;
+    --surface: #111318;
+    --surface2: #181c24;
+    --border: #1e2433;
+    --accent: #00e5ff;
+    --accent2: #7c3aed;
+    --accent3: #f59e0b;
+    --correct: #10b981;
+    --wrong: #ef4444;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --mono: 'JetBrains Mono', monospace;
+    --display: 'Syne', sans-serif;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--mono);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,229,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,229,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── SPLASH ── */
+  #splash {
+    position: fixed; inset: 0; z-index: 100;
+    background: var(--bg);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: flex-start;
+    gap: 1.5rem;
+    padding: 3rem 1.5rem 4rem;
+    overflow-y: auto;
+  }
+  .splash-badge {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.3em;
+    color: var(--accent);
+    text-transform: uppercase;
+    border: 1px solid var(--accent);
+    padding: 0.35em 1em;
+    opacity: 0;
+    animation: fadeUp 0.6s 0.2s forwards;
+  }
+  .splash-title {
+    font-family: var(--display);
+    font-size: clamp(2.4rem, 7vw, 5rem);
+    font-weight: 800;
+    line-height: 1;
+    text-align: center;
+    opacity: 0;
+    animation: fadeUp 0.6s 0.4s forwards;
+  }
+  .splash-title span { color: var(--accent); }
+  .splash-sub {
+    font-size: 0.85rem;
+    color: var(--muted);
+    text-align: center;
+    max-width: 480px;
+    line-height: 1.7;
+    opacity: 0;
+    animation: fadeUp 0.6s 0.6s forwards;
+  }
+  .topics-grid {
+    display: flex; flex-wrap: wrap; gap: 0.5rem;
+    justify-content: center; max-width: 600px;
+    opacity: 0;
+    animation: fadeUp 0.6s 0.8s forwards;
+  }
+  .topic-tag {
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    padding: 0.3em 0.8em;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    border-radius: 2px;
+  }
+  .start-btn {
+    margin-top: 0.5rem;
+    padding: 0.9rem 3rem;
+    background: var(--accent);
+    color: #000;
+    font-family: var(--mono);
+    font-weight: 700;
+    font-size: 0.9rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    border: none; cursor: pointer;
+    clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+    transition: transform 0.15s, box-shadow 0.15s;
+    opacity: 0;
+    animation: fadeUp 0.6s 1s forwards;
+  }
+  .start-btn:hover { transform: scale(1.04); box-shadow: 0 0 30px rgba(0,229,255,0.4); }
+
+  /* ── MAIN APP ── */
+  #app { display: none; position: relative; z-index: 1; max-width: 820px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+
+  /* Header */
+  .header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1rem 0 1.5rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 2rem;
+    flex-wrap: wrap; gap: 1rem;
+  }
+  .header-logo {
+    font-family: var(--display);
+    font-weight: 800; font-size: 1.1rem;
+    color: var(--accent);
+    letter-spacing: -0.02em;
+  }
+  .header-logo span { color: var(--text); }
+  .progress-wrap { flex: 1; max-width: 300px; }
+  .progress-label {
+    display: flex; justify-content: space-between;
+    font-size: 0.65rem; color: var(--muted); margin-bottom: 0.4rem;
+    letter-spacing: 0.1em;
+  }
+  .progress-bar {
+    height: 3px; background: var(--border); border-radius: 2px; overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%; background: var(--accent);
+    transition: width 0.4s ease;
+    box-shadow: 0 0 8px var(--accent);
+  }
+  .score-badge {
+    font-size: 0.75rem;
+    color: var(--accent3);
+    border: 1px solid var(--accent3);
+    padding: 0.3em 0.8em;
+    letter-spacing: 0.1em;
+  }
+
+  /* Question card */
+  .q-meta {
+    display: flex; align-items: center; gap: 1rem;
+    margin-bottom: 1.2rem; flex-wrap: wrap;
+  }
+  .q-num {
+    font-size: 0.65rem; letter-spacing: 0.2em; color: var(--accent);
+    text-transform: uppercase;
+  }
+  .q-category {
+    font-size: 0.62rem; letter-spacing: 0.15em;
+    color: var(--muted); text-transform: uppercase;
+    border: 1px solid var(--border);
+    padding: 0.2em 0.6em;
+  }
+  .q-text {
+    font-family: var(--display);
+    font-size: clamp(1rem, 2.5vw, 1.25rem);
+    font-weight: 600;
+    line-height: 1.5;
+    margin-bottom: 2rem;
+    color: var(--text);
+  }
+
+  /* Options */
+  .options { display: flex; flex-direction: column; gap: 0.75rem; }
+  .option {
+    position: relative;
+    display: flex; align-items: flex-start; gap: 1rem;
+    padding: 1rem 1.2rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s, transform 0.1s;
+    border-radius: 2px;
+    text-align: left;
+  }
+  .option:hover:not(.disabled) {
+    border-color: var(--accent);
+    background: var(--surface2);
+    transform: translateX(4px);
+  }
+  .option.correct { border-color: var(--correct); background: rgba(16,185,129,0.08); }
+  .option.wrong   { border-color: var(--wrong);   background: rgba(239,68,68,0.08); }
+  .option.disabled { cursor: default; }
+  .opt-key {
+    min-width: 26px; height: 26px;
+    border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.7rem; font-weight: 700; color: var(--muted);
+    flex-shrink: 0;
+    transition: border-color 0.2s, color 0.2s;
+  }
+  .option.correct .opt-key { border-color: var(--correct); color: var(--correct); }
+  .option.wrong   .opt-key { border-color: var(--wrong);   color: var(--wrong); }
+  .option:hover:not(.disabled) .opt-key { border-color: var(--accent); color: var(--accent); }
+  .opt-text { font-size: 0.88rem; line-height: 1.5; padding-top: 0.15rem; }
+
+  /* Explanation */
+  .explanation {
+    margin-top: 1.5rem;
+    padding: 1.2rem 1.4rem;
+    background: var(--surface2);
+    border-left: 3px solid var(--accent);
+    display: none;
+    animation: fadeUp 0.3s forwards;
+  }
+  .explanation.show { display: block; }
+  .exp-label {
+    font-size: 0.62rem; letter-spacing: 0.2em; color: var(--accent);
+    text-transform: uppercase; margin-bottom: 0.6rem;
+  }
+  .exp-text { font-size: 0.84rem; line-height: 1.7; color: #94a3b8; }
+
+  /* Nav */
+  .nav {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-top: 2rem; gap: 1rem; flex-wrap: wrap;
+  }
+  .nav-btn {
+    padding: 0.75rem 2rem;
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text);
+    cursor: pointer;
+    transition: 0.2s;
+    clip-path: polygon(6px 0%, 100% 0%, calc(100% - 6px) 100%, 0% 100%);
+  }
+  .nav-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .nav-btn.primary {
+    background: var(--accent); color: #000;
+    border-color: var(--accent);
+  }
+  .nav-btn.primary:hover { box-shadow: 0 0 20px rgba(0,229,255,0.35); }
+  .nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  /* Result screen */
+  #result {
+    display: none; text-align: center;
+    padding: 4rem 2rem;
+    animation: fadeUp 0.5s forwards;
+  }
+  .result-title {
+    font-family: var(--display);
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 800; margin-bottom: 0.5rem;
+  }
+  .result-score {
+    font-size: clamp(3rem, 10vw, 6rem);
+    font-family: var(--display);
+    font-weight: 800;
+    color: var(--accent);
+    line-height: 1;
+    margin: 1rem 0;
+    text-shadow: 0 0 60px rgba(0,229,255,0.4);
+  }
+  .result-grade {
+    font-size: 1.1rem; color: var(--muted); margin-bottom: 2rem;
+  }
+  .result-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 1rem; max-width: 400px; margin: 0 auto 2.5rem;
+  }
+  .result-stat {
+    background: var(--surface); border: 1px solid var(--border);
+    padding: 1rem; border-radius: 2px;
+  }
+  .stat-val { font-size: 1.5rem; font-weight: 700; font-family: var(--display); }
+  .stat-val.c { color: var(--correct); }
+  .stat-val.w { color: var(--wrong); }
+  .stat-val.s { color: var(--accent3); }
+  .stat-lab { font-size: 0.65rem; color: var(--muted); letter-spacing: 0.1em; margin-top: 0.2rem; }
+  .restart-btn {
+    padding: 0.9rem 3rem;
+    background: var(--accent); color: #000;
+    font-family: var(--mono); font-weight: 700;
+    font-size: 0.9rem; letter-spacing: 0.15em;
+    text-transform: uppercase; border: none; cursor: pointer;
+    clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .restart-btn:hover { transform: scale(1.04); box-shadow: 0 0 30px rgba(0,229,255,0.4); }
+
+  /* Question dots minimap */
+  .minimap {
+    display: flex; flex-wrap: wrap; gap: 4px;
+    margin-bottom: 1.5rem;
+  }
+  .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--border);
+    transition: background 0.3s;
+    cursor: pointer;
+  }
+  .dot.answered { background: var(--accent); }
+  .dot.current  { background: var(--accent3); box-shadow: 0 0 6px var(--accent3); }
+  .dot.correct-dot { background: var(--correct); }
+  .dot.wrong-dot   { background: var(--wrong); }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .card-anim { animation: fadeUp 0.3s forwards; }
+
+  /* ── TOPIC SELECTION ── */
+  .mode-tabs {
+    display: flex; gap: 0.5rem;
+    opacity: 0; animation: fadeUp 0.6s 0.7s forwards;
+  }
+  .mode-tab {
+    padding: 0.45rem 1.2rem;
+    font-family: var(--mono); font-size: 0.7rem;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    border: 1px solid var(--border);
+    background: transparent; color: var(--muted);
+    cursor: pointer; transition: 0.2s;
+    clip-path: polygon(5px 0%,100% 0%,calc(100% - 5px) 100%,0% 100%);
+  }
+  .mode-tab.active {
+    background: var(--accent); color: #000;
+    border-color: var(--accent);
+  }
+  .mode-tab:hover:not(.active) { border-color: var(--accent); color: var(--accent); }
+
+  #topicSelect {
+    width: 100%; max-width: 640px;
+    opacity: 0; animation: fadeUp 0.6s 0.85s forwards;
+  }
+  .topic-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 0.5rem;
+  }
+  .topic-btn {
+    padding: 0.6rem 0.8rem;
+    font-family: var(--mono); font-size: 0.68rem;
+    letter-spacing: 0.08em; text-align: left;
+    border: 1px solid var(--border);
+    background: var(--surface); color: var(--muted);
+    cursor: pointer; transition: 0.2s;
+    border-radius: 2px; position: relative;
+  }
+  .topic-btn .t-count {
+    display: block; font-size: 0.6rem;
+    color: var(--accent); margin-top: 0.2rem;
+  }
+  .topic-btn:hover { border-color: var(--accent2); color: var(--text); background: var(--surface2); }
+  .topic-btn.selected { border-color: var(--accent); color: var(--accent); background: rgba(0,229,255,0.07); }
+  .topic-btn.selected::after {
+    content: '✓';
+    position: absolute; top: 0.4rem; right: 0.6rem;
+    font-size: 0.65rem; color: var(--accent);
+  }
+  .sel-info {
+    font-size: 0.7rem; color: var(--muted);
+    text-align: center; margin-top: 0.5rem;
+    letter-spacing: 0.05em;
+  }
+  .sel-info span { color: var(--accent3); }
+
+  .quiz-mode-label {
+    font-size: 0.62rem; letter-spacing: 0.18em;
+    color: var(--accent2); text-transform: uppercase;
+    border: 1px solid var(--accent2);
+    padding: 0.2em 0.6em;
+  }
+</style>
+</head>
+<body>
+
+<!-- ── SPLASH ── -->
+<div id="splash">
+  <div class="splash-badge">Interview Prep Series</div>
+  <div class="splash-title">System<br><span>Design</span> Quiz</div>
+  <div class="splash-sub" id="splashSub">300 curated MCQs across 29 topics. Pick a topic below or start all questions.</div>
+
+  <!-- All Topics button -->
+  <button class="start-btn" id="startBtn" onclick="startAll()">Start Full Quiz (All Topics) →</button>
+
+  <!-- Topic grid — always visible -->
+  <div style="width:100%;max-width:680px;">
+    <div style="font-size:0.62rem;letter-spacing:0.2em;color:var(--accent);text-transform:uppercase;margin-bottom:0.75rem;opacity:0;animation:fadeUp 0.5s 1.1s forwards;">Or choose a topic:</div>
+    <div class="topic-grid" id="topicGrid"></div>
+  </div>
+</div>
+
+<!-- ── APP ── -->
+<div id="app">
+  <div class="header">
+    <div class="header-logo">SD<span>Quiz</span></div>
+    <div class="progress-wrap">
+      <div class="progress-label">
+        <span id="progLabel">Q 1 / 300</span>
+        <span id="progPct">0%</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="progFill" style="width:0%"></div></div>
+    </div>
+    <div class="score-badge">Score: <span id="scoreDisplay">0</span></div>
+  </div>
+
+  <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:0.5rem;">
+    <div class="quiz-mode-label" id="modeLabel">All Topics</div>
+    <button style="font-family:var(--mono);font-size:0.65rem;letter-spacing:0.1em;padding:0.25em 0.8em;background:transparent;border:1px solid var(--border);color:var(--muted);cursor:pointer;text-transform:uppercase;" onclick="goHome()">← Change Mode</button>
+  </div>
+  <div class="minimap" id="minimap"></div>
+
+  <div id="quizArea"></div>
+
+  <div id="result">
+    <div class="result-title">Quiz Complete 🎯</div>
+    <div class="result-score" id="finalScore"></div>
+    <div class="result-grade" id="finalGrade"></div>
+    <div class="result-grid">
+      <div class="result-stat"><div class="stat-val c" id="rCorrect">0</div><div class="stat-lab">CORRECT</div></div>
+      <div class="result-stat"><div class="stat-val w" id="rWrong">0</div><div class="stat-lab">WRONG</div></div>
+      <div class="result-stat"><div class="stat-val s" id="rSkipped">0</div><div class="stat-lab">SKIPPED</div></div>
+    </div>
+    <button class="restart-btn" onclick="restartQuiz()">Try Again →</button>
+  </div>
+</div>
+
+<script>
+const TOPICS = ["Scalability","Load Balancing","Caching","Databases","CAP Theorem","Consistency","Replication","Sharding","Microservices","Message Queues","CDN","API Design","Rate Limiting","SQL vs NoSQL","Hashing","Distributed Systems","Consensus Algorithms","Storage","Networking","Security","Observability","Service Discovery","Event-Driven","Data Pipelines","System Design Patterns","Kubernetes","Cloud","Database Internals","Design Problems"];
+
+const ALL_QUESTIONS = [
+  // ── SCALABILITY ──
+  {cat:"Scalability",q:"What does horizontal scaling (scaling out) mean?",opts:["Increasing CPU and RAM of a single server","Adding more machines to distribute the load","Optimizing application code for performance","Partitioning data across databases"],ans:1,exp:"Horizontal scaling (scale-out) means adding more servers/nodes to handle increased load, distributing it across machines. Vertical scaling (scale-up) means upgrading hardware on a single machine."},
+  {cat:"Scalability",q:"Which of the following is a key challenge when scaling stateful services horizontally?",opts:["More hardware costs","Session/state management across nodes","DNS resolution latency","Increased CPU usage"],ans:1,exp:"Stateful services store session data per server. When scaling horizontally, you need strategies like sticky sessions, distributed caches (Redis), or JWT tokens to share state across nodes."},
+  {cat:"Scalability",q:"What is the primary purpose of a load balancer in a scalable system?",opts:["Encrypting traffic between services","Distributing incoming requests across multiple servers","Compressing HTTP responses","Caching frequently accessed data"],ans:1,exp:"A load balancer distributes incoming network traffic across multiple backend servers to ensure no single server is overwhelmed, improving availability and responsiveness."},
+  {cat:"Scalability",q:"Which metric best indicates whether a system needs to scale?",opts:["Lines of code","CPU utilization consistently above 80%","Number of developers","Database schema complexity"],ans:1,exp:"Consistently high CPU utilization (above ~70-80%) indicates the system is struggling with load and may need to scale horizontally or vertically."},
+  {cat:"Scalability",q:"What is 'elasticity' in cloud systems?",opts:["The ability to encrypt data at rest","Automatically adding/removing resources based on demand","Running applications in multiple regions","Replicating databases across data centers"],ans:1,exp:"Elasticity refers to the ability to automatically provision and de-provision resources dynamically in response to demand, typically associated with cloud auto-scaling."},
+
+  // ── LOAD BALANCING ──
+  {cat:"Load Balancing",q:"Which load balancing algorithm distributes requests one-by-one in order across servers?",opts:["Least Connections","IP Hash","Round Robin","Weighted Response Time"],ans:2,exp:"Round Robin cycles through servers in order, sending each new request to the next server. It's simple but doesn't account for server capacity or current load."},
+  {cat:"Load Balancing",q:"What is the benefit of 'sticky sessions' (session affinity)?",opts:["Encrypts user sessions","Routes the same user to the same server","Reduces database calls","Improves DNS resolution speed"],ans:1,exp:"Sticky sessions ensure requests from a specific client are routed to the same server, which is useful for stateful applications that store session data locally."},
+  {cat:"Load Balancing",q:"Layer 7 load balancing operates at which OSI layer?",opts:["Transport Layer","Network Layer","Application Layer","Data Link Layer"],ans:2,exp:"Layer 7 (Application Layer) load balancers can inspect HTTP headers, cookies, and URLs to make intelligent routing decisions, unlike L4 which only sees TCP/UDP."},
+  {cat:"Load Balancing",q:"Which algorithm routes requests to the server with the fewest active connections?",opts:["Round Robin","Random","Least Connections","IP Hash"],ans:2,exp:"The Least Connections algorithm sends new requests to the server with the fewest active connections, suitable for sessions with variable duration."},
+  {cat:"Load Balancing",q:"What is a 'health check' in the context of load balancers?",opts:["Monitoring CPU temperature of servers","Periodic probes to detect and remove unhealthy backend servers","Encrypting health data","Checking database query performance"],ans:1,exp:"Load balancers perform health checks (e.g., HTTP pings) on backend servers. Unhealthy servers are removed from the pool to prevent requests from being routed to them."},
+
+  // ── CACHING ──
+  {cat:"Caching",q:"What does a cache-aside (lazy loading) strategy do?",opts:["Pre-loads all data into cache on startup","Application loads data into cache only on cache miss","Writes to cache and database simultaneously","Evicts data after a fixed time"],ans:1,exp:"In cache-aside, the application first checks the cache. On a miss, it reads from the DB, stores the result in cache, and returns it. Cache is populated lazily, only when needed."},
+  {cat:"Caching",q:"Which cache eviction policy removes the least recently used item?",opts:["FIFO","LFU","LRU","MRU"],ans:2,exp:"LRU (Least Recently Used) evicts the item that hasn't been accessed for the longest time. It's one of the most widely used eviction policies in practice."},
+  {cat:"Caching",q:"What is a 'cache stampede' (thundering herd) problem?",opts:["Cache running out of memory","Multiple requests simultaneously hitting the DB when a cached item expires","Slow network causing cache misses","Cache nodes failing one by one"],ans:1,exp:"A cache stampede occurs when a popular cached key expires and many concurrent requests all miss the cache simultaneously, flooding the database. Mitigations include mutex locking and probabilistic early expiration."},
+  {cat:"Caching",q:"In a write-through cache strategy, data is:",opts:["Written only to cache and DB is updated later","Written to cache and database simultaneously","Written only to the database","Written to multiple cache layers"],ans:1,exp:"Write-through ensures data is written to both the cache and the database at the same time, keeping them consistent. The tradeoff is higher write latency."},
+  {cat:"Caching",q:"Which distributed caching system is known for supporting data structures like lists, sets, and hashes?",opts:["Memcached","Varnish","Redis","Squid"],ans:2,exp:"Redis supports rich data structures (strings, lists, sets, sorted sets, hashes, etc.) making it very versatile for caching, session storage, pub/sub, and more."},
+  {cat:"Caching",q:"What is a CDN cache used for?",opts:["Caching database queries","Storing static assets closer to end users globally","Managing application session state","Accelerating microservice communication"],ans:1,exp:"A CDN (Content Delivery Network) caches static assets (images, CSS, JS, videos) at edge servers distributed globally, reducing latency for end users."},
+
+  // ── DATABASES ──
+  {cat:"Databases",q:"What is database sharding?",opts:["Creating read replicas for performance","Partitioning data horizontally across multiple databases","Encrypting database columns","Indexing all columns for faster queries"],ans:1,exp:"Sharding splits a large database into smaller pieces (shards) stored on different servers based on a shard key, allowing the system to scale horizontally."},
+  {cat:"Databases",q:"What does ACID stand for in database transactions?",opts:["Availability, Consistency, Integrity, Durability","Atomicity, Consistency, Isolation, Durability","Atomicity, Concurrency, Integrity, Distribution","Availability, Concurrency, Isolation, Distribution"],ans:1,exp:"ACID: Atomicity (all or nothing), Consistency (valid state transitions), Isolation (concurrent transactions don't interfere), Durability (committed data persists). Fundamental for relational databases."},
+  {cat:"Databases",q:"Which SQL isolation level prevents dirty reads but allows non-repeatable reads?",opts:["Read Uncommitted","Read Committed","Repeatable Read","Serializable"],ans:1,exp:"Read Committed prevents reading uncommitted data (dirty reads) but allows a row to change between two reads in the same transaction (non-repeatable read)."},
+  {cat:"Databases",q:"What is a covering index?",opts:["An index that covers all rows in a table","An index that contains all columns needed by a query, avoiding table lookup","An index on encrypted columns","A partial index on a subset of rows"],ans:1,exp:"A covering index includes all the columns a query needs, so the DB engine can satisfy the query using only the index without accessing the actual table rows, greatly improving performance."},
+  {cat:"Databases",q:"What problem does the N+1 query problem describe?",opts:["A query that returns N+1 rows unexpectedly","Executing 1 query to fetch a list, then N additional queries for each item","Running the same query N+1 times due to cache miss","Inserting N+1 duplicate records"],ans:1,exp:"The N+1 problem occurs when code fetches a list (1 query) then loops through fetching related data individually (N queries), causing poor performance. Solved with JOIN or eager loading."},
+  {cat:"Databases",q:"Which type of database is best suited for storing highly connected data with complex relationships?",opts:["Columnar database","Key-Value store","Graph database","Time-series database"],ans:2,exp:"Graph databases (Neo4j, Amazon Neptune) store data as nodes and edges, making them ideal for highly connected data like social networks, recommendation engines, and fraud detection."},
+  {cat:"Databases",q:"What is the purpose of a WAL (Write-Ahead Log) in databases?",opts:["Caching write operations in memory","Ensuring durability and recovery by logging changes before applying them","Replicating data to secondary nodes","Compressing database files"],ans:1,exp:"WAL logs every change to disk before applying it to the actual data pages. This ensures crash recovery: if the DB crashes mid-transaction, it can replay or roll back using the log."},
+
+  // ── CAP THEOREM ──
+  {cat:"CAP Theorem",q:"What does the CAP theorem state?",opts:["Any system can achieve Consistency, Availability, and Partition Tolerance simultaneously","A distributed system can guarantee at most two of: Consistency, Availability, Partition Tolerance","Distributed systems must sacrifice consistency for availability","Network partitions never occur in well-designed systems"],ans:1,exp:"CAP theorem (Brewer's theorem) states that in the presence of a network partition, a distributed system must choose between Consistency and Availability. You can't have all three simultaneously."},
+  {cat:"CAP Theorem",q:"Which type of system prioritizes Consistency and Partition Tolerance (CP)?",opts:["Amazon DynamoDB (eventual consistency mode)","Apache Cassandra","HBase and Zookeeper","CouchDB"],ans:2,exp:"CP systems (e.g., HBase, Zookeeper, MongoDB in strong consistency mode) sacrifice availability during partitions to maintain consistent data across nodes."},
+  {cat:"CAP Theorem",q:"In CAP theorem, what does 'Availability' mean?",opts:["Data is always accurate and never stale","Every request receives a non-error response (though not necessarily the latest data)","All nodes have the same data at all times","The system never goes down"],ans:1,exp:"Availability in CAP means every request receives a response (not necessarily the most recent data). An AP system stays responsive during a partition but may return stale data."},
+  {cat:"CAP Theorem",q:"PACELC extends the CAP theorem by adding which consideration?",opts:["Performance and Consistency","Latency and Consistency trade-offs even when there's no partition","Partition tolerance and eventual consistency","Physical and logical replication"],ans:1,exp:"PACELC (Patterson et al.) says: if there's a Partition, choose between A and C; Else (when no partition), choose between Latency and Consistency. It captures the everyday tradeoff, not just failure scenarios."},
+
+  // ── CONSISTENCY ──
+  {cat:"Consistency",q:"What is eventual consistency?",opts:["Data is always consistent across all nodes at query time","Given enough time without new updates, all replicas will converge to the same value","All writes are rejected unless all nodes agree","Transactions are serialized globally"],ans:1,exp:"Eventual consistency guarantees that if no new updates are made to an object, eventually all reads will return the last updated value. Used in AP systems like DynamoDB, Cassandra."},
+  {cat:"Consistency",q:"What is strong (linearizable) consistency?",opts:["All nodes eventually agree","Every read reflects the most recent write, as if operations execute instantaneously","Reads may return stale data under load","Only the primary node handles writes"],ans:1,exp:"Linearizability (strong consistency) means all operations appear to execute atomically in real-time order. Any read after a write must return that write's value."},
+  {cat:"Consistency",q:"What is 'read-your-writes' consistency?",opts:["All users see each other's writes immediately","A user always sees their own most recent writes when reading","Writes are echoed back to the client immediately","Read operations are batched for consistency"],ans:1,exp:"Read-your-writes (read-your-own-writes) guarantees that after a client performs a write, subsequent reads by that same client will reflect that write, even before it propagates everywhere."},
+
+  // ── REPLICATION ──
+  {cat:"Replication",q:"What is the difference between synchronous and asynchronous replication?",opts:["Sync uses TCP, async uses UDP","In sync replication, the primary waits for replicas to acknowledge before confirming write; async doesn't wait","Sync replicates schema only; async replicates data","Async replication is used only for caching"],ans:1,exp:"Synchronous replication ensures durability (replica confirms before write returns) but adds latency. Asynchronous replication is faster but risks data loss if primary fails before replica syncs."},
+  {cat:"Replication",q:"What is a leader-follower (master-slave) replication pattern?",opts:["All nodes accept reads and writes equally","One node (leader) accepts writes; followers replicate and serve reads","Multiple leaders each handle a geographic region","Each node replicates only a subset of data"],ans:1,exp:"In leader-follower replication, the primary/leader handles all writes. Followers replicate data from the leader and can serve reads, reducing read load on the leader."},
+  {cat:"Replication",q:"What is multi-leader (multi-master) replication's main challenge?",opts:["Higher storage costs","Write conflicts when the same data is modified on different leaders concurrently","Slower read performance","Incompatibility with relational databases"],ans:1,exp:"Multi-leader replication allows writes on multiple nodes, improving availability and geo-distribution. The challenge is resolving write conflicts when the same data is updated on different leaders simultaneously."},
+  {cat:"Replication",q:"What is the purpose of a replication lag?",opts:["The delay in encrypting replicated data","The time lag between a write on the primary and its appearance on replicas","The latency added by load balancers","The wait time before a failed node recovers"],ans:1,exp:"Replication lag is the delay between a write on the primary and its propagation to replicas. High replication lag can cause stale reads and is a concern in asynchronous replication."},
+
+  // ── SHARDING ──
+  {cat:"Sharding",q:"What is consistent hashing used for in distributed systems?",opts:["Encrypting data before storage","Distributing keys across nodes so that adding/removing nodes minimizes remapping","Ensuring all queries hit the same database node","Compressing data for efficient storage"],ans:1,exp:"Consistent hashing maps keys to nodes on a ring. When a node is added or removed, only a fraction of keys (1/n) need remapping, unlike modular hashing where almost all keys change."},
+  {cat:"Sharding",q:"What is a 'hot shard' problem?",opts:["A shard running at high temperature","One shard receiving disproportionately more traffic than others","Too many shards for the cluster size","Shards that replicate too frequently"],ans:1,exp:"A hot shard (hot spot) occurs when a shard key causes uneven distribution—e.g., all celebrity user data going to one shard. This overwhelms one node while others are underutilized."},
+  {cat:"Sharding",q:"What is the main drawback of range-based sharding?",opts:["High storage requirements per shard","Susceptible to hot spots if data is not evenly distributed across ranges","Requires consistent hashing","Cannot support secondary indexes"],ans:1,exp:"Range-based sharding splits data by key ranges (e.g., A-M, N-Z). If access patterns are skewed (e.g., recent dates get more traffic), some shards become hot spots while others sit idle."},
+
+  // ── MICROSERVICES ──
+  {cat:"Microservices",q:"What is the 'strangler fig' pattern for microservices migration?",opts:["Immediately replacing the monolith with microservices","Gradually routing features to new microservices while the monolith shrinks over time","Running microservices alongside a monolith without interaction","Breaking apart databases before services"],ans:1,exp:"The strangler fig pattern incrementally replaces a monolith by routing specific functionality to new microservices over time. The monolith 'strangles' as more routes are redirected, reducing risk."},
+  {cat:"Microservices",q:"What is a service mesh in microservices architecture?",opts:["A UI layer connecting multiple front-end services","An infrastructure layer managing service-to-service communication with features like load balancing, observability, and mTLS","A database replication topology","A caching strategy for microservices"],ans:1,exp:"A service mesh (e.g., Istio, Linkerd) provides a dedicated infrastructure layer for service-to-service communication, handling traffic management, security (mTLS), and observability transparently."},
+  {cat:"Microservices",q:"What is the saga pattern used for in microservices?",opts:["Service discovery between microservices","Managing distributed transactions across multiple services without 2PC","Scaling microservices automatically","Aggregating logs from multiple services"],ans:1,exp:"The Saga pattern manages distributed transactions through a sequence of local transactions, each publishing events. If one fails, compensating transactions roll back previous steps—avoiding distributed ACID transactions."},
+  {cat:"Microservices",q:"Which communication pattern uses a message broker and is asynchronous?",opts:["REST over HTTP","gRPC","Event-driven / message queue (e.g., Kafka, RabbitMQ)","GraphQL subscriptions over WebSocket"],ans:2,exp:"Event-driven communication uses a message broker (Kafka, RabbitMQ, SQS) where producers publish events and consumers subscribe. This decouples services and improves resilience."},
+  {cat:"Microservices",q:"What is the API gateway pattern?",opts:["A database abstraction layer for microservices","A single entry point for all client requests that routes to appropriate backend services","A caching proxy for microservice responses","A service registry for microservice discovery"],ans:1,exp:"An API gateway is a reverse proxy that sits in front of microservices, handling routing, authentication, rate limiting, SSL termination, and response aggregation—simplifying the client interface."},
+
+  // ── MESSAGE QUEUES ──
+  {cat:"Message Queues",q:"What is the main benefit of using a message queue?",opts:["Increases query speed","Decouples producers from consumers and enables async processing","Replaces the need for a database","Encrypts all inter-service communication"],ans:1,exp:"Message queues decouple services so producers don't wait for consumers. This enables async processing, load leveling, retry logic, and system resilience when downstream services are slow or down."},
+  {cat:"Message Queues",q:"What is a 'dead letter queue' (DLQ)?",opts:["A queue for deleted messages","A queue for messages that failed processing after max retries","A queue with zero consumers","A queue used in read-heavy systems"],ans:1,exp:"A DLQ holds messages that couldn't be successfully processed after a configured number of retries. It allows debugging failed messages without blocking the main queue."},
+  {cat:"Message Queues",q:"Apache Kafka stores messages in what structure?",opts:["Hash tables","Circular buffers","Append-only log partitions","Binary trees"],ans:2,exp:"Kafka stores messages as append-only log segments per partition. This allows sequential disk I/O (very fast), message replay, and horizontal scaling via partition distribution across brokers."},
+  {cat:"Message Queues",q:"What is the difference between a queue and a topic in messaging?",opts:["Queues are for files, topics for text","In a queue, each message is consumed once by one consumer; in a topic, multiple consumers can receive the same message (pub/sub)","Topics support ordering, queues do not","Queues are asynchronous, topics are synchronous"],ans:1,exp:"Queues deliver each message to exactly one consumer (point-to-point). Topics (pub/sub) broadcast messages to all subscribed consumers. Kafka uses topics with consumer groups for both patterns."},
+  {cat:"Message Queues",q:"What does 'exactly-once delivery' mean in messaging systems?",opts:["Messages are retried until acknowledged","Each message is delivered and processed exactly one time, with no duplicates","Messages are sent once and never retried","Consumers only receive messages while online"],ans:1,exp:"Exactly-once semantics ensures each message is processed exactly once—not lost (at-least-once) nor processed multiple times. It's complex to achieve, requiring idempotent consumers or transactional producers."},
+
+  // ── CDN ──
+  {cat:"CDN",q:"What is a CDN's primary function?",opts:["Routing packets between data centers","Delivering content from servers geographically closer to the user","Encrypting all web traffic","Load balancing application servers"],ans:1,exp:"A CDN (Content Delivery Network) caches and serves content from edge servers distributed globally, reducing latency by serving users from nearby nodes instead of origin servers."},
+  {cat:"CDN",q:"What is 'cache invalidation' in a CDN?",opts:["Removing expired SSL certificates","Forcing edge nodes to fetch fresh content before the TTL expires","Adding new cache nodes to the CDN","Preventing bots from caching content"],ans:1,exp:"Cache invalidation is the process of forcing CDN edge servers to remove or refresh cached content before its TTL expires, typically done after deploying updates to avoid serving stale assets."},
+  {cat:"CDN",q:"What is an 'origin server' in CDN terminology?",opts:["The CDN edge node closest to the user","The primary server hosting the original content that CDN caches from","The DNS server for the CDN","A backup server in the CDN network"],ans:1,exp:"The origin server is the main server that hosts the actual content. CDN edge servers pull content from the origin on cache miss and cache it locally for future requests."},
+
+  // ── API DESIGN ──
+  {cat:"API Design",q:"What does REST stand for?",opts:["Remote Execution State Transfer","Representational State Transfer","Request Exchange Standard Technology","Reliable Event Stream Transfer"],ans:1,exp:"REST (Representational State Transfer) is an architectural style for distributed hypermedia systems. RESTful APIs use HTTP methods (GET, POST, PUT, DELETE) and stateless communication."},
+  {cat:"API Design",q:"What is idempotency in API design?",opts:["The API returns the same schema for all requests","Making the same request multiple times has the same effect as making it once","Requests are encrypted end-to-end","The API is backwards compatible with all versions"],ans:1,exp:"An idempotent operation produces the same result no matter how many times it's called. GET, PUT, DELETE are idempotent; POST is not by default. Critical for safe retries in distributed systems."},
+  {cat:"API Design",q:"What is the main advantage of gRPC over REST?",opts:["gRPC uses JSON which is easier to debug","gRPC uses HTTP/2 with Protocol Buffers for binary serialization, offering lower latency and better performance","gRPC supports browser clients natively","gRPC doesn't require schema definitions"],ans:1,exp:"gRPC uses HTTP/2 (multiplexing, server push) and Protocol Buffers (compact binary format) for fast, efficient communication—ideal for internal microservice communication with strict performance needs."},
+  {cat:"API Design",q:"What is GraphQL and its key benefit?",opts:["A graph database query language","A query language for APIs that lets clients request exactly the data they need, reducing over-fetching","A REST alternative that uses websockets","A caching protocol for APIs"],ans:1,exp:"GraphQL allows clients to specify exactly what data they need in a single request, eliminating over-fetching and under-fetching problems common in REST. The server returns precisely the requested fields."},
+  {cat:"API Design",q:"What is API versioning and why is it needed?",opts:["Counting API requests per second","Managing different versions of an API to ensure backward compatibility when introducing breaking changes","Encrypting API keys per version","Caching API responses by version"],ans:1,exp:"API versioning (via URI path /v1/, headers, or query params) allows APIs to evolve by introducing breaking changes in new versions without disrupting existing clients still using older versions."},
+  {cat:"API Design",q:"What is a webhook?",opts:["A type of API key","An HTTP callback triggered by an event, where the server pushes data to a registered URL","A polling mechanism for APIs","A REST endpoint that accepts only XML"],ans:1,exp:"Webhooks are reverse APIs—instead of polling, the server sends an HTTP POST to a registered URL when an event occurs. Used for real-time notifications (Stripe payment events, GitHub push events)."},
+
+  // ── RATE LIMITING ──
+  {cat:"Rate Limiting",q:"What algorithm tracks a sliding window of request timestamps for rate limiting?",opts:["Token bucket","Fixed window counter","Sliding window log","Leaky bucket"],ans:2,exp:"The sliding window log algorithm stores timestamps of each request. It counts requests in the rolling window [now - window_size, now], providing accurate rate limiting without the boundary issues of fixed windows."},
+  {cat:"Rate Limiting",q:"What is the token bucket algorithm?",opts:["Limits requests by counting in fixed time windows","Tokens are added to a bucket at a fixed rate; each request consumes a token; requests are rejected when bucket is empty","Queues excess requests in a bucket","Maps client IPs to request buckets"],ans:1,exp:"Token bucket allows bursting: tokens accumulate up to bucket capacity, and each request consumes one. It smooths traffic while allowing short bursts, used by AWS API Gateway and others."},
+  {cat:"Rate Limiting",q:"Where is rate limiting best implemented in a large system?",opts:["Inside each microservice independently","At the API gateway or a dedicated rate limiting service","On the database","Inside the client application"],ans:1,exp:"Implementing rate limiting at the API gateway centralizes enforcement, prevents it needing to be duplicated per service, and protects the entire backend. A dedicated service can share state across gateway instances."},
+  {cat:"Rate Limiting",q:"What is the difference between rate limiting and throttling?",opts:["They are the same thing","Rate limiting sets a maximum request count; throttling reduces the speed/rate of processing requests","Throttling rejects requests; rate limiting queues them","Rate limiting is per user; throttling is per service"],ans:1,exp:"Rate limiting caps the number of requests allowed in a period (reject over limit). Throttling reduces the processing rate of requests (slow down or queue instead of reject). Often used together."},
+
+  // ── SQL vs NoSQL ──
+  {cat:"SQL vs NoSQL",q:"Which type of NoSQL database is best for storing user sessions or shopping carts?",opts:["Document store","Columnar database","Key-Value store","Graph database"],ans:2,exp:"Key-Value stores (Redis, DynamoDB in simple mode) offer O(1) lookups by key, making them ideal for sessions, caches, shopping carts—where you access data by a known identifier."},
+  {cat:"SQL vs NoSQL",q:"What is a columnar database optimized for?",opts:["OLTP workloads with frequent row inserts","Analytical queries (OLAP) reading many rows but few columns","Storing JSON documents","Graph traversal queries"],ans:1,exp:"Columnar databases (Redshift, BigQuery, Cassandra) store data by column rather than row, enabling efficient compression and reading only relevant columns—ideal for analytics and aggregations."},
+  {cat:"SQL vs NoSQL",q:"What does 'schema-less' mean in NoSQL databases?",opts:["The database has no access control","Documents in the same collection can have different fields and structures","No indexes are maintained","All data must be stored as strings"],ans:1,exp:"Schema-less (flexible schema) means documents/records can have different structures. In MongoDB, one document might have 3 fields and another 10. Good for evolving data models but requires careful application-level handling."},
+  {cat:"SQL vs NoSQL",q:"Which SQL feature is hardest to replicate in most NoSQL databases?",opts:["Simple CRUD operations","Multi-document/cross-collection ACID transactions with complex joins","Storing large text fields","Sorting results"],ans:1,exp:"Complex multi-table JOINs and multi-document ACID transactions are difficult in most NoSQL databases, which are designed for denormalized data and don't natively support relational joins."},
+  {cat:"SQL vs NoSQL",q:"When is a time-series database the right choice?",opts:["Storing user profiles","Storing and querying data that is primarily indexed by time (metrics, logs, sensor data)","Managing e-commerce inventory","Handling graph relationships"],ans:1,exp:"Time-series databases (InfluxDB, TimescaleDB, Prometheus) are optimized for time-stamped data—IoT sensors, application metrics, financial ticks. They offer efficient storage and fast time-range queries."},
+
+  // ── HASHING ──
+  {cat:"Hashing",q:"What is a hash function's key property for use in hash tables?",opts:["It must be reversible (decryptable)","It maps input to a fixed-size output deterministically and uniformly","It always produces unique outputs","It requires a secret key"],ans:1,exp:"A good hash function maps inputs to a fixed-size output (deterministic), distributes values uniformly to minimize collisions, and is fast to compute. Reversibility is NOT required (and for cryptographic hashing, undesirable)."},
+  {cat:"Hashing",q:"What is consistent hashing's main advantage over modular hashing?",opts:["Lower computational complexity","When nodes are added/removed, only K/n keys need to be remapped instead of almost all keys","It prevents hash collisions entirely","It works only with prime number of nodes"],ans:1,exp:"With modular hashing (key % n), changing n remaps almost all keys. Consistent hashing minimizes remapping: adding/removing one node only affects ~1/n of the total keys."},
+  {cat:"Hashing",q:"What is a 'virtual node' in consistent hashing?",opts:["A simulated server for testing","Each physical node is represented multiple times on the ring to improve load distribution","A node with no data","A CDN edge node"],ans:1,exp:"Virtual nodes (vnodes) assign each physical server multiple points on the consistent hash ring. This improves load balance and allows for proportional distribution when nodes have different capacities."},
+
+  // ── DISTRIBUTED SYSTEMS ──
+  {cat:"Distributed Systems",q:"What is the 'two generals problem'?",opts:["How two databases reach consensus on writes","Demonstrates that 100% reliable agreement between two parties over an unreliable channel is impossible","How to split traffic between two data centers","Managing two leader nodes in a cluster"],ans:1,exp:"The Two Generals Problem shows it's impossible for two nodes communicating over an unreliable network to achieve guaranteed consensus. It illustrates the fundamental challenge of distributed agreement."},
+  {cat:"Distributed Systems",q:"What is the purpose of a heartbeat mechanism in distributed systems?",opts:["Monitoring CPU usage of servers","Detecting node failures by checking if a node regularly sends periodic signals","Replicating data between nodes","Load balancing traffic across nodes"],ans:1,exp:"Heartbeats are periodic signals sent between nodes to indicate liveness. If a node stops sending heartbeats, it's presumed failed, allowing the cluster to trigger failover or rebalancing."},
+  {cat:"Distributed Systems",q:"What is 'split brain' in distributed systems?",opts:["A bug causing a single node to run multiple processes","When a network partition causes multiple nodes to independently assume they are the leader","A database consistency error","When cache and database get out of sync"],ans:1,exp:"Split brain occurs when a network partition isolates nodes into groups, and each group independently elects a leader. This can cause conflicting writes. Quorum-based consensus prevents split brain."},
+  {cat:"Distributed Systems",q:"What is vector clock used for?",opts:["Measuring processing latency per node","Tracking causality and ordering of events across distributed nodes without a global clock","Synchronizing clocks across data centers","Counting requests per server"],ans:1,exp:"Vector clocks capture causal relationships between events in distributed systems. Each node maintains a counter vector; by comparing clocks, the system can determine if events are concurrent or causally ordered."},
+  {cat:"Distributed Systems",q:"What does 'idempotent consumer' mean in distributed messaging?",opts:["A consumer that processes messages in order","A consumer that can safely process the same message multiple times without unintended side effects","A consumer subscribed to multiple topics","A consumer that batches messages"],ans:1,exp:"An idempotent consumer produces the same result even when processing duplicate messages. Essential for at-least-once delivery systems to prevent double-charging or duplicate record creation."},
+  {cat:"Distributed Systems",q:"What is the purpose of a circuit breaker pattern?",opts:["Limiting the number of concurrent database connections","Preventing cascading failures by stopping calls to a failing service after repeated errors","Encrypting traffic between services","Managing API versioning"],ans:1,exp:"A circuit breaker monitors failures. When errors exceed a threshold, it 'opens' and stops requests to the failing service, allowing it to recover. After a timeout, it tests with limited requests ('half-open' state)."},
+
+  // ── CONSENSUS ALGORITHMS ──
+  {cat:"Consensus Algorithms",q:"What is the Raft algorithm designed for?",opts:["Encrypting data across distributed nodes","Achieving distributed consensus on a replicated log with a clear leader election mechanism","Optimizing database query plans","Balancing load across microservices"],ans:1,exp:"Raft is a consensus algorithm designed to be more understandable than Paxos. It elects a leader, replicates log entries from leader to followers, and commits entries once a majority acknowledges them."},
+  {cat:"Consensus Algorithms",q:"What is a 'quorum' in distributed consensus?",opts:["A single designated leader node","The minimum number of nodes that must agree for an operation to be considered successful","The total number of nodes in a cluster","A fallback mechanism for failed nodes"],ans:1,exp:"A quorum is a majority vote (n/2 + 1 nodes). Requiring a quorum for reads and writes ensures that at least one node in any quorum has the latest committed value, maintaining consistency despite failures."},
+  {cat:"Consensus Algorithms",q:"What makes the Paxos algorithm difficult to implement?",opts:["It requires synchronous clocks","Its complexity and the many edge cases in multi-Paxos for practical systems","It only works with 3 nodes","It requires a shared filesystem"],ans:1,exp:"Paxos is notoriously difficult to implement correctly. The basic protocol handles single values, but extending to a replicated log (Multi-Paxos) and handling leader failures, holes in the log, etc. adds significant complexity."},
+  {cat:"Consensus Algorithms",q:"What is the 'leader election' problem in distributed systems?",opts:["How a user is assigned an account admin role","How distributed nodes agree on which single node should coordinate operations","How a load balancer is selected","How primary and replica databases are assigned"],ans:1,exp:"Leader election is the process by which distributed nodes agree on a single coordinator (leader) that handles writes or coordination. Algorithms like Raft, ZAB (ZooKeeper), and Bully are used for this."},
+
+  // ── STORAGE ──
+  {cat:"Storage",q:"What is the difference between block storage, file storage, and object storage?",opts:["They only differ in storage capacity","Block: raw volumes (like hard drives); File: filesystem with directories; Object: flat store with keys and metadata, infinitely scalable","Block is for databases, file is for images, object is for code","They all use the same underlying mechanism"],ans:1,exp:"Block storage (EBS) provides raw disk partitions. File storage (EFS, NFS) provides hierarchical file systems. Object storage (S3) stores flat objects with metadata, offering massive scale and HTTP access."},
+  {cat:"Storage",q:"What is RAID 1 used for?",opts:["Striping data across disks for performance","Mirroring data across two disks for redundancy","Distributing parity across multiple disks","Combining RAID 0 and RAID 1 configurations"],ans:1,exp:"RAID 1 mirrors data across two disks. Every write goes to both disks. If one fails, data is preserved on the other. Provides redundancy but uses 2x storage with no performance gain on writes."},
+  {cat:"Storage",q:"What does LSM (Log-Structured Merge) tree optimize for?",opts:["Read-heavy workloads with frequent point queries","Write-heavy workloads by converting random writes to sequential disk writes","In-memory caching of hot data","Columnar compression of large datasets"],ans:1,exp:"LSM trees (used in Cassandra, LevelDB, RocksDB) buffer writes in memory (memtable), flush sorted runs to disk (SSTables), and merge them. This converts random writes to sequential, achieving very high write throughput."},
+  {cat:"Storage",q:"What is the purpose of a checksum in storage systems?",opts:["Compressing stored data","Detecting data corruption by verifying stored data matches its recorded checksum","Encrypting data at rest","Indexing data for fast retrieval"],ans:1,exp:"Checksums (CRC32, MD5, SHA-256) generate a fixed-size hash of data. When reading, the checksum is recomputed and compared to the stored value. A mismatch indicates corruption."},
+
+  // ── NETWORKING ──
+  {cat:"Networking",q:"What is a TCP three-way handshake?",opts:["Three retries before a TCP connection is dropped","SYN → SYN-ACK → ACK: the process to establish a TCP connection","Encrypting three packets for security","Three-step DNS resolution process"],ans:1,exp:"TCP connection establishment uses three steps: Client sends SYN, server responds SYN-ACK, client sends ACK. After this the connection is established and data can flow."},
+  {cat:"Networking",q:"What is the difference between TCP and UDP?",opts:["TCP is faster, UDP is more reliable","TCP provides reliable, ordered delivery with acknowledgments; UDP is faster but has no guarantees","TCP is for HTTP, UDP is for HTTPS","UDP supports more concurrent connections"],ans:1,exp:"TCP guarantees delivery, ordering, and error correction through acknowledgments and retransmission. UDP is connectionless with no delivery guarantees—ideal for real-time apps (video, DNS) where speed trumps reliability."},
+  {cat:"Networking",q:"What is DNS and what does it do?",opts:["Encrypts network traffic","Translates human-readable domain names into IP addresses","Routes packets between routers","Assigns IP addresses to devices on a network"],ans:1,exp:"DNS (Domain Name System) is the internet's phonebook—it resolves human-readable hostnames (google.com) to IP addresses. It's hierarchical (root → TLD → authoritative) and heavily cached."},
+  {cat:"Networking",q:"What is a reverse proxy and how does it differ from a forward proxy?",opts:["They are identical in function","A forward proxy hides clients from servers; a reverse proxy sits in front of servers and handles requests on their behalf","A reverse proxy handles only HTTPS","A forward proxy caches server responses; a reverse proxy does not"],ans:1,exp:"A forward proxy hides client identity from servers (e.g., VPN). A reverse proxy (nginx, HAProxy) hides server details from clients, enabling load balancing, SSL termination, and caching."},
+  {cat:"Networking",q:"What is a WebSocket and when is it used?",opts:["An upgraded HTTPS connection for file transfer","A persistent full-duplex communication channel between client and server over a single TCP connection","A proxy protocol for HTTP/2","A type of REST endpoint"],ans:1,exp:"WebSockets provide persistent, bi-directional communication channels, ideal for real-time applications like chat, live dashboards, collaborative editing, and gaming—where the server needs to push data to clients."},
+  {cat:"Networking",q:"What is HTTP/2's main improvement over HTTP/1.1?",opts:["Binary encoding only","Multiplexing multiple requests over a single connection, header compression, and server push","Mandatory HTTPS encryption","Longer timeout windows"],ans:1,exp:"HTTP/2 introduced multiplexing (multiple requests/responses over one TCP connection without head-of-line blocking), header compression (HPACK), server push, and binary framing—significantly improving performance."},
+
+  // ── SECURITY ──
+  {cat:"Security",q:"What is OAuth 2.0 used for?",opts:["Encrypting database passwords","Authorization framework allowing third-party apps limited access to user accounts without sharing credentials","Authenticating users with username/password","Encrypting API responses"],ans:1,exp:"OAuth 2.0 is an authorization framework. It lets users grant third-party apps limited access to their resources (e.g., 'Login with Google') without sharing passwords, using access tokens."},
+  {cat:"Security",q:"What is the difference between authentication and authorization?",opts:["They are synonymous","Authentication verifies who you are; authorization determines what you are allowed to do","Authorization verifies identity; authentication grants access","Authentication is for APIs; authorization is for UIs"],ans:1,exp:"Authentication (authn) verifies identity: 'Who are you?' (username/password, MFA). Authorization (authz) determines permissions: 'What are you allowed to do?' (RBAC, policies). Both are required for secure systems."},
+  {cat:"Security",q:"What is a JWT (JSON Web Token)?",opts:["A session cookie format","A compact, URL-safe token containing claims, signed by the server, used for stateless authentication","An encrypted database connection string","A format for encrypting API keys"],ans:1,exp:"A JWT is a base64-encoded JSON object with header, payload (claims), and signature. The server signs it; clients include it in requests. The server verifies the signature without needing a session store—enabling stateless auth."},
+  {cat:"Security",q:"What is SQL injection and how is it prevented?",opts:["A technique to speed up SQL queries","Inserting malicious SQL code through user input to manipulate queries; prevented via parameterized queries/prepared statements","A way to merge multiple SQL databases","A method for encrypting SQL data"],ans:1,exp:"SQL injection occurs when user input is concatenated into SQL queries, allowing attackers to modify query logic. Prevention: use parameterized queries (prepared statements) and ORM frameworks that handle escaping."},
+  {cat:"Security",q:"What is mutual TLS (mTLS)?",opts:["TLS with two SSL certificates on the server","Both client and server present certificates to authenticate each other during TLS handshake","A faster version of TLS for microservices","TLS applied twice for extra security"],ans:1,exp:"mTLS requires both the client and server to present and verify X.509 certificates. It provides two-way authentication—ensuring both parties are trusted—commonly used for service-to-service auth in microservices."},
+
+  // ── ADDITIONAL IMPORTANT TOPICS ──
+  {cat:"Distributed Systems",q:"What is the purpose of Zookeeper in distributed systems?",opts:["A NoSQL database for large datasets","Distributed coordination service for configuration, naming, synchronization, and leader election","A message queue for microservices","A caching layer for distributed data"],ans:1,exp:"ZooKeeper provides distributed coordination: configuration management, naming, distributed synchronization, and group services. Used by Kafka, HBase, and others for leader election and cluster coordination."},
+  {cat:"Scalability",q:"What is the purpose of a connection pool?",opts:["Storing user session data","Reusing pre-established database connections to avoid the overhead of creating new connections for each request","Encrypting database connections","Distributing database load"],ans:1,exp:"Connection pooling maintains a pool of reusable DB connections. Creating connections is expensive (TCP handshake + auth). A pool allows the app to borrow and return connections quickly, improving throughput significantly."},
+  {cat:"Databases",q:"What is a materialized view?",opts:["A virtual table defined by a query","A precomputed, stored query result that is updated on demand or schedule","A view that only shows certain rows","An encrypted view of sensitive data"],ans:1,exp:"A materialized view stores the results of a query physically on disk. Unlike a regular view (which re-executes on each access), materialized views are precomputed for fast reads. They need periodic refreshes for accuracy."},
+  {cat:"API Design",q:"What is pagination and why is it important in APIs?",opts:["Splitting API documentation into pages","Returning large result sets in chunks (pages) to limit response size and server load","Versioning API endpoints","Caching API results per page"],ans:1,exp:"Pagination (cursor-based, offset-based, or keyset) splits large result sets into smaller pages. Returning 10,000 records at once strains servers, network, and clients. Pagination improves performance and user experience."},
+  {cat:"Scalability",q:"What is the 'thundering herd' problem?",opts:["Too many servers causing network congestion","A large number of processes simultaneously competing for the same resource after being awoken simultaneously, causing system overload","Database lock contention across thousands of rows","CDN servers all requesting origin simultaneously"],ans:1,exp:"Thundering herd occurs when many processes/threads (or distributed clients) are simultaneously woken or triggered to compete for the same resource (e.g., expired cache key), overloading the backend."},
+  {cat:"Databases",q:"What is database denormalization and when should it be used?",opts:["Removing all indexes for write performance","Intentionally introducing redundancy to improve read performance at the cost of write complexity","Splitting tables into smaller normalized forms","Encrypting sensitive database fields"],ans:1,exp:"Denormalization adds redundant data (e.g., storing a user's name in the orders table) to avoid expensive JOINs in read-heavy systems. Used when query performance is critical and write complexity is acceptable."},
+  {cat:"Distributed Systems",q:"What is the purpose of a service registry (e.g., Consul, Eureka)?",opts:["Storing user authentication tokens","Maintaining a registry of available service instances for dynamic service discovery","Caching service responses","Monitoring service health metrics"],ans:1,exp:"A service registry tracks instances of services (host/port) dynamically. Services register on startup and deregister on shutdown. Clients query the registry for available instances—enabling dynamic service discovery in microservices."},
+  {cat:"Caching",q:"What is write-behind (write-back) caching?",opts:["Writing to cache only, deferring database writes asynchronously","Writing only to the database with cache invalidation","Writing to both cache and database simultaneously","Reading from cache and writing to database"],ans:0,exp:"Write-behind caching writes to the cache immediately and asynchronously writes to the database later. This improves write performance but risks data loss if the cache fails before the write is persisted."},
+  {cat:"Scalability",q:"What does 'P99 latency' mean?",opts:["Average latency across all requests","The latency at the 99th percentile—99% of requests complete within this time","Latency for 99% CPU usage scenarios","The 99th fastest response time in a benchmark"],ans:1,exp:"P99 (99th percentile latency) means 99% of requests finish in that time or less. High percentile latencies (P99, P999) reveal tail latency issues that average metrics hide, critical for SLA guarantees."},
+  {cat:"Networking",q:"What is a 'long poll' vs 'server-sent events' (SSE) for real-time updates?",opts:["They are identical mechanisms","Long polling keeps HTTP request open until server has data (then client reconnects); SSE is a persistent one-way stream from server to client","Long polling uses WebSockets; SSE uses HTTP","SSE is bidirectional; long polling is unidirectional"],ans:1,exp:"Long polling: client sends request, server holds it until data is available, then responds (client reconnects immediately). SSE: browser API for persistent one-way streams from server over HTTP—simpler than WebSockets for push-only scenarios."},
+  {cat:"Security",q:"What is CORS (Cross-Origin Resource Sharing)?",opts:["A caching mechanism for cross-origin assets","A browser security mechanism that controls how web pages can request resources from a different domain","An encryption standard for API communications","A way to share cookies across domains"],ans:1,exp:"CORS is a browser security mechanism. By default, browsers block cross-origin requests. Servers include CORS headers (Access-Control-Allow-Origin) to explicitly allow specific origins to access their resources."},
+  {cat:"Distributed Systems",q:"What is an event sourcing pattern?",opts:["Storing only the current state of data","Storing every state change as an immutable sequence of events, deriving current state by replaying events","Broadcasting events to all microservices","Using event-driven architecture for UI updates"],ans:1,exp:"Event sourcing stores a log of all state-changing events rather than just current state. Current state is derived by replaying events. Benefits: complete audit trail, temporal queries, event replay for debugging."},
+  {cat:"Databases",q:"What is the difference between a primary key and a foreign key?",opts:["They are used interchangeably","Primary key uniquely identifies a row within its table; foreign key references a primary key in another table to enforce relationships","Foreign key is faster to query","Primary key can be NULL; foreign key cannot"],ans:1,exp:"A primary key uniquely identifies each row in a table (NOT NULL, unique). A foreign key in one table references the primary key of another, enforcing referential integrity and modeling relationships."},
+  {cat:"Scalability",q:"What is the difference between a monolith and microservices architecture?",opts:["Monoliths run on one server; microservices run on many","A monolith is a single deployable unit with all functionality; microservices decompose the application into independently deployable services","Microservices use SQL; monoliths use NoSQL","Monoliths are always slower than microservices"],ans:1,exp:"A monolith packages all features in one codebase/deployment. Microservices split functionality into small, independent services with their own deployment, scaling, and data. Microservices add complexity but enable independent scaling and deployment."},
+
+  // ── OBSERVABILITY ──
+  {cat:"Observability",q:"What are the three pillars of observability?",opts:["Logs, Alerts, and Dashboards","Metrics, Logs, and Traces","CPU, Memory, and Network","Uptime, Latency, and Throughput"],ans:1,exp:"The three pillars of observability are Metrics (numerical measurements over time), Logs (discrete event records), and Traces (end-to-end request journeys across services). Together they give full system visibility."},
+  {cat:"Observability",q:"What is distributed tracing?",opts:["Logging all database queries","Tracking a single request's journey across multiple services with a unique trace ID","Monitoring CPU usage per service","Auditing all user actions across microservices"],ans:1,exp:"Distributed tracing (Jaeger, Zipkin, OpenTelemetry) assigns a unique trace ID to each request. As it passes through services, each hop creates a span. Together, spans form a trace showing latency at each service."},
+  {cat:"Observability",q:"What is the difference between a metric and a log?",opts:["They are interchangeable","Metrics are numeric time-series aggregates (e.g., request rate); logs are discrete text records of individual events","Logs are faster to query; metrics are slower","Metrics only track errors; logs track all events"],ans:1,exp:"Metrics (Prometheus, Datadog) are numeric values aggregated over time—ideal for dashboards and alerting. Logs (ELK stack) capture individual events with context—ideal for debugging specific incidents."},
+  {cat:"Observability",q:"What does an SLO (Service Level Objective) define?",opts:["The legal agreement between provider and customer","A target value for a service reliability metric (e.g., 99.9% uptime) used internally","The cost of downtime per hour","The maximum allowed latency for any request"],ans:1,exp:"An SLO is an internal target for service reliability, e.g., '99.9% of requests must succeed.' It's the goal teams aim for. An SLA is the external contract (with penalties). An SLI is the actual measured metric."},
+  {cat:"Observability",q:"What is an error budget in SRE?",opts:["The budget allocated for fixing bugs","The allowed amount of downtime/errors defined by 100% minus the SLO target","The number of errors logged per day","The budget for monitoring tools"],ans:1,exp:"Error budget = 100% - SLO. A 99.9% SLO allows 0.1% error budget (~43.8 min/month). Teams can spend this budget on risky changes; once exhausted, new features freeze until reliability is restored."},
+  {cat:"Observability",q:"What is a RED method in monitoring?",opts:["Reads, Errors, and Disk","Rate, Errors, Duration—the three key metrics for every service","Requests, Events, and Data","Retries, Errors, and Delays"],ans:1,exp:"The RED method (from Tom Wilkie) monitors: Rate (requests per second), Errors (failed request rate), and Duration (latency distribution). It's a practical framework for measuring microservice health."},
+  {cat:"Observability",q:"What is log aggregation and why is it needed in microservices?",opts:["Compressing log files to save storage","Collecting logs from all services into a centralized system for unified search and analysis","Deleting old logs automatically","Encrypting logs for compliance"],ans:1,exp:"In microservices, each service emits logs independently. Log aggregation (ELK Stack, Loki, Splunk) centralizes them, enabling cross-service searching, correlation, and alerting from one interface."},
+  {cat:"Observability",q:"What is a golden signal in monitoring?",opts:["A metric that indicates 100% uptime","The four key metrics (latency, traffic, errors, saturation) used to measure service health","An alert triggered by zero errors","A SLA-compliant response time"],ans:1,exp:"Google SRE's four golden signals: Latency (how long requests take), Traffic (how many requests), Errors (rate of failed requests), and Saturation (how full the system is). Monitoring these covers the most critical aspects."},
+
+  // ── SERVICE DISCOVERY ──
+  {cat:"Service Discovery",q:"What is client-side service discovery?",opts:["The client contacts a fixed IP address","The client queries a service registry and selects an instance itself before making the call","The server discovers which client to respond to","An API gateway routes requests to services"],ans:1,exp:"In client-side discovery, the client queries the service registry (Eureka, Consul), selects an available instance using a load balancing strategy, and makes the call directly. Netflix Ribbon is a classic example."},
+  {cat:"Service Discovery",q:"What is server-side service discovery?",opts:["Services register themselves on startup","The client sends a request to a router/load balancer which queries the registry and forwards the request","Services discover each other through DNS only","Clients cache registry data locally"],ans:1,exp:"In server-side discovery, the client calls a load balancer or router (e.g., AWS ALB, Kubernetes Service). The router queries the registry and forwards to an available instance. The client is unaware of the registry."},
+  {cat:"Service Discovery",q:"How does Kubernetes implement service discovery?",opts:["Via a custom DNS server that must be configured manually","Through kube-dns/CoreDNS and Services that provide stable DNS names and virtual IPs for pods","Through a centralized ZooKeeper cluster","By assigning fixed IP addresses to each pod"],ans:1,exp:"Kubernetes creates a DNS entry for each Service (e.g., my-svc.namespace.svc.cluster.local) via CoreDNS. Services also get a stable ClusterIP, abstracting dynamic pod IPs behind a consistent endpoint."},
+
+  // ── EVENT-DRIVEN ARCHITECTURE ──
+  {cat:"Event-Driven",q:"What is the difference between an event and a command in event-driven systems?",opts:["Events are synchronous; commands are asynchronous","A command requests an action from a specific recipient; an event notifies that something happened without dictating what happens next","Commands carry data; events carry no payload","They are interchangeable terms"],ans:1,exp:"A command (e.g., PlaceOrder) is directed at a specific handler to do something. An event (e.g., OrderPlaced) announces a fact—it happened—and multiple consumers can react independently. Events enable loose coupling."},
+  {cat:"Event-Driven",q:"What is event streaming vs event queuing?",opts:["Streaming deletes events after consumption; queuing retains them","Streaming retains events in an ordered log for any consumer to replay; queuing delivers each message to one consumer and deletes it","They are the same thing with different names","Streaming is for metrics; queuing is for logs"],ans:1,exp:"Event streaming (Kafka) stores events durably in an ordered log—any consumer can read from any offset at any time, enabling replay. Message queuing (RabbitMQ) delivers messages to one consumer and removes them."},
+  {cat:"Event-Driven",q:"What is CQRS (Command Query Responsibility Segregation)?",opts:["Combining reads and writes in one database model","Separating read models (queries) from write models (commands) to optimize each independently","A caching strategy for query results","A database normalization technique"],ans:1,exp:"CQRS separates the model used for writes (commands) from the model used for reads (queries). Write side handles business logic; read side is optimized for query performance. Often used with event sourcing."},
+  {cat:"Event-Driven",q:"What is an outbox pattern in event-driven systems?",opts:["A dead letter queue for failed events","Writing events to a local database table (outbox) atomically with business data, then publishing them to the broker from the outbox","Storing outgoing API responses in a log","A message broker that holds undelivered messages"],ans:1,exp:"The outbox pattern solves dual-write: when you save data and publish an event, do both atomically by writing the event to an outbox table in the same DB transaction. A separate relay then publishes from the outbox to the broker."},
+  {cat:"Event-Driven",q:"What is a consumer group in Kafka?",opts:["A set of brokers that form a Kafka cluster","A group of consumers that jointly consume a topic, with each partition assigned to exactly one consumer in the group","A group of producers writing to the same topic","A collection of Kafka topics"],ans:1,exp:"A consumer group allows parallel consumption of a topic. Each partition is consumed by only one group member, enabling horizontal scaling. Multiple groups can independently read the same topic from different offsets."},
+  {cat:"Event-Driven",q:"What is event replay and why is it useful?",opts:["Retrying failed HTTP calls automatically","Re-processing previously stored events from the beginning to rebuild state, populate new read models, or debug issues","Sending duplicate events to detect consumer idempotency","Replaying events only after system crash"],ans:1,exp:"Event replay allows re-processing historical events to rebuild state from scratch, populate a new read model, fix processing bugs, or onboard new consumers. This is a core advantage of event sourcing and Kafka's log-based storage."},
+
+  // ── DATA PIPELINES ──
+  {cat:"Data Pipelines",q:"What is the difference between batch processing and stream processing?",opts:["Batch is real-time; stream processes at scheduled intervals","Batch processes accumulated data at scheduled intervals; stream processes data continuously as it arrives","Batch is faster than stream processing","Stream processing requires more storage"],ans:1,exp:"Batch processing (Hadoop MapReduce, Spark) processes large volumes of accumulated data periodically. Stream processing (Flink, Kafka Streams, Spark Streaming) processes data in real-time as it arrives, with low latency."},
+  {cat:"Data Pipelines",q:"What is an ETL pipeline?",opts:["Event, Transform, Load","Extract data from sources, Transform it into the desired format, Load it into the destination","Execute, Test, Launch","Encrypt, Transfer, Log"],ans:1,exp:"ETL (Extract, Transform, Load) extracts data from source systems (databases, APIs), transforms it (cleaning, enriching, aggregating), and loads it into a data warehouse (Redshift, BigQuery) for analytics."},
+  {cat:"Data Pipelines",q:"What is a data lake vs a data warehouse?",opts:["They store the same types of data","A data lake stores raw, unprocessed data in any format; a data warehouse stores processed, structured data optimized for analytics","Data lakes use SQL; data warehouses use NoSQL","Data warehouses are cheaper to operate"],ans:1,exp:"Data lakes (S3, Azure Data Lake) store raw data in its native format at low cost. Data warehouses (Redshift, Snowflake) store transformed, structured data optimized for SQL analytics. Often used together in a modern data architecture."},
+  {cat:"Data Pipelines",q:"What is backpressure in stream processing?",opts:["Reversing data flow for error recovery","A mechanism where a consumer signals it is overwhelmed so the producer slows down to match consumption rate","Buffering all data before processing","Scaling the pipeline horizontally under load"],ans:1,exp:"Backpressure prevents overwhelming consumers. When a consumer can't keep up, it signals upstream to slow production. Reactive Streams and systems like Akka Streams implement backpressure for flow control."},
+  {cat:"Data Pipelines",q:"What is a Lambda architecture in big data?",opts:["A serverless data processing framework","A big data architecture combining batch layer (accuracy) and speed layer (low latency), with a serving layer merging both views","An AWS Lambda-based data pipeline","A single-layer real-time processing architecture"],ans:1,exp:"Lambda architecture has three layers: Batch (reprocesses all data periodically for accuracy), Speed (processes recent data in real-time for low latency), and Serving (merges batch and speed views for queries)."},
+  {cat:"Data Pipelines",q:"What is schema evolution in data pipelines?",opts:["Changing the database schema without downtime","Managing changes to data schemas over time while maintaining backward and forward compatibility","Versioning ETL scripts","Migrating from SQL to NoSQL"],ans:1,exp:"Schema evolution handles changes like adding/removing fields in a data schema without breaking existing producers or consumers. Tools like Confluent Schema Registry with Avro enforce compatibility rules (backward, forward, full)."},
+
+  // ── SYSTEM DESIGN PATTERNS ──
+  {cat:"System Design Patterns",q:"What is the Bulkhead pattern?",opts:["Encrypting traffic between services","Isolating components into pools so failures in one don't cascade to others","Replying requests in case of failure","Routing traffic based on request type"],ans:1,exp:"The Bulkhead pattern (from ship design) isolates resources (thread pools, connection pools) per service/feature. If one service hogs resources, others remain unaffected. Prevents cascading failures across the system."},
+  {cat:"System Design Patterns",q:"What is the Sidecar pattern in microservices?",opts:["A backup service for each microservice","A helper process deployed alongside each service to provide cross-cutting concerns like logging, monitoring, and proxy","A read-only replica of a microservice","A caching layer for each service"],ans:1,exp:"The Sidecar pattern attaches a helper container (the sidecar) to the main service container in the same pod. The sidecar handles cross-cutting concerns (logging, metrics, mTLS proxy) without changing the main service code."},
+  {cat:"System Design Patterns",q:"What is the Retry pattern with exponential backoff?",opts:["Retrying exactly twice before failing","Retrying failed operations with progressively longer wait times between attempts to avoid overwhelming recovering services","Queueing retries in a database","Retrying only read operations, not writes"],ans:1,exp:"Exponential backoff doubles the wait time between retries (1s, 2s, 4s, 8s...) with added jitter to prevent synchronized thundering herds. Prevents hammering a recovering service while still eventually succeeding."},
+  {cat:"System Design Patterns",q:"What is the Ambassador pattern?",opts:["A service that proxies external API calls on behalf of the application","A leader election mechanism","A pattern for migrating legacy systems","A routing pattern for multi-region systems"],ans:0,exp:"The Ambassador pattern places a proxy (ambassador) in front of an application to handle network concerns: retries, circuit breaking, logging, and protocol translation. The app communicates only with its ambassador."},
+  {cat:"System Design Patterns",q:"What is the Competing Consumers pattern?",opts:["Multiple producers writing to the same queue","Multiple consumer instances reading from the same queue concurrently to scale message processing","Consumers that compete for lock ownership","A pattern for resolving write conflicts"],ans:1,exp:"Competing consumers allow multiple worker instances to pull and process messages from the same queue concurrently. This scales message processing horizontally and provides fault tolerance—if one consumer dies, others pick up its work."},
+  {cat:"System Design Patterns",q:"What is a fanout pattern in messaging?",opts:["A single consumer processing all messages","Broadcasting a single message to multiple queues or subscribers simultaneously","Splitting large messages into smaller chunks","Routing messages based on content type"],ans:1,exp:"Fanout broadcasts a message to all bound queues or subscribers simultaneously. In AWS SNS, one SNS topic fans out to multiple SQS queues, Lambda functions, or HTTP endpoints—enabling parallel processing of the same event."},
+  {cat:"System Design Patterns",q:"What is the Anti-Corruption Layer (ACL) pattern?",opts:["A security layer preventing SQL injection","A translation layer between systems to prevent a legacy system's model from corrupting a new system's domain model","A validation layer for API inputs","A caching layer for external API calls"],ans:1,exp:"The ACL (from Domain-Driven Design) isolates a bounded context from external or legacy systems by translating between their models. It prevents external concepts from leaking into the internal domain model."},
+  {cat:"System Design Patterns",q:"What is the Backends for Frontends (BFF) pattern?",opts:["Deploying backend services behind a frontend CDN","Creating dedicated backend services tailored to each frontend type (mobile, web, third-party) with specific API contracts","A reverse proxy for frontend assets","Caching backend responses at the frontend layer"],ans:1,exp:"BFF creates separate backend APIs for each client type. Mobile BFF returns compact responses; web BFF returns richer data. Each BFF is optimized for its client's needs, avoiding one-size-fits-all API complexity."},
+
+  // ── MORE SCALABILITY ──
+  {cat:"Scalability",q:"What is a blue-green deployment?",opts:["A canary release with 50% traffic split","Maintaining two identical production environments (blue/green); switching traffic from one to the other for zero-downtime deployments","Deploying to two data centers simultaneously","A CI/CD pipeline with automated rollbacks"],ans:1,exp:"Blue-green deployment runs two identical production environments. Traffic goes to blue. Deploy to green, test, then switch traffic. If issues arise, instantly rollback by switching back to blue. Zero-downtime deployments."},
+  {cat:"Scalability",q:"What is a canary deployment?",opts:["A deployment that triggers on schedule","Rolling out a new version to a small subset of users first to test in production before full rollout","A disaster recovery deployment strategy","Deploying to multiple clouds simultaneously"],ans:1,exp:"Canary deployments route a small percentage of traffic (e.g., 1-5%) to the new version. Monitoring metrics on the canary, then gradually increasing traffic if stable. Reduces risk of wide-scale failures from new releases."},
+  {cat:"Scalability",q:"What is geo-distribution in system design?",opts:["Distributing load across CPUs on one server","Deploying systems across multiple geographic regions to reduce latency and improve availability for global users","Sharding data by geographic location","Routing requests by user country for legal compliance"],ans:1,exp:"Geo-distribution deploys infrastructure in multiple regions worldwide (AWS us-east-1, eu-west-1, etc.). Users are routed to the nearest region via GeoDNS or Anycast, reducing latency and providing regional failover."},
+  {cat:"Scalability",q:"What is active-active vs active-passive multi-region setup?",opts:["Active-active uses SQL; active-passive uses NoSQL","Active-active: all regions serve traffic simultaneously; active-passive: one region is primary, others are standby and activate on failure","Active-active is more expensive but no benefit","Active-passive has no data replication"],ans:1,exp:"Active-active: all regions handle production traffic simultaneously, maximizing resource use and availability. Active-passive: the primary region handles all traffic; standby region activates only during failover, simpler but wastes resources."},
+  {cat:"Scalability",q:"What is a read replica and when should you use it?",opts:["A backup database for disaster recovery only","A copy of the primary database that serves read traffic, reducing load on the primary for read-heavy workloads","A cache layer in front of the database","A database used for write operations only"],ans:1,exp:"Read replicas replicate data from the primary DB and serve read queries. Ideal when reads vastly outnumber writes (e.g., blog, news site). Reduces primary DB load. Reads may be slightly stale due to replication lag."},
+
+  // ── MORE DATABASES ──
+  {cat:"Databases",q:"What is database connection pooling's role in high-traffic systems?",opts:["It reduces the number of tables in a database","It maintains a pool of reusable connections, reducing latency from connection establishment under high load","It distributes write load across multiple databases","It compresses query results for faster transfer"],ans:1,exp:"Each DB connection involves TCP handshake and auth overhead. Under high traffic, creating per-request connections is expensive. Pooling (PgBouncer, HikariCP) reuses pre-established connections, dramatically improving throughput."},
+  {cat:"Databases",q:"What is a B-tree index and why is it the default in most RDBMS?",opts:["A binary search tree optimized for in-memory operations","A balanced tree data structure that enables O(log n) lookups and is efficient for range queries and sorted data","An index that only works with integer keys","A hash-based index for O(1) lookups"],ans:1,exp:"B-trees maintain balanced sorted structure, enabling O(log n) lookups and efficient range scans (BETWEEN, >, <). They're the default index type in PostgreSQL, MySQL, Oracle because they support both equality and range queries."},
+  {cat:"Databases",q:"What is the difference between optimistic and pessimistic locking?",opts:["Optimistic locking uses SELECT FOR UPDATE; pessimistic does not","Optimistic: assumes conflicts are rare, validates at commit time; pessimistic: locks data immediately on read to prevent conflicts","Optimistic locking is used only in NoSQL databases","Pessimistic locking is always faster"],ans:1,exp:"Optimistic locking (version field check on update) assumes low contention—no lock held, but update fails if version changed. Pessimistic locking (SELECT FOR UPDATE) locks the row immediately, preventing others from modifying until released."},
+  {cat:"Databases",q:"What is a composite index and when is it beneficial?",opts:["An index combining data from multiple tables","An index on multiple columns, beneficial for queries filtering on those columns together in the correct order","An index that covers all rows regardless of filter","A partial index applied to NULL values"],ans:1,exp:"A composite (multi-column) index on (col1, col2) speeds up queries filtering on col1 alone or col1+col2 together (leading prefix rule). Useful when queries frequently filter on multiple columns."},
+  {cat:"Databases",q:"What is a database deadlock and how is it resolved?",opts:["A slow query blocking other queries","A circular dependency where two transactions each hold a lock the other needs, causing both to wait indefinitely","A database running out of disk space","A failed database migration"],ans:1,exp:"A deadlock occurs when Transaction A holds Lock 1 and waits for Lock 2, while Transaction B holds Lock 2 and waits for Lock 1. DBs detect deadlocks and kill one transaction. Prevention: always acquire locks in the same order."},
+  {cat:"Databases",q:"What is time-to-live (TTL) in databases and caches?",opts:["The time a database query takes to execute","An expiration mechanism that automatically deletes records or cache entries after a specified duration","The maximum time a database connection can stay open","The SLA uptime of a database service"],ans:1,exp:"TTL sets an expiration on data. Caches use TTL to auto-evict stale entries. DynamoDB and Redis support per-item TTL, automatically deleting expired records—useful for sessions, OTP codes, and temporary data."},
+
+  // ── MORE NETWORKING ──
+  {cat:"Networking",q:"What is Anycast routing?",opts:["Routing traffic to any available server randomly","A network addressing method where the same IP is advertised from multiple locations and traffic is routed to the topologically nearest one","Broadcasting packets to all hosts in a subnet","A DNS-based geographic routing strategy"],ans:1,exp:"Anycast assigns the same IP to multiple servers in different locations. Routers direct traffic to the nearest one based on BGP routing metrics. Used by CDNs and DNS providers (Cloudflare 1.1.1.1) for low-latency global routing."},
+  {cat:"Networking",q:"What is QUIC protocol and why was it developed?",opts:["A replacement for DNS over HTTPS","A UDP-based transport protocol developed by Google to reduce latency by eliminating TCP handshakes and improving performance over lossy networks","An extension of HTTP/2 for binary framing","A protocol for inter-datacenter replication"],ans:1,exp:"QUIC (used in HTTP/3) runs over UDP, eliminating TCP's 3-way handshake, reducing connection setup time. It builds reliability and encryption into the protocol itself, improving performance especially on mobile and lossy networks."},
+  {cat:"Networking",q:"What is a VPC (Virtual Private Cloud)?",opts:["A CDN network for private content","An isolated virtual network in the cloud where you control IP ranges, subnets, routing tables, and network gateways","A private container registry","A dedicated physical server in a data center"],ans:1,exp:"A VPC provides an isolated network environment in the cloud (AWS VPC, GCP VPC). You define IP ranges, create subnets (public/private), configure routing, security groups, and control traffic flow—similar to an on-premise network."},
+  {cat:"Networking",q:"What is a NAT gateway and why is it used?",opts:["A gateway that translates domain names to IPs","Allows resources in a private subnet to access the internet while preventing inbound connections from the internet","A firewall for blocking malicious traffic","A load balancer for private subnets"],ans:1,exp:"NAT (Network Address Translation) gateway allows instances in a private subnet to make outbound internet requests (e.g., download packages) while remaining unreachable from the internet directly—improving security."},
+  {cat:"Networking",q:"What is BGP (Border Gateway Protocol) used for?",opts:["Routing traffic within a single data center","The internet's inter-domain routing protocol that exchanges routing information between autonomous systems","Assigning IP addresses to devices","Encrypting traffic between cloud providers"],ans:1,exp:"BGP is the routing protocol of the internet. It exchanges routing information between Autonomous Systems (ISPs, cloud providers), enabling packets to find their way across the global internet. Anycast relies on BGP."},
+
+  // ── MORE SECURITY ──
+  {cat:"Security",q:"What is a DDoS attack and how is it mitigated?",opts:["A distributed database attack exploiting SQL injection","Overwhelming a system with traffic from many sources to make it unavailable; mitigated via traffic scrubbing, rate limiting, and CDN absorption","Exploiting certificate vulnerabilities","A man-in-the-middle attack on microservices"],ans:1,exp:"DDoS (Distributed Denial of Service) floods a target with traffic from many compromised machines. Mitigation: CDN/WAF (Cloudflare, AWS Shield) absorbs traffic, rate limiting drops excess, Anycast distributes attack traffic globally."},
+  {cat:"Security",q:"What is a WAF (Web Application Firewall)?",opts:["A firewall that protects physical servers","A security layer that filters, monitors, and blocks malicious HTTP traffic to web applications","A network layer firewall for IP blocking","A VPN for securing web traffic"],ans:1,exp:"A WAF (AWS WAF, Cloudflare WAF) operates at Layer 7, inspecting HTTP requests to block common web attacks: SQL injection, XSS, CSRF, and malicious bots. It sits in front of the application, filtering before requests reach the server."},
+  {cat:"Security",q:"What is zero-trust security architecture?",opts:["Trusting no external traffic and blocking all inbound connections","A security model that assumes no user or system is trusted by default; every access request must be verified regardless of network location","An architecture with no authentication requirements","A firewall-only security approach"],ans:1,exp:"Zero-trust ('never trust, always verify') authenticates and authorizes every request regardless of whether it comes from inside or outside the network. Uses principles like least privilege, MFA, microsegmentation, and continuous verification."},
+  {cat:"Security",q:"What is secrets management and why is it important?",opts:["Keeping documentation confidential","Securely storing and distributing sensitive credentials (API keys, passwords, certificates) to services at runtime without hardcoding them","Encrypting user passwords in the database","Managing SSH keys for server access"],ans:1,exp:"Secrets management (HashiCorp Vault, AWS Secrets Manager) ensures credentials are never hardcoded in source code, are rotated regularly, have access auditing, and are injected securely at runtime—preventing credential leaks."},
+
+  // ── MORE CACHING ──
+  {cat:"Caching",q:"What is a distributed cache and how does it differ from a local cache?",opts:["Distributed caches are slower than local caches","A local cache is in-process memory (fast but per-instance); a distributed cache (Redis, Memcached) is shared across all instances","Local caches support data structures; distributed caches do not","Distributed caches only store database query results"],ans:1,exp:"Local (in-process) cache is fast but not shared—each server instance has its own copy, causing inconsistency. Distributed cache (Redis cluster) is shared across all instances, ensuring consistency and surviving single node restarts."},
+  {cat:"Caching",q:"What is cache warming?",opts:["Increasing cache TTL to reduce misses","Pre-loading the cache with data before it receives production traffic to avoid cold-start cache misses","Enabling compression in cache","Adding more cache nodes proactively"],ans:1,exp:"Cache warming pre-populates the cache before going live. Useful after deployments or cache flushes. Without warming, the first surge of traffic hits cold cache—all requests fall through to the DB, potentially overwhelming it."},
+  {cat:"Caching",q:"What is cache coherence in multi-level caching?",opts:["Ensuring all cache nodes have the same data","Keeping all cache levels (L1, L2, distributed) synchronized so reads return consistent, up-to-date data","Replicating cache across data centers","Invalidating all caches on every write"],ans:1,exp:"Cache coherence ensures that multiple cache layers (browser, CDN, application, DB query cache) don't serve stale data. Strategies include write-through, TTL-based expiry, and event-driven invalidation upon data changes."},
+
+  // ── MORE MICROSERVICES ──
+  {cat:"Microservices",q:"What is domain-driven design (DDD) and its relevance to microservices?",opts:["A database design methodology","A software design approach focusing on the business domain, where bounded contexts map naturally to microservice boundaries","A networking topology for microservices","An API design standard for microservices"],ans:1,exp:"DDD models software around the business domain. Bounded contexts (self-contained domain areas with their own model) map well to microservice boundaries—each service owns its domain and data, avoiding tight coupling."},
+  {cat:"Microservices",q:"What is the two-phase commit (2PC) and why is it avoided in microservices?",opts:["A deployment strategy using two phases","A distributed transaction protocol that locks resources across services during commit, causing availability issues and tight coupling","A database migration technique","A way to version microservice APIs"],ans:1,exp:"2PC coordinates transactions across multiple services/databases in two phases (prepare + commit). It causes long-held locks, reduced availability, and tight coupling. The Saga pattern is preferred for microservices distributed transactions."},
+  {cat:"Microservices",q:"What is idempotency key in API design?",opts:["An API key that never expires","A unique client-generated ID sent with a request so the server can safely retry without duplicate side effects","A hash of the request body","A versioning identifier for API schemas"],ans:1,exp:"Idempotency keys (used by Stripe, etc.) let clients safely retry requests. The server stores the key and result; if the same key is seen again, it returns the stored result instead of re-executing the operation."},
+  {cat:"Microservices",q:"What is graceful degradation in distributed systems?",opts:["Rebooting failing services automatically","The ability of a system to continue functioning with reduced functionality when some components fail, rather than failing completely","Gradually deprecating old API versions","Reducing traffic during maintenance windows"],ans:1,exp:"Graceful degradation ensures that when dependencies fail, the system delivers reduced but working functionality. Example: if the recommendation service is down, show generic products rather than returning an error page."},
+
+  // ── MORE LOAD BALANCING ──
+  {cat:"Load Balancing",q:"What is a Global Server Load Balancer (GSLB)?",opts:["A load balancer that handles only global CDN traffic","A DNS-based load balancing mechanism that routes users to the best regional data center based on geographic proximity, health, and policy","A load balancer that manages all servers in a single data center","An L4 load balancer with global reach"],ans:1,exp:"GSLB uses intelligent DNS to route users to the optimal data center globally. Factors include geographic proximity, health checks, and capacity. Tools: AWS Route 53 latency routing, Cloudflare Load Balancing."},
+  {cat:"Load Balancing",q:"What is the Power of Two Choices load balancing algorithm?",opts:["Choosing the least loaded of all servers","Randomly selecting two servers and routing to the less loaded one, reducing the imbalance of pure random without full scans","Splitting traffic 50/50 between two server pools","A weighted round robin with two weight classes"],ans:1,exp:"Power of Two Choices picks two random servers and sends to the less loaded. This achieves near-optimal load balancing with O(1) decision cost, avoiding the overhead of examining all servers while being much better than pure random."},
+
+  // ── MORE CONSISTENCY ──
+  {cat:"Consistency",q:"What is monotonic read consistency?",opts:["All reads are always up-to-date","If a process reads a value, subsequent reads will never return an older value (no going back in time)","Reads are processed in strict order","Read replicas are always in sync with the primary"],ans:1,exp:"Monotonic reads guarantee that once a client reads a value, future reads will never return older data—reads progress forward in time. Sticky routing to the same replica or routing reads through a single node ensures this."},
+  {cat:"Consistency",q:"What is causal consistency?",opts:["Consistency based on the physical clock time of events","Guarantees that causally related operations are seen in order by all processes, while unrelated operations may be seen in any order","All writes must be acknowledged by all nodes","Consistency enforced at the application level only"],ans:1,exp:"Causal consistency preserves cause-and-effect ordering. If Alice posts a message and Bob replies, all users must see Alice's message before Bob's reply. Unrelated events may be seen in different orders. Vector clocks track causality."},
+
+  // ── MORE HASHING ──
+  {cat:"Hashing",q:"What is a Bloom filter and what is it used for?",opts:["A hash map for large datasets","A probabilistic data structure that tests whether an element is in a set, with possible false positives but no false negatives","A perfect hash function implementation","A compression algorithm for large datasets"],ans:1,exp:"A Bloom filter uses multiple hash functions and a bit array. It can say 'definitely not in set' or 'possibly in set.' False positives are possible; false negatives are not. Used to avoid expensive lookups (DB, disk) for items that don't exist."},
+  {cat:"Hashing",q:"What is a HyperLogLog data structure used for?",opts:["Storing top-N most frequent items","Estimating the cardinality (count of unique elements) of a large dataset using very little memory","Hashing large files for deduplication","Sorting large datasets efficiently"],ans:1,exp:"HyperLogLog (used in Redis) estimates unique element count using O(log log N) memory. Instead of storing all elements, it uses probabilistic counting to estimate cardinality with ~2% error—perfect for counting unique website visitors."},
+  {cat:"Hashing",q:"What is the use of MD5 or SHA hashing in system design?",opts:["As encryption algorithms for passwords","For generating checksums, content fingerprinting, deduplication, and cache key generation (not for password storage)","For compressing data before storage","For encrypting messages between services"],ans:1,exp:"MD5/SHA are used for checksums (data integrity), content fingerprinting (detecting duplicate files), generating cache keys, and ETags. They are NOT suitable for password storage (use bcrypt/Argon2) as they're not collision-resistant enough."},
+
+  // ── MORE MESSAGE QUEUES ──
+  {cat:"Message Queues",q:"What is message ordering guarantee in distributed queues?",opts:["All queues guarantee strict global ordering","Ordering varies: standard queues may reorder; FIFO queues guarantee order; Kafka guarantees order per partition","Message order only matters for video streaming","Ordering is always guaranteed when using durable queues"],ans:1,exp:"Standard queues (AWS SQS standard) may deliver out of order. FIFO queues guarantee order but limit throughput. Kafka guarantees order within a partition. Choosing depends on whether your application requires strict ordering."},
+  {cat:"Message Queues",q:"What is the difference between push and pull message consumption?",opts:["Push is faster; pull is more reliable","In push, the broker delivers messages to consumers; in pull, consumers actively fetch messages from the broker","Push is for events; pull is for commands","They are the same mechanism with different names"],ans:1,exp:"Push (RabbitMQ, SNS): broker pushes messages to consumers immediately. Pull (Kafka, SQS): consumers poll the broker for messages. Pull gives consumers control over processing rate; push has lower latency but can overwhelm slow consumers."},
+  {cat:"Message Queues",q:"What is a priority queue in message systems?",opts:["A queue that processes messages in insertion order","A queue where higher-priority messages are processed before lower-priority ones regardless of arrival order","A queue with multiple consumers","A queue for system admin messages only"],ans:1,exp:"Priority queues process messages by priority rather than arrival order. Critical use cases: emergency alerts before routine notifications, premium user requests before free-tier, payment retries before analytics events."},
+
+  // ── MORE STORAGE ──
+  {cat:"Storage",q:"What is erasure coding in distributed storage?",opts:["Deleting corrupted data automatically","A data protection technique that encodes data into fragments with redundancy so it can be reconstructed from a subset of fragments even if some are lost","Encrypting stored data using multiple keys","A method for compressing data into smaller blocks"],ans:1,exp:"Erasure coding (used in HDFS, Ceph, S3) splits data into k data fragments and m parity fragments. The original data can be recovered from any k of the k+m fragments. More storage-efficient than replication for large datasets."},
+  {cat:"Storage",q:"What is a distributed file system (DFS)?",opts:["A local filesystem with encryption","A file system that allows multiple clients to access shared files across a network as if they were local","A file system built on SSDs for speed","A file system that compresses files automatically"],ans:1,exp:"A DFS (HDFS, GFS, NFS) allows multiple machines to share a common file namespace over a network. Files are accessed transparently like local files but stored across multiple servers, enabling shared access and fault tolerance."},
+  {cat:"Storage",q:"What is the difference between SSD and HDD in system design context?",opts:["SSDs are only used for OS storage","SSDs offer much lower latency (microseconds) and higher IOPS vs HDDs (milliseconds, lower IOPS), critical for database and I/O intensive workloads","HDDs have faster sequential reads than SSDs","SSDs are more cost-effective for cold data storage"],ans:1,exp:"SSDs: ~0.1ms latency, 100K+ IOPS. HDDs: ~10ms latency, ~200 IOPS. For database and latency-sensitive workloads, SSDs are essential. HDDs remain cost-effective for large cold storage (backups, logs, archival)."},
+
+  // ── MORE CAP / CONSISTENCY MODELS ──
+  {cat:"CAP Theorem",q:"In real-world systems, why is partition tolerance non-negotiable?",opts:["Partitions are prevented by proper hardware","Network partitions always happen in distributed systems; removing P means having a single-node system, which is not truly distributed","Partition tolerance is optional in cloud environments","Only systems outside the cloud need partition tolerance"],ans:1,exp:"Network partitions (cable cuts, latency spikes, node crashes) happen in any distributed system. You cannot simply opt out of P. Therefore the real choice in CAP is between C and A when a partition occurs."},
+  {cat:"Consistency",q:"What is session consistency (session guarantee)?",opts:["Ensuring sessions are stored in a database","A consistency model that guarantees read-your-writes, monotonic reads, and causal consistency within a single user session","Locking all data during a user session","Syncing all replicas before responding to a session"],ans:1,exp:"Session consistency provides a set of consistency guarantees (read-your-writes, monotonic reads) within a user session, typically by routing all of a session's requests to the same replica or tracking session state."},
+
+  // ── ADDITIONAL CONCEPTS ──
+  {cat:"Distributed Systems",q:"What is a distributed lock and when is it needed?",opts:["A hardware locking mechanism for distributed storage","A mechanism to ensure only one instance of a service performs a particular operation at a time across a distributed system","A lock that spans multiple database tables","A network-level lock for preventing DDoS"],ans:1,exp:"Distributed locks (Redis SETNX, ZooKeeper ephemeral nodes) prevent race conditions when multiple service instances might execute the same critical section concurrently—e.g., cron jobs, inventory deduction, or leader election."},
+  {cat:"Distributed Systems",q:"What is the gossip protocol used for in distributed systems?",opts:["Spreading security patches across nodes","A peer-to-peer communication protocol where nodes periodically exchange state information with random peers to propagate information throughout the cluster","Monitoring CPU usage across nodes","Replicating database writes across nodes"],ans:1,exp:"Gossip protocols (used by Cassandra, Redis Cluster, Consul) propagate information like node membership, failures, and configuration by having each node periodically exchange state with a few random peers. Eventually all nodes converge."},
+  {cat:"Scalability",q:"What is request coalescing (request collapsing)?",opts:["Merging multiple API requests from the same client","Combining multiple concurrent requests for the same resource into one upstream request, reducing backend load","Batching writes to reduce database round trips","Compressing API responses to reduce bandwidth"],ans:1,exp:"Request coalescing (used in Varnish, CDNs) detects multiple concurrent cache misses for the same key, makes one backend request, and returns the result to all waiting requesters. Prevents cache stampede in high-traffic systems."},
+  {cat:"API Design",q:"What is long-polling vs WebSocket for real-time features?",opts:["They achieve identical performance","Long-polling repeatedly opens HTTP connections waiting for updates (higher overhead); WebSocket maintains one persistent bidirectional connection with lower overhead","WebSocket is only for mobile apps","Long-polling requires special server support; WebSocket does not"],ans:1,exp:"Long-polling: client makes HTTP request, server holds until update available, then responds—client immediately reconnects. WebSocket: single persistent TCP connection for full-duplex communication. WebSocket is more efficient for frequent updates."},
+  {cat:"Microservices",q:"What is contract testing in microservices?",opts:["Testing the legal service contracts between teams","Verifying that a service's API matches what its consumers expect, catching integration bugs without deploying all services together","End-to-end testing of all microservices simultaneously","Testing service configuration files"],ans:1,exp:"Contract testing (Pact, Spring Cloud Contract) verifies that a producer service fulfills the contract expected by its consumer. It catches breaking API changes early, enabling independent deployments without full integration test environments."},
+  {cat:"Networking",q:"What is mTLS and how does it differ from regular TLS?",opts:["mTLS uses stronger encryption algorithms","Regular TLS only authenticates the server; mTLS requires both client and server to present and verify certificates for mutual authentication","mTLS is used only for database connections","mTLS replaces OAuth for API authentication"],ans:1,exp:"Standard TLS: client verifies server's certificate (one-way). mTLS: both sides present certificates, so the server also authenticates the client. Used for service-to-service communication in zero-trust architectures and service meshes."},
+  {cat:"System Design Patterns",q:"What is a Throttle pattern vs a Rate Limiter?",opts:["They are identical in behavior","Rate limiting enforces maximum request count per window; throttling queues or delays excess requests to smooth traffic instead of rejecting them","Throttling is per-user; rate limiting is per-system","Rate limiting is applied at the database; throttling at the load balancer"],ans:1,exp:"Rate limiting rejects requests over the limit. Throttling shapes traffic—excess requests are queued, delayed, or slowed down rather than rejected. Throttling preserves all requests at the cost of latency; rate limiting sacrifices some."},
+  {cat:"Data Pipelines",q:"What is idempotent data processing in pipelines?",opts:["Processing each record only once regardless of delivery guarantees","Designing pipeline stages so reprocessing the same record multiple times produces the same outcome as processing it once","Deduplicating data before ingestion","Processing records in exactly the order they were created"],ans:1,exp:"Idempotent processing means running the same data through a pipeline stage multiple times doesn't cause duplicate records or incorrect state. Essential for at-least-once delivery systems where messages may be redelivered."},
+  // ── KUBERNETES ──
+  {cat:"Kubernetes",q:"What is a Kubernetes Pod?",opts:["A virtual machine running containers","The smallest deployable unit in Kubernetes, consisting of one or more containers sharing network and storage","A Kubernetes node","A Kubernetes namespace"],ans:1,exp:"A Pod is the atomic unit in Kubernetes. Containers in the same Pod share the same IP address, port space, and storage volumes. Pods are ephemeral—they can be killed and replaced by the scheduler."},
+  {cat:"Kubernetes",q:"What is a Kubernetes Deployment?",opts:["A configuration file for networking","A controller that manages a ReplicaSet to maintain a desired number of Pod replicas and handle rolling updates","A Kubernetes namespace configuration","A storage volume definition"],ans:1,exp:"A Deployment declaratively manages Pods via ReplicaSets. It handles rolling updates (gradually replacing pods), rollbacks, and ensures the desired number of replicas are always running."},
+  {cat:"Kubernetes",q:"What is a Kubernetes Service?",opts:["A background process running in a pod","An abstraction that provides a stable IP/DNS name for a set of Pods, load balancing traffic across them","A Kubernetes storage class","A job running on a schedule"],ans:1,exp:"A Service gives Pods a stable network identity. Since Pods are ephemeral and their IPs change, a Service provides a constant ClusterIP/DNS name. It load-balances traffic to all healthy matching Pods."},
+  {cat:"Kubernetes",q:"What is a Kubernetes ConfigMap?",opts:["A Kubernetes encryption tool","A key-value store for non-sensitive configuration data, injected into Pods as env vars or files","A template for deploying applications","A Kubernetes RBAC policy"],ans:1,exp:"ConfigMaps decouple configuration from container images. They store non-secret config (DB host, feature flags) and can be mounted as files or injected as environment variables into Pods."},
+  {cat:"Kubernetes",q:"What does a HorizontalPodAutoscaler (HPA) do?",opts:["Vertically scales Pod CPU/memory limits","Automatically scales the number of Pod replicas based on observed CPU/memory or custom metrics","Distributes Pods across nodes evenly","Monitors Pod health and restarts failed Pods"],ans:1,exp:"HPA watches metrics (CPU, memory, custom) and automatically adjusts the replica count of a Deployment or ReplicaSet. Scales out under load and in during quiet periods to optimize resource usage."},
+  {cat:"Kubernetes",q:"What is a Kubernetes Namespace?",opts:["A DNS record for a service","A virtual cluster within a Kubernetes cluster providing resource isolation and scope for names","A node-level security boundary","A Kubernetes storage partition"],ans:1,exp:"Namespaces partition a Kubernetes cluster into virtual sub-clusters, isolating resources (Pods, Services, ConfigMaps) by team or environment (dev, staging, prod). Resource quotas can be applied per namespace."},
+  {cat:"Kubernetes",q:"What is a Kubernetes DaemonSet?",opts:["A set of background daemon processes","Ensures a copy of a specific Pod runs on every (or selected) node in the cluster","A cluster-wide Cron scheduler","A set of configuration rules for services"],ans:1,exp:"DaemonSets ensure that one Pod replica runs on every node (or a subset matching a selector). Used for node-level services: log collectors (Fluentd), monitoring agents (Prometheus node-exporter), network plugins."},
+  {cat:"Kubernetes",q:"What is the role of etcd in Kubernetes?",opts:["Storing container images","The distributed key-value store that stores all cluster state and configuration data","Routing network traffic between pods","Managing container lifecycle hooks"],ans:1,exp:"etcd is Kubernetes' backing store for all cluster data: node info, Pod specs, ConfigMaps, Secrets, Deployments. It uses Raft for consensus, ensuring cluster state is consistent and durable."},
+  {cat:"Kubernetes",q:"What is a Kubernetes Ingress?",opts:["A type of Kubernetes volume","A resource that manages external HTTP/HTTPS traffic routing to internal Services based on rules","A network policy for pod communication","A load balancer service type"],ans:1,exp:"Ingress exposes HTTP/S routes from outside the cluster to Services. It supports path-based and host-based routing (e.g., /api → api-service, /app → frontend). Requires an Ingress controller (nginx, Traefik)."},
+  {cat:"Kubernetes",q:"What is a PersistentVolume (PV) in Kubernetes?",opts:["Temporary storage for a Pod's lifetime","A piece of storage provisioned in the cluster, independent of Pod lifecycle, with its own lifecycle","An in-memory cache volume for high-speed access","A shared config volume between containers"],ans:1,exp:"PersistentVolumes are cluster-level storage resources that outlive Pods. PersistentVolumeClaims (PVCs) request storage. StorageClasses enable dynamic provisioning of PVs from cloud providers (AWS EBS, GCE PD)."},
+
+  // ── CLOUD ──
+  {cat:"Cloud",q:"What is the difference between IaaS, PaaS, and SaaS?",opts:["They are all the same type of cloud service","IaaS provides raw infrastructure; PaaS provides a managed platform for running apps; SaaS delivers complete software over the internet","IaaS is cheaper than PaaS; PaaS is cheaper than SaaS","Only SaaS requires an internet connection"],ans:1,exp:"IaaS (EC2, GCE): you manage OS and above. PaaS (Heroku, App Engine): you deploy code, provider manages OS/runtime. SaaS (Gmail, Salesforce): fully managed software delivered as a service. Each abstracts more from the user."},
+  {cat:"Cloud",q:"What is serverless computing?",opts:["A system with no physical servers","A cloud execution model where the provider manages infrastructure and automatically scales; you pay only for actual execution time","A deployment model with no downtime","A cloud model that avoids using virtual machines"],ans:1,exp:"Serverless (AWS Lambda, GCP Cloud Functions) lets you run code without managing servers. The provider auto-scales from zero to peak. You pay per invocation/duration. Ideal for event-driven, unpredictable workloads."},
+  {cat:"Cloud",q:"What is cloud-native architecture?",opts:["Applications running on physical hardware in the cloud","An approach to building apps that fully exploits cloud capabilities: containerization, microservices, dynamic orchestration, and DevOps practices","Moving existing monoliths to the cloud unchanged","Using only proprietary cloud services for all components"],ans:1,exp:"Cloud-native apps are designed for the cloud: containerized, dynamically orchestrated (Kubernetes), microservices-based, CI/CD driven, and observable. They embrace immutability, resilience, and horizontal scaling."},
+  {cat:"Cloud",q:"What is a cloud region vs an availability zone (AZ)?",opts:["They are the same geographic unit","A region is a geographic area containing multiple isolated AZs; AZs are one or more data centers with independent power and networking","An AZ is larger than a region","Regions are for compute; AZs are for storage"],ans:1,exp:"A region (us-east-1) is a geographic cluster of AZs. Each AZ is physically separate with its own power/cooling/networking. Deploying across AZs provides high availability within a region. Regions provide geographic redundancy."},
+  {cat:"Cloud",q:"What is auto-scaling and how does it work?",opts:["Manually adding servers during traffic spikes","Automatically adding or removing compute resources based on demand, using scaling policies and metrics triggers","Upgrading server hardware automatically","Distributing traffic evenly across fixed server pools"],ans:1,exp:"Auto-scaling (AWS ASG, GCP MIG) monitors metrics (CPU, request rate) and triggers scale-out (add instances) or scale-in (remove instances) actions. Maintains performance while optimizing costs."},
+  {cat:"Cloud",q:"What is a managed database service and its advantages?",opts:["A database hosted entirely by the development team","A cloud-provided database where the provider handles provisioning, patching, backups, and failover","A database accessible only within a VPC","A read-only replica of an on-premise database"],ans:1,exp:"Managed DBs (AWS RDS, Cloud SQL, Atlas) offload operational burden: automated backups, patching, multi-AZ failover, read replicas. Teams focus on schema and queries instead of DBA operations."},
+  {cat:"Cloud",q:"What is the shared responsibility model in cloud security?",opts:["The cloud provider is responsible for all security","Security responsibilities are split: provider secures infrastructure 'of' the cloud; customer secures what is 'in' the cloud","Customers are responsible for all security","Security is shared equally 50/50"],ans:1,exp:"Cloud providers secure physical infrastructure, hypervisor, and managed services. Customers secure their OS, applications, data, IAM, and network configuration. The line varies by service type (IaaS vs SaaS)."},
+  {cat:"Cloud",q:"What is Infrastructure as Code (IaC)?",opts:["Writing backend code that runs on cloud infrastructure","Managing and provisioning infrastructure through machine-readable configuration files rather than manual processes","Deploying code using Docker containers","A monitoring tool for cloud resources"],ans:1,exp:"IaC (Terraform, Pulumi, CloudFormation) defines infrastructure in version-controlled code. This enables repeatable, auditable, and automated provisioning—eliminating configuration drift and manual errors."},
+
+  // ── DATABASE INTERNALS ──
+  {cat:"Database Internals",q:"What is a transaction log (redo log) in a relational database?",opts:["A performance monitoring log","A log recording all database changes, used for crash recovery by replaying committed transactions","An error log for failed queries","A slow query log for optimization"],ans:1,exp:"The redo log (MySQL InnoDB redo log, PostgreSQL WAL) records all modifications before they're applied to data pages. On crash recovery, the DB replays committed transactions and rolls back uncommitted ones."},
+  {cat:"Database Internals",q:"What is MVCC (Multi-Version Concurrency Control)?",opts:["A backup strategy using multiple database versions","A technique where each transaction sees a snapshot of data at a point in time, allowing readers and writers to not block each other","Running multiple database versions simultaneously","A replication strategy using multiple primary databases"],ans:1,exp:"MVCC (PostgreSQL, MySQL InnoDB) maintains multiple versions of rows. Readers see a consistent snapshot without blocking writers; writers create new versions without blocking readers. Enables high concurrency without reader-writer locking."},
+  {cat:"Database Internals",q:"What is query plan and why does it matter?",opts:["A schedule for running database backups","The execution strategy chosen by the query optimizer, showing how it will access and join data","A predefined set of SQL queries","A configuration for database indexing"],ans:1,exp:"The query optimizer generates a query plan (using EXPLAIN) showing whether it uses index scan, sequential scan, hash join, etc. Understanding plans helps identify missing indexes, bad statistics, and optimization opportunities."},
+  {cat:"Database Internals",q:"What is a database buffer pool?",opts:["A connection pool for database clients","An in-memory cache of database pages (data + index blocks) that reduces disk I/O by keeping frequently accessed pages in RAM","A queue for pending write operations","A backup buffer for transaction logs"],ans:1,exp:"The buffer pool (InnoDB buffer pool, PostgreSQL shared_buffers) caches data pages in memory. Reads hit memory instead of disk. Writes go to the buffer and are flushed asynchronously (dirty page writeback), dramatically improving I/O performance."},
+  {cat:"Database Internals",q:"What is the difference between a clustered and a non-clustered index?",opts:["Clustered indexes are faster; non-clustered are slower","A clustered index defines the physical order of data rows; a non-clustered index is a separate structure with pointers to the actual rows","Clustered indexes can only be on primary keys","Non-clustered indexes cannot be used for range queries"],ans:1,exp:"Clustered index: data rows are physically sorted by the index key (InnoDB always clusters by primary key). One per table. Non-clustered: a separate B-tree with leaf nodes containing pointers to heap rows. Multiple allowed per table."},
+  {cat:"Database Internals",q:"What is database vacuum/autovacuum in PostgreSQL?",opts:["A process to delete old database files","A maintenance process that reclaims storage from dead row versions created by MVCC updates/deletes and updates statistics","A compression tool for database tables","A process that defragments table indexes"],ans:1,exp:"PostgreSQL's MVCC creates dead row versions on updates/deletes. VACUUM reclaims this space and updates table statistics for the query planner. Autovacuum runs automatically, preventing table bloat and maintaining performance."},
+  {cat:"Database Internals",q:"What is a hot standby in PostgreSQL?",opts:["A standby server running at high CPU usage","A replica that can serve read-only queries while continuously applying WAL changes from the primary","A primary server with hot backup enabled","An in-memory replica for ultra-low latency reads"],ans:1,exp:"Hot standby allows read queries on a replica while it streams WAL from the primary. Unlike warm standbys (no queries allowed), hot standby reduces primary read load and provides a ready failover target."},
+  {cat:"Database Internals",q:"What is connection multiplexing in database proxies?",opts:["Running multiple databases on one server","A proxy (PgBouncer) that multiplexes many client connections into fewer actual database connections, reducing connection overhead","Routing read/write queries to different databases","Encrypting multiple database connections"],ans:1,exp:"PgBouncer and similar proxies maintain a small pool of real DB connections and multiplex thousands of client connections onto them. Databases have connection limits; multiplexing allows many clients without exhausting the DB."},
+
+  // ── DESIGN PROBLEMS ──
+  {cat:"Design Problems",q:"How would you design a URL shortener (like bit.ly)?",opts:["Store the full URL in the short URL itself","Generate a unique short key (base62 hash of ID), store (short_key → long_url) in a DB, redirect users via 301/302","Use UUID as the short URL","Store URLs in a distributed cache only"],ans:1,exp:"URL shortener: generate a short key (base62 encode a unique ID or hash), store mapping in DB+cache. On redirect, look up key in cache (Redis) first, then DB. Use 301 (permanent) or 302 (temporary) redirect. Handle collisions with increment."},
+  {cat:"Design Problems",q:"In designing a rate limiter, which algorithm handles burst traffic most gracefully?",opts:["Fixed window counter","Token bucket—allows bursts up to bucket capacity while enforcing average rate over time","Sliding window log","Leaky bucket—processes at fixed rate, discards excess"],ans:1,exp:"Token bucket allows short bursts (consuming accumulated tokens) while maintaining the average rate. A user can burst 10 requests immediately if their bucket is full, then refill at the configured rate—balancing user experience and protection."},
+  {cat:"Design Problems",q:"How would you design a notification system for millions of users?",opts:["Send all notifications synchronously via HTTP calls","Use a message queue to decouple notification triggers, with workers handling delivery per channel (push, email, SMS) with retries and templating","Store notifications in a database and poll every second","Use WebSockets to push all notifications directly"],ans:1,exp:"Notification system: API writes to a Kafka/SQS queue → notification workers consume, look up user preferences/device tokens, call push/email/SMS providers. Use retries with exponential backoff, DLQ for failures, and batching for efficiency."},
+  {cat:"Design Problems",q:"How do you handle distributed transaction failures in an e-commerce order system?",opts:["Use two-phase commit across all services","Use Saga pattern: each service performs its local transaction and publishes events; compensating transactions handle rollbacks on failure","Lock all resources until the full transaction completes","Store all data in a single database to avoid distributed transactions"],ans:1,exp:"Saga pattern decomposes the transaction into local steps: Create Order → Reserve Inventory → Charge Payment → Ship. Each step publishes an event. On failure, compensating transactions undo previous steps (cancel order, release inventory, refund)."},
+  {cat:"Design Problems",q:"What is the key challenge in designing a real-time collaborative editor (like Google Docs)?",opts:["Storing document history","Handling concurrent edits by multiple users simultaneously—resolving conflicts while preserving intent and user experience","Rendering rich text in the browser","Handling user authentication"],ans:1,exp:"Conflict resolution for concurrent edits is the core challenge. Solutions: Operational Transformation (OT, used by Google Docs)—transforms operations based on prior state; or CRDT (Conflict-free Replicated Data Types)—mathematically guarantee convergence without coordination."},
+  {cat:"Design Problems",q:"How would you design a type-ahead / autocomplete search feature for scale?",opts:["Run a LIKE query on the full database on every keystroke","Maintain a trie or prefix-based inverted index with top-N completions per prefix, cached aggressively at edge","Search the full-text index on every keystroke","Store all search queries in the user's browser only"],ans:1,exp:"Autocomplete: pre-compute top suggestions per prefix in a trie or sorted prefix table. Cache in Redis. For ultra-scale, serve from CDN edge. Rank by popularity/personalization. Debounce client requests (300ms) to reduce query volume."},
+  {cat:"Design Problems",q:"How would you design a global leaderboard for a game?",opts:["Sort the entire user table on every request","Use a sorted set (Redis ZADD/ZRANK) for real-time ranking; batch-compute persistent leaderboards periodically","Store rankings in a document database","Use a graph database for player relationships and scores"],ans:1,exp:"Redis Sorted Sets (ZADD score member, ZREVRANK for rank) provide O(log n) updates and rank queries. For billions of players, use approximate leaderboards with sharded sorted sets or segment-based ranking (top 1000 exact, rest approximate)."},
+  {cat:"Design Problems",q:"How do you prevent double-spending in a payment system?",opts:["Check balance before every transaction","Use idempotency keys + database transactions with optimistic/pessimistic locking or compare-and-swap operations to ensure each payment executes exactly once","Process payments sequentially in a single thread","Store pending payments in a cache"],ans:1,exp:"Prevent double-spending: idempotency key (client-generated UUID stored server-side) prevents duplicate API calls. Database-level: use SELECT FOR UPDATE (pessimistic) or version check (optimistic) to atomically deduct balance. Use message queues with exactly-once semantics."},
+  {cat:"Design Problems",q:"How would you design a distributed job scheduler?",opts:["Use a single cron server for all jobs","Use a job queue (Kafka/SQS) with worker pools, idempotent job execution, distributed locks to prevent duplicate execution, and a metadata store for job state","Store jobs in a relational database and poll every second","Use a load balancer to distribute jobs"],ans:1,exp:"Distributed scheduler: leader election (ZooKeeper) for scheduling decisions; job state in DB (pending, running, done); distribute to worker queue (Kafka); workers acquire distributed lock (Redis) before executing; idempotent execution + DLQ for failures."},
+  {cat:"Design Problems",q:"What are key considerations when designing a multi-tenant SaaS system?",opts:["All tenants share the same database tables without isolation","Data isolation strategy (shared DB/schema/table or separate DBs), tenant routing, per-tenant resource limits, and security boundaries","Giving each tenant a separate server always","Using only NoSQL databases for multi-tenancy"],ans:1,exp:"Multi-tenancy models: Silo (separate DB per tenant—most isolated, expensive), Bridge (shared DB, separate schema), Pool (shared schema with tenant_id column—cheapest, hardest isolation). Key: row-level security, query scoping, rate limiting per tenant."},
+
+  // ── MORE DISTRIBUTED SYSTEMS ──
+  {cat:"Distributed Systems",q:"What is the difference between latency and throughput?",opts:["They are inversely proportional in all cases","Latency is the time to complete a single operation; throughput is the number of operations completed per unit time","Latency measures server speed; throughput measures network speed","They measure the same thing in different units"],ans:1,exp:"Latency: time for one request (e.g., 50ms). Throughput: requests per second (e.g., 10,000 RPS). They're related but not the same—a system can have low latency and low throughput, or high throughput with acceptable latency."},
+  {cat:"Distributed Systems",q:"What is a sidecar proxy in a service mesh?",opts:["A replica of the main service","A proxy container co-deployed with every service instance to intercept all network traffic and provide observability, security, and traffic management","A dedicated caching proxy","A load balancer deployed per region"],ans:1,exp:"In Istio/Linkerd, each Pod gets an Envoy sidecar proxy injected. All inbound/outbound traffic passes through the sidecar, which handles mTLS, retries, circuit breaking, distributed tracing, and metrics—transparently to the application code."},
+  {cat:"Distributed Systems",q:"What is clock skew and how does it affect distributed systems?",opts:["CPU clock speed differences between servers","The difference in time readings between clocks on different nodes, causing ordering problems for time-based operations","Network latency causing delayed message delivery","A difference in timezone configuration"],ans:1,exp:"Clocks on different machines drift apart (clock skew). This makes timestamp-based event ordering unreliable. Solutions: NTP synchronization, logical clocks (Lamport timestamps), vector clocks, or using globally consistent timestamps (Google TrueTime)."},
+  {cat:"Distributed Systems",q:"What is a Lamport timestamp?",opts:["A timestamp from the Lamport server","A logical clock that assigns monotonically increasing timestamps to events, preserving causal ordering across distributed nodes","A physical timestamp with nanosecond precision","A timestamp that is synchronized via GPS"],ans:1,exp:"Lamport timestamps: each node maintains a counter. On send: increment and attach. On receive: take max(local, received)+1. This ensures if A→B causally, then L(A)<L(B). Doesn't capture concurrent events but preserves causal order."},
+  {cat:"Distributed Systems",q:"What is the difference between fail-stop and Byzantine failures?",opts:["Fail-stop is worse than Byzantine","Fail-stop: a node stops and doesn't send incorrect data; Byzantine: a node behaves arbitrarily (crashes, sends wrong data, or acts maliciously)","Byzantine failures only occur in blockchain","They are the same type of failure"],ans:1,exp:"Fail-stop (crash) failures: nodes simply stop responding—easy to detect via timeouts. Byzantine failures: nodes can send incorrect or inconsistent data to different nodes. BFT consensus requires >2/3 honest nodes and is more complex than CFT (which tolerates n/2 failures)."},
+
+  // ── MORE API DESIGN ──
+  {cat:"API Design",q:"What is OpenAPI/Swagger specification?",opts:["A programming language for APIs","A language-agnostic specification for describing RESTful APIs, enabling auto-generated documentation, client SDKs, and server stubs","A testing framework for APIs","An API security standard"],ans:1,exp:"OpenAPI (formerly Swagger) is a YAML/JSON spec describing endpoints, parameters, request/response schemas, and authentication. Tools auto-generate docs (Swagger UI), client libraries, and mock servers from the spec."},
+  {cat:"API Design",q:"What is the difference between synchronous and asynchronous APIs?",opts:["Synchronous APIs use HTTP; async use WebSockets only","Synchronous: client waits for response before continuing; Asynchronous: client receives acknowledgment immediately and gets result later via callback/polling/webhook","Async APIs are always faster than sync","Synchronous APIs cannot handle concurrent requests"],ans:1,exp:"Sync API: client blocks until operation completes (fast operations). Async API: server accepts request (202 Accepted), processes in background, notifies via webhook, polling endpoint, or message. Used for long-running operations (video processing, reports)."},
+  {cat:"API Design",q:"What is content negotiation in REST APIs?",opts:["Negotiating API rate limits with clients","The mechanism where client and server agree on data format via Accept/Content-Type headers","Versioning APIs through HTTP headers","Caching API responses based on content type"],ans:1,exp:"Content negotiation lets clients specify preferred response format via Accept header (Accept: application/json vs application/xml). Server responds with matching Content-Type. Enables one endpoint to serve multiple formats."},
+  {cat:"API Design",q:"What is HATEOAS in REST?",opts:["A REST authentication standard","Hypermedia As The Engine Of Application State: API responses include links to related actions/resources, enabling clients to navigate without hardcoded URLs","A caching strategy for REST APIs","A REST API testing methodology"],ans:1,exp:"HATEOAS is a REST constraint where responses embed links to next possible actions. Example: an order response includes links to 'pay', 'cancel', 'track'. Clients discover API dynamically rather than having endpoints hardcoded."},
+
+  // ── MORE SECURITY ──
+  {cat:"Security",q:"What is PKCE (Proof Key for Code Exchange) and why is it used?",opts:["A password encryption standard","An OAuth 2.0 extension preventing authorization code interception attacks in public clients (mobile/SPA) by binding the code to a cryptographic secret","A two-factor authentication method","An API key rotation mechanism"],ans:1,exp:"PKCE prevents auth code theft in public clients. Client generates code_verifier + code_challenge (SHA256 hash). Sends challenge with auth request; sends verifier with token request. Server verifies hash—ensures only the original client can exchange the code."},
+  {cat:"Security",q:"What is a replay attack and how is it prevented?",opts:["Replaying failed database transactions","An attacker intercepts and re-sends a valid request to perform unauthorized actions; prevented via nonces, timestamps, or short-lived tokens","An attacker replaying cached API responses","A DDoS attack using repeated requests"],ans:1,exp:"Replay attacks reuse captured valid requests. Prevention: include a nonce (unique per-request random value), timestamp (reject requests older than 5 min), or use short-lived JWTs/tokens. HTTPS alone doesn't prevent replay if an attacker steals a valid token."},
+  {cat:"Security",q:"What is RBAC (Role-Based Access Control)?",opts:["Restricting access based on request rate","An access control model where permissions are assigned to roles, and roles are assigned to users","Access control based on resource type","A network-level access control list"],ans:1,exp:"RBAC assigns permissions to roles (Admin, Editor, Viewer) and assigns roles to users. Users inherit permissions via their roles. Simplifies permission management—changing a role updates all users in that role simultaneously."},
+  {cat:"Security",q:"What is the principle of least privilege?",opts:["Users should have the most permissions possible for flexibility","Every user, process, or system should have only the minimum permissions required to perform its function","Permissions should be distributed equally among all users","Only administrators should have system access"],ans:1,exp:"Least privilege minimizes attack surface. A compromised account with minimal permissions limits blast radius. Applied to IAM roles, database users, service accounts, and network rules—grant only what's needed, nothing more."},
+
+  // ── MORE SCALABILITY ──
+  {cat:"Scalability",q:"What is tail latency and why does it matter?",opts:["The latency of the last request in a batch","High latency at the extreme percentiles (P99, P999) that affects a small fraction of requests but disproportionately impacts user experience in fan-out systems","Latency caused by slow network tail links","The latency of dequeuing from a message queue"],ans:1,exp:"In systems with fan-out (1 request → many downstream calls), overall latency is determined by the slowest backend (the tail). P99 tail latency causes slow user-visible response even if most calls are fast. Mitigations: hedged requests, timeout budgets."},
+  {cat:"Scalability",q:"What is hedged requests strategy?",opts:["Routing requests to multiple regions","Sending a duplicate request to a second server after a short timeout, taking the first response—reduces tail latency at the cost of extra load","Caching request results as a hedge against failures","Retrying requests after exponential backoff"],ans:1,exp:"Hedged requests (from Google's Tail at Scale paper): if a response doesn't arrive within P95 threshold, send a duplicate to another replica. Use whichever response arrives first. Reduces tail latency significantly with modest extra load (~2%)."},
+  {cat:"Scalability",q:"What is the C10K problem?",opts:["A CPU bottleneck when serving 10,000 users","The challenge of handling 10,000 concurrent network connections efficiently, which drove the development of event-driven and async I/O architectures","A memory limitation in 10K concurrent databases","A problem with 10,000 database connections"],ans:1,exp:"The C10K problem (Dan Kegel, 1999) asked how to handle 10,000 concurrent connections. Traditional thread-per-connection models failed at this scale. Solutions: event-driven I/O (epoll, kqueue), async frameworks (Node.js, Nginx, Go goroutines)."},
+
+  // ── MORE CACHING ──
+  {cat:"Caching",q:"What is Memoization vs Caching?",opts:["They are the same technique","Memoization caches function results in-process for the same inputs; caching is a broader term for any data storage for faster retrieval","Memoization is used only in functional programming","Caching is synchronous; memoization is asynchronous"],ans:1,exp:"Memoization is an optimization technique specific to pure functions: same inputs always return cached output. Caching is broader—can apply to DB queries, HTTP responses, computed results, with invalidation strategies, distributed storage, and TTL."},
+  {cat:"Caching",q:"What is a negative cache and when is it useful?",opts:["A cache that only stores failed results","Caching the fact that a lookup returned no result (miss), to prevent repeated expensive lookups for non-existent keys","A cache that evicts data aggressively","A cache placed behind the database"],ans:1,exp:"Negative caching stores 'not found' results (e.g., user doesn't exist) with a short TTL. Without it, every request for a non-existent resource hits the DB. Useful against abuse (e.g., scanning non-existent user IDs) and for expensive misses."},
+
+  // ── MORE REPLICATION ──
+  {cat:"Replication",q:"What is chain replication?",opts:["Replicating data across a circular ring of nodes","A replication protocol where writes go to the head of a chain, propagate through middle nodes, and are acknowledged only after reaching the tail","Linking multiple replication streams in sequence","A Kafka replication strategy"],ans:1,exp:"Chain replication (CR): nodes arranged as a chain. Writes to head → propagated to tail → ACK to client. Reads only from tail (guaranteeing latest committed value). Provides strong consistency. Used in Ceph RADOS and some academic systems."},
+  {cat:"Replication",q:"What is the purpose of a replication factor in Kafka?",opts:["The number of consumer groups per topic","The number of copies of each partition maintained across brokers, determining fault tolerance","The compression ratio applied to messages","The maximum number of partitions per topic"],ans:1,exp:"Replication factor 3 means each partition has 1 leader and 2 follower replicas on different brokers. The topic tolerates up to 2 broker failures. The minimum in-sync replicas (ISR) setting controls when writes are acknowledged."},
+
+  // ── MORE SHARDING ──
+  {cat:"Sharding",q:"What is directory-based sharding?",opts:["Sharding based on alphabetical order of keys","Using a lookup service (directory) to map each entity to its shard, providing flexibility to reassign shards without rehashing","Distributing shards across server directories","A sharding strategy using file system directories"],ans:1,exp:"Directory-based sharding stores a mapping table (key → shard) in a lookup service. Unlike hash/range sharding, you can reassign data to shards without remapping all keys. Tradeoff: the directory becomes a bottleneck/single point of failure."},
+  {cat:"Sharding",q:"How do you handle cross-shard queries?",opts:["Cross-shard queries are impossible in sharded systems","Fan-out queries to all relevant shards and aggregate results in the application layer, or use a dedicated query coordinator service","Always denormalize data to avoid cross-shard queries","Use a global lock across all shards for queries"],ans:1,exp:"Cross-shard queries (e.g., sorted results across shards) require scatter-gather: query all shards in parallel, merge-sort results in memory. Expensive at scale. Mitigations: avoid them by shard key design, denormalize data, or use a search index (Elasticsearch) for cross-shard queries."},
+
+  // ── MORE MESSAGE QUEUES ──
+  {cat:"Message Queues",q:"What is Kafka's log compaction feature?",opts:["Compressing Kafka log files to save disk space","Retaining only the latest message for each key, effectively maintaining a snapshot of the latest state per key indefinitely","Merging multiple Kafka topics into one","Deleting old messages after processing"],ans:1,exp:"Log compaction removes all but the latest message per key. Result: compact log with latest value per key, retained forever regardless of retention time. Used for changelog topics and rebuilding state in Kafka Streams/ksqlDB."},
+  {cat:"Message Queues",q:"What is the Kafka consumer offset and how is it managed?",opts:["The position of a producer in a topic","The position of a consumer in a partition log; managed by committing offsets to __consumer_offsets topic or externally","The lag between producer and consumer throughput","The index of the latest message in a partition"],ans:1,exp:"Kafka consumers track their position via offsets. Committed offset = last processed message position. On restart, consumer resumes from committed offset. Auto-commit (at-most-once risk) vs manual commit (at-least-once control). External offset management enables exactly-once."},
+
+  // ── MORE CONSENSUS ──
+  {cat:"Consensus Algorithms",q:"What is the difference between Raft and Multi-Paxos?",opts:["Raft uses more nodes than Paxos","Both achieve distributed consensus; Raft was designed for understandability with clear leader election and log replication phases; Paxos is mathematically elegant but harder to implement","Paxos handles Byzantine failures; Raft does not","Raft requires synchronous clocks; Paxos does not"],ans:1,exp:"Raft and Multi-Paxos solve the same problem. Raft explicitly separates leader election, log replication, and safety—making it easier to understand, teach, and implement correctly. Both are crash-fault-tolerant and require majority quorum."},
+  {cat:"Consensus Algorithms",q:"What is the FLP impossibility result?",opts:["Faster-than-Light-speed Processing limitation","In an asynchronous distributed system, no deterministic consensus algorithm can guarantee termination if even one process can fail","A theorem about Byzantine fault tolerance limits","A proof that distributed locks are impossible"],ans:1,exp:"The Fischer-Lynch-Paterson theorem proves that in a purely asynchronous system with even one possible process crash, no deterministic algorithm can always reach consensus. Real systems work around this with timeouts, randomization (Raft's election randomization), or partial synchrony assumptions."},
+
+  // ── MORE NETWORKING ──
+  {cat:"Networking",q:"What is service mesh observability?",opts:["Monitoring hardware in a data center","Automatic collection of metrics, logs, and traces for all service-to-service communication without application code changes","Network packet inspection at Layer 2","Monitoring DNS resolution across services"],ans:1,exp:"Service meshes (Istio with Envoy) automatically emit L7 metrics (request rate, error rate, latency), distributed traces, and access logs for every service call. Teams gain full traffic visibility without instrumenting application code."},
+  {cat:"Networking",q:"What is a connection draining / deregistration delay?",opts:["Waiting for connections to timeout on their own","Allowing in-flight requests to complete before removing a server instance from the load balancer pool during scale-in or deployments","Closing idle connections after a timeout","Draining a message queue before shutdown"],ans:1,exp:"Connection draining (AWS: deregistration delay) stops sending new requests to an instance being decommissioned but allows existing in-flight requests to complete within a timeout. Prevents dropping active requests during deployments or scale-in events."},
+
+  // ── MORE DATA PIPELINES ──
+  {cat:"Data Pipelines",q:"What is a data mesh architecture?",opts:["A microservices architecture for databases","A decentralized data ownership model where domain teams own and publish their data as products, with a federated governance layer","A distributed caching layer for analytics","A streaming data pipeline using mesh topology"],ans:1,exp:"Data mesh (Zhamak Dehghani) decentralizes data ownership: each domain team owns their data pipelines and exposes data as products. Federated governance ensures interoperability. Contrasts with centralized data lake/warehouse owned by a data team."},
+  {cat:"Data Pipelines",q:"What is change data capture (CDC)?",opts:["Auditing changes to application configuration","Capturing every insert, update, and delete from a database log in real-time and publishing changes as events to downstream systems","A technique for comparing two database snapshots","Monitoring database schema changes over time"],ans:1,exp:"CDC (Debezium, AWS DMS) reads the DB replication log (binlog, WAL) to capture row-level changes in real-time. Changes are published to Kafka, enabling sync to search indexes, caches, data warehouses, and other services without polling the DB."},
+
+  // ── MORE SQL vs NoSQL ──
+  {cat:"SQL vs NoSQL",q:"What is a wide-column store and its typical use cases?",opts:["A SQL database with many columns per table","A NoSQL database where columns can vary per row and are grouped into column families, optimized for large-scale writes and time-series data","A database that compresses all columns","An OLAP database with columnar storage"],ans:1,exp:"Wide-column stores (Cassandra, HBase, Bigtable) organize data into column families. Rows can have different columns. Optimized for high-write throughput, large datasets, time-series, and IoT data. Queries must be designed around access patterns."},
+  {cat:"SQL vs NoSQL",q:"What is the difference between eventual consistency in Cassandra and MongoDB?",opts:["They implement identical consistency models","Cassandra defaults to eventual consistency with tunable consistency levels (quorum reads/writes); MongoDB offers tunable read/write concern with optional strong consistency","MongoDB always uses strong consistency; Cassandra cannot","Both always use quorum-based strong consistency"],ans:1,exp:"Cassandra: default eventual consistency, but tunable—QUORUM reads+writes give strong consistency at latency cost. MongoDB: default strong consistency with primary reads, but can be relaxed (secondary reads, lower write concern). Both are tunable."},
+
+  // ── MORE CDN ──
+  {cat:"CDN",q:"What is a CDN pull vs push zone?",opts:["Pull is faster than push always","Pull zone: CDN fetches content from origin on first request (lazy); Push zone: you proactively upload content to CDN edge servers","Push zone is for dynamic content; pull is for static","They are the same mechanism"],ans:1,exp:"Pull zones (most common): first request goes to origin, CDN caches and serves subsequent requests. Push zones: you upload assets to CDN directly (common for large files, video). Pull is simpler; push ensures immediate availability without origin hits."},
+  {cat:"CDN",q:"What is edge computing in the context of CDNs?",opts:["Running servers at the edge of a building","Executing compute logic (code) at CDN edge locations close to users, rather than in a central origin data center","Caching only at the geographic edge of a network","A technique for reducing CDN latency by prefetching"],ans:1,exp:"Edge computing (Cloudflare Workers, Fastly Compute@Edge, Lambda@Edge) runs code at CDN edge nodes globally. Enables: A/B testing at the edge, auth, personalization, and API aggregation—with sub-millisecond latency to users."},
+
+  // ── MORE OBSERVABILITY ──
+  {cat:"Observability",q:"What is the USE method in monitoring?",opts:["Uptime, Speed, and Errors","Utilization, Saturation, Errors—the three metrics for every resource (CPU, memory, disk, network)","Users, Services, and Events","Updates, Syncs, and Executions"],ans:1,exp:"The USE method (Brendan Gregg) monitors every resource: Utilization (% busy), Saturation (work backlog/queue), Errors (error rate). Applied to CPU, memory, disks, network interfaces. Complements RED (which is service-oriented)."},
+  {cat:"Observability",q:"What is a span in distributed tracing?",opts:["A time range for log retention","A single unit of work within a trace, representing an operation in one service with start time, duration, and metadata","A network packet between services","A monitoring alert threshold"],ans:1,exp:"A span represents one operation (HTTP call, DB query, function call) within a distributed trace. Each span has: trace_id (shared), span_id (unique), parent_span_id, operation name, start time, duration, and tags. Spans form a tree showing request flow."},
+
+  // ── MORE RATE LIMITING ──
+  {cat:"Rate Limiting",q:"How do you implement distributed rate limiting across multiple API gateway instances?",opts:["Each instance independently limits requests without coordination","Use a centralized store (Redis) with atomic operations (INCR with TTL or Lua scripts) to share rate limit counters across all instances","Assign each user to a fixed gateway instance","Use a fixed window counter on a single master gateway"],ans:1,exp:"Distributed rate limiting: all gateway instances share counters in Redis. Use atomic INCR+EXPIRE (fixed window) or a sliding window Lua script. Redis Cluster shards counters for scale. Latency tradeoff: each request pays a Redis round-trip."},
+  {cat:"Rate Limiting",q:"What is a rate limit response code and standard headers?",opts:["200 OK with a warning header","429 Too Many Requests, with headers: X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset, Retry-After","503 Service Unavailable","400 Bad Request with error details"],ans:1,exp:"RFC 6585 defines 429 Too Many Requests for rate limiting. Best practice headers: X-RateLimit-Limit (limit), X-RateLimit-Remaining (requests left), X-RateLimit-Reset (Unix timestamp when window resets), Retry-After (seconds to wait). Helps clients implement smart backoff."},
+
+  // ── MORE SYSTEM DESIGN PATTERNS ──
+  {cat:"System Design Patterns",q:"What is the Strangler Fig pattern?",opts:["Immediately rewriting the legacy system","Gradually replacing a legacy system by routing new features to new services while the legacy system shrinks over time until it can be decommissioned","Running two versions of the system permanently","Migrating the database first before services"],ans:1,exp:"Strangler Fig (Martin Fowler): wrap the legacy system with a facade. New functionality goes to new services. Gradually reroute legacy functionality to new implementations. Eventually the legacy is 'strangled' away without a risky big-bang rewrite."},
+  {cat:"System Design Patterns",q:"What is the Scatter-Gather pattern?",opts:["Distributing logs to multiple destinations","Sending a request to multiple services in parallel (scatter) and aggregating their responses into one result (gather)","Sharding data and gathering it at query time","A map-reduce variant for streaming data"],ans:1,exp:"Scatter-gather parallelizes work: one coordinator scatters sub-requests to multiple workers simultaneously, then gathers and merges responses. Used in search (Elasticsearch fan-out to shards), price comparison, and distributed aggregations."},
+  {cat:"System Design Patterns",q:"What is the Claim Check pattern in messaging?",opts:["Verifying message sender identity","Storing large message payloads in external storage and passing only a reference (claim check token) in the message, keeping the message queue lightweight","Checking message delivery guarantees","A pattern for message deduplication"],ans:1,exp:"Claim check: store large payload (image, video, large JSON) in blob storage (S3). Pass the storage reference in the message. Consumer retrieves payload using the reference. Keeps message broker fast (small messages) and handles large payloads cost-effectively."},
+];
+
+// ── QUIZ STATE ──
+let ACTIVE_QUESTIONS = [];
+let current = 0, score = 0, answered = [];
+let quizTotal = 0;
+
+// Derive all unique topics from actual question data (always accurate)
+const allTopics = [...new Set(ALL_QUESTIONS.map(q => q.cat))];
+
+// Update subtitle with real total
+document.getElementById('splashSub').textContent =
+  `${ALL_QUESTIONS.length} curated MCQs across ${allTopics.length} topics. Pick a topic below or start all questions.`;
+
+// Build topic grid — clicking a topic immediately starts its quiz
+function buildTopicGrid() {
+  const grid = document.getElementById('topicGrid');
+  grid.innerHTML = allTopics.map(t => {
+    const count = ALL_QUESTIONS.filter(q => q.cat === t).length;
+    const safeId = 'tbtn-' + t.replace(/[^a-z0-9]/gi, '_');
+    return `<button class="topic-btn" id="${safeId}" onclick="startTopic('${t.replace(/'/g,"\\'")}")">
+      ${t}<span class="t-count">${count} Q</span>
+    </button>`;
+  }).join('');
+}
+buildTopicGrid();
+
+// Start quiz filtered to one topic
+function startTopic(t) {
+  ACTIVE_QUESTIONS = ALL_QUESTIONS.filter(q => q.cat === t);
+  quizTotal = ACTIVE_QUESTIONS.length;
+  current = 0; score = 0;
+  answered = new Array(quizTotal).fill(null);
+  document.getElementById('modeLabel').textContent = t;
+  document.getElementById('splash').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  buildMinimap();
+  renderQuestion();
+}
+
+// Start quiz with all questions
+function startAll() {
+  ACTIVE_QUESTIONS = ALL_QUESTIONS.slice();
+  quizTotal = ACTIVE_QUESTIONS.length;
+  current = 0; score = 0;
+  answered = new Array(quizTotal).fill(null);
+  document.getElementById('modeLabel').textContent = 'All Topics';
+  document.getElementById('splash').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  buildMinimap();
+  renderQuestion();
+}
+
+function goHome() {
+  document.getElementById('splash').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('result').style.display = 'none';
+  document.getElementById('quizArea').style.display = 'block';
+  document.getElementById('minimap').style.display = 'flex';
+}
+
+function buildMinimap() {
+  const mm = document.getElementById('minimap');
+  mm.innerHTML = '';
+  for(let i=0;i<quizTotal;i++){
+    const d = document.createElement('div');
+    d.className='dot'; d.title=`Q${i+1}`;
+    d.onclick=()=>jumpTo(i);
+    mm.appendChild(d);
+  }
+}
+
+function updateMinimap() {
+  const dots = document.querySelectorAll('.dot');
+  dots.forEach((d,i)=>{
+    d.className='dot';
+    if(i===current) d.classList.add('current');
+    else if(answered[i]!==null){
+      const correct = ACTIVE_QUESTIONS[i].ans === answered[i];
+      d.classList.add(correct?'correct-dot':'wrong-dot');
+    } else if(i<current) d.classList.add('answered');
+  });
+}
+
+function jumpTo(i) {
+  current = i;
+  renderQuestion();
+}
+
+function renderQuestion() {
+  const q = ACTIVE_QUESTIONS[current];
+  const pct = Math.round((current/quizTotal)*100);
+  document.getElementById('progLabel').textContent = `Q ${current+1} / ${quizTotal}`;
+  document.getElementById('progPct').textContent = pct+'%';
+  document.getElementById('progFill').style.width = pct+'%';
+  document.getElementById('scoreDisplay').textContent = score;
+  updateMinimap();
+
+  const isAnswered = answered[current] !== null;
+
+  document.getElementById('quizArea').innerHTML = `
+    <div class="card-anim">
+      <div class="q-meta">
+        <span class="q-num">Question ${current+1} of ${quizTotal}</span>
+        <span class="q-category">${q.cat}</span>
+      </div>
+      <div class="q-text">${q.q}</div>
+      <div class="options">
+        ${q.opts.map((o,i)=>{
+          let cls='option';
+          if(isAnswered){
+            cls+=' disabled';
+            if(i===q.ans) cls+=' correct';
+            else if(i===answered[current]) cls+=' wrong';
+          }
+          return `<div class="${cls}" onclick="selectAnswer(${i})">
+            <div class="opt-key">${String.fromCharCode(65+i)}</div>
+            <div class="opt-text">${o}</div>
+          </div>`;
+        }).join('')}
+      </div>
+      <div class="explanation${isAnswered?' show':''}" id="exp">
+        <div class="exp-label">// Explanation</div>
+        <div class="exp-text">${q.exp}</div>
+      </div>
+      <div class="nav">
+        <button class="nav-btn" onclick="prevQ()" ${current===0?'disabled':''}>← Prev</button>
+        <span style="font-size:0.7rem;color:var(--muted)">${isAnswered?(answered[current]===q.ans?'✓ Correct':'✗ Incorrect'):'Not answered'}</span>
+        ${current===quizTotal-1
+          ? `<button class="nav-btn primary" onclick="showResult()">Finish Quiz →</button>`
+          : `<button class="nav-btn primary" onclick="nextQ()">Next →</button>`}
+      </div>
+    </div>
+  `;
+}
+
+function selectAnswer(i) {
+  if(answered[current]!==null) return;
+  answered[current]=i;
+  if(i===ACTIVE_QUESTIONS[current].ans) score++;
+  renderQuestion();
+}
+
+function nextQ() {
+  if(current<quizTotal-1){ current++; renderQuestion(); }
+}
+function prevQ() {
+  if(current>0){ current--; renderQuestion(); }
+}
+
+function showResult() {
+  document.getElementById('quizArea').style.display='none';
+  document.getElementById('minimap').style.display='none';
+  const correct = answered.filter((a,i)=>a===ACTIVE_QUESTIONS[i].ans).length;
+  const wrong   = answered.filter((a,i)=>a!==null&&a!==ACTIVE_QUESTIONS[i].ans).length;
+  const skipped = answered.filter(a=>a===null).length;
+  const pct = Math.round((correct/quizTotal)*100);
+  let grade='Needs Work 📚';
+  if(pct>=90) grade='Expert Level 🏆';
+  else if(pct>=75) grade='Advanced 🌟';
+  else if(pct>=60) grade='Intermediate 👍';
+  else if(pct>=40) grade='Developing 📖';
+  document.getElementById('finalScore').textContent = pct+'%';
+  document.getElementById('finalGrade').textContent = grade;
+  document.getElementById('rCorrect').textContent = correct;
+  document.getElementById('rWrong').textContent = wrong;
+  document.getElementById('rSkipped').textContent = skipped;
+  document.getElementById('result').style.display='block';
+}
+
+function restartQuiz() {
+  current=0; score=0; answered=new Array(quizTotal).fill(null);
+  document.getElementById('quizArea').style.display='block';
+  document.getElementById('minimap').style.display='flex';
+  document.getElementById('result').style.display='none';
+  buildMinimap();
+  renderQuestion();
+}
+</script>
+</body>
+</html>
