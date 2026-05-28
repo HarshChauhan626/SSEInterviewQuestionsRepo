@@ -206,7 +206,7 @@
       </section>
       <aside class="stat" aria-label="Library size">
         <strong id="count">0</strong>
-        <span>Markdown files</span>
+        <span>Notes & Quizzes</span>
       </aside>
     </header>
 
@@ -225,12 +225,15 @@
   </main>
 
   <script>
-    const fallbackMarkdownFiles = [
+    const fallbackFiles = [
       "a2arag.md",
       "agenticai.md",
+      "agenticaimcq.html",
+      "awssolutionarchitectmcq.html",
       "backtracking.md",
       "binarysearch.md",
       "bitmanipulation.md",
+      "databases.html",
       "databases.md",
       "disjoinset.md",
       "distributedsystems.md",
@@ -246,6 +249,7 @@
       "linkedlist.md",
       "monotonicstack.md",
       "nodejs.md",
+      "nodejsmcq.html",
       "observability.md",
       "prefixsum.md",
       "puzzles.md",
@@ -254,6 +258,7 @@
       "recursion.md",
       "slidingwindow.md",
       "systemdesigneventdrivenetc.md",
+      "systemdesignmcq.html",
       "trees.md",
       "trie.md",
       "twopointer.md",
@@ -263,9 +268,12 @@
     const titleMap = {
       "a2arag.md": "A2A RAG",
       "agenticai.md": "Agentic AI",
+      "agenticaimcq.html": "Agentic AI MCQ",
+      "awssolutionarchitectmcq.html": "AWS Solution Architect MCQ",
       "backtracking.md": "Backtracking",
       "binarysearch.md": "Binary Search",
       "bitmanipulation.md": "Bit Manipulation",
+      "databases.html": "Databases MCQ",
       "databases.md": "Databases",
       "disjoinset.md": "Disjoint Set",
       "distributedsystems.md": "Distributed Systems",
@@ -281,6 +289,7 @@
       "linkedlist.md": "Linked List",
       "monotonicstack.md": "Monotonic Stack",
       "nodejs.md": "Node.js",
+      "nodejsmcq.html": "Node.js MCQ",
       "observability.md": "Observability",
       "prefixsum.md": "Prefix Sum",
       "puzzles.md": "Puzzles",
@@ -289,13 +298,14 @@
       "recursion.md": "Recursion",
       "slidingwindow.md": "Sliding Window",
       "systemdesigneventdrivenetc.md": "System Design: Event Driven Etc",
+      "systemdesignmcq.html": "System Design MCQ",
       "trees.md": "Trees",
       "trie.md": "Trie",
       "twopointer.md": "Two Pointer",
       "websocket.md": "WebSocket"
     };
 
-    let markdownFiles = [...fallbackMarkdownFiles];
+    let libraryFiles = [...fallbackFiles];
 
     const grid = document.querySelector("#fileGrid");
     const filter = document.querySelector("#filter");
@@ -305,7 +315,7 @@
     function titleFromFile(file) {
       if (titleMap[file]) return titleMap[file];
       return file
-        .replace(/\.md$/i, "")
+        .replace(/\.(md|html)$/i, "")
         .replace(/([a-z])([A-Z])/g, "$1 $2")
         .replace(/dsa/i, "DSA")
         .replace(/ai/i, "AI")
@@ -317,22 +327,25 @@
 
     function renderList() {
       const term = filter.value.trim().toLowerCase();
-      const files = markdownFiles.filter(file => {
+      const files = libraryFiles.filter(file => {
         return file.toLowerCase().includes(term) || titleFromFile(file).toLowerCase().includes(term);
       });
 
-      grid.innerHTML = files.map((file, index) => `
-        <a class="card" href="markdownreader.html?file=${encodeURIComponent(file)}">
+      grid.innerHTML = files.map((file, index) => {
+        const isHtml = file.endsWith('.html');
+        const href = isHtml ? file : `markdownreader.html?file=${encodeURIComponent(file)}`;
+        return `
+        <a class="card" href="${href}">
           <span class="card-title">${titleFromFile(file)}</span>
           <span class="card-meta">
             <span>${file}</span>
             <span class="tag">#${String(index + 1).padStart(2, "0")}</span>
           </span>
         </a>
-      `).join("");
+      `}).join("");
 
-      visibleCount.textContent = `${files.length} of ${markdownFiles.length} shown`;
-      count.textContent = markdownFiles.length;
+      visibleCount.textContent = `${files.length} of ${libraryFiles.length} shown`;
+      count.textContent = libraryFiles.length;
     }
 
     async function loadManifest() {
@@ -342,10 +355,18 @@
         const manifest = await response.json();
         const files = Array.isArray(manifest) ? manifest : manifest.files;
         if (Array.isArray(files) && files.length) {
-          markdownFiles = files.filter(file => file.endsWith(".md")).sort((a, b) => a.localeCompare(b));
+          const mdFiles = files.filter(file => file.endsWith(".md"));
+          const quizFiles = [
+            "agenticaimcq.html",
+            "awssolutionarchitectmcq.html",
+            "databases.html",
+            "nodejsmcq.html",
+            "systemdesignmcq.html"
+          ];
+          libraryFiles = [...mdFiles, ...quizFiles].sort((a, b) => a.localeCompare(b));
         }
       } catch (error) {
-        markdownFiles = [...fallbackMarkdownFiles];
+        libraryFiles = [...fallbackFiles];
       }
     }
 
