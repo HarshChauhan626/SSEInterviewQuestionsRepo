@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Database Mastery Quiz</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --surface2: #1a1a24;
+    --border: #2a2a3a;
+    --accent-pg: #00d4aa;
+    --accent-dy: #ff6b35;
+    --accent-mg: #4ecdc4;
+    --text: #e8e8f0;
+    --text-muted: #7070a0;
+    --correct: #00e676;
+    --wrong: #ff1744;
+    --font-head: 'Syne', sans-serif;
+    --font-mono: 'Space Mono', monospace;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-head);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ─── GRID BACKGROUND ─── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,212,170,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,212,170,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ─── SPLASH ─── */
+  #splash {
+    position: fixed; inset: 0; z-index: 100;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    background: var(--bg);
+    padding: 2rem;
+  }
+
+  .splash-badge {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.3em;
+    color: var(--accent-pg);
+    border: 1px solid var(--accent-pg);
+    padding: 0.3rem 1rem;
+    text-transform: uppercase;
+    margin-bottom: 2rem;
+    animation: fadeUp 0.6s ease both;
+  }
+
+  .splash-title {
+    font-size: clamp(2.5rem, 7vw, 5.5rem);
+    font-weight: 800;
+    line-height: 1;
+    text-align: center;
+    margin-bottom: 1rem;
+    animation: fadeUp 0.6s 0.1s ease both;
+  }
+
+  .splash-title span.pg { color: var(--accent-pg); }
+  .splash-title span.dy { color: var(--accent-dy); }
+  .splash-title span.mg { color: var(--accent-mg); }
+
+  .splash-sub {
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    text-align: center;
+    margin-bottom: 3rem;
+    animation: fadeUp 0.6s 0.2s ease both;
+  }
+
+  .db-pills {
+    display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center;
+    margin-bottom: 3rem;
+    animation: fadeUp 0.6s 0.3s ease both;
+  }
+
+  .db-pill {
+    padding: 0.5rem 1.5rem;
+    border-radius: 2px;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: all 0.2s;
+  }
+  .db-pill.pg { background: rgba(0,212,170,0.1); border-color: var(--accent-pg); color: var(--accent-pg); }
+  .db-pill.dy { background: rgba(255,107,53,0.1); border-color: var(--accent-dy); color: var(--accent-dy); }
+  .db-pill.mg { background: rgba(78,205,196,0.1); border-color: var(--accent-mg); color: var(--accent-mg); }
+  .db-pill.all { background: rgba(255,255,255,0.05); border-color: var(--text-muted); color: var(--text); }
+  .db-pill.active { opacity: 1; transform: scale(1.05); }
+  .db-pill:not(.active) { opacity: 0.5; }
+
+  .start-btn {
+    background: var(--accent-pg);
+    color: #000;
+    border: none;
+    padding: 1rem 3rem;
+    font-family: var(--font-head);
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+    transition: all 0.2s;
+    animation: fadeUp 0.6s 0.4s ease both;
+  }
+  .start-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,212,170,0.3); }
+
+  .stats-row {
+    display: flex; gap: 2rem; margin-top: 2rem;
+    animation: fadeUp 0.6s 0.5s ease both;
+  }
+  .stat { text-align: center; }
+  .stat-num { font-size: 1.8rem; font-weight: 800; color: var(--accent-pg); }
+  .stat-label { font-family: var(--font-mono); font-size: 0.65rem; color: var(--text-muted); letter-spacing: 0.1em; }
+
+  /* ─── QUIZ ─── */
+  #quiz { display: none; position: relative; z-index: 1; }
+
+  .quiz-header {
+    position: sticky; top: 0; z-index: 50;
+    background: rgba(10,10,15,0.95);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border);
+    padding: 1rem 2rem;
+    display: flex; align-items: center; gap: 1.5rem;
+  }
+
+  .q-counter {
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+  .q-counter span { color: var(--text); font-weight: 700; }
+
+  .progress-bar {
+    flex: 1;
+    height: 4px;
+    background: var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent-pg), var(--accent-mg));
+    transition: width 0.4s ease;
+    position: relative;
+  }
+  .progress-fill::after {
+    content: '';
+    position: absolute; right: 0; top: -2px;
+    width: 8px; height: 8px;
+    background: var(--accent-pg);
+    border-radius: 50%;
+    box-shadow: 0 0 10px var(--accent-pg);
+  }
+
+  .score-chip {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    padding: 0.25rem 0.75rem;
+    border: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  .score-chip .correct-c { color: var(--correct); }
+  .score-chip .wrong-c { color: var(--wrong); }
+
+  .db-tag {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 0.2rem 0.6rem;
+    letter-spacing: 0.1em;
+  }
+  .db-tag.pg { background: rgba(0,212,170,0.15); color: var(--accent-pg); border: 1px solid rgba(0,212,170,0.3); }
+  .db-tag.dy { background: rgba(255,107,53,0.15); color: var(--accent-dy); border: 1px solid rgba(255,107,53,0.3); }
+  .db-tag.mg { background: rgba(78,205,196,0.15); color: var(--accent-mg); border: 1px solid rgba(78,205,196,0.3); }
+
+  .quiz-body {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 3rem 2rem;
+  }
+
+  .question-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 2.5rem;
+    margin-bottom: 1.5rem;
+    position: relative;
+    animation: slideIn 0.3s ease;
+  }
+  .question-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 3px; height: 100%;
+  }
+  .question-card.pg::before { background: var(--accent-pg); }
+  .question-card.dy::before { background: var(--accent-dy); }
+  .question-card.mg::before { background: var(--accent-mg); }
+
+  .q-meta {
+    display: flex; align-items: center; gap: 0.75rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .q-num {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--text-muted);
+  }
+
+  .q-topic {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    background: var(--surface2);
+    padding: 0.15rem 0.5rem;
+    border: 1px solid var(--border);
+  }
+
+  .question-text {
+    font-size: 1.1rem;
+    font-weight: 600;
+    line-height: 1.6;
+    color: var(--text);
+  }
+
+  .options-grid {
+    display: grid;
+    gap: 0.75rem;
+    margin-top: 2rem;
+  }
+
+  .option {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: all 0.15s;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    text-align: left;
+  }
+  .option:hover:not(.disabled) {
+    border-color: var(--text-muted);
+    background: rgba(255,255,255,0.05);
+  }
+  .option.correct { border-color: var(--correct); background: rgba(0,230,118,0.08); color: var(--correct); }
+  .option.wrong { border-color: var(--wrong); background: rgba(255,23,68,0.08); color: var(--wrong); }
+  .option.disabled { cursor: default; }
+
+  .opt-letter {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    font-weight: 700;
+    width: 22px; height: 22px;
+    border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+    transition: all 0.15s;
+  }
+  .option.correct .opt-letter { border-color: var(--correct); background: var(--correct); color: #000; }
+  .option.wrong .opt-letter { border-color: var(--wrong); background: var(--wrong); color: #fff; }
+
+  .solution-box {
+    margin-top: 1rem;
+    padding: 1.25rem;
+    background: rgba(0,212,170,0.04);
+    border: 1px solid rgba(0,212,170,0.2);
+    border-left: 3px solid var(--accent-pg);
+    display: none;
+    animation: fadeUp 0.3s ease;
+  }
+  .solution-box.show { display: block; }
+  .solution-box.dy { border-color: rgba(255,107,53,0.2); border-left-color: var(--accent-dy); background: rgba(255,107,53,0.04); }
+  .solution-box.mg { border-color: rgba(78,205,196,0.2); border-left-color: var(--accent-mg); background: rgba(78,205,196,0.04); }
+
+  .solution-label {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    color: var(--accent-pg);
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+  }
+  .solution-box.dy .solution-label { color: var(--accent-dy); }
+  .solution-box.mg .solution-label { color: var(--accent-mg); }
+
+  .solution-text {
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: var(--text);
+  }
+
+  .nav-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .nav-btn {
+    font-family: var(--font-head);
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    padding: 0.75rem 1.75rem;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .nav-btn:hover { border-color: var(--text); color: var(--text); }
+  .nav-btn.primary {
+    background: var(--accent-pg);
+    border-color: var(--accent-pg);
+    color: #000;
+    clip-path: polygon(6px 0%, 100% 0%, calc(100% - 6px) 100%, 0% 100%);
+  }
+  .nav-btn.primary:hover { box-shadow: 0 4px 20px rgba(0,212,170,0.3); transform: translateY(-1px); }
+
+  .jump-input {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 0.5rem 0.75rem;
+    width: 80px;
+    text-align: center;
+  }
+  .jump-input:focus { outline: none; border-color: var(--accent-pg); }
+
+  /* ─── RESULTS ─── */
+  #results {
+    display: none;
+    position: fixed; inset: 0; z-index: 200;
+    background: var(--bg);
+    overflow-y: auto;
+    padding: 4rem 2rem;
+  }
+
+  .results-inner { max-width: 600px; margin: 0 auto; }
+
+  .results-title {
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+  }
+
+  .results-sub {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-bottom: 3rem;
+  }
+
+  .score-big {
+    font-size: 5rem;
+    font-weight: 800;
+    line-height: 1;
+    color: var(--accent-pg);
+    margin-bottom: 0.5rem;
+  }
+
+  .score-label {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+    margin-bottom: 2rem;
+  }
+
+  .breakdown {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;
+    margin-bottom: 2rem;
+  }
+  .breakdown-card {
+    padding: 1.5rem 1rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    text-align: center;
+  }
+  .breakdown-card .bval { font-size: 1.8rem; font-weight: 800; }
+  .breakdown-card .blabel { font-family: var(--font-mono); font-size: 0.65rem; color: var(--text-muted); letter-spacing: 0.1em; margin-top: 0.25rem; }
+  .breakdown-card.pg .bval { color: var(--accent-pg); }
+  .breakdown-card.dy .bval { color: var(--accent-dy); }
+  .breakdown-card.mg .bval { color: var(--accent-mg); }
+
+  .retry-btn {
+    background: var(--accent-pg);
+    color: #000;
+    border: none;
+    padding: 1rem 2.5rem;
+    font-family: var(--font-head);
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+    transition: all 0.2s;
+  }
+  .retry-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,212,170,0.3); }
+
+  /* ─── FILTER BAR ─── */
+  .filter-bar {
+    display: flex; gap: 0.5rem; flex-wrap: wrap;
+    padding: 1rem 2rem;
+    border-bottom: 1px solid var(--border);
+    background: rgba(10,10,15,0.9);
+    position: sticky; top: 73px; z-index: 40;
+  }
+  .filter-btn {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    padding: 0.3rem 0.8rem;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .filter-btn:hover { border-color: var(--text-muted); color: var(--text); }
+  .filter-btn.active-pg { border-color: var(--accent-pg); color: var(--accent-pg); background: rgba(0,212,170,0.08); }
+  .filter-btn.active-dy { border-color: var(--accent-dy); color: var(--accent-dy); background: rgba(255,107,53,0.08); }
+  .filter-btn.active-mg { border-color: var(--accent-mg); color: var(--accent-mg); background: rgba(78,205,196,0.08); }
+  .filter-btn.active-all { border-color: var(--text); color: var(--text); background: rgba(255,255,255,0.05); }
+
+  /* ─── ANIMATIONS ─── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(-10px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  /* ─── SCROLLBAR ─── */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); }
+  ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+  @media (max-width: 600px) {
+    .quiz-header { padding: 0.75rem 1rem; gap: 0.75rem; }
+    .quiz-body { padding: 1.5rem 1rem; }
+    .question-card { padding: 1.5rem; }
+    .breakdown { grid-template-columns: repeat(3, 1fr); gap: 0.5rem; }
+    .breakdown-card { padding: 1rem 0.5rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- SPLASH -->
+<div id="splash">
+  <div class="splash-badge">▸ Interview Prep Series</div>
+  <h1 class="splash-title">
+    <span class="pg">DB</span> MASTERY<br>QUIZ
+  </h1>
+  <p class="splash-sub">200 MCQs · PostgreSQL · DynamoDB · MongoDB · With Solutions</p>
+  <div class="db-pills">
+    <div class="db-pill pg all active" onclick="setFilter('all')">ALL 200</div>
+    <div class="db-pill pg" onclick="setFilter('pg')">PostgreSQL</div>
+    <div class="db-pill dy" onclick="setFilter('dy')">DynamoDB</div>
+    <div class="db-pill mg" onclick="setFilter('mg')">MongoDB</div>
+  </div>
+  <button class="start-btn" onclick="startQuiz()">▶ START QUIZ</button>
+  <div class="stats-row">
+    <div class="stat"><div class="stat-num">200</div><div class="stat-label">Questions</div></div>
+    <div class="stat"><div class="stat-num">3</div><div class="stat-label">Databases</div></div>
+    <div class="stat"><div class="stat-num">∞</div><div class="stat-label">Retries</div></div>
+  </div>
+</div>
+
+<!-- QUIZ -->
+<div id="quiz">
+  <div class="quiz-header">
+    <div class="q-counter">Q <span id="qCurrent">1</span> / <span id="qTotal">200</span></div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+    <div class="score-chip"><span class="correct-c" id="correctCount">0</span> / <span class="wrong-c" id="wrongCount">0</span></div>
+    <button class="nav-btn" style="padding:0.4rem 0.8rem;font-size:0.75rem;" onclick="showResults()">Results</button>
+  </div>
+  <div class="filter-bar">
+    <button class="filter-btn active-all" id="fb-all" onclick="filterQuestions('all')">ALL</button>
+    <button class="filter-btn" id="fb-pg" onclick="filterQuestions('pg')">PostgreSQL</button>
+    <button class="filter-btn" id="fb-dy" onclick="filterQuestions('dy')">DynamoDB</button>
+    <button class="filter-btn" id="fb-mg" onclick="filterQuestions('mg')">MongoDB</button>
+  </div>
+  <div class="quiz-body">
+    <div id="questionContainer"></div>
+    <div class="nav-row">
+      <button class="nav-btn" onclick="prevQ()">← Prev</button>
+      <div style="display:flex;align-items:center;gap:0.5rem;">
+        <input type="number" class="jump-input" id="jumpInput" placeholder="Go to" min="1">
+        <button class="nav-btn" onclick="jumpTo()">Go</button>
+      </div>
+      <button class="nav-btn primary" onclick="nextQ()">Next →</button>
+    </div>
+  </div>
+</div>
+
+<!-- RESULTS -->
+<div id="results">
+  <div class="results-inner">
+    <div class="results-title" id="resultsTitle">Quiz Complete</div>
+    <div class="results-sub" id="resultsSub">Here's your performance breakdown</div>
+    <div class="score-big" id="scorePercent">0%</div>
+    <div class="score-label" id="scoreLabel">0 / 0 CORRECT</div>
+    <div class="breakdown">
+      <div class="breakdown-card pg">
+        <div class="bval" id="pgScore">-</div>
+        <div class="blabel">PostgreSQL</div>
+      </div>
+      <div class="breakdown-card dy">
+        <div class="bval" id="dyScore">-</div>
+        <div class="blabel">DynamoDB</div>
+      </div>
+      <div class="breakdown-card mg">
+        <div class="bval" id="mgScore">-</div>
+        <div class="blabel">MongoDB</div>
+      </div>
+    </div>
+    <button class="retry-btn" onclick="retryQuiz()">↺ Retry Quiz</button>
+    &nbsp;&nbsp;
+    <button class="nav-btn" style="display:inline-block;" onclick="goBack()">← Back to Quiz</button>
+  </div>
+</div>
+
+<script>
+const ALL_QUESTIONS = [
+  // ═══════════════════════════════════════════════════════
+  // POSTGRESQL (Q1-Q70)
+  // ═══════════════════════════════════════════════════════
+  {db:'pg',topic:'Basics',q:'What does ACID stand for in database transactions?',o:['Atomicity, Consistency, Isolation, Durability','Atomicity, Concurrency, Integrity, Durability','Association, Consistency, Isolation, Dependency','Atomicity, Consistency, Integration, Data'],a:0,sol:'ACID stands for Atomicity (all-or-nothing), Consistency (valid state transitions), Isolation (concurrent transactions don\'t interfere), and Durability (committed data persists).'},
+  {db:'pg',topic:'Data Types',q:'Which PostgreSQL data type stores a universally unique identifier?',o:['TEXT','VARCHAR','UUID','SERIAL'],a:2,sol:'UUID is a 128-bit number used to uniquely identify information. In PostgreSQL, the UUID type stores values in the format xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx.'},
+  {db:'pg',topic:'Indexes',q:'What type of index does PostgreSQL use by default when you run CREATE INDEX?',o:['Hash','B-tree','GIN','BRIN'],a:1,sol:'PostgreSQL uses B-tree indexes by default. They are balanced tree structures that work well for equality and range queries with <, <=, =, >=, > operators.'},
+  {db:'pg',topic:'Joins',q:'What is the result of a LEFT JOIN when there is no matching row in the right table?',o:['The row is excluded','NULL values for right table columns','An error is thrown','Zero values for right table columns'],a:1,sol:'In a LEFT JOIN, all rows from the left table are returned. Where no match exists in the right table, NULL is placed for all right-table columns.'},
+  {db:'pg',topic:'Constraints',q:'Which constraint ensures that a column\'s value is unique across the table but allows NULL?',o:['PRIMARY KEY','UNIQUE','CHECK','NOT NULL'],a:1,sol:'A UNIQUE constraint ensures all non-NULL values in a column are distinct. Unlike PRIMARY KEY, UNIQUE allows multiple NULL values (NULLs are not considered equal to each other).'},
+  {db:'pg',topic:'Window Functions',q:'Which clause is used to define partitions in a window function?',o:['GROUP BY','HAVING','PARTITION BY','ORDER BY'],a:2,sol:'PARTITION BY divides the result set into partitions for window functions. Each partition is processed independently, similar to GROUP BY but without collapsing rows.'},
+  {db:'pg',topic:'CTEs',q:'What keyword introduces a Common Table Expression (CTE) in PostgreSQL?',o:['DECLARE','WITH','TEMP','DEFINE'],a:1,sol:'A CTE is introduced with the WITH keyword. Syntax: WITH cte_name AS (SELECT ...) SELECT * FROM cte_name. CTEs improve readability and enable recursive queries.'},
+  {db:'pg',topic:'Transactions',q:'What command saves all changes made in the current transaction?',o:['SAVE','COMMIT','END TRANSACTION','APPLY'],a:1,sol:'COMMIT makes all changes in the current transaction permanent and visible to other transactions. It ends the transaction block and releases locks.'},
+  {db:'pg',topic:'Transactions',q:'What does ROLLBACK do in PostgreSQL?',o:['Saves a checkpoint','Undoes all changes in the current transaction','Deletes a table','Resets sequences'],a:1,sol:'ROLLBACK undoes all changes made since the beginning of the current transaction (or since the last SAVEPOINT), restoring the database to its previous state.'},
+  {db:'pg',topic:'Schema',q:'What is the default schema in PostgreSQL where objects are created if no schema is specified?',o:['default','main','public','master'],a:2,sol:'The "public" schema is the default schema in PostgreSQL. When no schema is specified, objects are created in public and unqualified references resolve to it.'},
+  {db:'pg',topic:'JSONB',q:'What is the difference between JSON and JSONB data types in PostgreSQL?',o:['JSON is faster to write; JSONB is faster to read/index','JSON supports indexing; JSONB does not','JSONB stores data as text; JSON is binary','They are identical'],a:0,sol:'JSON stores an exact copy of the input text. JSONB stores data in a decomposed binary format, which is slower to input but faster to process and supports GIN indexes.'},
+  {db:'pg',topic:'JSONB',q:'Which operator is used to check if a JSONB value contains another JSONB value?',o:['>>','@>','->','#>'],a:1,sol:'The @> operator tests whether the left JSONB value contains the right JSONB value. Example: \'{"a":1,"b":2}\'::jsonb @> \'{"a":1}\'::jsonb returns true.'},
+  {db:'pg',topic:'Sequences',q:'What function retrieves the last value generated by a sequence in the current session?',o:['CURRENT_VALUE()','LAST_INSERT_ID()','currval()','lastval()'],a:3,sol:'lastval() returns the most recently returned value by any nextval() call in the current session, regardless of which sequence it was called on. currval() requires the sequence name.'},
+  {db:'pg',topic:'Full-Text Search',q:'Which data type is used to store pre-processed text for full-text search in PostgreSQL?',o:['TEXT','TSVECTOR','TSQUERY','FULLTEXT'],a:1,sol:'TSVECTOR is a sorted list of distinct lexemes (normalized words). tsvector columns store the pre-processed searchable text, enabling efficient full-text search with GIN or GIST indexes.'},
+  {db:'pg',topic:'Inheritance',q:'PostgreSQL supports table inheritance. What keyword is used?',o:['EXTENDS','INHERITS','DERIVED FROM','PARENT'],a:1,sol:'PostgreSQL table inheritance uses the INHERITS keyword: CREATE TABLE child_table (extra_col INT) INHERITS (parent_table). Child tables inherit all columns and constraints from the parent.'},
+  {db:'pg',topic:'Indexes',q:'Which index type in PostgreSQL is best for full-text search with tsvector columns?',o:['B-tree','Hash','GIN','BRIN'],a:2,sol:'GIN (Generalized Inverted Index) is optimal for tsvector columns because it creates an index on each lexeme (word), enabling very fast text search lookups.'},
+  {db:'pg',topic:'Partitioning',q:'Which partitioning method divides data based on a range of column values?',o:['List partitioning','Hash partitioning','Range partitioning','Composite partitioning'],a:2,sol:'Range partitioning divides data based on ranges of a column value (e.g., dates or numeric ranges). Each partition holds rows where the key falls within a specified range.'},
+  {db:'pg',topic:'Roles',q:'What command grants all privileges on a table to a user in PostgreSQL?',o:['ALLOW ALL ON table TO user','GRANT ALL PRIVILEGES ON TABLE table TO user','SET PERMISSION ALL ON table FOR user','ALLOW FULL ACCESS TABLE table TO user'],a:1,sol:'GRANT ALL PRIVILEGES ON TABLE tablename TO username grants SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, and TRIGGER privileges on the specified table.'},
+  {db:'pg',topic:'Explain',q:'What does EXPLAIN ANALYZE do in PostgreSQL?',o:['Shows the query plan without executing it','Shows the query plan and executes the query to show actual times','Optimizes and rewrites the query','Shows table statistics'],a:1,sol:'EXPLAIN ANALYZE executes the query (not just plans) and shows both estimated and actual execution statistics including actual row counts and timing for each node.'},
+  {db:'pg',topic:'MVCC',q:'What is MVCC in PostgreSQL?',o:['Multi-Version Concurrency Control','Multiple Variable Cache Control','Master-Version Copy Cache','Multi-Value Column Constraint'],a:0,sol:'MVCC (Multi-Version Concurrency Control) allows readers and writers to not block each other by maintaining multiple versions of a row. Each transaction sees a consistent snapshot.'},
+  {db:'pg',topic:'Triggers',q:'Which trigger timing fires before the operation affects the table?',o:['AFTER','INSTEAD OF','BEFORE','DURING'],a:2,sol:'BEFORE triggers fire before the triggering operation (INSERT, UPDATE, DELETE) modifies the row. They can modify the row to be inserted/updated or cancel the operation by returning NULL.'},
+  {db:'pg',topic:'Functions',q:'Which language is natively supported for writing functions directly in PostgreSQL?',o:['JavaScript','Python','PL/pgSQL','Ruby'],a:2,sol:'PL/pgSQL (Procedural Language/PostgreSQL) is the built-in procedural language. PostgreSQL also supports PL/Python, PL/Perl, etc., but PL/pgSQL is the native default.'},
+  {db:'pg',topic:'Views',q:'What is a materialized view in PostgreSQL?',o:['A view that automatically updates','A view whose results are physically stored on disk','A view accessible across schemas','A read-only view'],a:1,sol:'A materialized view stores the query result set physically on disk. Unlike regular views (which execute the query each time), materialized views must be manually refreshed with REFRESH MATERIALIZED VIEW.'},
+  {db:'pg',topic:'Vacuum',q:'What does the VACUUM command do in PostgreSQL?',o:['Compresses table data','Reclaims storage from dead tuples','Drops unused indexes','Defragments indexes'],a:1,sol:'VACUUM reclaims storage occupied by dead tuples (rows that have been updated or deleted but not physically removed due to MVCC). It also updates visibility maps and freezes old rows.'},
+  {db:'pg',topic:'Operators',q:'What does the || operator do when applied to strings in PostgreSQL?',o:['Logical OR','Bitwise OR','String concatenation','Append to array'],a:2,sol:'The || operator concatenates strings in PostgreSQL. Example: \'Hello\' || \' World\' returns \'Hello World\'. It also concatenates arrays when applied to array types.'},
+  {db:'pg',topic:'Aggregates',q:'Which aggregate function returns the number of non-NULL values in a column?',o:['COUNT(*)','COUNT(column)','SUM(1)','COUNTV()'],a:1,sol:'COUNT(column_name) counts only non-NULL values in that column. COUNT(*) counts all rows including those with NULL values. These can produce different results on nullable columns.'},
+  {db:'pg',topic:'Locking',q:'What level of lock does SELECT ... FOR UPDATE acquire?',o:['Share lock','Exclusive row lock','Table lock','Advisory lock'],a:1,sol:'SELECT FOR UPDATE acquires an exclusive row-level lock on the selected rows, preventing other transactions from modifying or locking them until the current transaction ends.'},
+  {db:'pg',topic:'Foreign Keys',q:'What does ON DELETE CASCADE do in a foreign key constraint?',o:['Prevents deletion of referenced rows','Automatically deletes child rows when parent is deleted','Sets child foreign key to NULL when parent deleted','Raises an error if child rows exist'],a:1,sol:'ON DELETE CASCADE automatically deletes rows in the child table when the corresponding row in the parent table is deleted, maintaining referential integrity automatically.'},
+  {db:'pg',topic:'Array',q:'How do you access the second element of a PostgreSQL array column?',o:['arr[0]','arr[2]','arr[1]','arr.get(1)'],a:1,sol:'PostgreSQL arrays are 1-indexed by default. arr[1] gets the first element, arr[2] the second. Unlike most programming languages, 0 is not the first array index in PostgreSQL.'},
+  {db:'pg',topic:'Replication',q:'What is streaming replication in PostgreSQL?',o:['Replication via SQL statements','Continuous shipping of WAL records to standby servers','Logical replication of individual tables','Copying data files over network'],a:1,sol:'Streaming replication continuously streams WAL (Write-Ahead Log) records from the primary to standby servers in real time, keeping standbys synchronized with minimal lag.'},
+  {db:'pg',topic:'Extensions',q:'Which extension adds support for advanced full-text search with fuzzy matching in PostgreSQL?',o:['pg_trgm','pg_fulltext','ts_fuzzy','fts_extra'],a:0,sol:'pg_trgm (trigram) provides functions and operators for determining string similarity based on trigram matching, enabling fuzzy text search and similarity searches. Used with GIN/GIST indexes.'},
+  {db:'pg',topic:'HStore',q:'What does the hstore extension provide?',o:['JSON storage','Key-value pair storage in a single column','Hierarchical storage','Hash-based indexing'],a:1,sol:'hstore stores sets of key-value pairs within a single PostgreSQL value. Keys and values are simple strings. It\'s useful for semi-structured data, though JSONB has largely superseded it.'},
+  {db:'pg',topic:'COPY',q:'Which command is used to bulk-load data from a CSV file into a PostgreSQL table?',o:['BULK INSERT','LOAD DATA','COPY','IMPORT'],a:2,sol:'COPY is PostgreSQL\'s command for bulk data loading/unloading. COPY table FROM \'/path/file.csv\' CSV HEADER; is significantly faster than individual INSERT statements.'},
+  {db:'pg',topic:'Serial',q:'What is the equivalent of SERIAL in PostgreSQL 10+?',o:['AUTOINCREMENT','IDENTITY','SEQUENCE','GENERATED'],a:3,sol:'PostgreSQL 10+ introduced GENERATED ALWAYS AS IDENTITY and GENERATED BY DEFAULT AS IDENTITY which follow the SQL standard and are preferred over the older SERIAL pseudo-type.'},
+  {db:'pg',topic:'WAL',q:'What does WAL stand for in PostgreSQL?',o:['Write-After-Log','Write-Ahead Log','Write-Append Ledger','Wide-Area Log'],a:1,sol:'WAL (Write-Ahead Log) ensures data integrity. Changes are written to the WAL log before being applied to data files. This allows PostgreSQL to recover from crashes by replaying the WAL.'},
+  {db:'pg',topic:'Indexes',q:'Which PostgreSQL index type is best for equality searches on low-cardinality columns?',o:['B-tree','Hash','GIN','BRIN'],a:1,sol:'Hash indexes are optimized for equality comparisons (=) only. They are compact and fast for exact lookups. B-tree supports equality too but Hash can be faster for pure equality searches.'},
+  {db:'pg',topic:'Lateral',q:'What does a LATERAL join allow in PostgreSQL?',o:['Joining tables from different schemas','Subquery to reference columns from preceding table','Joining across databases','Recursive joins'],a:1,sol:'A LATERAL join (CROSS JOIN LATERAL or LEFT JOIN LATERAL) allows the subquery to reference columns from table expressions preceding it in the FROM clause, like a correlated subquery for each row.'},
+  {db:'pg',topic:'Types',q:'Which PostgreSQL type would you use to store a fixed-point decimal number for currency?',o:['FLOAT','DOUBLE PRECISION','NUMERIC','MONEY'],a:2,sol:'NUMERIC (alias DECIMAL) stores exact numeric values with configurable precision and scale. It\'s preferred for financial data because it avoids floating-point rounding errors.'},
+  {db:'pg',topic:'Stats',q:'What PostgreSQL system view shows statistics about table access patterns?',o:['pg_stat_user_tables','pg_class','pg_stat_activity','pg_indexes'],a:0,sol:'pg_stat_user_tables provides per-table statistics including sequential scans, index scans, rows fetched, inserted, updated, and deleted. Crucial for query optimization analysis.'},
+  {db:'pg',topic:'Configuration',q:'Which configuration parameter controls the maximum number of concurrent connections in PostgreSQL?',o:['max_clients','max_connections','connection_limit','pg_max_conn'],a:1,sol:'max_connections in postgresql.conf sets the maximum number of concurrent client connections. Default is 100. Changing it requires a server restart and affects shared memory requirements.'},
+  {db:'pg',topic:'Recursive CTE',q:'What keyword enables a recursive CTE in PostgreSQL?',o:['RECURSIVE','LOOP','ITERATE','REPEAT'],a:0,sol:'WITH RECURSIVE enables recursive CTEs. The recursive CTE has a base case (non-recursive term) and a recursive term that references the CTE itself, used for tree/graph traversal.'},
+  {db:'pg',topic:'Upsert',q:'Which PostgreSQL clause handles conflicts in INSERT statements (upsert)?',o:['ON CONFLICT','ON DUPLICATE','INSERT OR REPLACE','MERGE'],a:0,sol:'ON CONFLICT (column) DO UPDATE SET ... or ON CONFLICT DO NOTHING implements upsert semantics. It handles unique constraint violations without separate SELECT + INSERT/UPDATE logic.'},
+  {db:'pg',topic:'Row-Level Security',q:'What PostgreSQL feature restricts which rows users can access based on policies?',o:['Column-Level Security','Row-Level Security (RLS)','Schema-Level Security','Table Permissions'],a:1,sol:'Row-Level Security (RLS) allows defining policies that control which rows in a table are visible to or modifiable by particular users, providing fine-grained access control.'},
+  {db:'pg',topic:'BRIN',q:'What does BRIN index stand for and when is it best used?',o:['Binary Range Index - for equality','Block Range INdex - for large naturally ordered tables','Balanced Range Index - for partitioned tables','Binary Relational Index - for foreign keys'],a:1,sol:'BRIN (Block Range INdex) stores min/max values for ranges of blocks. Ideal for very large tables where data is naturally correlated with its physical location (e.g., timestamp columns in append-only logs).'},
+  {db:'pg',topic:'Subquery',q:'Which type of subquery executes once and its result is used by the outer query?',o:['Correlated subquery','Scalar subquery','Non-correlated subquery','Nested subquery'],a:2,sol:'A non-correlated (uncorrelated) subquery executes once independently of the outer query. In contrast, a correlated subquery references outer query columns and executes once per outer row.'},
+  {db:'pg',topic:'Functions',q:'What does the COALESCE function return?',o:['The maximum value from a list','The first non-NULL value from a list','The concatenation of all values','The count of non-NULL values'],a:1,sol:'COALESCE(val1, val2, ...) returns the first non-NULL value in its argument list. It\'s commonly used to substitute a default value for NULL: COALESCE(column, \'default\').'},
+  {db:'pg',topic:'Catalog',q:'Which system catalog stores information about all database tables in PostgreSQL?',o:['information_schema.columns','pg_catalog.pg_class','pg_catalog.pg_tables','pg_stat_tables'],a:1,sol:'pg_class is the PostgreSQL system catalog that contains one row for each table, index, sequence, view, materialized view, composite type, or TOAST table in the database.'},
+  {db:'pg',topic:'Parallel',q:'Which parameter enables parallel query execution in PostgreSQL?',o:['max_workers','parallel_workers','max_parallel_workers_per_gather','enable_parallelism'],a:2,sol:'max_parallel_workers_per_gather controls how many parallel worker processes can be used for a single Gather node in a query plan. Setting it >0 enables parallel query execution.'},
+  {db:'pg',topic:'Data Types',q:'What is the storage size of a PostgreSQL INTEGER type?',o:['2 bytes','4 bytes','8 bytes','Variable'],a:1,sol:'INTEGER (alias INT or INT4) is a 4-byte signed integer with range -2,147,483,648 to 2,147,483,647. SMALLINT is 2 bytes, BIGINT is 8 bytes.'},
+  {db:'pg',topic:'Date Functions',q:'Which function extracts a specific part (e.g., year) from a date/timestamp?',o:['DATE_PART() or EXTRACT()','DATEGET()','GETPART()','DATE_GET()'],a:0,sol:'Both DATE_PART(\'year\', timestamp) and EXTRACT(YEAR FROM timestamp) extract parts from date/time values. EXTRACT is SQL-standard; DATE_PART is PostgreSQL-specific but both work identically.'},
+  {db:'pg',topic:'Indexes',q:'What is a partial index in PostgreSQL?',o:['An index on a subset of columns','An index built on rows matching a WHERE clause','A temporary index','An index on expressions'],a:1,sol:'A partial index is built on a subset of rows in a table, defined by a WHERE clause in CREATE INDEX. It\'s smaller and faster than full indexes when queries often filter on specific conditions.'},
+  {db:'pg',topic:'Performance',q:'What does the ANALYZE command do in PostgreSQL?',o:['Runs EXPLAIN on all queries','Updates statistics used by the query planner','Compacts table storage','Validates table constraints'],a:1,sol:'ANALYZE collects statistics about column distributions (most common values, histograms) that the query planner uses to estimate row counts and choose optimal query plans.'},
+  {db:'pg',topic:'String',q:'Which function converts a string to lowercase in PostgreSQL?',o:['TOLOWER()','LCASE()','lower()','str_lower()'],a:2,sol:'lower(string) converts all characters in the string to lowercase. Similarly, upper() converts to uppercase. These are standard SQL string functions available in PostgreSQL.'},
+  {db:'pg',topic:'Constraints',q:'Which constraint checks that a column value satisfies an expression?',o:['VALIDATE','VERIFY','CHECK','ASSERT'],a:2,sol:'CHECK constraints validate that values satisfy a Boolean expression. Example: CHECK (age >= 0 AND age <= 120). They can be column-level or table-level (referencing multiple columns).'},
+  {db:'pg',topic:'Schemas',q:'What is the purpose of the search_path configuration in PostgreSQL?',o:['Sets the file path for WAL logs','Determines schema resolution order for unqualified names','Defines the data directory','Controls backup file locations'],a:1,sol:'search_path determines the order in which schemas are searched when an object name is not qualified with a schema name. Default is "$user", public meaning user\'s own schema is checked first.'},
+  {db:'pg',topic:'Deadlocks',q:'How does PostgreSQL handle deadlocks?',o:['Rolls back the entire session','Queues one transaction until the other completes','Detects and aborts one of the deadlocked transactions','Raises a warning and continues'],a:2,sol:'PostgreSQL\'s deadlock detector periodically checks for deadlock cycles. When found, it aborts one transaction (the "victim") with error code 40P01, allowing the other to proceed.'},
+  {db:'pg',topic:'Table Spaces',q:'What is a tablespace in PostgreSQL?',o:['A logical grouping of tables','A location on the file system where database objects are stored','A schema with multiple tables','A backup of all table data'],a:1,sol:'A tablespace defines a location on the file system where PostgreSQL stores database objects. It allows DBAs to spread data across multiple disks for performance or capacity reasons.'},
+  {db:'pg',topic:'Inheritance',q:'What happens to child table rows when you SELECT from a parent table in PostgreSQL inheritance?',o:['Only parent table rows are returned','Child table rows are also returned by default','An error is raised','NULL is returned for child-only columns'],a:1,sol:'By default, SELECT on a parent table includes all rows from the parent AND all inherited child tables. Use ONLY keyword (SELECT ... FROM ONLY parent) to restrict to just the parent.'},
+  {db:'pg',topic:'Foreign Data',q:'What allows PostgreSQL to query data in other databases or remote systems?',o:['Database Links','Foreign Data Wrappers (FDW)','Remote Queries','External Tables'],a:1,sol:'Foreign Data Wrappers (FDW) allow PostgreSQL to access data in external sources (other PostgreSQL instances, MySQL, CSV files, etc.) as if they were local tables. postgres_fdw is the most common.'},
+  {db:'pg',topic:'Aggregates',q:'Which aggregate function computes the average of a set of values?',o:['MEAN()','AVERAGE()','AVG()','MED()'],a:2,sol:'AVG(column) computes the arithmetic mean of non-NULL values. It returns NUMERIC for integer inputs and DOUBLE PRECISION for floating-point inputs. NULL values are ignored.'},
+  {db:'pg',topic:'Window',q:'What does ROW_NUMBER() return in a window function?',o:['The ID of the current row','A sequential integer for each row within its partition','The rank with gaps for ties','The count of all rows'],a:1,sol:'ROW_NUMBER() assigns a unique sequential integer to each row within its partition, starting at 1. Unlike RANK(), it doesn\'t skip numbers for ties; every row gets a distinct number.'},
+  {db:'pg',topic:'Performance',q:'What is connection pooling and why is it important for PostgreSQL?',o:['Caching query results for reuse','Managing a pool of reusable database connections to reduce overhead','Pooling WAL log segments','Batching multiple queries together'],a:1,sol:'Connection pooling maintains a pool of established database connections that can be reused. PostgreSQL creates a process per connection; pooling (via PgBouncer) reduces overhead of repeated connection creation.'},
+  {db:'pg',topic:'Security',q:'What PostgreSQL feature encrypts data at the column level?',o:['TDE','pgcrypto','SSL','Row-Level Security'],a:1,sol:'The pgcrypto extension provides cryptographic functions for encrypting/decrypting data at the column level. Functions like pgp_sym_encrypt() and pgp_sym_decrypt() allow per-column encryption.'},
+  {db:'pg',topic:'Backup',q:'Which tool creates a logical backup of a PostgreSQL database?',o:['pg_basebackup','pg_dump','pg_restore','pg_archive'],a:1,sol:'pg_dump creates a logical backup as SQL scripts or custom format archives. It can back up specific tables or entire databases. pg_restore is used to restore pg_dump custom-format backups.'},
+  {db:'pg',topic:'Types',q:'What is the range type in PostgreSQL used for?',o:['Storing arrays of values','Representing a range between two values of the same type','Defining value constraints','Implementing fuzzy search'],a:1,sol:'Range types represent a range of values of some element type, e.g., int4range, daterange, tsrange. They support containment, overlap, and adjacency operations natively.'},
+  {db:'pg',topic:'JSON',q:'Which operator extracts a JSON object field as text in PostgreSQL?',o:['->>','->','#>','#>>'],a:0,sol:'->> extracts a JSON object field as text. -> extracts as JSON. Example: data->\'name\' returns JSON; data->>\'name\' returns text. Use ->> when you need a text value for comparison.'},
+  {db:'pg',topic:'Monitoring',q:'What view shows currently executing queries and their state in PostgreSQL?',o:['pg_stat_statements','pg_stat_activity','pg_locks','pg_stat_bgwriter'],a:1,sol:'pg_stat_activity shows one row per server process with details including the username, database, current query text, query start time, state (active, idle, waiting), and client address.'},
+  {db:'pg',topic:'Replication',q:'What is logical replication in PostgreSQL?',o:['Shipping WAL files','Replicating specific tables based on publication/subscription model','Full database file copy','Replication via SQL triggers'],a:1,sol:'Logical replication replicates individual tables (not whole clusters) using a publish/subscribe model (CREATE PUBLICATION, CREATE SUBSCRIPTION). It allows selective replication and works across major versions.'},
+
+  // ═══════════════════════════════════════════════════════
+  // DYNAMODB (Q71-Q135)
+  // ═══════════════════════════════════════════════════════
+  {db:'dy',topic:'Basics',q:'What is Amazon DynamoDB?',o:['A relational SQL database managed by AWS','A fully managed NoSQL key-value and document database','A graph database service','A time-series database'],a:1,sol:'DynamoDB is AWS\'s fully managed, serverless NoSQL database that provides single-digit millisecond performance at any scale. It supports key-value and document data models.'},
+  {db:'dy',topic:'Keys',q:'What is the partition key (hash key) used for in DynamoDB?',o:['Sorting items within a partition','Distributing data across partitions','Defining the table schema','Enforcing uniqueness across tables'],a:1,sol:'The partition key is hashed to determine which physical partition stores an item. Items with the same partition key are stored together. Good partition key design ensures even distribution.'},
+  {db:'dy',topic:'Keys',q:'What is a composite primary key in DynamoDB?',o:['A key combining two partition keys','A combination of a partition key and a sort key','A key with multiple attributes','A foreign key reference'],a:1,sol:'A composite primary key consists of a partition key (required) plus a sort key. Items sharing the same partition key are stored together and sorted by the sort key, enabling range queries.'},
+  {db:'dy',topic:'Capacity',q:'What are Read Capacity Units (RCU) in DynamoDB provisioned mode?',o:['Number of reads per day','One strongly consistent read per second for items up to 4KB','One read per second regardless of size','Number of bytes read per second'],a:1,sol:'One RCU = one strongly consistent read per second (or two eventually consistent reads) for items up to 4KB. Larger items consume proportionally more RCUs. Used in provisioned throughput mode.'},
+  {db:'dy',topic:'Capacity',q:'What is DynamoDB On-Demand capacity mode?',o:['Fixed provisioned capacity','Automatically scales and charges per request with no pre-specified capacity','Fixed monthly pricing','Reserved capacity'],a:1,sol:'On-Demand mode automatically scales to handle any request volume. You pay per request (read/write request units) without specifying capacity. Ideal for unpredictable workloads.'},
+  {db:'dy',topic:'Indexes',q:'What is a Global Secondary Index (GSI) in DynamoDB?',o:['An index on the primary key','An index with a different partition and sort key than the base table','An index restricted to items in one partition','A local index on a single attribute'],a:1,sol:'A GSI has a partition key and optional sort key different from the base table. It spans all partitions (global), has its own provisioned throughput, and can have a projection of attributes.'},
+  {db:'dy',topic:'Indexes',q:'How does a Local Secondary Index (LSI) differ from a GSI?',o:['LSI uses a different partition key','LSI shares the same partition key as the table and must be created at table creation','LSI can be created after table creation','LSI has separate provisioned throughput'],a:1,sol:'An LSI uses the same partition key as the base table but a different sort key. It must be defined at table creation and shares the table\'s provisioned throughput. Limited to 5 per table.'},
+  {db:'dy',topic:'Consistency',q:'What is eventually consistent reads in DynamoDB?',o:['Reads that always reflect the latest write','Reads that may reflect a slightly outdated state but use half the RCUs','Reads that fail if data is being updated','Reads that lock the item'],a:1,sol:'Eventually consistent reads may return data that is slightly stale (typically milliseconds old). They use half the RCUs of strongly consistent reads, offering a cost-performance trade-off.'},
+  {db:'dy',topic:'Operations',q:'Which DynamoDB operation retrieves an item by its primary key?',o:['Query','Scan','GetItem','BatchGetItem'],a:2,sol:'GetItem retrieves a single item by its complete primary key (partition key + sort key if applicable). It\'s the most efficient read operation. Returns the item or empty if not found.'},
+  {db:'dy',topic:'Operations',q:'What is the difference between a Query and a Scan in DynamoDB?',o:['Query is faster; Scan is more flexible - Query uses key conditions, Scan examines all items','Scan uses indexes; Query does not','Query retrieves one item; Scan retrieves all','They are identical'],a:0,sol:'Query uses the partition key to retrieve items efficiently (optionally filtering by sort key). Scan examines ALL items in the table—it\'s expensive for large tables. Always prefer Query over Scan.'},
+  {db:'dy',topic:'Streams',q:'What does DynamoDB Streams provide?',o:['A way to stream data from S3','A time-ordered sequence of item-level modifications','A read-only replica of the table','A way to export table data'],a:1,sol:'DynamoDB Streams captures a time-ordered sequence of item-level changes (inserts, updates, deletes) in a DynamoDB table. Stream records are available for 24 hours and enable event-driven architectures.'},
+  {db:'dy',topic:'Transactions',q:'Which DynamoDB operation provides ACID transactions across multiple items?',o:['BatchWriteItem','TransactWriteItems','PutItem with conditions','MultiWrite'],a:1,sol:'TransactWriteItems performs up to 100 write actions (Put, Update, Delete, ConditionCheck) as a single all-or-nothing ACID transaction. Similarly, TransactGetItems provides transactional reads.'},
+  {db:'dy',topic:'TTL',q:'What is DynamoDB TTL (Time To Live)?',o:['Maximum query execution time','Automatic deletion of items based on a timestamp attribute','Session timeout for connections','Cache expiration for DAX'],a:1,sol:'TTL allows you to define a timestamp attribute on items. DynamoDB automatically deletes expired items (past the timestamp) in the background, reducing storage costs without consuming write capacity.'},
+  {db:'dy',topic:'DAX',q:'What is Amazon DynamoDB Accelerator (DAX)?',o:['A backup service','A fully managed in-memory cache for DynamoDB','A query analyzer','A replication service'],a:1,sol:'DAX is a fully managed, in-memory cache for DynamoDB. It delivers microsecond response times for eventually consistent reads, reducing read load on DynamoDB tables dramatically.'},
+  {db:'dy',topic:'Data Types',q:'Which DynamoDB data type stores a set of unique strings?',o:['List (L)','Map (M)','String Set (SS)','Binary Set (BS)'],a:2,sol:'String Set (SS) is a DynamoDB data type that stores a collection of unique, non-empty strings. There\'s also Number Set (NS) and Binary Set (BS). Sets don\'t maintain order.'},
+  {db:'dy',topic:'Expressions',q:'What is a FilterExpression in DynamoDB?',o:['Pre-filters items before reading from disk','Filters results after data is read but before returning to client','An index-based filter','A filter applied to partition key selection'],a:1,sol:'FilterExpression narrows Query/Scan results AFTER data is read. It doesn\'t reduce the amount of data read (you still pay for all items examined). Use key conditions to reduce data read instead.'},
+  {db:'dy',topic:'Expressions',q:'What does a ConditionExpression do in DynamoDB write operations?',o:['Filters read results','Allows a write only if a specified condition is true','Transforms data on write','Validates data types'],a:1,sol:'ConditionExpression enables optimistic locking—the write (Put, Update, Delete) only succeeds if the condition evaluates to true. Used for check-and-set operations to prevent overwrites.'},
+  {db:'dy',topic:'Backup',q:'What is DynamoDB Point-in-Time Recovery (PITR)?',o:['Daily automated backups','Continuous backups allowing restore to any point in the last 35 days','Manual snapshots','Cross-region replication'],a:1,sol:'PITR provides continuous backups with granular restore capability. You can restore a table to any second within the retention period (up to 35 days). It must be explicitly enabled per table.'},
+  {db:'dy',topic:'Global Tables',q:'What are DynamoDB Global Tables?',o:['Tables with a global index','Multi-region, multi-active replicated tables','Tables with global secondary indexes','Shared tables across AWS accounts'],a:1,sol:'Global Tables provide multi-region, multi-active replication. Changes in any region are propagated to all others. Last-writer-wins conflict resolution. Great for low-latency global access.'},
+  {db:'dy',topic:'Item Size',q:'What is the maximum item size in DynamoDB?',o:['1 MB','400 KB','64 KB','10 MB'],a:1,sol:'DynamoDB items are limited to 400KB. This includes attribute names and values. For larger objects, store them in S3 and save the S3 key as a DynamoDB attribute.'},
+  {db:'dy',topic:'Partitions',q:'What happens when a DynamoDB partition\'s capacity is exhausted?',o:['Requests are queued','DynamoDB automatically splits the partition','Requests fail with ProvisionedThroughputExceededException','The table is locked'],a:1,sol:'DynamoDB automatically splits a partition when it reaches 10GB or when the provisioned capacity for it is consistently exceeded. The split distributes the data and capacity across two new partitions.'},
+  {db:'dy',topic:'Hot Partitions',q:'What is a "hot partition" problem in DynamoDB?',o:['Partitions that are too large','Disproportionate traffic concentrated on a single partition causing throttling','Partitions in a hot region','Partitions with high TTL churn'],a:1,sol:'Hot partitions occur when too many requests target the same partition key, exceeding that partition\'s capacity. Solutions include better key design (e.g., adding random suffixes), write sharding, or DAX.'},
+  {db:'dy',topic:'Projection',q:'What is a ProjectionExpression in DynamoDB?',o:['A virtual column computed from other attributes','Specifies which attributes to return in a read operation','A filter applied to results','The attributes included in a GSI'],a:1,sol:'ProjectionExpression specifies a comma-separated list of attributes to retrieve. Using it reduces response size and network transfer. Without it, all attributes are returned.'},
+  {db:'dy',topic:'BatchOps',q:'What is the maximum number of items that can be retrieved in a single BatchGetItem call?',o:['10','100','25','50'],a:1,sol:'BatchGetItem can retrieve up to 100 items or 16MB of data in a single request. Items can be from different tables. Failed items are returned in UnprocessedKeys for retry.'},
+  {db:'dy',topic:'BatchOps',q:'What is the limit for items in a BatchWriteItem call?',o:['100','50','25','10'],a:2,sol:'BatchWriteItem can contain up to 25 PutItem or DeleteItem requests (no UpdateItem) with a maximum total request size of 16MB. Unprocessed items are returned in UnprocessedItems.'},
+  {db:'dy',topic:'Adaptive Capacity',q:'What is DynamoDB Adaptive Capacity?',o:['Automatic Read/Write split','Automatically redistributes throughput to hot partitions','Scales provisioned capacity based on usage patterns','Automatically selects strongly vs eventually consistent reads'],a:1,sol:'Adaptive Capacity automatically boosts capacity for individual hot partitions that receive disproportionate traffic, isolating activity to the partition level to prevent throttling.'},
+  {db:'dy',topic:'Reserved Words',q:'What must you do when using a DynamoDB reserved word as an attribute name in expressions?',o:['Enclose it in quotes','Use an expression attribute name substitution (#alias)','Prefix with a dollar sign','Escape with backslash'],a:1,sol:'Expression attribute names (e.g., #n for "name") are placeholder tokens starting with # that substitute for actual attribute names, necessary when the name is a reserved word or contains special characters.'},
+  {db:'dy',topic:'Atomic Counters',q:'How can you implement an atomic counter in DynamoDB?',o:['Use conditional writes','Use the ADD action in UpdateExpression','Use transactions','Use a separate counter table'],a:1,sol:'The ADD action in UpdateExpression atomically adds a number to an existing attribute value. Example: UpdateExpression: "ADD visitCount :inc" where :inc is the increment. No conditional check needed.'},
+  {db:'dy',topic:'Sparse Indexes',q:'What is a sparse index in DynamoDB?',o:['An index with fewer attributes projected','A GSI that only includes items where the index key exists','An index created on a compressed column','A partial index defined by a filter'],a:1,sol:'A sparse index is a GSI/LSI where the index key attribute is not present in all items. DynamoDB only includes items in the index if they have the index key attribute, making it "sparse".'},
+  {db:'dy',topic:'Exports',q:'What DynamoDB feature allows exporting table data to S3 without consuming read capacity?',o:['DynamoDB Streams','DynamoDB Table Export','DynamoDB Backup','AWS Data Pipeline'],a:1,sol:'DynamoDB Table Export exports data to S3 in DynamoDB JSON or Amazon Ion format. It uses PITR data and doesn\'t consume any read capacity on the table, allowing large exports without impact.'},
+  {db:'dy',topic:'Naming',q:'What characters are valid in DynamoDB attribute names?',o:['Only alphanumeric characters','All Unicode characters including special characters and spaces','Only lowercase letters and underscores','Only ASCII characters'],a:1,sol:'DynamoDB attribute names can use any UTF-8 character, including spaces and special characters, with a max of 64KB. However, expression attribute names (#alias) must start with # followed by alphanumeric chars.'},
+  {db:'dy',topic:'Costs',q:'In DynamoDB, which operation is more expensive in terms of capacity units?',o:['Read is more expensive','Write is more expensive','They cost the same','Cost depends on item size only'],a:1,sol:'Write operations cost significantly more than reads in DynamoDB. One WCU handles 1 write per second for items up to 1KB. One RCU handles 1 strongly consistent read per second for items up to 4KB.'},
+  {db:'dy',topic:'Auto Scaling',q:'What does DynamoDB Auto Scaling do?',o:['Automatically adds or removes tables','Adjusts provisioned throughput up or down based on actual traffic patterns','Automatically creates GSIs','Manages partition splitting'],a:1,sol:'Auto Scaling uses CloudWatch alarms to monitor consumption metrics and automatically adjusts provisioned read/write capacity to maintain a target utilization percentage you define.'},
+  {db:'dy',topic:'Table Classes',q:'What is DynamoDB Standard-Infrequent Access (Standard-IA) table class?',o:['A read replica for infrequent reads','A storage class with lower storage costs but higher request costs, for infrequently accessed data','A cold storage tier for archived tables','Tables with TTL enabled'],a:1,sol:'Standard-IA has lower storage costs (~60% cheaper) but higher per-request costs than Standard. Use it for tables where data is stored long-term but accessed infrequently (like logs or historical data).'},
+  {db:'dy',topic:'Encryption',q:'How does DynamoDB handle encryption at rest?',o:['Encryption must be configured manually','All data is encrypted at rest by default using AWS managed keys','Encryption is only available in certain regions','Only attribute values are encrypted, not keys'],a:1,sol:'DynamoDB encrypts all data at rest by default using AWS-owned CMKs (no charge). You can opt for AWS-managed or customer-managed KMS keys for more control. Encryption cannot be disabled.'},
+  {db:'dy',topic:'Pagination',q:'How does DynamoDB handle result pagination for Query and Scan operations?',o:['Returns all results in one response always','Uses LIMIT and OFFSET parameters','Returns a LastEvaluatedKey which is used as ExclusiveStartKey in the next call','Uses cursor-based pagination tokens as strings'],a:2,sol:'When results are paginated, DynamoDB returns a LastEvaluatedKey. Pass this as ExclusiveStartKey in the next request to continue reading. When LastEvaluatedKey is null, all results have been returned.'},
+  {db:'dy',topic:'Expressions',q:'What is an UpdateExpression in DynamoDB?',o:['An expression that updates GSI key attributes','A string defining how to modify attributes (SET, REMOVE, ADD, DELETE)','A condition for allowing updates','A filter applied after update'],a:1,sol:'UpdateExpression specifies the modifications: SET (add/update attributes), REMOVE (delete attributes), ADD (increment numbers or add to sets), DELETE (remove elements from sets). Multiple actions can be combined.'},
+  {db:'dy',topic:'Capacity',q:'What happens when DynamoDB throughput is exceeded in provisioned mode?',o:['Requests succeed with degraded performance','ProvisionedThroughputExceededException is returned','DynamoDB automatically scales immediately','Requests are queued indefinitely'],a:1,sol:'Exceeding provisioned throughput results in ProvisionedThroughputExceededException (HTTP 400). The AWS SDKs automatically retry with exponential backoff. You should implement retry logic in your application.'},
+
+  // ═══════════════════════════════════════════════════════
+  // MONGODB (Q136-Q200)
+  // ═══════════════════════════════════════════════════════
+  {db:'mg',topic:'Basics',q:'What is MongoDB?',o:['A relational database','A document-oriented NoSQL database','A key-value store','A graph database'],a:1,sol:'MongoDB is a document-oriented NoSQL database that stores data as BSON (Binary JSON) documents. It offers flexible schemas, horizontal scaling, and rich query capabilities.'},
+  {db:'mg',topic:'Documents',q:'What format are MongoDB documents stored in?',o:['XML','CSV','BSON (Binary JSON)','JSON Text'],a:2,sol:'MongoDB stores data as BSON (Binary JSON), an extension of JSON that includes additional data types like Date, BinData, ObjectId, etc. BSON is more efficient to parse than JSON text.'},
+  {db:'mg',topic:'_id',q:'What is the default type of the _id field in MongoDB?',o:['UUID','Integer','ObjectId','String'],a:2,sol:'By default, MongoDB uses ObjectId as the _id field. An ObjectId is a 12-byte identifier: 4-byte timestamp, 5-byte random value, 3-byte incrementing counter. It\'s unique within a collection.'},
+  {db:'mg',topic:'CRUD',q:'Which MongoDB method inserts a single document into a collection?',o:['db.collection.add()','db.collection.insertOne()','db.collection.create()','db.collection.push()'],a:1,sol:'insertOne() inserts a single document and returns an insertedId. insertMany() inserts multiple. The legacy insert() method is deprecated. Returns an InsertOneResult object.'},
+  {db:'mg',topic:'CRUD',q:'Which method updates a single document matching a filter in MongoDB?',o:['db.collection.change()','db.collection.modify()','db.collection.updateOne()','db.collection.set()'],a:2,sol:'updateOne(filter, update) modifies the first matching document. Use $set, $inc, etc. in the update document. updateMany() modifies all matching documents. replaceOne() replaces the entire document.'},
+  {db:'mg',topic:'Query',q:'How do you query MongoDB for documents where age is greater than 25?',o:["db.users.find({age: {$gt: 25}})",'db.users.find({age > 25})','db.users.where("age > 25")','db.users.query({age: [">", 25]})'],a:0,sol:'MongoDB query operators use $gt (greater than), $lt (less than), $gte, $lte, $eq, $ne, $in, $nin. Example: db.users.find({age: {$gt: 25}}) finds all users older than 25.'},
+  {db:'mg',topic:'Indexes',q:'What command creates an index on the "email" field of the users collection in MongoDB?',o:["db.users.createIndex({email: 1})",'db.users.addIndex("email")','db.users.index({email: true})','db.users.ensureIndex({email: "asc"})'],a:0,sol:'createIndex({field: 1}) creates an ascending index. Use -1 for descending. For text search use {field: "text"}. Indexes significantly improve query performance on indexed fields.'},
+  {db:'mg',topic:'Aggregation',q:'What does the $match stage do in a MongoDB aggregation pipeline?',o:['Joins two collections','Filters documents similar to a find() query','Groups documents by a field','Projects specific fields'],a:1,sol:'$match filters documents in the pipeline based on specified conditions. Placing $match early in the pipeline reduces the number of documents processed by subsequent stages, improving performance.'},
+  {db:'mg',topic:'Aggregation',q:'Which aggregation stage groups documents and computes aggregate values?',o:['$project','$match','$group','$sort'],a:2,sol:'$group groups documents by a specified key and computes aggregate values like $sum, $avg, $min, $max, $count, $push, $addToSet. The _id field specifies the grouping key.'},
+  {db:'mg',topic:'Replication',q:'What is a MongoDB Replica Set?',o:['A set of indexes for a collection','A group of MongoDB instances maintaining the same data set','A collection of related documents','A sharded cluster configuration'],a:1,sol:'A Replica Set is a group of MongoDB instances hosting the same data. It provides redundancy and high availability. One member is the primary (handles writes); others are secondaries that replicate the primary\'s data.'},
+  {db:'mg',topic:'Replication',q:'What happens if the primary in a MongoDB Replica Set becomes unavailable?',o:['The entire cluster goes offline','The secondaries automatically elect a new primary','Writes are buffered until the primary returns','The oldest secondary becomes primary without election'],a:1,sol:'MongoDB uses a Raft-based election algorithm. Secondaries holding a majority vote elect a new primary. The process typically takes 10-30 seconds. Write concern majority ensures data survives a failover.'},
+  {db:'mg',topic:'Sharding',q:'What is sharding in MongoDB?',o:['Horizontal scaling by distributing data across multiple servers','Vertical scaling by adding more RAM','Partitioning a collection by time','Compressing old documents'],a:0,sol:'Sharding distributes data across multiple servers (shards) for horizontal scaling. Each shard holds a subset of data. The mongos router directs queries to the appropriate shard(s) using the shard key.'},
+  {db:'mg',topic:'Sharding',q:'What is a shard key in MongoDB?',o:['The primary key of the collection','The field(s) used to distribute documents across shards','A key used for encryption','A key for inter-shard communication'],a:1,sol:'The shard key determines how documents are distributed across shards. Good shard key choice is critical—it should have high cardinality, low frequency, and non-monotonically increasing values to avoid hotspots.'},
+  {db:'mg',topic:'Operators',q:'What does the $lookup aggregation stage do in MongoDB?',o:['Looks up a document by _id','Performs a left outer join with another collection','Searches text indexes','Validates document schema'],a:1,sol:'$lookup performs a left outer join from one collection to another. Syntax: {$lookup: {from: "other_collection", localField: "field", foreignField: "other_field", as: "result"}}'},
+  {db:'mg',topic:'Update',q:'What does the $set operator do in a MongoDB update?',o:['Replaces the entire document','Sets the value of a field, creating it if it doesn\'t exist','Converts a field to a set type','Removes a field'],a:1,sol:'$set modifies or adds the specified field(s) to the document without affecting other fields. Example: {$set: {status: "active"}} only modifies the status field, leaving all others intact.'},
+  {db:'mg',topic:'Update',q:'What does the $unset operator do in MongoDB?',o:['Decrements a field value','Removes a field from a document','Sets a field to undefined','Clears an array'],a:1,sol:'$unset removes the specified field(s) from a document. Example: {$unset: {temporaryField: ""}} removes temporaryField. The value in the $unset expression doesn\'t matter (conventionally "").'},
+  {db:'mg',topic:'Text Search',q:'How do you enable full-text search on a field in MongoDB?',o:['Create a regular index','Create a text index with {field: "text"}','Enable the text search module','Use the $search operator directly'],a:1,sol:'Create a text index: db.collection.createIndex({field: "text"}). Then use $text: {$search: "keyword"} in queries. Text indexes support stemming, stop words, and multi-field search.'},
+  {db:'mg',topic:'Schema',q:'What is a schemaless database and how does MongoDB apply it?',o:['A database with no data','A database where documents in a collection can have different fields','A database without indexes','A database with a fixed schema defined externally'],a:1,sol:'MongoDB is schemaless—documents in a collection don\'t need identical fields. This allows flexible data models. Schema validation can be added via $jsonSchema in collection validators for data integrity.'},
+  {db:'mg',topic:'Transactions',q:'When were multi-document ACID transactions introduced in MongoDB?',o:['MongoDB 3.0','MongoDB 3.6','MongoDB 4.0','MongoDB 4.4'],a:2,sol:'Multi-document ACID transactions were introduced in MongoDB 4.0 for replica sets and extended to sharded clusters in MongoDB 4.2. Sessions are used to associate operations with a transaction.'},
+  {db:'mg',topic:'GridFS',q:'What is MongoDB GridFS used for?',o:['Storing graph data','Storing and retrieving files larger than the 16MB BSON document limit','A distributed file system','A caching layer for query results'],a:1,sol:'GridFS is MongoDB\'s specification for storing and retrieving large files. It splits files into chunks (default 255KB each) stored as separate documents in fs.chunks, with metadata in fs.files.'},
+  {db:'mg',topic:'Write Concern',q:'What does write concern "majority" mean in MongoDB?',o:['Writes are acknowledged only by the primary','Writes are acknowledged after being applied to majority of replica set members','Writes go to more than 50% of shards','Majority of documents match the write'],a:1,sol:'Write concern "majority" means MongoDB waits until a majority of voting members of the replica set have acknowledged the write. This ensures writes survive a primary failover.'},
+  {db:'mg',topic:'Read Preference',q:'What read preference directs all reads to the primary in MongoDB?',o:['secondary','primaryPreferred','primary','nearest'],a:2,sol:'"primary" (default) routes all reads to the primary, ensuring always-consistent data. Other options: primaryPreferred, secondary, secondaryPreferred, nearest. Non-primary reads may return stale data.'},
+  {db:'mg',topic:'Capped Collections',q:'What is a capped collection in MongoDB?',o:['A collection with a maximum number of indexes','A fixed-size collection that overwrites oldest documents when full','A collection with a schema limit','A read-only collection'],a:1,sol:'Capped collections are fixed-size circular buffers. When the size limit is reached, oldest documents are automatically overwritten. Useful for logs and caching recent events. Insertion order is preserved.'},
+  {db:'mg',topic:'Projection',q:'How do you exclude a field from MongoDB query results?',o:["{field: false}",'{"field": "exclude"}','{field: 0}','EXCLUDE field'],a:2,sol:'In a projection, 0 excludes a field and 1 includes it. Example: db.collection.find({}, {field: 0}) returns all fields except "field". You cannot mix inclusions and exclusions (except for _id).'},
+  {db:'mg',topic:'Array Operators',q:'What does $elemMatch do in a MongoDB query?',o:['Matches any document containing the element','Matches documents where at least one array element satisfies all specified criteria','Finds an element by index','Counts matching elements'],a:1,sol:'$elemMatch matches documents where at least one array element satisfies ALL the specified query criteria simultaneously. Without it, each criterion could match different array elements.'},
+  {db:'mg',topic:'Indexes',q:'What is a compound index in MongoDB?',o:['An index spanning multiple collections','An index on multiple fields within a single collection','An index compressed for storage','An index with multiple types'],a:1,sol:'A compound index covers multiple fields: db.collection.createIndex({field1: 1, field2: -1}). It supports queries on the prefix fields. Field order matters—match the most selective field first.'},
+  {db:'mg',topic:'Explain',q:'What does db.collection.find().explain("executionStats") show?',o:['Query syntax errors','Execution statistics including index usage, documents examined, and time','A simplified query plan','Index recommendations'],a:1,sol:'explain("executionStats") shows detailed execution information: winning plan, rejected plans, index used, nReturned, totalDocsExamined, totalKeysExamined, and execution time in milliseconds.'},
+  {db:'mg',topic:'Atlas',q:'What is MongoDB Atlas?',o:['A MongoDB query language','MongoDB\'s fully managed cloud database service','A local MongoDB GUI tool','A MongoDB schema validator'],a:1,sol:'MongoDB Atlas is MongoDB\'s fully managed cloud database service running on AWS, Azure, and GCP. It provides automated backups, scaling, monitoring, and access to advanced features like Atlas Search and Data Lake.'},
+  {db:'mg',topic:'Change Streams',q:'What are MongoDB Change Streams?',o:['Schema migration scripts','Real-time notification of data changes using the oplog','A backup mechanism','Event triggers for application layer'],a:1,sol:'Change Streams allow applications to subscribe to real-time data changes in a collection, database, or deployment. Built on the oplog, they provide ordered, resumable streams of change events.'},
+  {db:'mg',topic:'Validation',q:'How do you add schema validation to a MongoDB collection?',o:['Using CREATE TABLE syntax','Using JSON Schema validators with validator option','Using a separate validation collection','MongoDB doesn\'t support schema validation'],a:1,sol:'Add validators when creating collections or via collMod command: {validator: {$jsonSchema: {bsonType: "object", required: ["name"], properties: {name: {bsonType: "string"}}}}}'},
+  {db:'mg',topic:'Operators',q:'What does $push do in a MongoDB update?',o:['Pushes the document to a stack','Appends a value to an array field','Pushes changes to replica set','Creates a new document'],a:1,sol:'$push appends a value to an array field. Combined with $each, you can push multiple values. Use $sort within $push to maintain sorted order. $addToSet prevents duplicates.'},
+  {db:'mg',topic:'Aggregation',q:'What does the $unwind aggregation stage do?',o:['Removes duplicate documents','Deconstructs an array field into separate documents for each element','Sorts documents','Limits the result set'],a:1,sol:'$unwind deconstructs an array field, creating one output document per array element. Useful before $group to work with individual array elements. preserveNullAndEmptyArrays option handles edge cases.'},
+  {db:'mg',topic:'Indexing',q:'What is a sparse index in MongoDB?',o:['An index with fewer keys','An index that only includes documents where the indexed field exists','A partial index based on a filter','A compressed index'],a:1,sol:'A sparse index only contains entries for documents that have the indexed field, skipping documents where the field is missing. Saves space when many documents lack the field.'},
+  {db:'mg',topic:'TTL',q:'What is a TTL index in MongoDB used for?',o:['Measuring query execution time','Automatically deleting documents after a specified time period','Setting timeout for write operations','Index expiry for maintenance'],a:1,sol:'TTL (Time-To-Live) indexes automatically remove documents from a collection after a specified number of seconds or at a specific clock time. Created with expireAfterSeconds: db.collection.createIndex({date: 1}, {expireAfterSeconds: 3600})'},
+  {db:'mg',topic:'Profiler',q:'What does the MongoDB profiler do?',o:['Profiles CPU and memory usage','Logs slow queries and database operations for performance analysis','Profiles network traffic','Analyzes index fragmentation'],a:1,sol:'The MongoDB profiler logs operations that take longer than a threshold (slowOpThresholdMs). Set profiling level with db.setProfilingLevel(). Results stored in system.profile capped collection.'},
+  {db:'mg',topic:'Operators',q:'What does the $inc operator do in MongoDB?',o:['Checks if a value is included in a set','Increments or decrements a numeric field by a given amount','Creates an incrementing sequence','Inserts a new counter document'],a:1,sol:'$inc atomically increments (positive value) or decrements (negative value) a numeric field. Example: {$inc: {count: 1, score: -5}} increments count by 1 and decrements score by 5.'},
+  {db:'mg',topic:'Aggregation',q:'What is the purpose of $facet in MongoDB aggregation?',o:['A stage for joining collections','Runs multiple aggregation pipelines simultaneously on the same input and returns results in a single document','Filters documents by multiple conditions','Creates sub-pipelines for each document'],a:1,sol:'$facet allows running multiple aggregation pipelines in parallel on the same set of input documents. Results from each sub-pipeline are returned under named keys in a single document. Great for analytics dashboards.'},
+  {db:'mg',topic:'Storage',q:'What is the default storage engine in MongoDB 4.x+?',o:['MMAPv1','TokuMX','WiredTiger','RocksDB'],a:2,sol:'WiredTiger has been the default storage engine since MongoDB 3.2. It provides document-level concurrency control, compression (snappy by default), and better multi-core performance than the legacy MMAPv1.'},
+  {db:'mg',topic:'Connection',q:'What does a MongoDB connection string look like?',o:['jdbc:mongodb://host:port/db','mongodb://[user:password@]host:port/database','http://host:port/db','mongo://host/database'],a:1,sol:'MongoDB connection strings follow the URI format: mongodb://[username:password@]host1[:port1]/database[?options]. For Atlas: mongodb+srv://... For replica sets, list multiple hosts.'},
+  {db:'mg',topic:'Collation',q:'What does collation in MongoDB allow?',o:['Multi-collection joins','Language-specific string comparison rules for queries and indexes','Converting between data types','Ordering shards'],a:1,sol:'Collation specifies language-specific rules for string comparison, including rules for lettercase and accent marks. Enables case-insensitive searches and locale-aware sorting. Example: {locale: "en", strength: 2}'},
+  {db:'mg',topic:'Utilities',q:'What does mongodump do?',o:['Imports JSON/CSV data','Creates a binary export (BSON dump) of a MongoDB database','Analyzes query performance','Validates collection integrity'],a:1,sol:'mongodump creates a binary BSON export of a MongoDB database or collection. mongorestore imports it back. For human-readable exports, use mongoexport (JSON/CSV) and mongoimport.'},
+  {db:'mg',topic:'Aggregation',q:'What is the $bucket aggregation stage used for?',o:['Grouping data into size-limited buckets','Categorizing documents into groups (buckets) based on a specified expression and boundaries','Joining collections','Limiting result set size'],a:1,sol:'$bucket categorizes documents into user-defined groups based on an expression value and specified boundaries. Example: grouping ages into 0-18, 18-35, 35-60, 60+ buckets for distribution analysis.'},
+  {db:'mg',topic:'Views',q:'What are MongoDB Views?',o:['Stored query results on disk','Read-only views of collections defined by aggregation pipelines','Snapshots of collection state','Materialized query caches'],a:1,sol:'MongoDB Views are read-only queryable objects defined by aggregation pipelines. They don\'t store data but compute results dynamically on query. Created with db.createView() or using the viewOn option.'},
+  {db:'mg',topic:'Transactions',q:'What is a multi-document transaction scope in MongoDB 4.0+?',o:['A transaction can span multiple databases','A transaction can span multiple collections within a replica set','A transaction automatically spans all shards','A transaction is limited to a single document'],a:1,sol:'In MongoDB 4.0, multi-document transactions work within a single replica set across multiple collections and databases. MongoDB 4.2 extended this to sharded clusters.'},
+  {db:'mg',topic:'Oplog',q:'What is the oplog in MongoDB?',o:['Operation log for admin commands','A capped collection that records all write operations for replication','Error and warning log','Audit log for user actions'],a:1,sol:'The oplog (operations log) is a special capped collection (local.oplog.rs) that records all write operations in an idempotent form. Secondaries replicate by reading and applying the primary\'s oplog.'},
+  {db:'mg',topic:'Compass',q:'What is MongoDB Compass?',o:['A CLI for MongoDB','A GUI tool for visualizing and exploring MongoDB data','A cloud monitoring service','A schema migration tool'],a:1,sol:'MongoDB Compass is the official GUI for MongoDB. It allows visual exploration of data, query building, index management, performance analysis, and schema visualization without writing queries.'},
+  {db:'mg',topic:'Data Types',q:'Which BSON type stores a date and time value in MongoDB?',o:['String','Timestamp','Date','DateTime'],a:2,sol:'The BSON Date type stores a 64-bit integer representing milliseconds since the Unix epoch (January 1, 1970). In the shell: new Date() or ISODate(). Use Date type (not strings) for date range queries.'},
+  {db:'mg',topic:'Aggregation',q:'What does $addFields do in a MongoDB aggregation pipeline?',o:['Adds new fields to documents','Adds new collections','Inserts documents into a collection','Adds indexes during aggregation'],a:0,sol:'$addFields (alias $set) adds new computed fields to documents passing through the pipeline without removing existing fields. Perfect for enriching documents with derived values before further processing.'},
+  {db:'mg',topic:'Cursors',q:'What does the cursor.limit() method do in MongoDB?',o:['Sets timeout for cursor','Restricts the number of documents returned from the query','Limits query execution plans','Sets maximum document size'],a:1,sol:'cursor.limit(n) specifies the maximum number of documents to return. Combined with skip() for pagination. For large collections, prefer range-based pagination using indexed fields for better performance.'},
+  {db:'mg',topic:'Hashed Sharding',q:'What is hashed sharding in MongoDB?',o:['Encrypting the shard key','Using the hash of a field value to distribute documents across shards','A backup sharding strategy','Sharding using range-based hash values'],a:1,sol:'Hashed sharding computes an MD5 hash of the shard key value and uses it for distribution. This ensures even data distribution even for monotonically increasing keys (like timestamps), preventing hot shards.'},
+  {db:'mg',topic:'Operators',q:'What does $exists do in a MongoDB query?',o:['Checks if a collection exists','Matches documents based on whether a field exists or not','Checks if an index exists','Validates document existence before insert'],a:1,sol:'{field: {$exists: true}} matches documents that have the field. {field: {$exists: false}} matches documents missing the field. Unlike {field: null}, $exists: false also matches truly absent fields.'},
+  {db:'mg',topic:'Atlas Search',q:'What is MongoDB Atlas Search?',o:['A replacement for regular MongoDB queries','Full-text search capability powered by Apache Lucene integrated with MongoDB Atlas','A separate search cluster','A keyword-based search on _id fields'],a:1,sol:'Atlas Search integrates Apache Lucene for full-text search within MongoDB Atlas. It supports fuzzy matching, autocomplete, faceting, relevance scoring, and complex text analysis without a separate search service.'},
+  {db:'mg',topic:'Performance',q:'What does the hint() method do in MongoDB queries?',o:['Adds a query comment','Forces MongoDB to use a specific index','Gives performance optimization hints to the planner','Suggests a query rewrite'],a:1,sol:'hint({indexName}) or hint({field: 1}) forces MongoDB to use a specific index rather than relying on the query planner. Useful when the planner selects a suboptimal index for specific queries.'},
+  {db:'mg',topic:'Backup',q:'What is MongoDB Atlas Continuous Backup?',o:['Full daily backups','Continuous incremental backups with point-in-time restore capability','Periodic snapshots only','Real-time replication to a backup cluster'],a:1,sol:'Atlas Continuous Backup (Cloud Backup) takes incremental backups and allows point-in-time restore to any second within the retention period. Snapshots are stored in cloud object storage.'},
+  {db:'mg',topic:'Aggregation',q:'Which aggregation operator counts the number of documents in a $group?',o:['$count','$sum: 1','$tally','$numDocs'],a:1,sol:'In a $group stage, {count: {$sum: 1}} counts documents per group. $sum accumulates values, so summing 1 per document yields the count. $count as a standalone aggregation stage counts total pipeline documents.'},
+  {db:'mg',topic:'Indexing',q:'What is a wildcard index in MongoDB?',o:['An index that matches any query','An index that indexes all fields or all fields matching a pattern in documents','A case-insensitive index','An index with wildcards in the collection name'],a:1,sol:'Wildcard indexes ($**) automatically index all fields or a subset of fields matching a pattern. Useful for workloads with unpredictable query patterns on documents with varying schemas.'},
+];
+
+let currentFilter = 'all';
+let filteredQuestions = [...ALL_QUESTIONS];
+let currentIndex = 0;
+let answers = new Array(ALL_QUESTIONS.length).fill(null);
+let correctCount = 0;
+let wrongCount = 0;
+let splashFilter = 'all';
+
+function setFilter(f) {
+  splashFilter = f;
+  document.querySelectorAll('.db-pill').forEach(p => p.classList.remove('active'));
+  event.target.classList.add('active');
+}
+
+function startQuiz() {
+  document.getElementById('splash').style.display = 'none';
+  document.getElementById('quiz').style.display = 'block';
+  filterQuestions(splashFilter);
+}
+
+function filterQuestions(filter) {
+  currentFilter = filter;
+  document.querySelectorAll('.filter-btn').forEach(b => {
+    b.className = 'filter-btn';
+  });
+  document.getElementById('fb-all').className = 'filter-btn' + (filter === 'all' ? ' active-all' : '');
+  document.getElementById('fb-pg').className = 'filter-btn' + (filter === 'pg' ? ' active-pg' : '');
+  document.getElementById('fb-dy').className = 'filter-btn' + (filter === 'dy' ? ' active-dy' : '');
+  document.getElementById('fb-mg').className = 'filter-btn' + (filter === 'mg' ? ' active-mg' : '');
+
+  filteredQuestions = filter === 'all' ? ALL_QUESTIONS : ALL_QUESTIONS.filter(q => q.db === filter);
+  document.getElementById('qTotal').textContent = filteredQuestions.length;
+  currentIndex = 0;
+  updateScoreCounts();
+  renderQuestion();
+}
+
+function renderQuestion() {
+  if (!filteredQuestions.length) return;
+  const q = filteredQuestions[currentIndex];
+  const globalIdx = ALL_QUESTIONS.indexOf(q);
+  const answered = answers[globalIdx] !== null;
+  const userAns = answers[globalIdx];
+
+  document.getElementById('qCurrent').textContent = currentIndex + 1;
+  document.getElementById('qTotal').textContent = filteredQuestions.length;
+  document.getElementById('progressFill').style.width = ((currentIndex + 1) / filteredQuestions.length * 100) + '%';
+
+  const dbColors = {pg:'pg', dy:'dy', mg:'mg'};
+  const dbNames = {pg:'PostgreSQL', dy:'DynamoDB', mg:'MongoDB'};
+  const letters = ['A','B','C','D'];
+
+  let optionsHtml = q.o.map((opt, i) => {
+    let cls = 'option';
+    if (answered) {
+      cls += ' disabled';
+      if (i === q.a) cls += ' correct';
+      else if (i === userAns) cls += ' wrong';
+    }
+    return `<button class="${cls}" onclick="selectAnswer(${i})"">
+      <span class="opt-letter">${letters[i]}</span>
+      <span>${opt}</span>
+    </button>`;
+  }).join('');
+
+  const solShow = answered ? 'show' : '';
+  const solClass = q.db;
+
+  document.getElementById('questionContainer').innerHTML = `
+    <div class="question-card ${dbColors[q.db]}">
+      <div class="q-meta">
+        <span class="db-tag ${q.db}">${dbNames[q.db]}</span>
+        <span class="q-topic">${q.topic}</span>
+        <span class="q-num">Q${globalIdx + 1}</span>
+      </div>
+      <div class="question-text">${q.q}</div>
+      <div class="options-grid">${optionsHtml}</div>
+      <div class="solution-box ${solShow} ${solClass}">
+        <div class="solution-label">✓ Explanation</div>
+        <div class="solution-text">${q.sol}</div>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('jumpInput').value = '';
+}
+
+function selectAnswer(optIdx) {
+  const q = filteredQuestions[currentIndex];
+  const globalIdx = ALL_QUESTIONS.indexOf(q);
+  if (answers[globalIdx] !== null) return;
+
+  answers[globalIdx] = optIdx;
+  if (optIdx === q.a) correctCount++;
+  else wrongCount++;
+
+  updateScoreCounts();
+  renderQuestion();
+}
+
+function updateScoreCounts() {
+  correctCount = 0; wrongCount = 0;
+  ALL_QUESTIONS.forEach((q, i) => {
+    if (answers[i] !== null) {
+      if (answers[i] === q.a) correctCount++;
+      else wrongCount++;
+    }
+  });
+  document.getElementById('correctCount').textContent = correctCount;
+  document.getElementById('wrongCount').textContent = wrongCount;
+}
+
+function nextQ() {
+  if (currentIndex < filteredQuestions.length - 1) {
+    currentIndex++;
+    renderQuestion();
+    window.scrollTo(0, 0);
+  }
+}
+
+function prevQ() {
+  if (currentIndex > 0) {
+    currentIndex--;
+    renderQuestion();
+    window.scrollTo(0, 0);
+  }
+}
+
+function jumpTo() {
+  const val = parseInt(document.getElementById('jumpInput').value);
+  if (val >= 1 && val <= filteredQuestions.length) {
+    currentIndex = val - 1;
+    renderQuestion();
+    window.scrollTo(0, 0);
+  }
+}
+
+function showResults() {
+  const answered = answers.filter(a => a !== null).length;
+  const total = ALL_QUESTIONS.length;
+  const pct = total > 0 ? Math.round((correctCount / Math.max(answered, 1)) * 100) : 0;
+
+  // Per-DB scores
+  const pgQs = ALL_QUESTIONS.filter(q => q.db === 'pg');
+  const dyQs = ALL_QUESTIONS.filter(q => q.db === 'dy');
+  const mgQs = ALL_QUESTIONS.filter(q => q.db === 'mg');
+
+  function dbScore(qs) {
+    const ans = qs.filter((q, i) => answers[ALL_QUESTIONS.indexOf(q)] !== null);
+    const cor = qs.filter(q => answers[ALL_QUESTIONS.indexOf(q)] === q.a);
+    return ans.length ? `${cor.length}/${ans.length}` : '--';
+  }
+
+  document.getElementById('scorePercent').textContent = pct + '%';
+  document.getElementById('scoreLabel').textContent = `${correctCount} / ${answered} CORRECT`;
+  document.getElementById('pgScore').textContent = dbScore(pgQs);
+  document.getElementById('dyScore').textContent = dbScore(dyQs);
+  document.getElementById('mgScore').textContent = dbScore(mgQs);
+
+  const titles = ['Quiz Complete!', answered === total ? '🏆 All Done!' : `${answered}/${total} Answered`];
+  document.getElementById('resultsTitle').textContent = answered === total ? '🏆 All Done!' : `Quiz Summary`;
+  document.getElementById('resultsSub').textContent = `${answered} of ${total} questions answered · ${pct}% accuracy`;
+
+  document.getElementById('results').style.display = 'block';
+  document.getElementById('results').scrollTop = 0;
+}
+
+function retryQuiz() {
+  answers = new Array(ALL_QUESTIONS.length).fill(null);
+  correctCount = 0; wrongCount = 0;
+  currentIndex = 0;
+  document.getElementById('results').style.display = 'none';
+  updateScoreCounts();
+  renderQuestion();
+  window.scrollTo(0, 0);
+}
+
+function goBack() {
+  document.getElementById('results').style.display = 'none';
+}
+
+// Keyboard navigation
+document.addEventListener('keydown', e => {
+  if (document.getElementById('splash').style.display !== 'none') return;
+  if (e.target.tagName === 'INPUT') return;
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') nextQ();
+  if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') prevQ();
+  if (e.key === '1') selectAnswer(0);
+  if (e.key === '2') selectAnswer(1);
+  if (e.key === '3') selectAnswer(2);
+  if (e.key === '4') selectAnswer(3);
+});
+</script>
+</body>
+</html>
