@@ -1,0 +1,1575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agentic AI — 200 MCQ Master Quiz</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --card: #16161f;
+    --border: #2a2a3a;
+    --accent: #00e5ff;
+    --accent2: #7c3aed;
+    --accent3: #10b981;
+    --warn: #f59e0b;
+    --danger: #ef4444;
+    --text: #e8e8f0;
+    --muted: #6b6b8a;
+    --correct: #10b981;
+    --wrong: #ef4444;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* GRID BACKGROUND */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,229,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,229,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* GLOW ORBS */
+  .orb1, .orb2 {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(120px);
+    pointer-events: none;
+    z-index: 0;
+    animation: drift 10s ease-in-out infinite alternate;
+  }
+  .orb1 { width: 500px; height: 500px; background: rgba(124,58,237,0.12); top: -100px; right: -100px; }
+  .orb2 { width: 400px; height: 400px; background: rgba(0,229,255,0.08); bottom: -50px; left: -50px; animation-delay: -5s; }
+  @keyframes drift { from { transform: translate(0,0); } to { transform: translate(30px, 20px); } }
+
+  #app { position: relative; z-index: 1; }
+
+  /* ---- SCREENS ---- */
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  /* ---- SPLASH ---- */
+  #splash {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    text-align: center;
+  }
+  .logo-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: linear-gradient(135deg, #7c3aed22, #00e5ff22);
+    border: 1px solid var(--accent);
+    border-radius: 100px;
+    padding: 6px 18px;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 2px;
+    margin-bottom: 32px;
+    text-transform: uppercase;
+  }
+  .logo-badge::before { content: '◈'; font-size: 14px; }
+  h1.title {
+    font-size: clamp(36px, 7vw, 80px);
+    font-weight: 800;
+    line-height: 1.05;
+    margin-bottom: 8px;
+    background: linear-gradient(135deg, #fff 0%, #00e5ff 50%, #7c3aed 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: -2px;
+  }
+  .subtitle {
+    font-size: 18px;
+    color: var(--muted);
+    margin-bottom: 48px;
+    font-weight: 400;
+    max-width: 480px;
+    line-height: 1.6;
+  }
+  .topic-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    max-width: 680px;
+    margin-bottom: 48px;
+  }
+  .topic-pill {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    padding: 6px 16px;
+    font-size: 12px;
+    font-family: 'Space Mono', monospace;
+    color: var(--muted);
+    transition: all 0.2s;
+  }
+  .topic-pill:hover { border-color: var(--accent); color: var(--accent); }
+
+  .stats-row {
+    display: flex;
+    gap: 32px;
+    margin-bottom: 48px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .stat-box {
+    text-align: center;
+  }
+  .stat-num {
+    font-size: 40px;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-family: 'Space Mono', monospace;
+    display: block;
+  }
+  .stat-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+
+  .mode-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+    max-width: 600px;
+    width: 100%;
+    margin-bottom: 32px;
+  }
+  .mode-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    cursor: pointer;
+    transition: all 0.25s;
+    text-align: left;
+  }
+  .mode-card:hover, .mode-card.selected {
+    border-color: var(--accent);
+    background: #00e5ff0d;
+    transform: translateY(-2px);
+  }
+  .mode-card.selected { border-color: var(--accent); }
+  .mode-icon { font-size: 28px; margin-bottom: 10px; }
+  .mode-name { font-weight: 700; font-size: 15px; margin-bottom: 4px; }
+  .mode-desc { font-size: 12px; color: var(--muted); }
+
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent2), var(--accent));
+    border: none;
+    border-radius: 10px;
+    padding: 16px 48px;
+    font-family: 'Syne', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: #fff;
+    cursor: pointer;
+    transition: all 0.25s;
+    letter-spacing: 0.5px;
+    box-shadow: 0 4px 30px rgba(0,229,255,0.2);
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 40px rgba(0,229,255,0.35); }
+  .btn-primary:active { transform: translateY(0); }
+
+  /* ---- QUIZ SCREEN ---- */
+  #quiz {
+    max-width: 820px;
+    margin: 0 auto;
+    padding: 24px 20px 60px;
+    min-height: 100vh;
+  }
+  .quiz-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 0 24px;
+    gap: 16px;
+  }
+  .q-counter {
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .q-counter span { color: var(--accent); font-weight: 700; }
+  .timer-badge {
+    font-family: 'Space Mono', monospace;
+    font-size: 15px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 6px 14px;
+    color: var(--text);
+    min-width: 70px;
+    text-align: center;
+  }
+  .timer-badge.warn { border-color: var(--warn); color: var(--warn); }
+  .timer-badge.danger { border-color: var(--danger); color: var(--danger); animation: pulse 0.5s ease-in-out infinite alternate; }
+  @keyframes pulse { from { opacity: 1; } to { opacity: 0.5; } }
+
+  .score-live {
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .score-live span { color: var(--correct); font-weight: 700; }
+
+  .progress-bar-wrap {
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    margin-bottom: 32px;
+    overflow: hidden;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent2), var(--accent));
+    border-radius: 2px;
+    transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .category-tag {
+    display: inline-block;
+    background: var(--accent2)22;
+    border: 1px solid var(--accent2)66;
+    border-radius: 6px;
+    padding: 3px 12px;
+    font-size: 11px;
+    font-family: 'Space Mono', monospace;
+    color: #a78bfa;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 16px;
+  }
+
+  .question-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px;
+    margin-bottom: 24px;
+    animation: slideUp 0.3s ease-out;
+  }
+  @keyframes slideUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+
+  .question-num {
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+  .question-text {
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 1.55;
+    color: var(--text);
+  }
+
+  .options-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 24px;
+    animation: slideUp 0.35s ease-out;
+  }
+
+  .option-btn {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 20px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    text-align: left;
+    width: 100%;
+    font-family: 'Syne', sans-serif;
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  .option-btn:hover:not(.disabled) { border-color: var(--accent); background: #00e5ff0a; transform: translateX(4px); }
+  .option-btn.disabled { cursor: default; }
+  .option-letter {
+    min-width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    flex-shrink: 0;
+    transition: all 0.2s;
+  }
+  .option-btn.correct { border-color: var(--correct); background: #10b98118; }
+  .option-btn.correct .option-letter { background: var(--correct); border-color: var(--correct); color: #000; }
+  .option-btn.wrong { border-color: var(--wrong); background: #ef444418; }
+  .option-btn.wrong .option-letter { background: var(--wrong); border-color: var(--wrong); color: #fff; }
+  .option-btn.reveal-correct { border-color: var(--correct)88; background: #10b98108; }
+  .option-btn.reveal-correct .option-letter { border-color: var(--correct); color: var(--correct); }
+
+  .solution-box {
+    background: #0d1f1a;
+    border: 1px solid var(--correct)44;
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin-bottom: 24px;
+    animation: fadeIn 0.3s ease-out;
+  }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  .solution-label {
+    font-size: 11px;
+    font-family: 'Space Mono', monospace;
+    color: var(--correct);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .solution-label::before { content: '✦'; }
+  .solution-text {
+    font-size: 14px;
+    line-height: 1.7;
+    color: #a7f3d0;
+  }
+
+  .nav-row {
+    display: flex;
+    gap: 12px;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .btn-nav {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 24px;
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-nav:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-nav.primary {
+    background: linear-gradient(135deg, var(--accent2), var(--accent));
+    border-color: transparent;
+    color: #fff;
+  }
+  .btn-nav.primary:hover { opacity: 0.9; transform: translateY(-1px); }
+  .btn-skip { font-size: 13px; color: var(--muted); background: none; border: none; cursor: pointer; font-family: 'Syne', sans-serif; transition: color 0.2s; }
+  .btn-skip:hover { color: var(--text); }
+
+  /* BOOKMARK */
+  .bookmark-btn {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 12px;
+    cursor: pointer;
+    color: var(--muted);
+    font-size: 16px;
+    transition: all 0.2s;
+  }
+  .bookmark-btn:hover, .bookmark-btn.active { border-color: var(--warn); color: var(--warn); }
+
+  /* ---- RESULTS SCREEN ---- */
+  #results {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 60px 20px;
+    text-align: center;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .result-grade {
+    font-size: 80px;
+    margin-bottom: 8px;
+    animation: bounceIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  @keyframes bounceIn { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .result-title {
+    font-size: 36px;
+    font-weight: 800;
+    margin-bottom: 8px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .result-subtitle { font-size: 16px; color: var(--muted); margin-bottom: 40px; }
+  .result-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    width: 100%;
+    margin-bottom: 40px;
+  }
+  @media (max-width: 560px) { .result-stats { grid-template-columns: repeat(2, 1fr); } }
+  .result-stat {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 12px;
+  }
+  .result-stat-num {
+    font-size: 32px;
+    font-weight: 800;
+    font-family: 'Space Mono', monospace;
+    display: block;
+    margin-bottom: 4px;
+  }
+  .result-stat-num.green { color: var(--correct); }
+  .result-stat-num.red { color: var(--wrong); }
+  .result-stat-num.blue { color: var(--accent); }
+  .result-stat-num.purple { color: #a78bfa; }
+  .result-stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+
+  .category-breakdown {
+    width: 100%;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 32px;
+    text-align: left;
+  }
+  .breakdown-title {
+    font-size: 13px;
+    font-family: 'Space Mono', monospace;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 20px;
+  }
+  .breakdown-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+  .breakdown-cat { font-size: 12px; min-width: 160px; color: var(--text); }
+  .breakdown-bar-wrap { flex: 1; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+  .breakdown-bar { height: 100%; background: linear-gradient(90deg, var(--accent2), var(--accent)); border-radius: 3px; transition: width 1s ease; }
+  .breakdown-score { font-family: 'Space Mono', monospace; font-size: 12px; color: var(--muted); min-width: 44px; text-align: right; }
+
+  .result-actions { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+  .btn-outline {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 28px;
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* SCROLL BAR */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  /* CATEGORY SELECTOR */
+  .filter-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+    align-items: center;
+  }
+  .filter-label { font-size: 12px; color: var(--muted); font-family: 'Space Mono', monospace; }
+  .filter-pill {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    padding: 4px 14px;
+    font-size: 12px;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'Space Mono', monospace;
+  }
+  .filter-pill:hover, .filter-pill.active { border-color: var(--accent); color: var(--accent); background: #00e5ff0a; }
+
+  @media (max-width: 600px) {
+    .question-card { padding: 20px; }
+    .question-text { font-size: 15px; }
+    .quiz-header { flex-wrap: wrap; }
+  }
+</style>
+</head>
+<body>
+<div class="orb1"></div>
+<div class="orb2"></div>
+<div id="app">
+
+  <!-- SPLASH SCREEN -->
+  <div id="splash" class="screen active">
+    <div class="logo-badge">Master Quiz Series</div>
+    <h1 class="title">Agentic AI<br>MCQ Challenge</h1>
+    <p class="subtitle">200 curated questions across RAG, LLMs, LangChain, LangGraph, Vector DBs, Embeddings, Architectures & System Design</p>
+    <div class="topic-grid">
+      <div class="topic-pill">Agentic AI</div>
+      <div class="topic-pill">RAG Systems</div>
+      <div class="topic-pill">LLM Internals</div>
+      <div class="topic-pill">LangChain</div>
+      <div class="topic-pill">LangGraph</div>
+      <div class="topic-pill">Vector Databases</div>
+      <div class="topic-pill">Embeddings</div>
+      <div class="topic-pill">System Design</div>
+      <div class="topic-pill">Architecture Patterns</div>
+    </div>
+    <div class="stats-row">
+      <div class="stat-box"><span class="stat-num">200</span><div class="stat-label">Questions</div></div>
+      <div class="stat-box"><span class="stat-num">9</span><div class="stat-label">Topics</div></div>
+      <div class="stat-box"><span class="stat-num">30s</span><div class="stat-label">Per Question</div></div>
+    </div>
+    <div class="mode-grid">
+      <div class="mode-card selected" data-mode="timed" onclick="selectMode(this,'timed')">
+        <div class="mode-icon">⏱️</div>
+        <div class="mode-name">Timed</div>
+        <div class="mode-desc">30 sec per question</div>
+      </div>
+      <div class="mode-card" data-mode="practice" onclick="selectMode(this,'practice')">
+        <div class="mode-icon">📖</div>
+        <div class="mode-name">Practice</div>
+        <div class="mode-desc">No timer, learn at pace</div>
+      </div>
+      <div class="mode-card" data-mode="exam" onclick="selectMode(this,'exam')">
+        <div class="mode-icon">🎯</div>
+        <div class="mode-name">Exam</div>
+        <div class="mode-desc">No hints, strict mode</div>
+      </div>
+    </div>
+    <button class="btn-primary" onclick="startQuiz()">Launch Quiz ◈</button>
+  </div>
+
+  <!-- QUIZ SCREEN -->
+  <div id="quiz" class="screen">
+    <div class="quiz-header">
+      <div class="q-counter">Question <span id="q-num">1</span> of <span id="q-total">200</span></div>
+      <div class="timer-badge" id="timer-display">0:30</div>
+      <div class="score-live">Score: <span id="live-score">0</span></div>
+      <button class="bookmark-btn" id="bookmark-btn" onclick="toggleBookmark()" title="Bookmark">☆</button>
+    </div>
+    <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progress-fill"></div></div>
+    <div class="category-tag" id="q-category">Category</div>
+    <div class="question-card">
+      <div class="question-num" id="q-number-label">Q1</div>
+      <div class="question-text" id="q-text">Loading...</div>
+    </div>
+    <div class="options-grid" id="options-container"></div>
+    <div class="solution-box" id="solution-box" style="display:none">
+      <div class="solution-label">Explanation</div>
+      <div class="solution-text" id="solution-text"></div>
+    </div>
+    <div class="nav-row">
+      <button class="btn-skip" onclick="skipQuestion()">Skip →</button>
+      <button class="btn-nav" id="next-btn" onclick="nextQuestion()" style="display:none">Next Question →</button>
+    </div>
+  </div>
+
+  <!-- RESULTS SCREEN -->
+  <div id="results" class="screen">
+    <div class="result-grade" id="result-grade">🏆</div>
+    <div class="result-title" id="result-title">Quiz Complete!</div>
+    <div class="result-subtitle" id="result-subtitle">Here's how you did</div>
+    <div class="result-stats">
+      <div class="result-stat"><span class="result-stat-num green" id="r-correct">0</span><div class="result-stat-label">Correct</div></div>
+      <div class="result-stat"><span class="result-stat-num red" id="r-wrong">0</span><div class="result-stat-label">Wrong</div></div>
+      <div class="result-stat"><span class="result-stat-num blue" id="r-score">0%</span><div class="result-stat-label">Score</div></div>
+      <div class="result-stat"><span class="result-stat-num purple" id="r-streak">0</span><div class="result-stat-label">Best Streak</div></div>
+    </div>
+    <div class="category-breakdown" id="cat-breakdown"></div>
+    <div class="result-actions">
+      <button class="btn-primary" onclick="restartQuiz()">Restart Quiz</button>
+      <button class="btn-outline" onclick="reviewMissed()">Review Missed</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ============================================================
+// 200 QUESTIONS DATA
+// ============================================================
+const questions = [
+  // ─── AGENTIC AI (Q1–30) ────────────────────────────────
+  {cat:"Agentic AI", q:"What defines an agentic AI system compared to a standard LLM chatbot?",
+   opts:["It uses larger language models","It autonomously plans and executes multi-step tasks to achieve goals","It only processes text inputs","It always requires human approval for each action"],
+   ans:1, sol:"Agentic AI systems go beyond single-turn responses. They autonomously decompose goals, plan multi-step workflows, and use tools or APIs to execute those steps — behaving more like goal-driven software agents than reactive chatbots."},
+
+  {cat:"Agentic AI", q:"Which cognitive architecture component is responsible for storing facts about the environment in an AI agent?",
+   opts:["Planner","Memory","Executor","Perceiver"],
+   ans:1, sol:"The Memory component stores environmental facts, past interactions, and contextual information. It can be short-term (in-context window) or long-term (external databases), enabling the agent to reason with historical knowledge."},
+
+  {cat:"Agentic AI", q:"What is the ReAct framework in agentic AI?",
+   opts:["A reinforcement learning technique","An interleaved Reasoning and Acting approach for LLM agents","A reactive neural network architecture","A real-time agent communication protocol"],
+   ans:1, sol:"ReAct (Reasoning + Acting) interleaves chain-of-thought reasoning traces with action execution. The agent thinks about what to do, takes an action (e.g., search), observes the result, and repeats — improving grounding and reducing hallucination."},
+
+  {cat:"Agentic AI", q:"In a multi-agent system, what is an 'orchestrator' agent?",
+   opts:["An agent that only retrieves documents","A coordinator that delegates subtasks to specialized sub-agents","An agent that fine-tunes the base LLM","An agent that monitors for safety violations"],
+   ans:1, sol:"An orchestrator (or planner) agent manages the overall workflow. It decomposes the high-level goal into subtasks, delegates them to specialized sub-agents (e.g., a code agent, a search agent), and synthesizes results into a final answer."},
+
+  {cat:"Agentic AI", q:"What is 'tool use' in the context of LLM agents?",
+   opts:["The LLM generating Python code internally","The ability for an LLM to call external APIs, functions, or services","The use of prompt templates","The model's ability to browse its training data"],
+   ans:1, sol:"Tool use allows LLMs to interact with external systems — executing Python code, querying databases, calling REST APIs, searching the web, or reading files. This dramatically extends what agents can do beyond pure language generation."},
+
+  {cat:"Agentic AI", q:"What problem does 'grounding' address in agentic AI systems?",
+   opts:["Connecting agent outputs to real-world verified information","Speeding up inference time","Reducing model size","Improving user interface design"],
+   ans:0, sol:"Grounding ensures agent outputs are anchored to real, verifiable data rather than hallucinated content. Techniques include RAG (retrieval-augmented generation), tool calls to authoritative APIs, and fact-checking loops."},
+
+  {cat:"Agentic AI", q:"Which of the following best describes 'self-reflection' in agentic AI?",
+   opts:["The agent summarizing its prompt","The agent evaluating and critiquing its own previous outputs to improve them","The agent requesting user feedback","The agent retraining itself on new data"],
+   ans:1, sol:"Self-reflection (used in frameworks like Reflexion) lets an agent critique its own outputs, identify mistakes, and iteratively refine responses. This improves accuracy without requiring additional training."},
+
+  {cat:"Agentic AI", q:"What is the 'plan-and-execute' agent pattern?",
+   opts:["An agent that plans and executes only once","Separate planning and execution phases where a planner generates a task list, and an executor carries it out step by step","An agent that only plans and never executes","An agent that uses A* search for planning"],
+   ans:1, sol:"Plan-and-execute separates concerns: a planning LLM call creates a structured task list, then an execution loop carries out each step using tools. This is more robust for long-horizon tasks than pure ReAct loops."},
+
+  {cat:"Agentic AI", q:"What is the primary risk of giving an AI agent too many permissions?",
+   opts:["The agent becomes slower","Privilege escalation and unintended destructive actions","The context window fills up faster","The model starts hallucinating more"],
+   ans:1, sol:"Over-permissioned agents can accidentally (or via adversarial prompt injection) delete data, exfiltrate information, make unauthorized API calls, or cause irreversible real-world effects. Least-privilege design is a critical safety principle."},
+
+  {cat:"Agentic AI", q:"What is 'prompt injection' in the context of agentic AI?",
+   opts:["Inserting few-shot examples into a prompt","A malicious instruction hidden in external content that hijacks the agent's behavior","The process of injecting retrieved context into prompts","Optimizing prompts via gradient descent"],
+   ans:1, sol:"Prompt injection occurs when an agent retrieves or processes external content (web pages, documents, emails) containing hidden instructions that override its original directives, potentially causing it to perform unauthorized actions."},
+
+  {cat:"Agentic AI", q:"In LLM-based agents, what does 'function calling' enable?",
+   opts:["The LLM to recursively call itself","The LLM to output structured calls to predefined functions that are executed by the application","The LLM to write and immediately run arbitrary code","The LLM to call other LLMs"],
+   ans:1, sol:"Function calling (e.g., OpenAI's tools API, Anthropic's tool use) lets an LLM output a structured JSON object specifying which function to call and with what arguments. The host application executes the function and returns results to the model."},
+
+  {cat:"Agentic AI", q:"What does HITL stand for in agentic AI workflows?",
+   opts:["High-Intelligence Task Loop","Human-In-The-Loop","Hierarchical Inference Task Layers","Heuristic Iterative Training Logic"],
+   ans:1, sol:"HITL (Human-In-The-Loop) refers to checkpoints where a human reviews or approves agent decisions before they are executed. This is especially important for high-stakes or irreversible actions."},
+
+  {cat:"Agentic AI", q:"Which memory type in agents stores information only for the current task/session?",
+   opts:["Episodic memory","Long-term memory","Working memory (short-term)","Semantic memory"],
+   ans:2, sol:"Working memory (in-context window) holds information only for the current session. It is cleared once the conversation ends. Long-term memory uses external stores (vector DBs, databases) that persist across sessions."},
+
+  {cat:"Agentic AI", q:"What is the 'Reflexion' framework for LLM agents?",
+   opts:["A memory compression technique","A framework where agents use verbal self-reflection and episodic memory to improve over trials without gradient updates","A multi-agent communication protocol","A reward model for RLHF"],
+   ans:1, sol:"Reflexion (Shinn et al., 2023) has agents generate verbal self-reflections after failed attempts, storing these in episodic memory. In subsequent trials, the agent uses this memory to avoid repeating mistakes — achieving improvement without retraining."},
+
+  {cat:"Agentic AI", q:"What distinguishes a 'cognitive architecture' from a simple prompt chain?",
+   opts:["Cognitive architectures use neural networks only","Cognitive architectures define structured modules (memory, planning, action) that work together to produce intelligent behavior","Prompt chains are always more powerful","Cognitive architectures never use LLMs"],
+   ans:1, sol:"A cognitive architecture (like BabyAGI, AutoGPT, or LATS) defines distinct functional modules — perception, memory, planning, execution, reflection — that coordinate to produce goal-directed behavior more robustly than a linear chain of prompts."},
+
+  {cat:"Agentic AI", q:"What is the key limitation of 'context window' as working memory for agents?",
+   opts:["It is too fast","It has a finite token limit, is not persistent, and expensive to fill for long tasks","It cannot store structured data","It doesn't support multilingual content"],
+   ans:1, sol:"The context window is finite (even 200K tokens has limits), costly to fill with long histories, and is cleared at session end. For long-horizon tasks, agents need external memory stores (vector DBs, SQL, key-value stores) to persist and retrieve state."},
+
+  {cat:"Agentic AI", q:"What is an 'action space' in agentic AI?",
+   opts:["The physical space where robots operate","The complete set of actions an agent can take (tools, APIs, sub-agents)","The number of tokens the agent can generate","The agent's reward function"],
+   ans:1, sol:"The action space defines every possible action available to an agent — API calls, database queries, code execution, web search, file operations, or communication with other agents. Designing the right action space is crucial to agent capability and safety."},
+
+  {cat:"Agentic AI", q:"What is 'task decomposition' in agentic AI?",
+   opts:["Splitting a large LLM into smaller models","Breaking a complex goal into smaller, manageable subtasks that can be executed sequentially or in parallel","Distributing inference across multiple GPUs","Compressing task descriptions"],
+   ans:1, sol:"Task decomposition (e.g., using chain-of-thought or dedicated planning models) breaks an ambiguous high-level goal (\"write a research report\") into concrete subtasks (search web, read papers, outline, write sections, verify facts) that can be systematically completed."},
+
+  {cat:"Agentic AI", q:"What is the purpose of an 'observation' step in the ReAct loop?",
+   opts:["To observe the user's facial expression","To parse and incorporate the results of the last action into the agent's context before the next reasoning step","To monitor GPU utilization","To log the agent's outputs"],
+   ans:1, sol:"After an agent takes an action (e.g., calls a search API), the Observation step captures the result and appends it to the context. The agent then reasons over the observation to decide the next action, creating a grounded loop."},
+
+  {cat:"Agentic AI", q:"What is 'agent state' in agentic systems like LangGraph?",
+   opts:["The current GPU memory allocation","A data structure that persists and evolves across agent steps, tracking progress, history, and intermediate results","The agent's personality settings","The LLM's internal hidden states"],
+   ans:1, sol:"Agent state is a shared data structure (e.g., a TypedDict in LangGraph) that is read and written at each node in the workflow graph. It tracks the task goal, memory, tool results, and intermediate outputs, enabling stateful multi-step reasoning."},
+
+  {cat:"Agentic AI", q:"What does 'agentic loop' refer to?",
+   opts:["A recursive training procedure","The cyclical process of perceive → reason → act → observe that agents repeat until a goal is achieved","An infinite loop bug in agent code","A type of feedback loop in RL"],
+   ans:1, sol:"The agentic loop is the core execution cycle: the agent perceives its environment, reasons about what to do, takes an action, observes the result, and repeats. This loop continues until the stopping condition (goal achieved, max steps, or user interrupt) is met."},
+
+  {cat:"Agentic AI", q:"What is the main challenge of 'long-horizon task execution' in agents?",
+   opts:["Rendering long output text","Error accumulation over many steps, context window exhaustion, and difficulty recovering from mistakes","Generating images","Handling multilingual inputs"],
+   ans:1, sol:"Over many steps, small errors compound (error compounding), context windows fill up or lose relevant early context, and recovery from wrong intermediate steps becomes harder. Robust agents need checkpointing, error detection, and fallback strategies."},
+
+  {cat:"Agentic AI", q:"In what scenario would you use a 'supervisor' pattern in multi-agent systems?",
+   opts:["When you need a single monolithic agent","When one agent coordinates multiple specialized agents, routing tasks and aggregating results","When agents communicate peer-to-peer","When agents are fine-tuned individually"],
+   ans:1, sol:"The supervisor pattern uses a central orchestrator LLM that receives the overall task, decides which specialist agent (researcher, coder, writer) to invoke, passes results between them, and synthesizes the final output — like a manager directing a team."},
+
+  {cat:"Agentic AI", q:"What is 'tool chaining' in agentic workflows?",
+   opts:["Connecting physical tools in a factory","Using the output of one tool as the input to another in a sequence","Parallel execution of all tools simultaneously","Listing all available tools in the system prompt"],
+   ans:1, sol:"Tool chaining composes multiple tool calls in sequence, where each tool's output feeds into the next. E.g., search the web → extract key points → summarize → format into a report. This enables complex multi-step pipelines."},
+
+  {cat:"Agentic AI", q:"What is the difference between 'proactive' and 'reactive' agents?",
+   opts:["Proactive agents are faster","Reactive agents only respond to triggers; proactive agents initiate actions toward long-term goals without waiting for explicit requests","Reactive agents use more memory","Proactive agents require more compute"],
+   ans:1, sol:"Reactive agents respond only to immediate stimuli (user messages, events). Proactive agents have goal-directed behavior — they monitor conditions, anticipate needs, and initiate actions autonomously to achieve objectives, even without direct prompting."},
+
+  {cat:"Agentic AI", q:"What is 'agent scaffolding'?",
+   opts:["The hardware infrastructure for running agents","The code/framework surrounding an LLM that manages the agentic loop, memory, tool calls, and state","A technique for building physical scaffolding with robots","The LLM fine-tuning process"],
+   ans:1, sol:"Agent scaffolding is the software layer (e.g., LangChain, LangGraph, AutoGen) that orchestrates the LLM. It handles the execution loop, injects retrieved memory, dispatches tool calls, parses outputs, manages state, and handles errors."},
+
+  {cat:"Agentic AI", q:"What is 'goal specification' and why is it critical in agentic AI?",
+   opts:["Writing the agent's system prompt","Precisely defining what the agent should optimize for, including constraints and success criteria, to prevent misaligned behavior","Setting GPU memory limits","Defining the agent's name"],
+   ans:1, sol:"Goal specification defines not just what the agent should do, but how success is measured and what constraints apply. Ambiguous or underspecified goals lead to reward hacking, scope creep, or unintended behavior — a core challenge in AI alignment."},
+
+  {cat:"Agentic AI", q:"What does 'environment' mean in the context of an AI agent?",
+   opts:["The physical room where servers are kept","Everything the agent can perceive and interact with — APIs, databases, files, users, and other agents","The training dataset","The programming language used"],
+   ans:1, sol:"The environment is the agent's operational context: all external systems it can observe (read) and act upon (write/call). This includes APIs, file systems, web browsers, databases, users, and other agents. A well-defined environment is key to safe agent design."},
+
+  {cat:"Agentic AI", q:"What is an 'agent persona' and how does it affect behavior?",
+   opts:["The agent's hardware specifications","A defined role, communication style, and behavioral constraints given to an agent via system prompt","The agent's avatar in a UI","The agent's training loss curve"],
+   ans:1, sol:"An agent persona (defined in the system prompt) specifies its role (e.g., 'You are a senior software engineer'), tone, domain expertise, and behavioral rules. This shapes how it interprets queries, what knowledge it prioritizes, and how it communicates."},
+
+  {cat:"Agentic AI", q:"Which technique allows an agent to decide when to stop the agentic loop?",
+   opts:["A fixed loop counter only","A stopping condition: checking if the goal is achieved, a final answer is ready, or a max-steps limit is reached","The user must always manually stop it","The GPU temperature sensor"],
+   ans:1, sol:"Stopping conditions prevent infinite loops and wasted compute. Common approaches: an LLM decides when it has a final answer (FINISH token), a rule-based check verifies goal completion, or a max_iterations guard terminates after N steps regardless."},
+
+  {cat:"Agentic AI", q:"What is 'parallelization' in multi-agent systems?",
+   opts:["Running the same agent on multiple GPUs","Executing independent subtasks simultaneously across multiple agents to reduce total latency","Compressing parallel data","Training agents in parallel"],
+   ans:1, sol:"When subtasks are independent (e.g., researching different sections of a report simultaneously), multiple specialized agents can execute them in parallel, dramatically reducing total wall-clock time compared to sequential single-agent execution."},
+
+  // ─── RAG (Q31–60) ──────────────────────────────────────
+  {cat:"RAG", q:"What does RAG stand for in the context of LLMs?",
+   opts:["Recurrent Activation Gate","Retrieval-Augmented Generation","Random Attention Gradient","Recursive Auto-regressive Generation"],
+   ans:1, sol:"RAG (Retrieval-Augmented Generation), introduced by Lewis et al. (2020), combines a retrieval system that fetches relevant documents with a generative model that uses them as context. This grounds LLM outputs in up-to-date, domain-specific knowledge."},
+
+  {cat:"RAG", q:"In a RAG pipeline, what is the role of the 'retriever'?",
+   opts:["Generating the final answer","Finding and returning the most relevant documents or chunks from a knowledge store given a query","Fine-tuning the language model","Chunking documents into pieces"],
+   ans:1, sol:"The retriever takes a query (or its embedding), searches a vector store or search index, and returns the top-k most semantically relevant documents/chunks. These are then passed to the generator as context for answer synthesis."},
+
+  {cat:"RAG", q:"What is 'chunking' in a RAG system, and why does it matter?",
+   opts:["Encrypting documents into binary chunks","Splitting documents into smaller segments to fit within context limits and improve retrieval granularity","Compressing documents for storage","Merging multiple documents together"],
+   ans:1, sol:"Chunking divides large documents into smaller pieces (e.g., 256–1024 tokens). Chunk size affects retrieval quality: too large → irrelevant content is retrieved; too small → insufficient context. Overlap between chunks preserves boundary context."},
+
+  {cat:"RAG", q:"What is 'hybrid search' in RAG?",
+   opts:["Using two different LLMs","Combining dense (vector/semantic) search with sparse (keyword/BM25) search for better retrieval coverage","Searching two databases simultaneously","Using half vector and half structured data"],
+   ans:1, sol:"Hybrid search merges dense vector similarity (semantic understanding) with sparse BM25 keyword matching. Dense search excels at conceptual similarity; sparse search handles exact keywords/product codes. Combining them (e.g., via RRF fusion) improves recall across diverse queries."},
+
+  {cat:"RAG", q:"What is 'reranking' in a RAG pipeline?",
+   opts:["Sorting documents alphabetically","A second-pass model (cross-encoder) that re-scores retrieved candidates for relevance, improving precision before passing to the generator","Changing the order of chunks within a document","Re-indexing the vector database"],
+   ans:1, sol:"After initial retrieval (bi-encoder/ANN), a reranker (typically a cross-encoder) takes each query-document pair and scores them more accurately. This two-stage approach balances recall (fast bi-encoder retrieval) with precision (slow but accurate reranking)."},
+
+  {cat:"RAG", q:"What is 'query rewriting' or 'query expansion' in advanced RAG?",
+   opts:["Correcting typos in user queries","Transforming the original query into one or more improved versions to increase retrieval effectiveness","Compressing the query into fewer tokens","Translating the query into another language"],
+   ans:1, sol:"Query rewriting uses an LLM to rephrase ambiguous queries, decompose multi-hop questions, or generate hypothetical answers (HyDE). This bridges the lexical gap between user language and document language, improving retrieval recall significantly."},
+
+  {cat:"RAG", q:"What is HyDE (Hypothetical Document Embeddings)?",
+   opts:["A vector DB compression technique","A technique where an LLM generates a hypothetical answer to a query, and that answer's embedding is used for retrieval instead of the query's embedding","A type of document chunking","A fine-tuning method for embeddings"],
+   ans:1, sol:"HyDE (Gao et al.) generates a hypothetical document that would answer the query using an LLM, then embeds that document for retrieval. Since hypothetical answers and real answers are often in the same embedding space, this often retrieves more relevant chunks than embedding the sparse original query."},
+
+  {cat:"RAG", q:"What is 'naive RAG' vs 'advanced RAG'?",
+   opts:["Naive RAG uses smaller models","Naive RAG is a simple retrieve-then-generate pipeline; Advanced RAG adds query optimization, reranking, iterative retrieval, and post-retrieval processing","Naive RAG uses keyword search only","Advanced RAG requires fine-tuning"],
+   ans:1, sol:"Naive RAG: embed query → ANN search → stuff chunks into prompt → generate. Advanced RAG adds pre-retrieval (query rewriting, routing), retrieval improvements (hybrid search, reranking), and post-retrieval (compression, iterative refinement, self-RAG verification)."},
+
+  {cat:"RAG", q:"What is the 'lost in the middle' problem in RAG?",
+   opts:["Documents stored in the middle of the vector DB are harder to retrieve","LLMs tend to attend to content at the beginning and end of the context window, performing worse on information positioned in the middle","Middle-sized chunks perform worse than large or small ones","The reranker struggles with medium-relevance documents"],
+   ans:1, sol:"Liu et al. (2023) showed that LLMs degrade significantly when the critical information appears in the middle of a long context. RAG systems can mitigate this by ordering the most relevant chunks at the start/end, or using models optimized for long context."},
+
+  {cat:"RAG", q:"What is 'contextual compression' in RAG?",
+   opts:["Compressing the vector index","Extracting only the relevant sentences or passages from retrieved chunks before passing to the LLM, reducing noise","Compressing the LLM weights","Using shorter system prompts"],
+   ans:1, sol:"Contextual compression (e.g., LangChain's ContextualCompressionRetriever) post-processes retrieved documents, extracting only the sentences or passages relevant to the query. This reduces irrelevant noise in the context window, improving answer quality and reducing token cost."},
+
+  {cat:"RAG", q:"What is 'self-RAG'?",
+   opts:["A RAG system that fine-tunes itself","A framework where an LLM generates special reflection tokens to decide when to retrieve, evaluate retrieved passages, and critique its own output during generation","A RAG system without a retriever","A technique for self-supervised embedding training"],
+   ans:1, sol:"Self-RAG (Asai et al., 2023) trains an LLM to generate special tokens (RETRIEVE, ISREL, ISSUP, ISUSE) inline with generation. The model decides on-the-fly whether retrieval is needed, whether retrieved passages are relevant, and whether its output is well-supported."},
+
+  {cat:"RAG", q:"What is 'multi-hop retrieval' in RAG?",
+   opts:["Retrieving from multiple servers","Performing multiple retrieval steps where each step's findings inform the next query, enabling reasoning across disconnected pieces of evidence","Using multiple embedding models","Retrieving the top-k chunks from k different databases"],
+   ans:1, sol:"Multi-hop retrieval is needed for questions requiring reasoning across multiple documents (e.g., 'What city was the CEO of Company X born in?'). The first retrieval finds the CEO's name; the second retrieval finds their birthplace — requiring chained queries."},
+
+  {cat:"RAG", q:"What metric is commonly used to evaluate RAG retrieval quality?",
+   opts:["BLEU score","Hit Rate, MRR (Mean Reciprocal Rank), and NDCG (Normalized Discounted Cumulative Gain)","Perplexity","ROUGE score"],
+   ans:1, sol:"Retrieval metrics: Hit Rate (is the answer chunk in top-k?), MRR (reciprocal rank of first relevant result), NDCG (quality-weighted ranking). Generation metrics include faithfulness (is the answer grounded?) and answer relevance. Frameworks like RAGAS automate these."},
+
+  {cat:"RAG", q:"What is 'parent-child chunking' in RAG?",
+   opts:["Using parent and child LLM models together","Indexing small child chunks for precise retrieval, but returning the larger parent chunk as context to the LLM for richer information","Splitting documents by section hierarchy","A recursive chunking algorithm"],
+   ans:1, sol:"Parent-child chunking indexes small chunks (for precise semantic retrieval) but returns their larger parent chunks (for richer context) to the LLM. This combines retrieval precision with generation context richness — a key technique in LangChain's ParentDocumentRetriever."},
+
+  {cat:"RAG", q:"What is 'RAG hallucination' and how is it different from standard LLM hallucination?",
+   opts:["They are the same thing","RAG hallucination occurs when the LLM generates information not grounded in the retrieved context, even when relevant context was provided","RAG hallucination is only about facts from before the knowledge cutoff","RAG systems cannot hallucinate"],
+   ans:1, sol:"Even with relevant context retrieved, LLMs can still ignore or contradict retrieved information (faithfulness failure) or generate plausible but unsupported claims. RAG reduces but doesn't eliminate hallucination, making faithfulness evaluation (e.g., via RAGAS) essential."},
+
+  {cat:"RAG", q:"What is 'corrective RAG' (CRAG)?",
+   opts:["RAG that corrects grammar errors","A framework that evaluates retrieval quality and, if unsatisfactory, triggers web search or knowledge refinement before generation","A RAG system with automatic document correction","RAG with hallucination post-processing"],
+   ans:1, sol:"CRAG evaluates retrieved documents for relevance. If relevant: use them. If irrelevant: trigger a web search for better sources. If ambiguous: combine both. A 'knowledge refinement' step decomposes documents into fine-grained knowledge strips, improving generation faithfulness."},
+
+  {cat:"RAG", q:"What is the purpose of metadata filtering in RAG?",
+   opts:["To filter out profanity from outputs","To restrict retrieval to documents matching specific metadata criteria (date, author, source, type) before semantic search, improving relevance and speed","To compress document metadata","To filter embeddings by dimension"],
+   ans:1, sol:"Metadata filtering (pre-filtering) narrows the search space before ANN search. Instead of searching all 1M+ chunks, filter to e.g., 'documents from 2024, category=finance' first. This improves retrieval relevance, reduces latency, and cuts costs."},
+
+  {cat:"RAG", q:"What is 'late chunking' or 'late interaction' in RAG?",
+   opts:["Chunking documents after retrieval","Models like ColBERT that compute token-level embeddings and use MaxSim scoring, enabling richer interaction between query and document tokens than single-vector retrieval","Chunking documents during query time","A technique to delay embedding generation"],
+   ans:1, sol:"Late interaction models (ColBERT, ColPali) retain per-token embeddings rather than compressing to a single vector. At retrieval time, MaxSim or similar operators score all query-token vs document-token pairs, enabling fine-grained matching that single-vector bi-encoders miss."},
+
+  {cat:"RAG", q:"What is the difference between 'closed-domain' and 'open-domain' RAG?",
+   opts:["Closed-domain RAG uses paid APIs","Closed-domain retrieves from a fixed, curated knowledge base (e.g., company docs); Open-domain retrieves from vast open sources like the web","Open-domain RAG uses larger models","They are the same"],
+   ans:1, sol:"Closed-domain RAG is common in enterprise (customer support, internal knowledge base) where you control the corpus. Open-domain RAG retrieves from broad external sources (web, Wikipedia). Each has different trade-offs in accuracy, freshness, and trust."},
+
+  {cat:"RAG", q:"What is 'streaming RAG' and why is it useful?",
+   opts:["Streaming data into the vector DB","Returning generated tokens to the user progressively as they are produced (streaming generation), reducing perceived latency in RAG applications","Streaming new documents into the index in real-time","Streaming multiple retrievals in parallel"],
+   ans:1, sol:"Streaming RAG sends tokens to the client as the LLM generates them, rather than waiting for the full response. For RAG applications, this reduces the 'time to first token' perceived latency dramatically, improving user experience especially for long answers."},
+
+  {cat:"RAG", q:"What is 'Modular RAG'?",
+   opts:["A RAG system split across multiple servers","A framework that treats RAG as composable modules (search, memory, fusion, generation) that can be flexibly combined and replaced, beyond the fixed retrieve-then-generate pipeline","A RAG system with modular chunking strategies","A RAG system using modular LLMs"],
+   ans:1, sol:"Modular RAG (Gao et al., 2023) proposes treating RAG as a set of composable modules — retrieval, reranking, fusion, memory, routing, generation — that can be reconfigured for different tasks. This is more flexible than the fixed naive RAG pattern."},
+
+  {cat:"RAG", q:"What is 'RAPTOR' in the RAG ecosystem?",
+   opts:["A fast vector search algorithm","A technique that recursively embeds and clusters text chunks, building a tree of summaries at multiple abstraction levels for multi-granularity retrieval","A transformer architecture","A document parsing library"],
+   ans:1, sol:"RAPTOR (Recursive Abstractive Processing for Tree-Organized Retrieval) clusters chunks, generates summaries of clusters, then clusters and summarizes those — building a tree. Retrieval can happen at multiple levels of abstraction, enabling both fine-grained and high-level queries."},
+
+  {cat:"RAG", q:"What is the significance of 'chunk overlap' in RAG chunking?",
+   opts:["It allows deduplication of chunks","Including a portion of the previous chunk (e.g., 50 tokens) ensures that information spanning chunk boundaries is not lost, preserving context continuity","It speeds up embedding generation","It reduces storage costs"],
+   ans:1, sol:"When a document is split at chunk boundaries, sentences that straddle those boundaries lose context. Overlap (e.g., 20% of chunk size) repeats the tail of one chunk at the head of the next, ensuring boundary-spanning information is captured in at least one chunk."},
+
+  {cat:"RAG", q:"How does RAG reduce LLM hallucination?",
+   opts:["By fine-tuning the model on factual data","By providing the LLM with retrieved ground-truth documents as context, anchoring generation to verifiable sources rather than relying solely on parametric memory","By using larger models","By adding a grammar checker"],
+   ans:1, sol:"RAG anchors LLM generation to retrieved source documents. Instead of relying purely on memorized parametric knowledge (which may be outdated or incorrect), the model is instructed to base answers on provided context, reducing but not eliminating factual errors."},
+
+  {cat:"RAG", q:"What is 'fusion RAG' or 'RAG-Fusion'?",
+   opts:["Merging two RAG systems","Generating multiple query variations, retrieving results for each, and fusing them via Reciprocal Rank Fusion (RRF) to create a more comprehensive, diversified result set","Combining RAG with fine-tuning","Fusing multiple LLM outputs"],
+   ans:1, sol:"RAG-Fusion generates N paraphrased versions of the original query, retrieves documents for each, and merges all results using RRF (Reciprocal Rank Fusion). This reduces retrieval gaps from any single query formulation and improves recall across diverse query phrasings."},
+
+  {cat:"RAG", q:"What is 'Agentic RAG'?",
+   opts:["RAG used inside a robotic system","Combining agentic capabilities (planning, tool use, multi-step reasoning) with RAG, so an agent can decide when and how to retrieve, and iteratively refine its retrieval strategy","RAG with an automated reranker","RAG that uses multi-agent systems"],
+   ans:1, sol:"Agentic RAG uses an LLM agent to orchestrate retrieval dynamically: the agent decides whether to retrieve, formulates targeted queries, evaluates retrieved content, and can perform multiple retrieval rounds. This goes beyond static one-shot retrieval."},
+
+  {cat:"RAG", q:"What is the purpose of a 'knowledge graph' in advanced RAG?",
+   opts:["To visualize agent workflows","To represent structured relationships between entities, enabling multi-hop reasoning and more precise retrieval of related facts that flat vector search may miss","To speed up embedding generation","To store model weights"],
+   ans:1, sol:"Knowledge graphs represent entities and their relationships as nodes and edges. GraphRAG combines vector similarity search with graph traversal, enabling multi-hop reasoning (A→B→C) and retrieval of structurally related information that semantic similarity alone might not surface."},
+
+  {cat:"RAG", q:"What is 'iterative RAG' or 'recursive RAG'?",
+   opts:["Repeating the same retrieval query multiple times","A pattern where each retrieval-generation step uses the previous answer to formulate better retrieval queries, iteratively building toward a complete answer","A technique for iterative embedding refinement","Recursive chunking of large documents"],
+   ans:1, sol:"Iterative RAG performs multiple retrieve-generate cycles. After the first retrieval and partial answer generation, the agent identifies knowledge gaps, formulates targeted follow-up queries, retrieves again, and refines the answer — enabling complex multi-hop reasoning."},
+
+  {cat:"RAG", q:"How does 'semantic caching' improve RAG performance?",
+   opts:["By compressing the vector index","By caching previous query embeddings and their results; when a new query is semantically similar to a cached one, the cached result is returned without re-retrieval, saving latency and cost","By caching LLM model weights","By caching document metadata"],
+   ans:1, sol:"Semantic caching stores (query_embedding, result) pairs. For new queries within a similarity threshold of cached queries, the cached result is returned instantly — bypassing vector search and LLM inference. Tools like GPTCache implement this for RAG pipelines."},
+
+  {cat:"RAG", q:"What is 'document grading' in a RAG system?",
+   opts:["Assigning quality scores during document ingestion","An LLM-based step that evaluates whether a retrieved document is actually relevant to the query before passing it to the generator","The process of scoring documents for archiving","Grading documents for educational use"],
+   ans:1, sol:"Document grading (used in LangGraph RAG tutorials) uses an LLM to score each retrieved chunk for relevance to the query. Irrelevant chunks are filtered out before generation, improving answer faithfulness and reducing context noise."},
+
+  {cat:"RAG", q:"What is the 'knowledge cutoff' problem in LLMs and how does RAG address it?",
+   opts:["LLMs cannot process very long documents","LLMs have static parametric knowledge up to a training date; RAG addresses this by dynamically retrieving up-to-date documents at inference time, providing current information without retraining","LLMs use too much memory","RAG doesn't address this problem"],
+   ans:1, sol:"LLMs are trained on static datasets with a knowledge cutoff. Events, research, or facts after this date are unknown to the model. RAG enables LLMs to access fresh, current documents at query time — combining the language ability of LLMs with always-fresh retrieval systems."},
+
+  // ─── LLM (Q61–90) ─────────────────────────────────────
+  {cat:"LLM", q:"What is the 'transformer' architecture primarily characterized by?",
+   opts:["Recurrent connections and LSTM cells","Self-attention mechanisms that allow every token to attend to every other token in the sequence","Convolutional filters applied to text","Feedforward layers without attention"],
+   ans:1, sol:"Transformers (Vaswani et al., 2017) use self-attention to compute relationships between all tokens in parallel. Unlike RNNs, there are no recurrent connections — the entire sequence is processed simultaneously, enabling massive parallelization and capturing long-range dependencies."},
+
+  {cat:"LLM", q:"What is 'context length' in an LLM?",
+   opts:["The length of the training dataset","The maximum number of tokens the model can process in a single forward pass (input + output combined)","The duration of a conversation","The number of layers in the transformer"],
+   ans:1, sol:"Context length (context window) defines how many tokens the model can 'see' at once. Tokens include both the prompt (input) and the generated output. Longer contexts (e.g., 128K, 1M tokens) enable processing of books, long codebases, or extended conversations."},
+
+  {cat:"LLM", q:"What is 'temperature' in LLM text generation?",
+   opts:["The physical temperature of the GPU","A sampling parameter that scales logits before softmax, controlling output randomness — higher values increase diversity, lower values increase determinism","The LLM's learning rate","The size of the training batch"],
+   ans:1, sol:"Temperature T scales the logit distribution before softmax. T→0 makes the model near-deterministic (always picks the top token); T=1 is standard; T>1 increases randomness. For factual RAG tasks, low temperature (0.0–0.3) is preferred; for creative tasks, higher values work better."},
+
+  {cat:"LLM", q:"What is 'RLHF' (Reinforcement Learning from Human Feedback)?",
+   opts:["A technique to make LLMs run faster on RL hardware","A training process that uses human preference ratings to train a reward model, then fine-tunes the LLM with PPO to align outputs with human values","An inference optimization technique","A method for reducing LLM size"],
+   ans:1, sol:"RLHF (used in InstructGPT, ChatGPT, Claude) has humans rank LLM outputs, trains a reward model on these rankings, then uses PPO (Proximal Policy Optimization) RL to fine-tune the LLM to maximize the reward — aligning the model with human preferences."},
+
+  {cat:"LLM", q:"What is 'Chain-of-Thought' (CoT) prompting?",
+   opts:["Prompting the model to generate code step-by-step","Prompting the LLM to show its reasoning process ('let's think step by step') before giving the final answer, improving performance on complex reasoning tasks","Chaining multiple LLM calls sequentially","A technique for generating longer outputs"],
+   ans:1, sol:"CoT prompting (Wei et al., 2022) encourages LLMs to generate intermediate reasoning steps before the final answer. This dramatically improves performance on math, logic, and multi-step reasoning by making the model's thinking explicit and allowing it to catch errors."},
+
+  {cat:"LLM", q:"What is 'few-shot prompting'?",
+   opts:["Using a small language model","Providing a few examples (input-output pairs) in the prompt to demonstrate the desired task format and style, enabling in-context learning","Fine-tuning on a few examples","Using few tokens in the prompt"],
+   ans:1, sol:"Few-shot prompting includes N demonstration examples in the prompt (typically 3–10). The model uses these as in-context learning signal to understand the task format, style, and constraints without any weight updates — a key strength of large models."},
+
+  {cat:"LLM", q:"What is the difference between 'encoder-only', 'decoder-only', and 'encoder-decoder' transformer architectures?",
+   opts:["They differ only in size","Encoder-only (BERT) is for understanding tasks; Decoder-only (GPT) is for generation; Encoder-decoder (T5) handles sequence-to-sequence tasks like translation","They differ only in training data","Encoder-only models are always larger"],
+   ans:1, sol:"Encoder-only (BERT, RoBERTa): bidirectional attention, best for classification, NER, embeddings. Decoder-only (GPT-4, Llama, Claude): causal/autoregressive, best for text generation. Encoder-decoder (T5, BART): separate encoder and decoder, best for translation, summarization, Q&A."},
+
+  {cat:"LLM", q:"What is 'top-p (nucleus) sampling' in LLM generation?",
+   opts:["Sampling from the top P% of training data","Sampling from the smallest set of tokens whose cumulative probability exceeds P, dynamically adjusting the vocabulary size based on distribution shape","Always selecting the P most likely tokens","A fixed-width beam search with width P"],
+   ans:1, sol:"Nucleus sampling (Holtzman et al.) samples from the minimal vocabulary set whose cumulative probability ≥ p (e.g., 0.9). Unlike top-k (which always samples from exactly k tokens), top-p adapts to the distribution — sampling from fewer tokens when the model is confident, more when uncertain."},
+
+  {cat:"LLM", q:"What is 'fine-tuning' an LLM and when would you use it over RAG?",
+   opts:["Training the LLM from scratch","Updating a pre-trained model's weights on a task-specific dataset to improve performance on that domain, preferred over RAG when the knowledge is stable, style matters, or the model needs to internalize procedural knowledge","Adding more layers to the model","A synonym for RAG"],
+   ans:1, sol:"Fine-tuning adapts the model's parametric knowledge to a specific domain, style, or behavior. Use it when: knowledge is stable (not frequently updated), consistent format/style is needed, or complex reasoning patterns must be internalized. Use RAG when: knowledge must be current, sources need to be cited, or data is proprietary/large."},
+
+  {cat:"LLM", q:"What is 'LoRA' (Low-Rank Adaptation) in LLM fine-tuning?",
+   opts:["A compression algorithm for LLM weights","A parameter-efficient fine-tuning technique that injects trainable low-rank matrices into attention layers, reducing trainable parameters by 99%+ while matching full fine-tune performance","A low-latency inference framework","A logging and monitoring library for LLMs"],
+   ans:1, sol:"LoRA (Hu et al., 2021) freezes the original model weights and injects small trainable rank-decomposition matrices (W = W₀ + BA, rank r ≪ d) into attention layers. This reduces trainable parameters from billions to millions, enabling fine-tuning on consumer hardware without catastrophic forgetting."},
+
+  {cat:"LLM", q:"What is 'prompt engineering' and why does it matter?",
+   opts:["Engineering hardware optimized for prompt processing","The systematic design of prompts (instructions, examples, context, format) to elicit desired behaviors from LLMs without modifying model weights","Writing prompts in multiple languages","Compressing prompts for efficiency"],
+   ans:1, sol:"Prompt engineering involves crafting the instruction, context, examples, and output format to guide LLM behavior. Well-engineered prompts dramatically affect output quality, consistency, and safety — often outperforming naive approaches without any model training."},
+
+  {cat:"LLM", q:"What is 'hallucination' in LLMs?",
+   opts:["When the model processes images incorrectly","When an LLM generates confident-sounding but factually incorrect, fabricated, or nonsensical content not grounded in training data or provided context","When the model runs out of GPU memory","A type of adversarial attack on LLMs"],
+   ans:1, sol:"Hallucination occurs because LLMs generate text based on statistical patterns rather than retrieving facts. They can confidently invent citations, names, events, or technical details that sound plausible but are false. RAG, grounding, and factuality evaluation are key mitigations."},
+
+  {cat:"LLM", q:"What is 'in-context learning' (ICL)?",
+   opts:["Learning that happens inside a convolutional context","The ability of large LLMs to adapt to new tasks at inference time solely from examples provided in the prompt, without updating model weights","A self-supervised learning paradigm","Training on contextual word embeddings"],
+   ans:1, sol:"ICL (demonstrated with GPT-3) shows that sufficiently large LLMs can perform novel tasks (translation, classification, arithmetic) by observing a few examples in the prompt — no gradient updates needed. Emergent at scale, ICL is a key property enabling versatile LLM-based applications."},
+
+  {cat:"LLM", q:"What is 'tokenization' in LLMs?",
+   opts:["Converting model outputs to binary","The process of splitting input text into tokens (subwords, words, or characters) that the model processes as discrete units","Encrypting input text","Normalizing text to lowercase"],
+   ans:1, sol:"Tokenizers (e.g., BPE, SentencePiece, tiktoken) convert raw text into integer token IDs. Most modern LLMs use BPE or similar, where common subwords get single tokens. Tokenization affects context length (1 token ≈ 0.75 words in English), cost, and model behavior."},
+
+  {cat:"LLM", q:"What is 'attention mechanism' in transformers and what problem does it solve?",
+   opts:["A hardware mechanism for memory access","A mechanism allowing each token to dynamically weigh the relevance of all other tokens in the sequence, solving the problem of capturing long-range dependencies that RNNs struggle with","A technique to speed up inference","A regularization technique"],
+   ans:1, sol:"Self-attention computes Query, Key, Value projections for each token. Attention scores (softmax(QKᵀ/√d)) weight how much each position attends to others. This captures long-range dependencies (e.g., a pronoun referring to an entity 500 tokens earlier) in O(n²) time."},
+
+  {cat:"LLM", q:"What is 'beam search' in LLM decoding?",
+   opts:["A search algorithm for training hyperparameters","A decoding strategy that maintains B candidate sequences (beams) at each step, expanding the most promising ones to find high-probability output sequences","A method for filtering training data","A regularization technique for transformers"],
+   ans:1, sol:"Beam search keeps the top-B (beam width) most likely partial sequences at each generation step, expanding each by all vocabulary tokens and pruning to top-B. It finds higher-probability sequences than greedy search but at B× the compute cost. Common in translation; less used for open-ended generation."},
+
+  {cat:"LLM", q:"What are 'emergent abilities' in LLMs?",
+   opts:["Abilities added through fine-tuning","Capabilities that appear abruptly at certain model scales and are not present in smaller models, such as multi-step reasoning, code generation, and in-context learning","Features engineered by researchers","Abilities that emerge from training on code data only"],
+   ans:1, sol:"Emergent abilities (Wei et al., 2022) are capabilities that appear unpredictably at certain scale thresholds and are absent in smaller models. Examples: arithmetic (appears ~100B params), chain-of-thought reasoning, multilingual translation. This makes scaling LLMs qualitatively different from small models."},
+
+  {cat:"LLM", q:"What is 'speculative decoding' in LLM inference?",
+   opts:["Predicting whether the user will like the output","Using a small draft model to generate candidate tokens in parallel, then using the large model to verify them in a single forward pass, reducing latency for token generation","Training on speculative future data","A decoding strategy for financial forecasting LLMs"],
+   ans:1, sol:"Speculative decoding (Leviathan et al.) uses a small fast draft model to propose K tokens at once, then the large model verifies all K tokens in one parallel forward pass. Accepted tokens are kept; rejected ones are resampled. This achieves 2–4× speedup with identical output distribution."},
+
+  {cat:"LLM", q:"What is 'KV cache' in LLM inference?",
+   opts:["A hardware cache for GPU kernels","Cached Key-Value attention matrices from the prompt/previous tokens, allowing the model to reuse previous computations during autoregressive generation without recomputing from scratch","A key-value store for LLM-generated data","A caching layer for RAG retrieved documents"],
+   ans:1, sol:"During autoregressive generation, each new token attends to all previous tokens. Without KV cache, all previous K,V matrices would be recomputed for each token — O(n²) per step. KV cache stores K,V from past tokens, reducing each step to O(n) by reusing previous computations."},
+
+  {cat:"LLM", q:"What is 'Constitutional AI' (CAI) in the context of LLM alignment?",
+   opts:["Using laws to regulate LLM use","A training technique (Anthropic) where the model critiques and revises its own outputs using a set of principles (constitution), reducing harmful outputs without human labels for each example","A constitutional law AI system","An AI that generates legal constitutions"],
+   ans:1, sol:"CAI (Anthropic, 2022) has the LLM critique and revise its own harmful outputs using a written constitution of principles (e.g., 'don't assist with harmful tasks'). A model fine-tuned on these self-critiques shows reduced harm with less reliance on human labeling of toxic examples."},
+
+  {cat:"LLM", q:"What is 'system prompt' in LLM APIs?",
+   opts:["The prompt used to start the server","A special message given before the conversation that sets the model's role, behavior, persona, and constraints — invisible to users but influential on all outputs","The first user message","The model's internal initialization state"],
+   ans:1, sol:"The system prompt (supported by GPT-4, Claude, Gemini, etc.) is a privileged instruction given at the start of a conversation. It defines the assistant's persona, domain, safety rules, output format, and behavioral constraints. It persists across the conversation."},
+
+  {cat:"LLM", q:"What is 'quantization' in the context of LLM deployment?",
+   opts:["Measuring model output quality","Reducing model weight precision (e.g., from FP16 to INT8 or INT4) to decrease memory footprint and increase inference speed, with some accuracy trade-off","Increasing the number of model parameters","A technique for multi-GPU training"],
+   ans:1, sol:"Quantization compresses model weights from FP16/BF16 (16-bit) to INT8 (8-bit) or INT4 (4-bit), reducing VRAM by 2–4×. Techniques like GPTQ, AWQ, and llama.cpp's GGUF enable running large models on consumer GPUs with minimal accuracy degradation."},
+
+  {cat:"LLM", q:"What is 'Mixture of Experts' (MoE) architecture in LLMs?",
+   opts:["Training multiple completely different LLMs","An architecture where a gating network routes each token to a subset of 'expert' feedforward layers, enabling very large model capacity while keeping per-token compute constant","Using multiple users to evaluate model outputs","A multi-GPU training strategy"],
+   ans:1, sol:"MoE (used in Mixtral, GPT-4 reportedly) has many expert FFN layers per transformer block but only activates K (e.g., 2) per token via a learned router. This gives a model with e.g. 8 experts and 2 active the capacity of a large model at the inference cost of a smaller one."},
+
+  {cat:"LLM", q:"What is 'perplexity' as an LLM evaluation metric?",
+   opts:["How confused users are by the model's outputs","The exponential of average negative log-likelihood of a test set — measuring how well the model predicts held-out text; lower perplexity means better language modeling","The model's response latency","The diversity of model outputs"],
+   ans:1, sol:"Perplexity = exp(average NLL) measures how 'surprised' a language model is by a test corpus. Lower perplexity = better language model. It's an intrinsic metric useful for comparing model quality on the same distribution but doesn't directly measure factuality, helpfulness, or safety."},
+
+  {cat:"LLM", q:"What is 'token budget' management in LLM applications?",
+   opts:["Managing hardware budget for GPU tokens","Strategically allocating the context window among system prompt, retrieved context, conversation history, and output to maximize quality within cost and context length limits","A financial model for LLM API costs","Tracking token generation speed"],
+   ans:1, sol:"Every LLM API call has token limits and per-token costs. Token budget management involves: compressing system prompts, summarizing old history, selecting only the most relevant retrieved chunks, and reserving output tokens. Frameworks like LangChain have utilities for this."},
+
+  // ─── VECTOR DB (Q91–115) ──────────────────────────────
+  {cat:"Vector DB", q:"What is a vector database, and how does it differ from a traditional relational database?",
+   opts:["It stores data in vectors of bits like traditional DBs","It stores high-dimensional vector embeddings and supports efficient similarity search (ANN), unlike relational DBs which use exact-match indexes and SQL","It's a database that only supports matrix operations","It uses vectorized SQL queries for faster execution"],
+   ans:1, sol:"Vector databases (Pinecone, Weaviate, Qdrant, Milvus, ChromaDB) store embedding vectors and retrieve the nearest neighbors via approximate algorithms (HNSW, IVF). Unlike SQL's exact-match B-tree indexes, vector DBs support semantic similarity search — finding 'close' rather than 'equal' items."},
+
+  {cat:"Vector DB", q:"What is HNSW (Hierarchical Navigable Small World)?",
+   opts:["A hierarchical neural network for sequence modeling","A graph-based ANN algorithm that builds a multi-layer graph connecting nearby vectors, enabling very fast approximate nearest-neighbor search with high recall","A hardware-accelerated search chip","A distributed database architecture"],
+   ans:1, sol:"HNSW (Malkov & Yashunin, 2018) constructs a multi-layer navigable small world graph over vectors. Search starts at the top layer (few long-range links), greedily descends to find neighbors, then refines at the bottom dense layer. Achieves excellent recall-speed tradeoff; used in Faiss, Qdrant, Weaviate."},
+
+  {cat:"Vector DB", q:"What does 'ANN' stand for in vector search?",
+   opts:["Artificial Neural Network","Approximate Nearest Neighbor","Automated Normalization Network","Accelerated Numeric Notation"],
+   ans:1, sol:"ANN (Approximate Nearest Neighbor) algorithms find vectors close to the query without exhaustively comparing all N vectors. This trades a small recall loss for massive speed gains (sub-millisecond at scale). HNSW, IVF, ScaNN, and Annoy are popular ANN algorithms."},
+
+  {cat:"Vector DB", q:"What is the 'cosine similarity' metric used in vector search?",
+   opts:["The ratio of vector lengths","A measure of the angle between two vectors, ranging from -1 (opposite) to 1 (identical direction), commonly used for comparing normalized embedding vectors regardless of their magnitude","The dot product of two vectors","The Euclidean distance between vectors"],
+   ans:1, sol:"Cosine similarity = (A·B)/(|A||B|) measures the cosine of the angle between vectors. It's direction-sensitive, not magnitude-sensitive — making it ideal for embeddings where direction encodes meaning. For unit-normalized vectors, cosine similarity equals the dot product."},
+
+  {cat:"Vector DB", q:"What is 'IVF' (Inverted File Index) in vector search?",
+   opts:["An inverted index of document words","A vector quantization technique that clusters vectors into Voronoi cells; search is restricted to the nearest cluster(s), dramatically reducing the number of comparisons needed","An index of inverted transformers","A file format for vector storage"],
+   ans:1, sol:"IVF clusters the dataset into K centroids (via k-means). At search time, only vectors in the nprobe nearest clusters are compared against the query. IVF dramatically reduces search space (from N to ~N/K vectors) at the cost of recall if the relevant vector's cluster isn't probed."},
+
+  {cat:"Vector DB", q:"What is 'scalar quantization' (SQ) and 'product quantization' (PQ) in vector DBs?",
+   opts:["Techniques for scaling and quantizing model parameters","Compression techniques: SQ compresses individual float values; PQ divides vectors into sub-vectors and encodes each with a codebook, achieving 8–32× compression with modest recall loss","Methods for scaling database read performance","Techniques for normalizing query vectors"],
+   ans:1, sol:"Scalar Quantization maps float32 values to int8, saving 4× memory. Product Quantization (Jégou et al.) splits vectors into M sub-vectors, quantizes each with a small codebook (256 centroids), and stores only codebook indices — achieving 8–32× compression. Faiss uses PQ extensively."},
+
+  {cat:"Vector DB", q:"What is a 'namespace' or 'collection' in a vector database?",
+   opts:["A partition in a relational DB","A logical isolation unit within a vector DB for organizing vectors by type, user, or domain, enabling multi-tenancy and namespace-scoped search without cross-contamination","A naming convention for embeddings","A schema definition for vector fields"],
+   ans:1, sol:"Collections (Qdrant, Milvus) or indexes (Pinecone) partition the vector space. Each collection has its own schema (dimensionality, distance metric, metadata). Namespace/collection separation is critical for multi-tenant RAG applications where different users/tenants must not see each other's data."},
+
+  {cat:"Vector DB", q:"What is the 'recall' metric in the context of ANN vector search evaluation?",
+   opts:["The model's ability to recall facts","The fraction of true nearest neighbors (from exact search) that are returned by the ANN algorithm, measuring how closely ANN approximates exact search","The vector DB query response time","The compression ratio of vector quantization"],
+   ans:1, sol:"Recall@k = |ANN top-k ∩ Exact top-k| / k. A recall of 0.95 means ANN finds 95% of the true top-k nearest neighbors. High recall with high speed (throughput) is the core ANN trade-off, controlled by parameters like ef_search in HNSW or nprobe in IVF."},
+
+  {cat:"Vector DB", q:"What is 'dense retrieval' vs 'sparse retrieval'?",
+   opts:["Dense retrieval uses more storage","Dense retrieval uses neural embedding vectors for semantic similarity; sparse retrieval uses term-frequency vectors (BM25, TF-IDF) for keyword matching","Dense retrieval is slower than sparse","They are equivalent techniques"],
+   ans:1, sol:"Dense retrieval (DPR, bi-encoders) embeds queries and documents as continuous dense vectors, capturing semantic meaning. Sparse retrieval (BM25, SPLADE) uses high-dimensional sparse term-frequency vectors, excelling at exact keyword/entity matching. Hybrid search combines both."},
+
+  {cat:"Vector DB", q:"What is 'upsert' in the context of a vector database?",
+   opts:["An upward sort of vectors","An insert-or-update operation: if a vector with the given ID exists, update it; if not, insert it","A technique for upward scaling a vector DB","A search operation that returns vectors in ascending order"],
+   ans:1, sol:"Upsert (update + insert) is the standard way to add vectors to most vector DBs (Pinecone, Qdrant). If the provided ID already exists, the stored vector and metadata are replaced; otherwise a new entry is created. This simplifies incremental indexing pipelines."},
+
+  {cat:"Vector DB", q:"What is 'filtered vector search' and why is it critical for RAG?",
+   opts:["Filtering low-quality vectors from the index","Combining semantic similarity search with boolean metadata filters (e.g., date > 2024, category = 'tech') to retrieve vectors that are both semantically relevant AND match specific criteria","A technique for filtering embeddings by dimension","A security layer for restricting DB access"],
+   ans:1, sol:"Filtered search is essential for multi-tenant RAG, time-bounded retrieval, and structured data. Challenge: filters applied post-ANN miss valid results (filtered recall problem); filters applied pre-ANN can be slow. Modern DBs (Qdrant, Weaviate) handle this efficiently with pre-filtering indexes."},
+
+  {cat:"Vector DB", q:"What is 'Faiss' and who developed it?",
+   opts:["A fast text search library by Google","A library by Meta AI for efficient similarity search and clustering of dense vectors, supporting CPU and GPU, widely used as the ANN backend for vector DBs and RAG systems","A financial AI search system","A federated AI search standard"],
+   ans:1, sol:"Faiss (Facebook AI Similarity Search) by Meta AI provides optimized implementations of IVF, HNSW, PQ, and other ANN algorithms. It's the foundation for many vector databases and RAG systems, offering both CPU and GPU implementations in C++ with Python bindings."},
+
+  {cat:"Vector DB", q:"What is the significance of vector 'dimensionality' in a vector database?",
+   opts:["Higher dimensions always mean better performance","Higher-dimensional embeddings capture more semantic nuance but require more memory and can slow down search due to the 'curse of dimensionality'; choosing the right dimension balances quality and efficiency","Dimensionality only affects storage, not search speed","All modern embeddings use 768 dimensions"],
+   ans:1, sol:"Embedding dimension ranges from 384 (all-MiniLM-L6) to 3072 (text-embedding-3-large). Higher dimensions capture more nuance but increase memory (4× dim bytes per vector) and can slow ANN search. The curse of dimensionality makes distance less discriminative at very high dimensions. PCA/Matryoshka embeddings offer flexible trade-offs."},
+
+  {cat:"Vector DB", q:"What is the 'Matryoshka Representation Learning' (MRL) technique for embeddings?",
+   opts:["A Russian-inspired model architecture","A training technique that embeds information hierarchically in embedding prefixes, so you can truncate to a shorter dimension and still get a useful (though less accurate) embedding","A multi-model ensemble technique","A method for storing embeddings in nested databases"],
+   ans:1, sol:"MRL (Kusupati et al.) trains embeddings so that the first d dimensions of an n-d embedding are themselves a meaningful d-dimensional embedding. This enables adaptive-length retrieval: use 256d for fast coarse retrieval, then 1536d for precise reranking — the foundation of OpenAI's text-embedding-3 models."},
+
+  {cat:"Vector DB", q:"What is the difference between Pinecone, Qdrant, Weaviate, and Chroma as vector databases?",
+   opts:["They are identical products","Pinecone is a managed cloud-native DB; Qdrant is open-source with strong filtering and Rust performance; Weaviate offers multi-modal and hybrid search; Chroma is lightweight and developer-friendly for local/prototyping use","Only Pinecone supports production use","They all use the same underlying ANN algorithm"],
+   ans:1, sol:"Pinecone: fully managed, serverless, best for production at scale. Qdrant: open-source/managed, Rust-based, excellent filtered search. Weaviate: open-source, GraphQL API, multimodal, hybrid BM25+vector. Chroma: simple Python API, great for local dev and prototyping. Milvus: high-scale open-source with GPU support."},
+
+  {cat:"Vector DB", q:"What is 'sparse + dense hybrid index' in vector databases?",
+   opts:["Using two different hardware systems","An index combining BM25/SPLADE sparse vectors with dense neural embeddings, allowing a single query to leverage both keyword precision and semantic understanding in one search operation","An index that stores data in two formats","A technique for indexing structured and unstructured data"],
+   ans:1, sol:"Hybrid indexes (supported by Weaviate, Qdrant, Elasticsearch) maintain both a sparse BM25 inverted index and a dense HNSW vector index simultaneously. A query can retrieve candidates from both, then merge results via RRF or learned fusion — achieving higher recall than either alone."},
+
+  // ─── EMBEDDINGS (Q116–140) ─────────────────────────────
+  {cat:"Embeddings", q:"What is a 'text embedding' in the context of NLP and LLMs?",
+   opts:["A way to embed HTML into text","A dense vector representation of text that captures semantic meaning, such that similar texts produce nearby vectors in the embedding space","A method for compressing text files","A tokenization technique"],
+   ans:1, sol:"Text embeddings convert words, sentences, or documents into fixed-length dense vectors (e.g., 768d or 1536d float32). The vector space is trained so semantically similar texts cluster nearby. Used in semantic search, RAG, clustering, classification, and anomaly detection."},
+
+  {cat:"Embeddings", q:"What is a 'bi-encoder' architecture for embeddings?",
+   opts:["An encoder with two attention heads","Two separate encoders (one for queries, one for documents) that independently encode each into a single vector, with similarity computed as dot product or cosine — enabling fast pre-computation of document embeddings","A model with two transformer layers","An encoder that processes bidirectional text simultaneously"],
+   ans:1, sol:"Bi-encoders (e.g., Sentence-BERT, E5, GTE) encode queries and documents independently into single vectors. Documents can be pre-embedded offline; at search time only the query is encoded. This enables fast ANN search but sacrifices the fine-grained token interaction a cross-encoder would provide."},
+
+  {cat:"Embeddings", q:"What is a 'cross-encoder' and how does it differ from a bi-encoder?",
+   opts:["An encoder that works on both images and text","A model that jointly encodes the query-document pair, attending to both simultaneously, providing higher relevance accuracy but requiring inference at retrieval time (no pre-computation)","An encoder with crossed attention weights","A bi-encoder used for cross-lingual tasks"],
+   ans:1, sol:"Cross-encoders concatenate query and document and pass through a transformer together — allowing full attention between all token pairs. This produces more accurate relevance scores than bi-encoders but requires fresh inference per query-document pair (O(N) at query time), making them ideal for reranking top-k candidates."},
+
+  {cat:"Embeddings", q:"What is 'semantic similarity' vs 'lexical similarity'?",
+   opts:["They are the same thing","Lexical similarity is based on shared words/characters; semantic similarity captures meaning regardless of exact wording, so 'car' and 'automobile' are semantically similar but lexically different","Semantic similarity is always more accurate","Lexical similarity uses neural networks"],
+   ans:1, sol:"Lexical similarity (BM25, Jaccard, edit distance) counts shared tokens. Semantic similarity (cosine of embeddings) captures meaning — 'what causes a fever' and 'fever etiology' are semantically similar despite sharing no words. Embeddings excel at semantic matching; BM25 at exact-match recall."},
+
+  {cat:"Embeddings", q:"What is 'sentence-transformers' (SBERT)?",
+   opts:["A library for parsing sentences","A framework that fine-tunes BERT-like models using siamese/triplet networks with contrastive loss to produce sentence-level embeddings suitable for semantic similarity tasks","A transformer architecture for sentence classification only","A tokenization library"],
+   ans:1, sol:"SBERT (Reimers & Gurevych, 2019) fine-tunes BERT using siamese networks and cosine-similarity loss. It produces sentence embeddings 5× faster than cross-encoder BERT and 100× more suitable for clustering/search — making BERT practical for large-scale semantic similarity."},
+
+  {cat:"Embeddings", q:"What is 'contrastive learning' in embedding training?",
+   opts:["Learning by contrasting different models","Training embeddings by pushing similar (positive) pairs closer and dissimilar (negative) pairs apart in the vector space, typically using InfoNCE or triplet loss","A learning technique for image contrast enhancement","A technique for comparing gradient magnitudes"],
+   ans:1, sol:"Contrastive learning (SimCSE, E5, OpenAI embeddings) uses positive pairs (same meaning, paraphrases) and negative pairs (different meaning) to shape the embedding space. The InfoNCE loss maximizes similarity for positives and minimizes it for negatives, creating a well-structured semantic space."},
+
+  {cat:"Embeddings", q:"What is 'hard negative mining' in embedding training?",
+   opts:["Mining hardware with negative energy","Selecting negatives (dissimilar training pairs) that are close to the anchor in embedding space — making the training task harder and improving the model's ability to discriminate near-duplicates","A technique for removing noise from training data","Mining positive examples from hard data sources"],
+   ans:1, sol:"Easy negatives (very different examples) don't provide useful gradients. Hard negatives are semantically similar but not equivalent (e.g., 'Paris is the capital of France' vs 'London is the capital of France'). Training with hard negatives forces the model to learn fine-grained distinctions, crucial for high-precision retrieval."},
+
+  {cat:"Embeddings", q:"What does 'embedding dimensionality reduction' mean and what are common techniques?",
+   opts:["Removing dimensions from the database","Projecting high-dimensional embeddings to lower dimensions to reduce storage/compute, using techniques like PCA, UMAP, or t-SNE — with trade-offs in information loss","Increasing embedding dimensions for better accuracy","A technique for compression of model weights"],
+   ans:1, sol:"PCA reduces linear variance; UMAP/t-SNE preserve local structure for visualization. For production RAG, truncating Matryoshka embeddings or using PCA to e.g. 256d can reduce storage by 6× and speed up ANN search, with modest recall loss. Balances efficiency vs. embedding quality."},
+
+  {cat:"Embeddings", q:"What is 'domain-specific embedding' and why might you need it for RAG?",
+   opts:["Embeddings for a specific GPU domain","Embeddings trained or fine-tuned on in-domain text (medical, legal, code), capturing specialized vocabulary and semantics better than general-purpose embeddings for domain-specific RAG retrieval","Embeddings stored in a domain-specific DB","Embeddings that only work in one language"],
+   ans:1, sol:"General embeddings may poorly represent specialized terminology (medical ICD codes, legal clauses, financial instruments). Domain-specific embeddings (BioBERT, LegalBERT, CodeBERT, or fine-tuned E5) better capture these nuances, significantly improving retrieval quality for specialized RAG systems."},
+
+  {cat:"Embeddings", q:"What is 'asymmetric semantic search' in the context of embeddings?",
+   opts:["Search where queries and documents are in different languages","Search where the query is short and the documents are long — requiring different encoding strategies since query intent and document content have different structures","Search using different embedding models for each","A search that returns asymmetric relevance scores"],
+   ans:1, sol:"Asymmetric search (e.g., question → paragraph) involves short queries and long documents. Some embedding models (MS-MARCO fine-tuned) are specifically trained for this asymmetry. Using symmetric models here can hurt performance because query and document embeddings live in different regions of the space."},
+
+  {cat:"Embeddings", q:"What is the 'embedding gap' problem in RAG?",
+   opts:["When embeddings have too many dimensions","The mismatch between how queries and documents are written — queries are short/interrogative, documents are long/declarative — leading to suboptimal retrieval when using symmetric embeddings","When vector DBs run out of embedding storage","A gap in embedding model training data"],
+   ans:1, sol:"The embedding gap: query 'what is photosynthesis?' vs document starting with 'Photosynthesis is a process by which...' — the query embedding may not closely match the document embedding even though the document answers it. Techniques: HyDE, asymmetric fine-tuning, or query expansion bridge this gap."},
+
+  {cat:"Embeddings", q:"What is a 'late chunking' embedding strategy?",
+   opts:["Generating embeddings after the user query arrives","Encoding an entire document with a long-context model, then performing mean-pooling over token embeddings within each chunk boundary — preserving global document context in each chunk's embedding","Generating embeddings at the end of model training","An embedding technique that uses delayed tokenization"],
+   ans:1, sol:"Late chunking (JinaAI, 2024) first encodes the entire document with a long-context model (capturing full context), then extracts chunk embeddings from the resulting token embeddings. This preserves global document context within each chunk embedding, unlike standard chunking where each chunk is encoded in isolation."},
+
+  {cat:"Embeddings", q:"What is the BGE (BAAI General Embedding) model?",
+   opts:["A Google embedding model","A family of high-quality open-source text embedding models from BAAI (Beijing Academy of AI), competitive with OpenAI embeddings on MTEB benchmarks, supporting diverse retrieval and similarity tasks","A background generation embedding","A batch gradient embedding technique"],
+   ans:1, sol:"BGE models (BGE-M3, BGE-large-en) by BAAI consistently top the MTEB leaderboard. BGE-M3 supports 100+ languages, multiple retrieval functions (dense, sparse, multi-vector ColBERT-style), and long context (8192 tokens) — making it a popular open-source choice for production RAG."},
+
+  {cat:"Embeddings", q:"What is 'MTEB' (Massive Text Embedding Benchmark)?",
+   opts:["A model training evaluation benchmark","A comprehensive benchmark covering 56+ datasets across 8 tasks (retrieval, clustering, classification, reranking, STS, etc.) used to evaluate and compare text embedding models","A multi-task embedding training framework","A memory test for embedding hardware"],
+   ans:1, sol:"MTEB (Muennighoff et al., 2022) is the de facto standard for evaluating embedding models. It covers retrieval (like BEIR), clustering, classification, STS, reranking, etc. Leaderboard rankings guide model selection for RAG — higher MTEB retrieval scores correlate with better RAG performance."},
+
+  {cat:"Embeddings", q:"What is 'ColBERT' and how does it differ from standard bi-encoders?",
+   opts:["A column-based BERT model for tabular data","A late-interaction model that retains per-token embeddings for both queries and documents, computing relevance via MaxSim (max token-level similarity) rather than a single vector dot product","A BERT model compressed into columns","A cross-encoder variant"],
+   ans:1, sol:"ColBERT (Khattab & Zaharia) keeps all token embeddings instead of pooling to one vector. At retrieval: for each query token, find the maximum similarity with any document token (MaxSim), then sum these per-query-token maxima. This 'late interaction' is more expressive than single-vector bi-encoders and faster than cross-encoders."},
+
+  {cat:"Embeddings", q:"What is 'sparse embedding' (SPLADE, BM25)?",
+   opts:["Embeddings with mostly zero values representing term importance in high-dimensional vocabulary space, enabling keyword-level search with learned term weighting","Dense embeddings with rare non-zero values","Embeddings stored in sparse matrix format for efficiency","A technique for reducing embedding dimensions to near-zero"],
+   ans:0, sol:"Sparse embeddings (SPLADE) are high-dimensional vectors (dim = vocabulary size ~30K) where most values are 0. Non-zero values represent learned term importance. SPLADE extends BM25 with neural term expansion — better than BM25 but searchable with inverted indexes. Used in hybrid RAG retrieval."},
+
+  // ─── LANGCHAIN (Q141–160) ─────────────────────────────
+  {cat:"LangChain", q:"What is LangChain and what problem does it solve?",
+   opts:["A blockchain platform for language data","An open-source framework for building LLM-powered applications by providing composable abstractions for chains, agents, memory, retrievers, and tools","A fine-tuning library for language models","A deployment platform for LLMs"],
+   ans:1, sol:"LangChain (Harrison Chase, 2022) provides building blocks for LLM apps: Prompt templates, LLM wrappers, Chains (pipelines), Agents, Memory, Retrievers, and Tool integrations. It abstracts the boilerplate of LLM orchestration so developers focus on application logic."},
+
+  {cat:"LangChain", q:"What is a 'Chain' in LangChain?",
+   opts:["A blockchain data structure","A sequence of LLM calls and component operations linked together, where each component's output feeds into the next — composing complex pipelines from simple building blocks","A list of prompts stored in memory","A chain of LLM fine-tuning steps"],
+   ans:1, sol:"LangChain Chains compose multiple operations: e.g., a RetrievalQAChain = retriever → stuff_documents → prompt_template → LLM → output_parser. Chains abstract multi-step LLM workflows into reusable, testable objects with standard input/output interfaces."},
+
+  {cat:"LangChain", q:"What is LCEL (LangChain Expression Language)?",
+   opts:["A language for writing LangChain documentation","A declarative pipe-operator (|) syntax for composing LangChain components (runnables) into chains, with built-in streaming, async, batching, and tracing support","A low-code environment for LangChain","An evaluation framework for LangChain"],
+   ans:1, sol:"LCEL (v0.1+) uses Python's | operator to chain Runnables: `chain = prompt | llm | output_parser`. Every LCEL chain automatically supports .stream(), .invoke(), .batch(), and .ainvoke() with the same code, plus built-in LangSmith tracing. This replaced the older verbose Chain classes."},
+
+  {cat:"LangChain", q:"What is a 'Runnable' in LangChain's architecture?",
+   opts:["A Python thread for LangChain","The core abstraction in LCEL — any component that implements invoke/stream/batch interfaces (LLMs, prompts, retrievers, output parsers) can be composed using the | operator","A runnable script for LangChain setup","A GPU-accelerated operator"],
+   ans:1, sol:"Runnables are the universal interface in LangChain v0.1+. Any object with .invoke(input) → output is a Runnable. LLMs, ChatModels, PromptTemplates, Retrievers, OutputParsers, and custom lambda functions are all Runnables, composable via LCEL's | syntax with consistent streaming/async support."},
+
+  {cat:"LangChain", q:"What is 'LangSmith' in the LangChain ecosystem?",
+   opts:["A blacksmith who created LangChain","An observability and evaluation platform for LLM applications built with LangChain, providing tracing, debugging, dataset management, and performance monitoring","A model fine-tuning service","A vector database by LangChain"],
+   ans:1, sol:"LangSmith is LangChain's LLMOps platform. It traces every component in a chain (prompt, LLM call, retrieval, tool use) with latency, token count, and cost. It supports creating evaluation datasets, running automated evals, and production monitoring — critical for debugging and improving RAG pipelines."},
+
+  {cat:"LangChain", q:"What is the 'RetrievalQA' chain in LangChain?",
+   opts:["A QA chain that only retrieves, doesn't generate","A pre-built chain that combines a retriever, a document stuffing/compressing strategy, a prompt template, and an LLM to answer questions based on retrieved context","A chain that queries a relational database","A chain for training retrieval models"],
+   ans:1, sol:"RetrievalQA = retriever + document combination (stuff/map_reduce/refine/map_rerank) + prompt + LLM. It's the classic RAG chain in LangChain. For production, LCEL-based implementations with create_retrieval_chain are now preferred for better streaming and observability."},
+
+  {cat:"LangChain", q:"What is the 'stuff', 'map_reduce', and 'refine' document combination strategy in LangChain?",
+   opts:["Three methods for splitting documents","Three strategies for combining multiple retrieved documents: stuff (all at once), map_reduce (summarize each then combine), refine (iteratively refine answer with each doc)","Three caching strategies","Three chunking approaches"],
+   ans:1, sol:"Stuff: concatenate all docs into one context (simple, best for small sets). Map_reduce: LLM processes each doc separately, then combines summaries (parallelizable, good for many large docs). Refine: LLM iteratively incorporates each doc into a running answer (thorough but slow, O(n) LLM calls)."},
+
+  {cat:"LangChain", q:"What is 'ConversationBufferMemory' vs 'ConversationSummaryMemory' in LangChain?",
+   opts:["Different databases for conversation storage","Buffer stores the full raw conversation history; Summary uses an LLM to periodically compress old turns into a summary, reducing context length while retaining key information","Two different formatting styles for conversations","Buffer is for single-turn; Summary is for multi-turn"],
+   ans:1, sol:"ConversationBufferMemory stores verbatim messages — simple but grows linearly (context overflow). ConversationSummaryMemory runs an LLM to summarize old messages, then injects the summary + recent messages — bounds context length at the cost of summarization latency and potential information loss."},
+
+  {cat:"LangChain", q:"What is an 'AgentExecutor' in LangChain?",
+   opts:["A Python executor for parallel agents","The runtime that manages the ReAct loop for LangChain agents: it calls the LLM, parses the action, executes the selected tool, appends the observation, and repeats until the agent returns a final answer","A GPU executor for LLM inference","A class for executing multiple agents in parallel"],
+   ans:1, sol:"AgentExecutor is the scaffolding that runs the agentic loop around a LangChain Agent. It handles: calling the LLM with the agent's prompt, parsing the Action/Action Input from the output, calling the appropriate tool, passing the Observation back to the LLM, and stopping when Action=FINAL ANSWER."},
+
+  {cat:"LangChain", q:"What is a 'Tool' in LangChain agents?",
+   opts:["A Python library imported by LangChain","Any function or service wrapped in a standardized interface (name, description, invoke) that an agent can call — including web search, calculators, code executors, APIs, and databases","A UI component for LangChain apps","A formatting utility"],
+   ans:1, sol:"LangChain Tools have: name (used by LLM to select), description (prompt telling LLM when/how to use), and invoke function. Built-in tools include TavilySearch, PythonREPL, WikipediaQuery, SQLDatabaseTool. Custom tools are created with @tool decorator or Tool() wrapper."},
+
+  {cat:"LangChain", q:"What is 'LangChain Hub' (formerly LangChainHub)?",
+   opts:["A marketplace for buying LangChain services","A repository for sharing, discovering, and pulling reusable prompts, chains, and agents, integrated with LangSmith for versioned prompt management","A GitHub for LangChain code","A dataset repository"],
+   ans:1, sol:"LangChain Hub (hub.langchain.com) is a prompt registry for sharing and versioning prompts. You can pull community prompts with hub.pull('rlm/rag-prompt'), iterate on them in LangSmith, and push new versions. This enables collaborative prompt engineering across teams."},
+
+  {cat:"LangChain", q:"What is 'MultiQueryRetriever' in LangChain?",
+   opts:["A retriever that queries multiple databases","A retriever that uses an LLM to generate N variations of the input query, retrieves results for each, and returns the union — improving coverage by handling different phrasings","A retriever with multiple embedding models","A retriever that returns multiple document types"],
+   ans:1, sol:"MultiQueryRetriever generates 3–5 paraphrased versions of the query using an LLM, retrieves top-k for each, and deduplicates the union. This addresses the brittle single-query problem where poor query phrasing misses relevant documents — a simple but effective RAG improvement."},
+
+  {cat:"LangChain", q:"What is the 'Ensemble Retriever' in LangChain?",
+   opts:["A retriever that uses an ensemble of LLMs","A retriever that combines results from multiple retrievers (e.g., BM25 + dense vector) using Reciprocal Rank Fusion, enabling hybrid search in LangChain","A retriever trained with ensemble learning","A retriever that queries all available vector DBs"],
+   ans:1, sol:"EnsembleRetriever takes multiple retrievers (e.g., BM25Retriever + VectorStoreRetriever), weights their results, and combines them via RRF. This provides hybrid search capability in LangChain without needing a native hybrid vector DB, significantly improving retrieval coverage."},
+
+  {cat:"LangChain", q:"What is 'LangServe' in the LangChain ecosystem?",
+   opts:["A load balancer for LLM servers","A library for deploying LangChain Runnables and chains as production REST APIs with FastAPI, providing automatic OpenAPI docs, streaming endpoints, and playground UI","A server monitoring tool","A fine-tuning server"],
+   ans:1, sol:"LangServe wraps any LCEL Runnable as a FastAPI server with one function call. It auto-generates /invoke, /stream, /batch REST endpoints with the correct input/output schema, a /playground UI for testing, and full streaming support — reducing production deployment friction."},
+
+  {cat:"LangChain", q:"What is 'LangChain's OutputParser' and why is it important?",
+   opts:["A parser for natural language understanding","A component that transforms raw LLM string output into structured Python objects (lists, dicts, Pydantic models) — critical for agentic systems that need to parse tool calls or structured data from LLM responses","A caching layer for LLM outputs","A tokenizer for LangChain"],
+   ans:1, sol:"Output parsers (PydanticOutputParser, JsonOutputParser, CommaSeparatedListOutputParser) convert unstructured LLM text into structured data. They typically include format_instructions (injected into the prompt to guide the LLM's output format) and a parse() method. Critical for reliable agent action parsing."},
+
+  {cat:"LangChain", q:"What is 'LangGraph' and how does it differ from LangChain?",
+   opts:["A visualization library for LangChain","A separate library from LangChain for building stateful, graph-based agentic workflows where nodes are LLM calls/tools and edges are routing logic — enabling cycles, human-in-the-loop, and complex multi-agent patterns","A graph database extension for LangChain","A visual graph editor for LangChain chains"],
+   ans:1, sol:"LangGraph is built on LangChain but provides a graph execution model (DAG + cycles) rather than linear chains. Nodes are agent steps (LLM calls, tool executions). Edges define routing (conditional, fixed). State is persisted across nodes. This enables loops, branching, human checkpoints, and multi-agent workflows that LCEL chains can't express."},
+
+  {cat:"LangChain", q:"What are 'callbacks' in LangChain and what are they used for?",
+   opts:["Python callback functions for async operations","Event handlers that hook into the LangChain execution lifecycle (on_llm_start, on_tool_end, on_chain_error, etc.) for logging, tracing, streaming, and monitoring","API callbacks for webhook integration","Error handling callbacks"],
+   ans:1, sol:"LangChain callbacks subscribe to events across the execution lifecycle. Built-in callbacks: StdOutCallbackHandler (console logging), LangSmithTracer (distributed tracing). Custom callbacks implement BaseCallbackHandler to e.g. stream tokens to a UI, log latencies, or capture intermediate outputs for debugging."},
+
+  {cat:"LangChain", q:"What is 'create_react_agent' function in LangChain?",
+   opts:["A function to create React web components","A factory function that creates a ReAct-style agent given an LLM and a list of tools, auto-generating the ReAct prompt and wrapping in an AgentExecutor","A function to create reinforcement learning agents","A utility for creating UI agent interfaces"],
+   ans:1, sol:"create_react_agent(llm, tools, prompt) creates a standard ReAct agent in LangChain. It composes the prompt with tool descriptions, wraps the LLM to parse Thought/Action/Action Input/Observation patterns, and returns a Runnable ready to be wrapped in AgentExecutor. Simpler than building agents from scratch."},
+
+  {cat:"LangChain", q:"What is 'structured output' in LangChain and how is it achieved?",
+   opts:["Formatting LangChain logs","Constraining LLM outputs to a specific JSON/Pydantic schema using llm.with_structured_output(Schema), function calling, or output parsers with retry logic — ensuring reliable structured data for downstream processing","A structured database output format","Tabular output from LangChain chains"],
+   ans:1, sol:"llm.with_structured_output(PydanticModel) uses native function calling (OpenAI tools, Anthropic tools, Gemini response schema) to force the LLM to output valid JSON matching a Pydantic schema. This is far more reliable than asking the LLM to 'output JSON' in a prompt and manually parsing."},
+
+  // ─── LANGGRAPH (Q161–180) ─────────────────────────────
+  {cat:"LangGraph", q:"What is the core abstraction in LangGraph?",
+   opts:["A linear pipeline of LLM calls","A stateful graph (StateGraph) where nodes process and update a shared state, edges define transitions, and the entire graph can have cycles — enabling persistent, loop-capable agentic workflows","A directed acyclic pipeline","A message queue for LLM tasks"],
+   ans:1, sol:"LangGraph's core abstraction is a StateGraph: nodes are Python functions that read/write a shared TypedDict state; edges route between nodes (fixed or conditional); the graph compiles to a Runnable. Cycles are supported, enabling iterative agentic loops unlike LangChain's DAG-only chains."},
+
+  {cat:"LangGraph", q:"What is 'state' in a LangGraph StateGraph?",
+   opts:["The GPU memory state","A TypedDict (or Pydantic model) shared across all nodes in the graph that accumulates data (messages, results, flags) as the graph executes, persisting the agent's context across steps","The graph's topology definition","The LLM's internal hidden states"],
+   ans:1, sol:"LangGraph state is a typed dictionary (e.g., TypedDict with 'messages', 'context', 'tool_calls' fields). Each node receives the current state, processes it, and returns a partial state update. The graph merges updates (using reducers like 'add' for message lists), creating a consistent shared memory across steps."},
+
+  {cat:"LangGraph", q:"What is a 'conditional edge' in LangGraph?",
+   opts:["An edge with a weight condition","An edge where the next node is determined at runtime by a routing function that reads the current state — enabling branching logic like 'if needs_retrieval → retriever else → generator'","A fixed edge with conditions on data types","An edge that only activates conditionally on weekdays"],
+   ans:1, sol:"Conditional edges call a Python function (router) with the current state and return the name of the next node. This enables dynamic routing: checking if a tool call is needed, routing to error handling, implementing retry loops, or directing flow between specialized sub-agents based on state."},
+
+  {cat:"LangGraph", q:"What is the '__END__' node in LangGraph?",
+   opts:["A node that deletes all state","A special terminal node that signals the end of the graph execution when an edge routes to it — the graph stops and returns the final state","A node that resets the graph to the beginning","A placeholder for future graph nodes"],
+   ans:1, sol:"Routing a conditional edge to END (from langgraph import END) terminates the graph. Typically the agent node checks: if the LLM's last message is a ToolCall → continue to tools node; if it's a regular response → route to END. This creates the standard 'agent → tools → agent → ... → END' agentic loop."},
+
+  {cat:"LangGraph", q:"What is the 'ToolNode' in LangGraph?",
+   opts:["A node for defining new tools","A pre-built node that executes tool calls found in the last AIMessage, runs the appropriate tools, and returns ToolMessages with results — the standard way to integrate tools in LangGraph agents","A node for configuring tool permissions","A monitoring node for tool usage"],
+   ans:1, sol:"ToolNode automatically extracts tool_calls from the latest AIMessage, invokes each tool with its arguments, handles errors, and appends ToolMessages with results back to the state's messages list. It works with any LangChain-compatible tool and simplifies the tool execution node in agent graphs."},
+
+  {cat:"LangGraph", q:"What is 'persistence' (checkpointing) in LangGraph?",
+   opts:["Saving graph topology to disk","Saving the graph's state to a storage backend (in-memory, SQLite, PostgreSQL, Redis) after each step, enabling human-in-the-loop interrupts, conversation resumption, and fault tolerance","Persisting the LLM model weights","Logging all graph executions"],
+   ans:1, sol:"LangGraph checkpointers (MemorySaver, SqliteSaver, PostgresSaver) save state after each node execution. This enables: resuming interrupted conversations (conversation history persistence), HITL breakpoints (interrupt before action, wait for human approval, resume), and debugging by replaying from any checkpoint."},
+
+  {cat:"LangGraph", q:"What is a 'subgraph' in LangGraph and when would you use it?",
+   opts:["A smaller version of the main graph","A LangGraph graph used as a node within a parent graph, enabling modular composition of complex multi-agent systems where each sub-agent has its own state, logic, and graph","A graph that processes sub-queries","A subgraph for testing purposes only"],
+   ans:1, sol:"Subgraphs encapsulate complex logic (e.g., a full RAG pipeline or a specialized coding agent) as a reusable node. The parent graph invokes it as a black box. State can be shared partially (via state schema overlaps) or fully isolated. Essential for modular, maintainable multi-agent architectures."},
+
+  {cat:"LangGraph", q:"What is 'human-in-the-loop' (HITL) in LangGraph?",
+   opts:["A graph node simulating human decisions","The ability to interrupt graph execution at specified nodes (interrupt_before or interrupt_after), persist state, request human input/approval, and resume execution — enabling oversight of critical agent decisions","A human user interface component","A technique for human-supervised training"],
+   ans:1, sol:"HITL in LangGraph uses breakpoints: compile the graph with interrupt_before=['node_name'] to pause before that node. The graph's thread persists in the checkpointer. A human can inspect state, modify it if needed, then call graph.invoke(None, config) to resume — perfect for reviewing agent tool calls before execution."},
+
+  {cat:"LangGraph", q:"What is 'multi-agent' architecture in LangGraph?",
+   opts:["Running multiple copies of the same agent","A pattern where multiple specialized agents (each a subgraph or node) are coordinated by a supervisor graph — enabling parallelism, specialization, and complex workflows beyond single-agent capability","Multiple users interacting with one agent","Training multiple agents on the same data"],
+   ans:1, sol:"LangGraph multi-agent systems use a supervisor graph that calls specialized sub-agents (researcher, coder, writer). Patterns include: supervisor (central coordinator), swarm (peer-to-peer communication), pipeline (sequential handoffs), or hierarchical (supervisors of supervisors). Each sub-agent can have its own LLM, tools, and state."},
+
+  {cat:"LangGraph", q:"What is the 'messages' key convention in LangGraph state?",
+   opts:["A key storing error messages","The standard state field (List[BaseMessage]) that accumulates the conversation history (HumanMessage, AIMessage, ToolMessage, SystemMessage) using an 'add' reducer — the backbone of chat-based agent state in LangGraph","A key for storing metadata","A configuration key for message formatting"],
+   ans:1, sol:"By convention, LangGraph agent state includes a messages: Annotated[List[BaseMessage], add_messages] field. The add_messages reducer appends new messages without replacing old ones. This accumulates the full conversation thread — human inputs, LLM responses, tool calls, and tool results — as the agent progresses."},
+
+  {cat:"LangGraph", q:"What is 'thread_id' in LangGraph's checkpointing system?",
+   opts:["The ID of the Python thread executing the graph","A unique identifier for each conversation/session in the checkpointer, enabling different users' or conversations' states to be stored and retrieved independently","A UUID for each graph node","An identifier for each LLM model call"],
+   ans:1, sol:"When invoking a LangGraph with a checkpointer, you pass config={'configurable': {'thread_id': 'user-123'}}. The checkpointer scopes all state saves to this thread_id, enabling independent conversation histories for different users or sessions — essential for multi-user applications."},
+
+  {cat:"LangGraph", q:"What is 'streaming' in LangGraph and what modes does it support?",
+   opts:["Uploading data to a stream processing system","Real-time output delivery from graph execution in multiple modes: values (full state after each step), updates (delta state per node), messages (streaming LLM tokens), debug (all events), and events (SSE for production streaming)","A mode for processing streaming data inputs","A technique for streaming graphs to remote servers"],
+   ans:1, sol:"LangGraph supports graph.stream(input, mode='updates') or astream_events for fine-grained streaming. Modes: 'values' emits full state per step; 'updates' emits only changed state; 'messages' streams individual LLM tokens as they generate; 'events' gives SSE-compatible JSON events for frontend consumption."},
+
+  {cat:"LangGraph", q:"What is the 'ReAct agent' pattern in LangGraph and how is it implemented?",
+   opts:["A reactive web component using LangGraph","A standard agentic loop implemented as a two-node graph: an 'agent' node (calls LLM) and a 'tools' node (executes tool calls), connected by a conditional edge that routes to tools if tool_calls exist or to END if the agent is done","A reinforcement learning agent in a graph","A pattern for reactive event-driven agents"],
+   ans:1, sol:"LangGraph ReAct: compile(StateGraph → agent_node → [conditional] → tools_node → [back to agent]). Agent node calls LLM; if response has tool_calls → route to tools; ToolNode executes them, appends ToolMessages → back to agent. This loop repeats until the agent's response has no tool calls → END."},
+
+  {cat:"LangGraph", q:"What is the 'Command' primitive in LangGraph?",
+   opts:["A shell command executor in LangGraph","A return type for node functions that combines state updates with routing instructions in a single object — enabling nodes to both update state AND dynamically control the next routing step without separate conditional edge functions","A command pattern for graph configuration","A CLI interface for LangGraph"],
+   ans:1, sol:"Command(update={'key': value}, goto='node_name') allows a node to simultaneously update state and specify the next node dynamically. This is more expressive than conditional edges alone — useful when the routing decision depends on data computed within the node function itself."},
+
+  {cat:"LangGraph", q:"What is the 'LangGraph Platform' (formerly LangGraph Cloud)?",
+   opts:["A cloud storage service for LangGraph files","A deployment platform for LangGraph agents providing managed checkpointing, horizontal scaling, streaming API, task queues, cron scheduling, and a Studio UI for visual debugging","A cloud GPU service for LangGraph","A monitoring platform only"],
+   ans:1, sol:"LangGraph Platform (cloud.langchain.com) handles production deployment: managed Postgres checkpointers for state persistence, auto-scaling compute, a REST API for invoking agents, SSE streaming endpoints, background task support, scheduled runs, and LangGraph Studio for visual graph inspection and debugging."},
+
+  {cat:"LangGraph", q:"What is 'LangGraph Studio' and what can developers do with it?",
+   opts:["A GUI for designing LangChain prompts","A visual IDE for LangGraph that shows a live graph diagram, allows step-by-step execution inspection, state editing at any checkpoint, replay of previous runs, and interactive debugging of complex agentic workflows","A studio for recording LLM audio outputs","A code generation tool for LangGraph"],
+   ans:1, sol:"LangGraph Studio (desktop app + cloud) renders the agent graph visually, shows which node is executing, displays the state at each step, and allows interactive debugging. Developers can pause execution, edit state, and resume — making it significantly easier to debug complex multi-agent workflows than reading logs."},
+
+  {cat:"LangGraph", q:"What is 'map-reduce' pattern in LangGraph?",
+   opts:["The Hadoop MapReduce algorithm","A pattern where the graph fans out to process multiple items in parallel (map) using Send() to create parallel branches, then aggregates results (reduce) in a final node","A document combination strategy","A technique for reducing graph state size"],
+   ans:1, sol:"LangGraph's Send() primitive enables dynamic parallelism. A node can emit multiple Send('worker_node', state_for_item) objects (one per item), spawning parallel subgraph executions. A subsequent 'reducer' node waits for all parallel branches and merges their results — ideal for processing document sets or research subtasks concurrently."},
+
+  {cat:"LangGraph", q:"What is 'time travel' in LangGraph?",
+   opts:["A feature for processing time-series data","The ability to replay or fork a graph's execution from any previous checkpoint — enabling debugging by re-running from any past state and exploring alternative execution paths","A time scheduling feature","An NLP feature for processing temporal language"],
+   ans:1, sol:"LangGraph's time travel uses checkpointers to list all past states for a thread and replay execution from any of them. graph.invoke(None, config={'checkpoint_id': past_id}) re-runs from that checkpoint. This enables debugging 'what if the agent had made a different decision at step 3?' by forking at that state."},
+
+  {cat:"LangGraph", q:"How does LangGraph handle errors and retries in agentic workflows?",
+   opts:["It crashes and requires manual restart","LangGraph nodes can be wrapped with retry policies (RetryPolicy), errors are caught and can route to error-handling nodes, and checkpointing means the graph can resume from the last successful state after a failure","It silently ignores all errors","It automatically reruns from the beginning"],
+   ans:1, sol:"LangGraph error handling: nodes can raise exceptions (routed to error handler nodes via conditional edges), RetryPolicy wraps nodes with configurable retry logic, and checkpointing means failures don't lose progress. This makes long-running agents fault-tolerant — resuming from the last checkpoint rather than restarting from scratch."},
+
+  // ─── SYSTEM DESIGN (Q181–200) ─────────────────────────
+  {cat:"System Design", q:"What are the key components of a production-grade RAG system architecture?",
+   opts:["Just an LLM and a database","Document ingestion pipeline, chunking & embedding service, vector database, retrieval layer (hybrid search + reranker), LLM inference service, caching layer, observability stack (tracing + evals), and API gateway","An LLM with a simple search API","A single Python script with all components"],
+   ans:1, sol:"Production RAG: (1) Ingestion: parse, chunk, embed, upsert to vector DB. (2) Retrieval: query embedding, hybrid ANN+BM25 search, metadata filter, reranking. (3) Generation: context stuffing, LLM call, output parsing. (4) Infrastructure: semantic cache, rate limiting, auth, async queues. (5) Ops: LangSmith traces, RAGAS evals, Prometheus metrics."},
+
+  {cat:"System Design", q:"How would you design a scalable document ingestion pipeline for a RAG system?",
+   opts:["Upload documents directly to the LLM's context","Use an async pipeline: document queue (SQS/Kafka) → parsing workers (Unstructured/LlamaParse) → chunking → embedding service (batched GPU inference) → vector DB upsert, with idempotent processing and dead-letter queues for failures","Manually ingest each document one by one","Store all documents in a relational database"],
+   ans:1, sol:"Scalable ingestion: message queue (Kafka/SQS) decouples upload from processing; workers parse diverse formats (PDF, DOCX, HTML) with Unstructured.io; recursive chunking with overlap; batched embedding (GPU inference server, e.g., TEI); parallel upserts to vector DB. Idempotency (hash-based dedup), DLQ for failures, and incremental updates for changed docs."},
+
+  {cat:"System Design", q:"What is the 'RAG vs Fine-tuning vs Both' decision framework?",
+   opts:["Always use fine-tuning for best results","Use RAG when knowledge must be current, citeable, or large-scale proprietary. Use fine-tuning when style/format consistency matters or complex reasoning must be internalized. Use both when you need both domain knowledge internalization and dynamic retrieval","Always use RAG for cost savings","Choose based only on available training data"],
+   ans:2, sol:"Decision framework: RAG = dynamic knowledge, freshness, citations, large corpus, no retraining cost. Fine-tuning = consistent tone/format, complex domain reasoning, task-specific behavior, fast inference (no retrieval overhead). Both = fine-tune for behavior + RAG for knowledge (e.g., fine-tuned medical LLM + clinical trial RAG). Cost, latency, and update frequency guide the choice."},
+
+  {cat:"System Design", q:"How would you implement multi-tenancy in a vector database for a SaaS RAG product?",
+   opts:["Use a single collection for all tenants","Options: (1) Collection-per-tenant: strong isolation, high overhead for many tenants. (2) Namespace/partition within one collection: metadata filter tenant_id, efficient with native pre-filtering. (3) Row-level security: embed tenant_id in metadata and enforce filter in all queries. Choose based on tenant count and isolation requirements","Share all data between all tenants","Encrypt all tenant data in the same collection"],
+   ans:1, sol:"Multi-tenancy strategies: Collection-per-tenant (Pinecone namespaces, Qdrant collections) gives strong isolation but high management overhead. Metadata filtering (tenant_id field, always-filtered queries) is efficient for 100s of tenants with proper index support. Row-level security + application-layer enforcement needed for strict compliance (SOC2, HIPAA). Also consider data residency requirements."},
+
+  {cat:"System Design", q:"What are key latency optimization strategies for LLM-based applications?",
+   opts:["Always use the largest model for best quality","Strategies: model selection (smaller/quantized models for simple tasks), speculative decoding, semantic caching, async/streaming responses, retrieval optimization (ANN tuning, pre-filtering), batching, prompt compression, edge deployment, and KV cache management","Add more GPUs always","Only optimize the database layer"],
+   ans:1, sol:"Latency stack: (1) Semantic cache (GPTCache) — cache similar queries. (2) Streaming — reduce time-to-first-token. (3) Async retrieval + generation pipeline. (4) Model selection — route simple queries to smaller models. (5) Speculative decoding. (6) Retrieval: HNSW ef_search tuning, metadata pre-filtering. (7) Prompt compression (LLMLingua). (8) CDN-edge inference for low-latency regions."},
+
+  {cat:"System Design", q:"How do you evaluate a RAG pipeline end-to-end?",
+   opts:["Only check if it returns an answer","Use RAGAS metrics: faithfulness (answer grounded in context?), answer relevance, context precision, context recall, answer correctness. Also evaluate: retrieval hit rate, MRR, latency P50/P95/P99, and cost per query. Build evaluation datasets (golden Q&A pairs) and run regression tests on pipeline changes","Only measure user satisfaction scores","Only evaluate the LLM component"],
+   ans:1, sol:"RAGAS framework: Faithfulness (are claims in the answer supported by retrieved context?), Answer Relevance (is the answer relevant to the question?), Context Precision (are retrieved chunks actually useful?), Context Recall (are all relevant chunks retrieved?). Beyond RAGAS: create golden datasets from expert QA pairs, run evals on every PR, monitor production via LangSmith traces."},
+
+  {cat:"System Design", q:"What is an 'agent gateway' pattern in multi-agent system design?",
+   opts:["A physical network gateway for agents","A centralized API layer that routes user requests to the appropriate specialized agent, handles authentication, rate limiting, cost tracking, and provides a unified interface to an underlying fleet of specialized agents","A database gateway for agent storage","A security firewall for blocking agent requests"],
+   ans:1, sol:"An agent gateway (similar to API gateway but for agents) handles: routing (classify request → route to specialist agent), auth/authz, rate limiting per user/tenant, cost allocation per agent, fallback logic, response caching, and unified logging. Enables a single user-facing endpoint that orchestrates many backend specialized agents."},
+
+  {cat:"System Design", q:"How would you handle 'context window management' for a long-running agent?",
+   opts:["Restart the agent when the context fills up","Strategies: conversation summarization (compress old turns), selective memory (embed+retrieve relevant past interactions from vector DB), sliding window (keep only recent N turns), hierarchical memory (short-term buffer + medium-term summary + long-term vector DB), and token counting with budget allocation","Use the largest context window model available","Store all history in a relational database only"],
+   ans:1, sol:"Context management for long agents: (1) Rolling buffer: keep last N messages. (2) Summarization: LLM compresses old turns into a running summary. (3) Semantic memory: embed all past interactions in a vector DB, retrieve relevant ones for each new query. (4) Hierarchical (Buffer → Summary → Vector): combines all three. LangGraph makes this manageable through state reducers and custom memory nodes."},
+
+  {cat:"System Design", q:"What is 'observability' for LLM/agentic systems and what should you monitor?",
+   opts:["Only monitor GPU utilization","Full LLM observability requires: distributed tracing (LangSmith, LangFuse, Helicone) of every LLM call and tool invocation, latency (P50/P95/P99), token usage/cost, error rates, evaluation scores (faithfulness, groundedness), prompt/response logging for debugging, and model drift detection","Only monitor API response times","Only count the number of LLM calls"],
+   ans:1, sol:"LLM Observability stack: Traces (LangSmith/Langfuse): every LLM call, retrieval step, tool call with inputs/outputs/latencies. Metrics: tokens used, costs, error rates, cache hit rates. Evals: automated quality scoring (RAGAS) on sampled production queries. Alerts: latency spikes, cost anomalies, error rate increases, quality degradation. Production debugging requires replay from traces."},
+
+  {cat:"System Design", q:"How would you architect a 'code generation' agentic system?",
+   opts:["Just prompt a large LLM with the task","Multi-agent architecture: (1) Task Planner parses requirements and creates a subtask plan. (2) Coder agent generates code using tools (read files, write files, search docs). (3) Test Runner agent executes code, captures stdout/stderr. (4) Debugger agent analyzes errors and suggests fixes. (5) Reviewer agent does static analysis. Loop until tests pass or max iterations","Use a code autocomplete model only","Store all code in an LLM's context window"],
+   ans:1, sol:"Production code generation agent: planner (decompose task) → coder (uses FileRead/Write tools, web search for docs) → test runner (Docker-sandboxed execution) → debugger (error analysis + fix loop) → reviewer (linting, security scan). Each agent is a specialized LangGraph subgraph. The supervisor orchestrates the loop with human checkpoint before final commit."},
+
+  {cat:"System Design", q:"What is 'agentic AI security' and what are the main threat vectors?",
+   opts:["Standard network security applied to AI","Key threats: (1) Prompt injection (external content hijacks agent behavior). (2) Privilege escalation (agent gains unintended permissions via chained tool calls). (3) Data exfiltration (agent leaks sensitive data). (4) Indirect prompt injection (malicious instructions in retrieved documents). Mitigations: least-privilege tools, input sanitization, output validation, human checkpoints for destructive actions","Only securing the API keys","Just using HTTPS for all communications"],
+   ans:1, sol:"Agentic security requires: (1) Principle of least privilege — agents only get tools/permissions they need. (2) Input sanitization — validate all retrieved/external content before injection into context. (3) Output guardrails — classify/filter agent outputs. (4) Audit logging — immutable log of all actions taken. (5) Sandboxed execution — code tools run in isolated containers. (6) HITL for irreversible actions."},
+
+  {cat:"System Design", q:"How would you design a 'feedback loop' for continuously improving a RAG system?",
+   opts:["Manually read all user conversations daily","Continuous improvement cycle: (1) Log all queries, retrieved contexts, and answers. (2) Collect explicit feedback (thumbs up/down) and implicit signals (click-through, follow-up queries). (3) Create evaluation datasets from high-quality interactions. (4) Run offline RAGAS evals on each pipeline change. (5) A/B test embedding models, chunking strategies, and rerankers. (6) Fine-tune embeddings on domain-specific Q&A pairs from production data","Never change the system once deployed","Only improve the LLM component"],
+   ans:1, sol:"RAG improvement loop: collect production data (queries + feedback) → annotate a golden eval set → run RAGAS/custom evals → identify failure modes (retrieval miss? hallucination? bad chunks?) → iterate: adjust chunking strategy, try different embeddings, add query rewriting, tune reranker → A/B test in shadow mode → deploy if metrics improve → repeat. LangSmith's annotation queues automate much of this."}
+];
+
+// ============================================================
+// APP STATE
+// ============================================================
+let state = {
+  mode: 'timed',
+  queue: [],
+  current: 0,
+  score: 0,
+  wrong: 0,
+  skipped: 0,
+  streak: 0,
+  bestStreak: 0,
+  answered: false,
+  timer: null,
+  timeLeft: 30,
+  bookmarks: new Set(),
+  catStats: {},
+  reviewMode: false,
+  missedQ: []
+};
+
+// Category stats init
+const cats = [...new Set(questions.map(q => q.cat))];
+cats.forEach(c => { state.catStats[c] = {correct:0, total:0}; });
+
+function selectMode(el, mode) {
+  document.querySelectorAll('.mode-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  state.mode = mode;
+}
+
+function startQuiz() {
+  state.queue = shuffleArray([...Array(questions.length).keys()]);
+  state.current = 0; state.score = 0; state.wrong = 0;
+  state.skipped = 0; state.streak = 0; state.bestStreak = 0;
+  state.answered = false; state.missedQ = [];
+  state.bookmarks = new Set();
+  cats.forEach(c => { state.catStats[c] = {correct:0, total:0}; });
+  document.getElementById('q-total').textContent = questions.length;
+  showScreen('quiz');
+  loadQuestion();
+}
+
+function shuffleArray(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function loadQuestion() {
+  if (state.current >= state.queue.length) { showResults(); return; }
+  state.answered = false;
+  const qIdx = state.queue[state.current];
+  const q = questions[qIdx];
+  const num = state.current + 1;
+
+  document.getElementById('q-num').textContent = num;
+  document.getElementById('progress-fill').style.width = `${(num / questions.length) * 100}%`;
+  document.getElementById('q-category').textContent = q.cat;
+  document.getElementById('q-number-label').textContent = `Q${num}`;
+  document.getElementById('q-text').textContent = q.q;
+  document.getElementById('solution-box').style.display = 'none';
+  document.getElementById('next-btn').style.display = 'none';
+  document.getElementById('live-score').textContent = state.score;
+
+  // Bookmark
+  const bBtn = document.getElementById('bookmark-btn');
+  bBtn.textContent = state.bookmarks.has(qIdx) ? '★' : '☆';
+  bBtn.className = 'bookmark-btn' + (state.bookmarks.has(qIdx) ? ' active' : '');
+
+  // Build options
+  const container = document.getElementById('options-container');
+  container.innerHTML = '';
+  const letters = ['A', 'B', 'C', 'D'];
+  q.opts.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.innerHTML = `<span class="option-letter">${letters[i]}</span><span>${opt}</span>`;
+    btn.onclick = () => selectAnswer(i, qIdx);
+    container.appendChild(btn);
+  });
+
+  // Timer
+  clearInterval(state.timer);
+  if (state.mode === 'timed') {
+    state.timeLeft = 30;
+    updateTimerDisplay();
+    state.timer = setInterval(tickTimer, 1000);
+  } else {
+    document.getElementById('timer-display').textContent = '—';
+    document.getElementById('timer-display').className = 'timer-badge';
+  }
+}
+
+function tickTimer() {
+  state.timeLeft--;
+  updateTimerDisplay();
+  if (state.timeLeft <= 0) {
+    clearInterval(state.timer);
+    if (!state.answered) timeOut();
+  }
+}
+
+function updateTimerDisplay() {
+  const el = document.getElementById('timer-display');
+  el.textContent = `0:${String(state.timeLeft).padStart(2,'0')}`;
+  el.className = 'timer-badge' + (state.timeLeft <= 5 ? ' danger' : state.timeLeft <= 10 ? ' warn' : '');
+}
+
+function timeOut() {
+  state.answered = true;
+  state.wrong++;
+  state.streak = 0;
+  const qIdx = state.queue[state.current];
+  state.missedQ.push(qIdx);
+  state.catStats[questions[qIdx].cat].total++;
+  revealAnswer(qIdx, -1);
+  document.getElementById('next-btn').style.display = 'inline-flex';
+}
+
+function selectAnswer(chosen, qIdx) {
+  if (state.answered) return;
+  if (state.mode === 'exam' && state.answered) return;
+  state.answered = true;
+  clearInterval(state.timer);
+
+  const q = questions[qIdx];
+  state.catStats[q.cat].total++;
+  const correct = chosen === q.ans;
+
+  if (correct) {
+    state.score++;
+    state.streak++;
+    if (state.streak > state.bestStreak) state.bestStreak = state.streak;
+    state.catStats[q.cat].correct++;
+  } else {
+    state.wrong++;
+    state.streak = 0;
+    state.missedQ.push(qIdx);
+  }
+
+  revealAnswer(qIdx, chosen);
+
+  if (state.mode !== 'exam') {
+    document.getElementById('solution-text').textContent = q.sol;
+    document.getElementById('solution-box').style.display = 'block';
+  }
+  document.getElementById('next-btn').style.display = 'inline-flex';
+  document.getElementById('live-score').textContent = state.score;
+}
+
+function revealAnswer(qIdx, chosen) {
+  const q = questions[qIdx];
+  const btns = document.querySelectorAll('.option-btn');
+  btns.forEach((btn, i) => {
+    btn.classList.add('disabled');
+    if (i === q.ans) {
+      btn.classList.add(chosen === -1 ? 'reveal-correct' : 'correct');
+    } else if (i === chosen && chosen !== q.ans) {
+      btn.classList.add('wrong');
+    }
+  });
+}
+
+function nextQuestion() {
+  state.current++;
+  loadQuestion();
+}
+
+function skipQuestion() {
+  if (state.answered) { nextQuestion(); return; }
+  clearInterval(state.timer);
+  state.answered = true;
+  state.skipped++;
+  state.streak = 0;
+  const qIdx = state.queue[state.current];
+  state.missedQ.push(qIdx);
+  revealAnswer(qIdx, -1);
+  const q = questions[qIdx];
+  document.getElementById('solution-text').textContent = q.sol;
+  document.getElementById('solution-box').style.display = 'block';
+  document.getElementById('next-btn').style.display = 'inline-flex';
+}
+
+function toggleBookmark() {
+  const qIdx = state.queue[state.current];
+  if (state.bookmarks.has(qIdx)) state.bookmarks.delete(qIdx);
+  else state.bookmarks.add(qIdx);
+  const bBtn = document.getElementById('bookmark-btn');
+  bBtn.textContent = state.bookmarks.has(qIdx) ? '★' : '☆';
+  bBtn.className = 'bookmark-btn' + (state.bookmarks.has(qIdx) ? ' active' : '');
+}
+
+function showResults() {
+  clearInterval(state.timer);
+  const pct = Math.round((state.score / questions.length) * 100);
+  let grade = '🥇', title = 'Outstanding!';
+  if (pct < 40) { grade = '📚'; title = 'Keep Studying'; }
+  else if (pct < 60) { grade = '💪'; title = 'Good Effort'; }
+  else if (pct < 80) { grade = '🎯'; title = 'Well Done!'; }
+  else if (pct < 95) { grade = '🏆'; title = 'Excellent!'; }
+
+  document.getElementById('result-grade').textContent = grade;
+  document.getElementById('result-title').textContent = title;
+  document.getElementById('result-subtitle').textContent = `You scored ${pct}% — ${state.score} correct out of ${questions.length}`;
+  document.getElementById('r-correct').textContent = state.score;
+  document.getElementById('r-wrong').textContent = state.wrong;
+  document.getElementById('r-score').textContent = pct + '%';
+  document.getElementById('r-streak').textContent = state.bestStreak;
+
+  // Category breakdown
+  const bd = document.getElementById('cat-breakdown');
+  bd.innerHTML = `<div class="breakdown-title">Performance by Category</div>`;
+  cats.forEach(cat => {
+    const s = state.catStats[cat];
+    const pct = s.total ? Math.round((s.correct / s.total) * 100) : 0;
+    bd.innerHTML += `<div class="breakdown-row">
+      <div class="breakdown-cat">${cat}</div>
+      <div class="breakdown-bar-wrap"><div class="breakdown-bar" style="width:${pct}%"></div></div>
+      <div class="breakdown-score">${s.correct}/${s.total}</div>
+    </div>`;
+  });
+
+  showScreen('results');
+}
+
+function restartQuiz() { showScreen('splash'); }
+
+function reviewMissed() {
+  if (state.missedQ.length === 0) { alert('No missed questions!'); return; }
+  state.queue = [...new Set(state.missedQ)];
+  state.current = 0; state.score = 0; state.wrong = 0;
+  state.skipped = 0; state.streak = 0; state.bestStreak = 0;
+  state.answered = false; state.missedQ = [];
+  cats.forEach(c => { state.catStats[c] = {correct:0, total:0}; });
+  document.getElementById('q-total').textContent = state.queue.length;
+  showScreen('quiz');
+  loadQuestion();
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if (id === 'splash') {
+    document.getElementById('splash').style.display = 'flex';
+  }
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', () => {
+  showScreen('splash');
+});
+</script>
+</body>
+</html>
