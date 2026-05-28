@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Node.js Mastery Quiz</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0e0f;
+    --surface: #111618;
+    --surface2: #161d20;
+    --border: #1e2a2d;
+    --green: #00ff87;
+    --green-dim: #00cc6a;
+    --red: #ff4757;
+    --yellow: #ffd32a;
+    --text: #e8f5f0;
+    --muted: #5a7a72;
+    --accent: #00ff87;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,255,135,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,255,135,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  #app { position: relative; z-index: 1; }
+
+  /* ── SPLASH ── */
+  #splash {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    text-align: center;
+  }
+
+  .logo-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(0,255,135,0.08);
+    border: 1px solid rgba(0,255,135,0.25);
+    border-radius: 40px;
+    padding: 8px 20px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--green);
+    margin-bottom: 32px;
+    letter-spacing: 1px;
+  }
+
+  .logo-badge::before {
+    content: '';
+    width: 8px; height: 8px;
+    background: var(--green);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%,100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.8); }
+  }
+
+  h1 {
+    font-size: clamp(42px, 8vw, 88px);
+    font-weight: 800;
+    line-height: 0.95;
+    letter-spacing: -3px;
+    margin-bottom: 20px;
+  }
+
+  h1 span { color: var(--green); }
+
+  .subtitle {
+    font-size: 16px;
+    color: var(--muted);
+    max-width: 480px;
+    line-height: 1.7;
+    margin-bottom: 48px;
+  }
+
+  .stats-row {
+    display: flex;
+    gap: 32px;
+    margin-bottom: 48px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .stat {
+    text-align: center;
+  }
+
+  .stat-num {
+    display: block;
+    font-size: 36px;
+    font-weight: 800;
+    color: var(--green);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .stat-label {
+    font-size: 12px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+  }
+
+  .topics-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    max-width: 600px;
+    margin-bottom: 48px;
+  }
+
+  .topic-chip {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 12px;
+    color: var(--muted);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .btn-start {
+    background: var(--green);
+    color: #000;
+    border: none;
+    padding: 18px 56px;
+    font-size: 16px;
+    font-weight: 800;
+    font-family: 'Syne', sans-serif;
+    border-radius: 4px;
+    cursor: pointer;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn-start::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(255,255,255,0.15);
+    transform: translateX(-100%);
+    transition: transform 0.3s;
+  }
+
+  .btn-start:hover::after { transform: translateX(0); }
+  .btn-start:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(0,255,135,0.4); }
+
+  /* ── QUIZ ── */
+  #quiz { display: none; min-height: 100vh; padding: 24px 20px 60px; max-width: 860px; margin: 0 auto; }
+
+  .quiz-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 32px;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  .q-counter {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .q-counter strong { color: var(--green); font-size: 20px; }
+
+  .progress-bar {
+    flex: 1;
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    margin: 0 20px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: var(--green);
+    border-radius: 2px;
+    transition: width 0.4s ease;
+    box-shadow: 0 0 8px rgba(0,255,135,0.5);
+  }
+
+  .score-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .score-badge span { color: var(--green); font-weight: 700; }
+
+  /* Category tag */
+  .cat-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--green);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 12px;
+    opacity: 0.7;
+  }
+
+  /* Question card */
+  .q-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 36px;
+    margin-bottom: 24px;
+    animation: slideIn 0.3s ease;
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .q-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+  }
+
+  .q-text {
+    font-size: clamp(15px, 2.5vw, 18px);
+    font-weight: 600;
+    line-height: 1.6;
+    color: var(--text);
+  }
+
+  .q-text code {
+    font-family: 'JetBrains Mono', monospace;
+    background: rgba(0,255,135,0.07);
+    border: 1px solid rgba(0,255,135,0.15);
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-size: 0.9em;
+    color: var(--green);
+  }
+
+  /* Options */
+  .options { display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; }
+
+  .opt {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    transition: all 0.18s;
+    font-size: 15px;
+    text-align: left;
+  }
+
+  .opt:hover:not(.disabled) {
+    border-color: rgba(0,255,135,0.4);
+    background: rgba(0,255,135,0.04);
+  }
+
+  .opt-letter {
+    width: 28px; height: 28px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    flex-shrink: 0;
+    color: var(--muted);
+    transition: all 0.18s;
+  }
+
+  .opt:hover:not(.disabled) .opt-letter {
+    border-color: var(--green);
+    color: var(--green);
+    background: rgba(0,255,135,0.1);
+  }
+
+  .opt.correct {
+    border-color: var(--green);
+    background: rgba(0,255,135,0.08);
+  }
+
+  .opt.correct .opt-letter {
+    background: var(--green);
+    color: #000;
+    border-color: var(--green);
+  }
+
+  .opt.wrong {
+    border-color: var(--red);
+    background: rgba(255,71,87,0.08);
+  }
+
+  .opt.wrong .opt-letter {
+    background: var(--red);
+    color: #fff;
+    border-color: var(--red);
+  }
+
+  .opt.disabled { cursor: default; }
+
+  /* Explanation */
+  .explanation {
+    background: rgba(0,255,135,0.04);
+    border: 1px solid rgba(0,255,135,0.2);
+    border-radius: 8px;
+    padding: 20px 24px;
+    margin-bottom: 24px;
+    display: none;
+    animation: fadeIn 0.3s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; } to { opacity: 1; }
+  }
+
+  .explanation.show { display: block; }
+
+  .exp-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--green);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+  }
+
+  .exp-text {
+    font-size: 14px;
+    color: #a0c4b8;
+    line-height: 1.7;
+  }
+
+  .exp-text code {
+    font-family: 'JetBrains Mono', monospace;
+    background: rgba(0,255,135,0.07);
+    border-radius: 3px;
+    padding: 1px 5px;
+    color: var(--green);
+    font-size: 0.9em;
+  }
+
+  /* Nav */
+  .q-nav {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .btn-next {
+    background: transparent;
+    color: var(--green);
+    border: 1px solid var(--green);
+    padding: 14px 36px;
+    font-size: 14px;
+    font-weight: 700;
+    font-family: 'Syne', sans-serif;
+    border-radius: 4px;
+    cursor: pointer;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    transition: all 0.2s;
+    display: none;
+  }
+
+  .btn-next.show { display: block; }
+  .btn-next:hover { background: var(--green); color: #000; }
+
+  /* ── RESULTS ── */
+  #results {
+    display: none;
+    min-height: 100vh;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    padding: 60px 20px;
+    text-align: center;
+  }
+
+  .result-ring {
+    width: 160px; height: 160px;
+    border-radius: 50%;
+    border: 3px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 32px;
+    position: relative;
+  }
+
+  .result-ring svg {
+    position: absolute;
+    inset: -3px;
+    width: calc(100% + 6px);
+    height: calc(100% + 6px);
+    transform: rotate(-90deg);
+  }
+
+  .result-ring svg circle {
+    fill: none;
+    stroke-width: 3;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 1.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .ring-bg { stroke: var(--border); }
+  .ring-fill { stroke: var(--green); filter: drop-shadow(0 0 6px rgba(0,255,135,0.6)); }
+
+  .result-score-num {
+    font-size: 48px;
+    font-weight: 800;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--green);
+    line-height: 1;
+  }
+
+  .result-score-den {
+    font-size: 16px;
+    color: var(--muted);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .result-title {
+    font-size: 32px;
+    font-weight: 800;
+    margin-bottom: 12px;
+  }
+
+  .result-subtitle {
+    color: var(--muted);
+    margin-bottom: 40px;
+    font-size: 15px;
+  }
+
+  .result-breakdown {
+    display: flex;
+    gap: 32px;
+    margin-bottom: 40px;
+    justify-content: center;
+  }
+
+  .bd-item { text-align: center; }
+  .bd-num { font-size: 28px; font-weight: 800; font-family: 'JetBrains Mono', monospace; }
+  .bd-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 1.5px; }
+  .bd-correct .bd-num { color: var(--green); }
+  .bd-wrong .bd-num { color: var(--red); }
+  .bd-skip .bd-num { color: var(--yellow); }
+
+  .btn-restart {
+    background: var(--green);
+    color: #000;
+    border: none;
+    padding: 16px 48px;
+    font-size: 15px;
+    font-weight: 800;
+    font-family: 'Syne', sans-serif;
+    border-radius: 4px;
+    cursor: pointer;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    transition: all 0.2s;
+  }
+
+  .btn-restart:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(0,255,135,0.4); }
+
+  @media (max-width: 600px) {
+    .q-card { padding: 24px 20px; }
+    h1 { letter-spacing: -2px; }
+    .stats-row { gap: 20px; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- SPLASH -->
+<div id="splash">
+  <div class="logo-badge">Node.js Mastery Quiz</div>
+  <h1>Master<br><span>Node.js</span></h1>
+  <p class="subtitle">200 hand-crafted questions covering core modules, event loop, streams, clustering, performance and advanced patterns.</p>
+  <div class="stats-row">
+    <div class="stat"><span class="stat-num">200</span><span class="stat-label">Questions</span></div>
+    <div class="stat"><span class="stat-num">15</span><span class="stat-label">Topics</span></div>
+    <div class="stat"><span class="stat-num">4</span><span class="stat-label">Options each</span></div>
+  </div>
+  <div class="topics-grid">
+    <span class="topic-chip">Core Modules</span>
+    <span class="topic-chip">Event Loop</span>
+    <span class="topic-chip">Streams</span>
+    <span class="topic-chip">Cluster & Workers</span>
+    <span class="topic-chip">Express.js</span>
+    <span class="topic-chip">Async/Await</span>
+    <span class="topic-chip">Buffers</span>
+    <span class="topic-chip">Child Processes</span>
+    <span class="topic-chip">Performance</span>
+    <span class="topic-chip">Security</span>
+    <span class="topic-chip">Testing</span>
+    <span class="topic-chip">Debugging</span>
+    <span class="topic-chip">npm/Package</span>
+    <span class="topic-chip">File System</span>
+    <span class="topic-chip">Networking</span>
+  </div>
+  <button class="btn-start" onclick="startQuiz()">Start Quiz →</button>
+</div>
+
+<!-- QUIZ -->
+<div id="quiz">
+  <div class="quiz-header">
+    <div class="q-counter"><strong id="qNum">1</strong> / 200</div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0.5%"></div></div>
+    <div class="score-badge">Score: <span id="scoreDisplay">0</span></div>
+  </div>
+  <div class="cat-tag" id="catTag"></div>
+  <div class="q-card">
+    <div class="q-num" id="qNumLabel"></div>
+    <div class="q-text" id="qText"></div>
+  </div>
+  <div class="options" id="optionsContainer"></div>
+  <div class="explanation" id="explanation">
+    <div class="exp-label">✦ Explanation</div>
+    <div class="exp-text" id="expText"></div>
+  </div>
+  <div class="q-nav">
+    <button class="btn-next" id="btnNext" onclick="nextQuestion()">Next →</button>
+  </div>
+</div>
+
+<!-- RESULTS -->
+<div id="results" style="display:none; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; padding:60px 20px; text-align:center;">
+  <div class="result-ring">
+    <svg viewBox="0 0 166 166"><circle class="ring-bg" cx="83" cy="83" r="80"/><circle class="ring-fill" id="ringFill" cx="83" cy="83" r="80" stroke-dasharray="502.65" stroke-dashoffset="502.65"/></svg>
+    <div>
+      <div class="result-score-num" id="finalScore">0</div>
+      <div class="result-score-den">/200</div>
+    </div>
+  </div>
+  <div class="result-title" id="resultTitle">Quiz Complete!</div>
+  <div class="result-subtitle" id="resultSubtitle"></div>
+  <div class="result-breakdown">
+    <div class="bd-item bd-correct"><div class="bd-num" id="finalCorrect">0</div><div class="bd-label">Correct</div></div>
+    <div class="bd-item bd-wrong"><div class="bd-num" id="finalWrong">0</div><div class="bd-label">Wrong</div></div>
+  </div>
+  <button class="btn-restart" onclick="restartQuiz()">Restart Quiz ↺</button>
+</div>
+
+</div>
+
+<script>
+const questions = [
+  // ── CORE MODULES ──
+  {cat:"Core Modules", q:"Which module provides the <code>EventEmitter</code> class in Node.js?", opts:["events","emitter","core","stream"], ans:0, exp:"The built-in <code>events</code> module exports the <code>EventEmitter</code> class, which is the foundation of Node.js's event-driven architecture."},
+  {cat:"Core Modules", q:"What does <code>require('path').join()</code> do?", opts:["Joins URL segments","Joins file path segments using the OS separator","Resolves a relative path to absolute","Checks if a path exists"], ans:1, exp:"<code>path.join()</code> concatenates path segments using the platform-specific separator (<code>/</code> on Unix, <code>\\</code> on Windows), normalizing the result."},
+  {cat:"Core Modules", q:"Which method reads a file asynchronously in the <code>fs</code> module?", opts:["fs.readFile()","fs.open()","fs.read()","fs.asyncRead()"], ans:0, exp:"<code>fs.readFile(path, options, callback)</code> reads the entire file asynchronously and delivers contents to the callback."},
+  {cat:"Core Modules", q:"What is the output of <code>typeof require</code>?", opts:["object","function","undefined","string"], ans:1, exp:"<code>require</code> is a function provided by Node's CommonJS module system to load modules."},
+  {cat:"Core Modules", q:"Which core module is used to work with URLs?", opts:["link","uri","url","http"], ans:2, exp:"The built-in <code>url</code> module provides utilities for URL resolution and parsing."},
+  {cat:"Core Modules", q:"What does <code>os.cpus()</code> return?", opts:["Number of CPUs","Array of CPU info objects","CPU speed in MHz","CPU architecture string"], ans:1, exp:"<code>os.cpus()</code> returns an array of objects containing information about each logical CPU core, including model, speed, and times."},
+  {cat:"Core Modules", q:"Which method of <code>crypto</code> creates a hash instance?", opts:["crypto.hash()","crypto.digest()","crypto.createHash()","crypto.newHash()"], ans:2, exp:"<code>crypto.createHash(algorithm)</code> creates and returns a Hash object that can be used to generate hash digests."},
+  {cat:"Core Modules", q:"What does <code>Buffer.from('hello', 'utf8')</code> create?", opts:["A string","A Buffer containing the UTF-8 bytes of 'hello'","An ArrayBuffer","A Uint8Array"], ans:1, exp:"<code>Buffer.from(string, encoding)</code> creates a new Buffer containing the string encoded with the given encoding."},
+  {cat:"Core Modules", q:"Which module provides the <code>assert</code> testing utilities?", opts:["test","chai","assert","node:assert"], ans:3, exp:"The built-in <code>node:assert</code> (or <code>assert</code>) module provides a set of assertion functions for verifying invariants."},
+  {cat:"Core Modules", q:"What does <code>process.argv[0]</code> contain?", opts:["The first CLI argument","The script filename","The node executable path","undefined"], ans:2, exp:"<code>process.argv[0]</code> is always the path to the Node.js executable. <code>process.argv[1]</code> is the script path, and <code>process.argv[2]</code> onwards are CLI arguments."},
+
+  // ── EVENT LOOP ──
+  {cat:"Event Loop", q:"What is the correct order of event loop phases?", opts:["timers → I/O → idle/prepare → poll → check → close","poll → timers → check → I/O → close","timers → poll → check → close → I/O","I/O → timers → poll → check → close → idle"], ans:0, exp:"The event loop phases in order are: timers, pending callbacks, idle/prepare, poll, check, and close callbacks."},
+  {cat:"Event Loop", q:"In which phase does <code>setImmediate()</code> execute its callbacks?", opts:["Timers","Poll","Check","Close"], ans:2, exp:"<code>setImmediate()</code> callbacks execute in the <strong>check</strong> phase, which runs immediately after the poll phase completes."},
+  {cat:"Event Loop", q:"Which queue has the highest priority in the microtask queue?", opts:["Promise callbacks","process.nextTick","queueMicrotask","MutationObserver"], ans:1, exp:"<code>process.nextTick</code> callbacks are processed before any other microtasks, including resolved Promise callbacks, after each C++ ↔ JS boundary crossing."},
+  {cat:"Event Loop", q:"What happens to I/O callbacks that were deferred from the previous iteration?", opts:["They are dropped","They run in the timers phase","They run in the pending callbacks phase","They run in the poll phase"], ans:2, exp:"The <em>pending callbacks</em> phase executes I/O callbacks deferred to the next loop iteration (e.g. TCP errors on some systems)."},
+  {cat:"Event Loop", q:"What is the minimum delay for <code>setTimeout(fn, 0)</code> in Node.js?", opts:["0 ms","1 ms","4 ms","10 ms"], ans:1, exp:"Node.js enforces a minimum delay of 1 ms for <code>setTimeout</code>. A delay of 0 is coerced to 1 ms internally."},
+  {cat:"Event Loop", q:"What does <code>setImmediate()</code> vs <code>setTimeout(fn,0)</code> order depend on?", opts:["Always setImmediate first","Always setTimeout first","Non-deterministic outside I/O callbacks","The Node.js version"], ans:2, exp:"When called from the main module (outside I/O callbacks), the order is non-deterministic and depends on process performance. Inside an I/O callback, <code>setImmediate</code> always fires before timers."},
+  {cat:"Event Loop", q:"What is a 'tick' in the context of <code>process.nextTick</code>?", opts:["A 1ms timer","One full pass of the event loop","A microtask checkpoint between phases","A heartbeat signal"], ans:2, exp:"A 'tick' refers to the microtask checkpoint that runs after the current operation completes, before the event loop continues to the next phase."},
+  {cat:"Event Loop", q:"Which of the following blocks the event loop?", opts:["fs.readFile()","setTimeout()","A while(true) loop","setImmediate()"], ans:2, exp:"Synchronous code like a <code>while(true)</code> loop runs on the main thread and blocks the event loop, preventing any I/O or timer callbacks from executing."},
+  {cat:"Event Loop", q:"What does the poll phase do when its queue is empty and no timers are scheduled?", opts:["Exits the process","Jumps to the check phase","Waits for new I/O events","Loops back to timers"], ans:2, exp:"When the poll queue is empty and no timers are pending, the event loop will wait in the poll phase for new I/O events to arrive."},
+  {cat:"Event Loop", q:"Which method adds a microtask that runs AFTER Promise callbacks?", opts:["process.nextTick","setImmediate","queueMicrotask","setTimeout(fn,0)"], ans:2, exp:"<code>queueMicrotask(fn)</code> adds to the microtask queue at the same priority as resolved Promise callbacks — after <code>process.nextTick</code> but before I/O."},
+
+  // ── ASYNC/PROMISES ──
+  {cat:"Async / Promises", q:"What does <code>Promise.allSettled()</code> do differently from <code>Promise.all()</code>?", opts:["It runs promises sequentially","It waits for all promises to settle, never rejecting","It cancels slow promises","It returns only fulfilled values"], ans:1, exp:"<code>Promise.allSettled()</code> waits for all promises to settle (fulfill or reject) and returns an array of result objects with <code>status</code>, <code>value</code>, or <code>reason</code> — it never rejects."},
+  {cat:"Async / Promises", q:"What does <code>async function</code> always return?", opts:["The returned value directly","A Promise","undefined","An Observable"], ans:1, exp:"An <code>async</code> function always returns a Promise. If it returns a non-Promise value, it is wrapped in <code>Promise.resolve(value)</code>."},
+  {cat:"Async / Promises", q:"What happens if you <code>await</code> a non-Promise value?", opts:["Throws a TypeError","The value is returned as-is after one microtask tick","Converts to 0","Silently ignored"], ans:1, exp:"<code>await</code> wraps the value in <code>Promise.resolve()</code>, so awaiting a non-Promise value resolves immediately, returning the value after one microtask tick."},
+  {cat:"Async / Promises", q:"Which method runs multiple promises concurrently and resolves when ALL resolve?", opts:["Promise.race()","Promise.any()","Promise.all()","Promise.allSettled()"], ans:2, exp:"<code>Promise.all(iterable)</code> takes an iterable of promises and returns a promise that resolves when all input promises resolve, or rejects as soon as one rejects."},
+  {cat:"Async / Promises", q:"What does <code>Promise.race()</code> return?", opts:["The slowest promise","A promise that settles as soon as the first input settles","All results in order","Undefined"], ans:1, exp:"<code>Promise.race(iterable)</code> returns a promise that settles (resolves or rejects) as soon as the first promise in the iterable settles."},
+  {cat:"Async / Promises", q:"What is the correct way to handle errors in an async function?", opts:["Using .catch() only","Using try/catch blocks","Using process.on('uncaughtException')","Async functions cannot throw"], ans:1, exp:"Inside an <code>async</code> function, errors thrown or rejected awaited promises can be caught with standard <code>try/catch</code> blocks."},
+  {cat:"Async / Promises", q:"What does <code>util.promisify()</code> do?", opts:["Converts a Promise to a callback","Wraps a callback-style function to return a Promise","Creates a new EventEmitter","Validates function arguments"], ans:1, exp:"<code>util.promisify(fn)</code> takes a function with a Node.js error-first callback signature and returns a version that returns a Promise."},
+  {cat:"Async / Promises", q:"Which of these catches an unhandled promise rejection in Node.js?", opts:["process.on('unhandledRejection', handler)","window.onerror","process.on('uncaughtException', handler)","domain.on('error', handler)"], ans:0, exp:"<code>process.on('unhandledRejection', (reason, promise) => {})</code> is the correct event for catching promises that rejected without a <code>.catch()</code> handler."},
+  {cat:"Async / Promises", q:"What does <code>Promise.any()</code> do?", opts:["Resolves when ANY promise resolves; rejects if ALL reject","Resolves when ALL promises resolve","Rejects on first rejection","Runs promises one at a time"], ans:0, exp:"<code>Promise.any(iterable)</code> resolves with the first fulfilled promise. If all promises reject, it rejects with an <code>AggregateError</code>."},
+  {cat:"Async / Promises", q:"What is the issue with <code>await</code> inside a <code>forEach</code> loop?", opts:["Syntax error","forEach doesn't respect await; iterations run concurrently","It blocks the main thread","It works perfectly fine"], ans:1, exp:"<code>Array.prototype.forEach</code> doesn't await its callback. Each iteration fires without waiting for the previous to complete. Use <code>for...of</code> or <code>Promise.all</code> with <code>.map()</code> instead."},
+
+  // ── STREAMS ──
+  {cat:"Streams", q:"Which stream type is both readable and writable?", opts:["Duplex","Transform","PassThrough","Readable"], ans:0, exp:"A <code>Duplex</code> stream implements both Readable and Writable interfaces simultaneously, with independent read and write buffers (e.g., TCP sockets)."},
+  {cat:"Streams", q:"What does a Transform stream do?", opts:["Only reads data","Only writes data","Transforms input data to produce output","Copies data without modification"], ans:2, exp:"A <code>Transform</code> stream is a Duplex stream where the output is computed from the input — e.g., compression streams like <code>zlib.createGzip()</code>."},
+  {cat:"Streams", q:"What does <code>stream.pipe()</code> do?", opts:["Creates a new stream","Connects readable output to writable input","Pauses a stream","Destroys a stream"], ans:1, exp:"<code>readable.pipe(writable)</code> attaches the writable stream to the readable so that data flowing from the readable is automatically written to the writable."},
+  {cat:"Streams", q:"What event is emitted when a readable stream has no more data?", opts:["end","finish","close","done"], ans:0, exp:"The <code>end</code> event is emitted when there is no more data to be consumed from a Readable stream. <code>finish</code> is emitted when a Writable is done."},
+  {cat:"Streams", q:"What is backpressure in Node.js streams?", opts:["Network latency","The mechanism to control data flow when a consumer is slower than producer","CPU overload","Memory fragmentation"], ans:1, exp:"Backpressure is the signaling mechanism that prevents a readable from pushing data faster than a writable can process it. When <code>write()</code> returns false, the readable should pause."},
+  {cat:"Streams", q:"What does <code>stream.Readable.from()</code> create?", opts:["A file read stream","A readable stream from an iterable or async iterable","A transform stream","A duplex stream"], ans:1, exp:"<code>Readable.from(iterable)</code> creates a Readable stream out of any synchronous or asynchronous iterable, including generators and arrays."},
+  {cat:"Streams", q:"In object mode, what do streams transmit instead of Buffers/strings?", opts:["JSON only","Any JavaScript value","Numbers only","Typed arrays only"], ans:1, exp:"In object mode (<code>objectMode: true</code>), streams can transmit arbitrary JavaScript objects rather than being limited to Buffers and strings."},
+  {cat:"Streams", q:"Which method explicitly signals the end of a writable stream?", opts:["stream.stop()","stream.close()","stream.end()","stream.flush()"], ans:2, exp:"<code>writable.end([chunk][, encoding][, callback])</code> signals that no more data will be written. Optionally writes a final chunk before closing."},
+  {cat:"Streams", q:"What is a PassThrough stream?", opts:["A stream that logs all data","A Transform that passes data unchanged","A stream that reads files","A stream that splits data"], ans:1, exp:"A <code>PassThrough</code> is a trivial Transform implementation that simply passes input through to the output unchanged, useful for testing or observation."},
+  {cat:"Streams", q:"What does <code>pipeline()</code> from <code>node:stream</code> do over <code>pipe()</code>?", opts:["It's faster","It automatically handles errors and cleanup across all stream stages","It supports async streams only","It buffers all data first"], ans:1, exp:"<code>stream.pipeline()</code> properly handles error propagation and cleanup for all streams in the chain, destroying all streams if any one fails — fixing a major <code>pipe()</code> pitfall."},
+
+  // ── CLUSTER & WORKERS ──
+  {cat:"Cluster & Workers", q:"What is the purpose of the <code>cluster</code> module?", opts:["To split large files","To create child processes sharing server ports for load balancing","To manage npm packages","To distribute database queries"], ans:1, exp:"The <code>cluster</code> module allows you to create child processes (workers) that share server ports, enabling a Node.js application to take advantage of multi-core systems."},
+  {cat:"Cluster & Workers", q:"In cluster mode, what is the 'master' (primary) process responsible for?", opts:["Handling HTTP requests","Forking and managing worker processes","Compiling TypeScript","Managing the database pool"], ans:1, exp:"The primary (master) process uses <code>cluster.fork()</code> to spawn worker processes. It doesn't handle requests itself but manages worker lifecycle and inter-process communication."},
+  {cat:"Cluster & Workers", q:"What is a Worker Thread in Node.js?", opts:["A thread for I/O operations only","A true OS-level thread for CPU-intensive work within the same process","A child process clone","A green thread"], ans:1, exp:"<code>worker_threads</code> provides true OS-level threads that share memory with the parent via <code>SharedArrayBuffer</code>, ideal for CPU-bound tasks without the overhead of forking."},
+  {cat:"Cluster & Workers", q:"Which module provides Worker Threads in Node.js?", opts:["threads","child_process","cluster","worker_threads"], ans:3, exp:"The <code>worker_threads</code> module (available since Node.js 10.5.0, stable in v12) enables multi-threaded JavaScript execution."},
+  {cat:"Cluster & Workers", q:"How do cluster workers communicate with the primary process?", opts:["Shared memory only","Via IPC (inter-process communication) channel","TCP sockets","Unix domain sockets only"], ans:1, exp:"Cluster workers communicate with the primary process through a built-in IPC channel using <code>process.send()</code> and the <code>message</code> event."},
+  {cat:"Cluster & Workers", q:"What does <code>cluster.isMaster</code> (or <code>cluster.isPrimary</code>) check?", opts:["Whether the process is in production","Whether the current process is the primary cluster process","Whether clustering is enabled","Whether the process has workers"], ans:1, exp:"<code>cluster.isPrimary</code> (formerly <code>isMaster</code>) returns <code>true</code> if the current process is the primary/master cluster process."},
+  {cat:"Cluster & Workers", q:"What shared object can be used for memory between Worker Threads?", opts:["Buffer","SharedArrayBuffer","JSON","MessageChannel"], ans:1, exp:"<code>SharedArrayBuffer</code> provides raw binary shared memory that can be accessed by multiple worker threads simultaneously (use <code>Atomics</code> for synchronization)."},
+  {cat:"Cluster & Workers", q:"Which scheduling policy is the default for cluster on non-Windows systems?", opts:["OS-handled","Round-robin","Weighted round-robin","Random"], ans:1, exp:"Node.js cluster defaults to round-robin scheduling on non-Windows systems, where the primary accepts connections and distributes them evenly across workers."},
+  {cat:"Cluster & Workers", q:"What happens when a cluster worker crashes?", opts:["The entire server goes down","The primary process receives an 'exit' event and can spawn a replacement","The error is silently ignored","Other workers take on extra load automatically"], ans:1, exp:"When a worker exits, the primary receives the <code>exit</code> event with the worker's exit code. The primary must explicitly call <code>cluster.fork()</code> to replace it."},
+  {cat:"Cluster & Workers", q:"What is the main difference between <code>cluster</code> and <code>worker_threads</code>?", opts:["cluster is deprecated","cluster creates separate processes (no shared memory); worker_threads share memory in one process","worker_threads are slower","They are identical"], ans:1, exp:"<code>cluster</code> forks new OS processes (no shared heap, higher overhead) while <code>worker_threads</code> creates threads within the same process with shared memory and lower overhead."},
+
+  // ── CHILD PROCESSES ──
+  {cat:"Child Processes", q:"Which method spawns a child process and buffers all output?", opts:["child_process.spawn()","child_process.exec()","child_process.fork()","child_process.run()"], ans:1, exp:"<code>exec()</code> spawns a shell, runs the command, and buffers all stdout/stderr before delivering them to a callback. Suitable for small outputs."},
+  {cat:"Child Processes", q:"What is the key advantage of <code>spawn()</code> over <code>exec()</code>?", opts:["spawn() is faster to write","spawn() streams I/O rather than buffering, so it's safe for large outputs","spawn() supports all shells","spawn() auto-restarts on crash"], ans:1, exp:"<code>spawn()</code> returns a ChildProcess with streaming stdio, making it suitable for large outputs or long-running processes where buffering would use too much memory."},
+  {cat:"Child Processes", q:"What is <code>child_process.fork()</code> specifically designed for?", opts:["Spawning any command","Spawning another Node.js module with an IPC channel","Compiling native addons","Creating cluster workers only"], ans:1, exp:"<code>fork(modulePath)</code> is a special case of <code>spawn</code> that spawns a new Node.js process and establishes an IPC channel for bidirectional messaging via <code>.send()</code>."},
+  {cat:"Child Processes", q:"What does <code>execSync()</code> do?", opts:["Runs a command asynchronously","Runs a command synchronously, blocking the event loop until it completes","Streams output","Creates a worker thread"], ans:1, exp:"<code>execSync()</code> is the synchronous version of <code>exec()</code>. It blocks the event loop until the child process exits, returning the stdout as a Buffer or string."},
+  {cat:"Child Processes", q:"How do you pass environment variables to a spawned child process?", opts:["Via process.env only","Using the env option in the options object","Via stdin","Using global variables"], ans:1, exp:"The second argument to <code>spawn/exec/fork</code> accepts an options object with an <code>env</code> property containing the environment variables for the child process."},
+
+  // ── NETWORKING / HTTP ──
+  {cat:"Networking / HTTP", q:"Which module is used to create a raw HTTP server in Node.js?", opts:["net","http","request","server"], ans:1, exp:"The built-in <code>http</code> module provides <code>http.createServer(callback)</code> to create an HTTP server."},
+  {cat:"Networking / HTTP", q:"What does <code>http.request()</code> return?", opts:["The response body as a string","A ClientRequest object","A Promise","A Buffer"], ans:1, exp:"<code>http.request()</code> returns a <code>ClientRequest</code> instance. You must call <code>req.end()</code> to actually send the request and listen for the <code>response</code> event."},
+  {cat:"Networking / HTTP", q:"Which Node.js module provides raw TCP/Unix socket communication?", opts:["dgram","http","net","tls"], ans:2, exp:"The <code>net</code> module provides an asynchronous network API for creating stream-based TCP servers and clients."},
+  {cat:"Networking / HTTP", q:"What is the difference between <code>http</code> and <code>https</code> modules?", opts:["https is faster","https uses TLS/SSL for encrypted communication","They are identical","https requires a proxy"], ans:1, exp:"The <code>https</code> module is the equivalent of <code>http</code> but over TLS/SSL, providing encrypted communication. It requires a certificate and private key."},
+  {cat:"Networking / HTTP", q:"Which module is used for UDP communication in Node.js?", opts:["net","udp","dgram","socket"], ans:2, exp:"The <code>dgram</code> module provides an implementation of UDP datagram sockets."},
+  {cat:"Networking / HTTP", q:"What does <code>res.setHeader('Content-Type', 'application/json')</code> do?", opts:["Validates JSON response","Sets the Content-Type response header","Parses request JSON","Sends JSON to client"], ans:1, exp:"<code>res.setHeader(name, value)</code> sets a single response header. Setting <code>Content-Type</code> tells the client how to interpret the response body."},
+  {cat:"Networking / HTTP", q:"What is WebSocket and how does Node.js support it?", opts:["A database protocol; via MongoDB driver","A full-duplex communication protocol; via libraries like ws or socket.io","A caching protocol; via Redis","An HTTP extension; built-in"], ans:1, exp:"WebSocket provides full-duplex, persistent communication over a single TCP connection. Node.js supports it through third-party libraries like <code>ws</code> or <code>socket.io</code> (no built-in support)."},
+  {cat:"Networking / HTTP", q:"What does <code>server.listen(port, hostname, callback)</code> do?", opts:["Sends a request to a port","Starts the HTTP server and binds to port/hostname","Connects to an existing server","Proxies traffic to another port"], ans:1, exp:"<code>server.listen()</code> starts the TCP server and begins accepting connections on the specified port and optional hostname."},
+  {cat:"Networking / HTTP", q:"What is the <code>keep-alive</code> header used for in HTTP?", opts:["Server-side caching","Maintaining persistent TCP connections across multiple requests","Session authentication","Content compression"], ans:1, exp:"The <code>Connection: keep-alive</code> header allows the TCP connection to be reused for multiple HTTP requests, reducing latency from repeated TCP handshakes."},
+  {cat:"Networking / HTTP", q:"What does HTTP/2 provide over HTTP/1.1 in Node.js?", opts:["Better security only","Multiplexing, server push, header compression","UDP support","Binary encoding only"], ans:1, exp:"HTTP/2 offers request multiplexing (multiple requests on one connection), server push, header compression (HPACK), and binary framing — all addressable via the <code>http2</code> module."},
+
+  // ── EXPRESS / FRAMEWORK ──
+  {cat:"Express.js", q:"What is middleware in Express.js?", opts:["A database layer","A function with (req, res, next) that has access to request/response cycle","A template engine","An HTTP verb handler"], ans:1, exp:"Middleware are functions with <code>(req, res, next)</code> signature that execute sequentially in the request pipeline. They can modify req/res, end the cycle, or call <code>next()</code>."},
+  {cat:"Express.js", q:"What does calling <code>next(err)</code> in Express middleware do?", opts:["Goes to the next route","Passes control to the error-handling middleware","Terminates the request","Logs the error and continues"], ans:1, exp:"Calling <code>next(err)</code> with an error argument skips all remaining regular middleware and routes and passes control to the error-handling middleware (signature: <code>(err, req, res, next)</code>)."},
+  {cat:"Express.js", q:"Which method mounts middleware or a router on a specific path prefix?", opts:["app.use()","app.get()","app.route()","app.all()"], ans:0, exp:"<code>app.use([path], middlewareFn)</code> mounts middleware at an optional path prefix. If no path is given, it runs for every request."},
+  {cat:"Express.js", q:"What is <code>express.Router()</code> used for?", opts:["Creating a mini-application with isolated middleware and routes","Proxying requests","Managing database connections","Serving static files"], ans:0, exp:"<code>express.Router()</code> creates a mini-app that can have its own middleware stack and routes, which can then be mounted onto the main application."},
+  {cat:"Express.js", q:"How do you access route parameters in Express?", opts:["req.params","req.query","req.body","req.headers"], ans:0, exp:"Route parameters defined with <code>:param</code> syntax (e.g. <code>/users/:id</code>) are accessible via <code>req.params.id</code>."},
+  {cat:"Express.js", q:"What does <code>express.json()</code> middleware do?", opts:["Stringifies response to JSON","Parses incoming request bodies with JSON payloads","Validates JSON schema","Sets Content-Type to JSON"], ans:1, exp:"<code>express.json()</code> is built-in middleware that parses incoming requests with <code>Content-Type: application/json</code> and populates <code>req.body</code>."},
+  {cat:"Express.js", q:"What is the purpose of <code>res.locals</code> in Express?", opts:["Storing global variables","Passing data from middleware to the current request's view/response","Caching responses","Storing session data"], ans:1, exp:"<code>res.locals</code> is an object scoped to the current request/response cycle, used to pass data from middleware to route handlers or view templates."},
+  {cat:"Express.js", q:"What is CORS and how do you enable it in Express?", opts:["Cross-Origin Resource Sharing; via the cors npm middleware","Cross-Object Reference Service; built-in","Cache-Origin Rate System; via headers only","Content-Origin Refresh Standard; not needed in Node"], ans:0, exp:"CORS (Cross-Origin Resource Sharing) controls browser access to resources from different origins. Enable it in Express by using the <code>cors</code> npm package as middleware."},
+  {cat:"Express.js", q:"What HTTP status code does <code>res.sendStatus(404)</code> send?", opts:["200","201","404","500"], ans:2, exp:"<code>res.sendStatus(404)</code> sets the response status to 404 and sends the status message ('Not Found') as the response body."},
+  {cat:"Express.js", q:"What does <code>app.set('view engine', 'ejs')</code> configure?", opts:["The HTML parser","The default template engine for rendering views","The JSON serializer","The static file handler"], ans:1, exp:"<code>app.set('view engine', engineName)</code> sets the default template engine for <code>res.render()</code> calls, so you don't need to specify the file extension."},
+
+  // ── BUFFERS ──
+  {cat:"Buffers", q:"What is a Buffer in Node.js?", opts:["A temporary file on disk","A fixed-size allocation of raw binary memory outside the V8 heap","An async queue","A JavaScript array of integers"], ans:1, exp:"A Buffer represents a fixed-size chunk of memory allocated outside the V8 JavaScript heap, used for working with raw binary data such as file contents or network packets."},
+  {cat:"Buffers", q:"What is the difference between <code>Buffer.alloc()</code> and <code>Buffer.allocUnsafe()</code>?", opts:["alloc() is deprecated","allocUnsafe() is zero-filled; alloc() is not","alloc() initializes memory to zero; allocUnsafe() does not and may contain old data","They are identical"], ans:2, exp:"<code>Buffer.alloc(size)</code> creates a Buffer filled with zeros, while <code>Buffer.allocUnsafe(size)</code> allocates memory faster without initialization — it may contain sensitive old memory data."},
+  {cat:"Buffers", q:"How do you convert a Buffer to a UTF-8 string?", opts:["buffer.parse()","buffer.toString('utf8')","String(buffer)","buffer.decode()"], ans:1, exp:"<code>buffer.toString(encoding)</code> decodes the Buffer using the specified encoding. UTF-8 is the default, so <code>buffer.toString()</code> also works."},
+  {cat:"Buffers", q:"What does <code>Buffer.concat(list)</code> do?", opts:["Creates a Buffer from a string","Merges an array of Buffers into a single Buffer","Splits a Buffer","Compares two Buffers"], ans:1, exp:"<code>Buffer.concat(list[, totalLength])</code> concatenates all Buffer instances in the list array into a new single Buffer."},
+  {cat:"Buffers", q:"What is the maximum size of a Buffer in Node.js?", opts:["2 GB","4 GB","Limited by V8's max string length (~1GB on 32-bit, larger on 64-bit)","Unlimited"], ans:2, exp:"Buffer size is limited by <code>buffer.constants.MAX_LENGTH</code>, which is approximately 2GB on 64-bit systems. In practice it is constrained by available memory."},
+
+  // ── MODULE SYSTEM ──
+  {cat:"Module System", q:"What is the difference between CommonJS <code>require()</code> and ES Module <code>import</code>?", opts:["require is newer","import is synchronous; require is asynchronous","require is synchronous and dynamic; import is static and can be async (top-level await)","They are identical"], ans:2, exp:"CommonJS <code>require()</code> is synchronous and can be called anywhere at runtime. ES Module <code>import</code> is statically analyzed at parse time, enabling tree-shaking, and supports top-level await."},
+  {cat:"Module System", q:"What does <code>module.exports</code> refer to?", opts:["The entire module file","The object that is returned when another file requires this module","The module's private scope","The module's metadata"], ans:1, exp:"<code>module.exports</code> is the object that is returned when another module calls <code>require()</code> on this file. By default it is an empty object <code>{}</code>."},
+  {cat:"Module System", q:"What does adding <code>'type': 'module'</code> to <code>package.json</code> do?", opts:["Enables TypeScript","Treats all .js files as ES Modules instead of CommonJS","Adds strict mode","Enables experimental features"], ans:1, exp:"Setting <code>\"type\": \"module\"</code> in <code>package.json</code> causes Node.js to treat <code>.js</code> files as ESM. Without it, <code>.js</code> files default to CommonJS."},
+  {cat:"Module System", q:"What is the <code>__dirname</code> variable in CommonJS?", opts:["The current working directory","The absolute path of the directory containing the current module file","The project root directory","The OS home directory"], ans:1, exp:"<code>__dirname</code> is a CommonJS-only variable that holds the absolute path of the directory containing the current module. It's not available in ES Modules (use <code>import.meta.url</code> instead)."},
+  {cat:"Module System", q:"How do you get the equivalent of <code>__dirname</code> in ES Modules?", opts:["Use process.cwd()","Use import.meta.dirname or derive from import.meta.url","It's available as-is","Use path.resolve()"], ans:1, exp:"In ESM, use <code>import.meta.dirname</code> (Node 21.2+) or <code>path.dirname(new URL(import.meta.url).pathname)</code> for older versions to get the directory of the current module."},
+  {cat:"Module System", q:"What is module caching in Node.js?", opts:["Compiling modules to native code","Storing compiled module exports so subsequent require() calls return the cached version","Saving modules to disk","Lazy loading modules"], ans:1, exp:"After a module is first loaded, Node.js caches it in <code>require.cache</code>. Subsequent <code>require()</code> calls return the cached exports without re-executing the module file."},
+  {cat:"Module System", q:"What does <code>require.resolve(id)</code> do?", opts:["Loads and returns the module","Returns the full resolved file path without loading the module","Checks if a module exists","Returns the module version"], ans:1, exp:"<code>require.resolve(id)</code> performs module resolution and returns the full file path that would be loaded, without actually loading the module."},
+  {cat:"Module System", q:"What is a <code>package.json</code> <code>exports</code> field used for?", opts:["Listing dependencies","Defining public entry points and restricting deep imports of the package","Publishing to npm","Setting Node.js version requirements"], ans:1, exp:"The <code>exports</code> field in <code>package.json</code> defines the package's public API. It maps subpath patterns to file paths and can prevent consumers from accessing internal implementation files."},
+  {cat:"Module System", q:"How does circular dependency work in CommonJS?", opts:["It throws an error","The partially-constructed exports of the module mid-load are returned","It resolves automatically","It loads the module twice"], ans:1, exp:"With circular <code>require()</code>, Node.js returns whatever has been exported so far (a partial export) when the cycle is encountered, which can lead to unexpected <code>undefined</code> values."},
+  {cat:"Module System", q:"What is the purpose of the <code>node:</code> prefix in imports like <code>require('node:fs')</code>?", opts:["Loads the latest module version","Explicitly loads a built-in Node.js module, bypassing npm package resolution","Marks the module as ESM-only","Enables module isolation"], ans:1, exp:"The <code>node:</code> prefix forces resolution as a built-in module, preventing a maliciously named npm package from shadowing it and making the intent explicit."},
+
+  // ── PERFORMANCE ──
+  {cat:"Performance", q:"What does the V8 engine's JIT (Just-In-Time) compiler do?", opts:["Interprets JavaScript line by line","Compiles hot JavaScript code paths to optimized machine code at runtime","Compiles JavaScript to WebAssembly","Converts TypeScript to JavaScript"], ans:1, exp:"V8's JIT compiler (Turbofan/Maglev) identifies frequently executed ('hot') code and compiles it to optimized machine code, dramatically improving execution speed compared to pure interpretation."},
+  {cat:"Performance", q:"What is <code>--max-old-space-size</code> CLI flag used for?", opts:["Setting max file size","Limiting CPU usage","Increasing/decreasing V8's old generation heap memory limit","Configuring swap space"], ans:2, exp:"<code>--max-old-space-size=SIZE_MB</code> sets the maximum V8 old space (long-lived objects) heap size in megabytes, useful when your app needs more than the default ~1.5GB."},
+  {cat:"Performance", q:"What is the purpose of <code>process.hrtime.bigint()</code>?", opts:["Getting the current Unix timestamp","Measuring high-resolution time in nanoseconds for benchmarking","Getting CPU time","Formatting dates"], ans:1, exp:"<code>process.hrtime.bigint()</code> returns the current high-resolution real time as a <code>BigInt</code> in nanoseconds, ideal for precise benchmarking."},
+  {cat:"Performance", q:"What does the <code>--inspect</code> flag enable?", opts:["Code linting","V8 Inspector Protocol for debugging with Chrome DevTools","Profiling only","Memory snapshots"], ans:1, exp:"<code>--inspect[=host:port]</code> activates the V8 Inspector Protocol, allowing you to connect Chrome DevTools or VS Code debugger to the running Node.js process for debugging and profiling."},
+  {cat:"Performance", q:"What is a memory leak in Node.js?", opts:["A bug that causes crashes","When memory is allocated but never freed, causing heap growth over time","When a stream is not closed","CPU overload"], ans:1, exp:"A memory leak occurs when references to objects are retained longer than necessary, preventing V8's garbage collector from freeing that memory, leading to ever-increasing heap usage."},
+  {cat:"Performance", q:"What tool can you use to analyze a Node.js heap snapshot?", opts:["top","Chrome DevTools Memory panel / clinic.js","npm audit","lsof"], ans:1, exp:"Chrome DevTools Memory panel (with <code>--inspect</code>) or tools like <code>clinic.js</code> (by NearForm) can analyze heap snapshots to identify memory leaks and allocation hotspots."},
+  {cat:"Performance", q:"What is the purpose of <code>node --prof</code>?", opts:["Enables production mode","Generates a V8 profiler log for CPU profiling","Profiles memory only","Runs linting"], ans:1, exp:"<code>node --prof</code> runs the app with V8's built-in sampling profiler, generating an isolate log that can be processed with <code>node --prof-process</code> to find CPU hotspots."},
+  {cat:"Performance", q:"What causes 'event loop lag'?", opts:["Too many open files","Synchronous code or heavy CPU work blocking the event loop","Network latency","Database queries"], ans:1, exp:"Event loop lag occurs when synchronous or CPU-intensive code runs on the main thread without yielding, preventing the event loop from processing I/O callbacks, timers, etc."},
+  {cat:"Performance", q:"What is the benefit of using <code>Buffer.allocUnsafe()</code> over <code>Buffer.alloc()</code> for performance?", opts:["Larger maximum size","Faster allocation because it skips zero-initialization","Better encoding support","Thread safety"], ans:1, exp:"<code>allocUnsafe</code> skips the memset zero-fill step, making allocation faster. Use it only when you will immediately write data to every byte before reading, to avoid leaking old memory."},
+  {cat:"Performance", q:"What is `libuv` and why is it important to Node.js?", opts:["A JavaScript parser","A C library providing the event loop, async I/O, and thread pool that Node.js is built on","A native module compiler","A TLS library"], ans:1, exp:"<code>libuv</code> is the C library that provides Node.js with its cross-platform event loop, non-blocking I/O, file system operations, DNS, and a thread pool for operations that have no async OS API."},
+
+  // ── SECURITY ──
+  {cat:"Security", q:"What is SQL injection and how do you prevent it in Node.js?", opts:["A DDoS attack; use rate limiting","Malicious SQL in user input; use parameterized queries / prepared statements","A buffer overflow; use Buffer.alloc","A CORS attack; use helmet.js"], ans:1, exp:"SQL injection inserts malicious SQL through user input. Prevent it by using parameterized queries or prepared statements (e.g. <code>db.query('SELECT * FROM users WHERE id = ?', [id])</code>) which separate code from data."},
+  {cat:"Security", q:"What does the <code>helmet</code> middleware do in Express?", opts:["Provides authentication","Sets security-related HTTP response headers","Encrypts the database","Rate limits requests"], ans:1, exp:"<code>helmet</code> is an Express middleware that sets various HTTP security headers (CSP, HSTS, X-Frame-Options, etc.) to protect your app from common web vulnerabilities."},
+  {cat:"Security", q:"What is a timing attack and how is it relevant to Node.js?", opts:["A DDoS via timed requests","An attack that infers secrets by measuring execution time differences; mitigated with crypto.timingSafeEqual()","A race condition in the event loop","A slow regex attack"], ans:1, exp:"Timing attacks measure execution time to infer secret values (e.g. comparing password hashes character-by-character). Use <code>crypto.timingSafeEqual(a, b)</code> for constant-time comparison."},
+  {cat:"Security", q:"What is a ReDoS attack?", opts:["Remote denial of service via DNS","Regex denial of service — malicious input causes catastrophic backtracking in regex, blocking the event loop","Redis DoS attack","Rate-limited DOS"], ans:1, exp:"ReDoS exploits poorly written regular expressions with exponential backtracking behavior. Because regex runs synchronously on the main thread, a matching attack string can block the event loop."},
+  {cat:"Security", q:"What does <code>npm audit</code> do?", opts:["Lints your code","Checks your dependencies for known security vulnerabilities","Tests your API endpoints","Validates package.json"], ans:1, exp:"<code>npm audit</code> analyzes your <code>package-lock.json</code> against the npm vulnerability database and reports known security issues in your dependency tree."},
+
+  // ── ERROR HANDLING ──
+  {cat:"Error Handling", q:"What is an 'error-first callback' pattern?", opts:["A callback that only handles errors","A callback where the first argument is an error (or null) and subsequent args are results","A callback that retries on error","A Promise-based error handler"], ans:1, exp:"The error-first (Node.js) callback convention passes <code>null</code> as the first argument on success or an Error object on failure: <code>callback(err, result)</code>. This standardizes async error handling."},
+  {cat:"Error Handling", q:"What is the difference between operational and programmer errors?", opts:["They are the same","Operational errors are expected runtime failures (e.g. ENOENT); programmer errors are bugs in code (e.g. TypeError)","Operational errors crash the app; programmer errors don't","Programmer errors are hardware-related"], ans:1, exp:"Operational errors (network failure, file not found) are expected and should be handled gracefully. Programmer errors (wrong argument type, null reference) are bugs that usually warrant crashing and restarting."},
+  {cat:"Error Handling", q:"What does <code>process.on('uncaughtException', handler)</code> catch?", opts:["Rejected promises","Synchronous exceptions that weren't caught anywhere in the call stack","All errors","Signal events"], ans:1, exp:"<code>uncaughtException</code> fires when a thrown exception bubbles all the way up without being caught. The recommended practice is to log, cleanup, and exit — the process is in an unknown state."},
+  {cat:"Error Handling", q:"How should you create custom Error classes in Node.js?", opts:["throw {code:'ERR_CUSTOM'}","class CustomError extends Error { constructor(msg) { super(msg); this.name = 'CustomError'; } }","Using util.inherits()","Using Error.create()"], ans:1, exp:"Extend the built-in <code>Error</code> class: set <code>this.name</code>, call <code>super(message)</code>, and optionally set a <code>code</code> property for programmatic error identification."},
+  {cat:"Error Handling", q:"What is the <code>domains</code> module used for?", opts:["DNS domains","Grouping async operations for centralized error handling (deprecated in favor of async_hooks)","Network domain name lookups","SSL certificate domains"], ans:1, exp:"The <code>domain</code> module allowed grouping async operations to handle errors centrally. It is deprecated and should not be used in new code; prefer try/catch with async/await or per-callback error handling."},
+
+  // ── FILE SYSTEM ──
+  {cat:"File System", q:"What does <code>fs.watch()</code> do?", opts:["Reads a file","Watches for changes in a file or directory and fires an event","Streams a file","Creates a file watcher daemon"], ans:1, exp:"<code>fs.watch(filename[, options], listener)</code> watches for changes on a file or directory, calling the listener with <code>(eventType, filename)</code> when changes occur."},
+  {cat:"File System", q:"What is the difference between <code>fs.readFile()</code> and using a read stream?", opts:["readFile is slower","readFile loads entire file into memory; streams process data in chunks, using less memory","Streams are more complex but identical in memory use","readFile is deprecated"], ans:1, exp:"<code>fs.readFile()</code> reads the entire file into a Buffer before calling back, which can exhaust memory for large files. Read streams process data in configurable chunks, keeping memory usage low."},
+  {cat:"File System", q:"What does <code>fs.promises.access(path, fs.constants.R_OK)</code> check?", opts:["If the file exists","If the current process has read permission for the path","If the path is a directory","If the file is locked"], ans:1, exp:"<code>fs.promises.access(path, mode)</code> checks whether the process can access the path with the given mode (R_OK = readable, W_OK = writable, X_OK = executable)."},
+  {cat:"File System", q:"What does <code>fs.createWriteStream(path, { flags: 'a' })</code> do?", opts:["Overwrites the file","Opens file in append mode, adding new data to the end","Creates a binary file","Locks the file for exclusive access"], ans:1, exp:"The <code>flags: 'a'</code> option opens the file for appending. New data is added to the end of the file without truncating existing content. Default flag is <code>'w'</code> (overwrite)."},
+  {cat:"File System", q:"What is <code>fs.mkdirSync(path, { recursive: true })</code> equivalent to?", opts:["mkdir","mkdir -p (creates nested directories, no error if exists)","rmdir","touch"], ans:1, exp:"<code>{ recursive: true }</code> is equivalent to the <code>-p</code> flag in Unix's <code>mkdir</code> command — it creates all intermediate directories and doesn't throw if the directory already exists."},
+
+  // ── DEBUGGING & TESTING ──
+  {cat:"Debugging & Testing", q:"What flag enables the Node.js built-in test runner?", opts:["--test","--run-tests","--jest","node:test is imported, not flagged"], ans:3, exp:"Node.js's built-in test runner (<code>node:test</code> module, stable since v18) is used via <code>import { test } from 'node:test'</code> without a special CLI flag."},
+  {cat:"Debugging & Testing", q:"What does <code>--inspect-brk</code> do differently from <code>--inspect</code>?", opts:["Enables HTTPS debugging","Pauses execution on the first line, waiting for a debugger to attach","Only profiles memory","Runs in headless mode"], ans:1, exp:"<code>--inspect-brk</code> opens the inspector AND immediately pauses execution before any user code runs, giving you time to attach the debugger before the code starts."},
+  {cat:"Debugging & Testing", q:"What is a test double (mock/stub/spy)?", opts:["A copy of the codebase","A simplified object that replaces a real dependency in tests to control behavior or verify interactions","A production replica","A load test tool"], ans:1, exp:"Test doubles replace real dependencies during testing. Stubs provide controlled responses, mocks verify interactions, and spies observe calls to real functions without replacing them."},
+  {cat:"Debugging & Testing", q:"What does <code>assert.deepStrictEqual(a, b)</code> do?", opts:["Checks reference equality","Recursively compares own properties and prototype, using strict equality for primitives","Checks only top-level properties","Checks type only"], ans:1, exp:"<code>assert.deepStrictEqual</code> performs recursive property comparison using strict equality (<code>===</code>) for primitives, and also checks object prototypes — stricter than <code>deepEqual</code>."},
+  {cat:"Debugging & Testing", q:"What is code coverage and how do you measure it in Node.js?", opts:["Lines of code count","Percentage of code executed during tests; measured with --experimental-test-coverage or c8/nyc","Test execution time","Error rate in tests"], ans:1, exp:"Code coverage measures what percentage of your source code is exercised by tests. Node.js v22+ includes built-in coverage via <code>--experimental-test-coverage</code>; <code>c8</code> and <code>nyc</code> are popular alternatives."},
+
+  // ── NPM & PACKAGES ──
+  {cat:"npm & Packages", q:"What does <code>npm ci</code> do differently from <code>npm install</code>?", opts:["Installs globally","Installs from package-lock.json exactly, fails if lock file is missing or out of sync — faster and deterministic for CI","Checks for vulnerabilities","Cleans the cache"], ans:1, exp:"<code>npm ci</code> installs dependencies strictly from <code>package-lock.json</code>, deletes <code>node_modules</code> first, and fails if the lockfile is absent or inconsistent — ensuring reproducible builds."},
+  {cat:"npm & Packages", q:"What is the difference between <code>dependencies</code> and <code>devDependencies</code>?", opts:["They are identical","dependencies are needed at runtime; devDependencies are only needed for development/testing","devDependencies are installed globally","dependencies are optional"], ans:1, exp:"<code>dependencies</code> are packages needed to run your app in production. <code>devDependencies</code> (testing, linting, build tools) are only installed in development environments and excluded from <code>npm ci --production</code>."},
+  {cat:"npm & Packages", q:"What does the <code>^</code> symbol mean in a semver range like <code>^1.2.3</code>?", opts:["Exact version only","Compatible with 1.2.3 — allows minor and patch updates but not major","Allows any version","Allows patch updates only"], ans:1, exp:"The caret (<code>^</code>) allows changes that do not modify the left-most non-zero digit. <code>^1.2.3</code> accepts <code>>=1.2.3 <2.0.0</code> — minor and patch updates within the same major version."},
+  {cat:"npm & Packages", q:"What is a peer dependency?", opts:["A dependency that's shared with sibling packages","A package that the consumer of your package must install themselves, at a compatible version","An optional dependency","A dev dependency alias"], ans:1, exp:"<code>peerDependencies</code> declare that your package requires a specific version of a host package (like React) to be installed by the consumer, not bundled by you."},
+  {cat:"npm & Packages", q:"What does <code>npm link</code> do?", opts:["Publishes a package","Creates a symlink from the global node_modules to your local package for local development testing","Connects to npm registry","Locks package versions"], ans:1, exp:"<code>npm link</code> creates a global symlink for your local package, then <code>npm link package-name</code> in another project uses that symlink — allowing you to test local packages without publishing."},
+
+  // ── ADVANCED TOPICS ──
+  {cat:"Advanced Node.js", q:"What is the N-API?", opts:["Node Package API","A stable C API for building native Node.js addons, ABI-stable across Node.js versions","A network profiling API","A new async API"], ans:1, exp:"N-API (now Node-API) provides a stable Application Binary Interface for native addons written in C/C++. Addons compiled against N-API work across Node.js versions without recompilation."},
+  {cat:"Advanced Node.js", q:"What is the purpose of <code>async_hooks</code>?", opts:["Creating async utility functions","Tracking the lifetime of asynchronous resources for context propagation and tracing","Cancelling async operations","Creating async iterators"], ans:1, exp:"<code>async_hooks</code> provides an API to track asynchronous resource lifetimes (create, before, after, destroy callbacks), useful for implementing distributed tracing, context propagation, and APM tools."},
+  {cat:"Advanced Node.js", q:"What is <code>AsyncLocalStorage</code>?", opts:["A file storage API","A way to maintain context (like a request ID) across async operations without passing it explicitly","An async database driver","A local-first storage library"], ans:1, exp:"<code>AsyncLocalStorage</code> (from <code>async_hooks</code>) provides a store that persists across async operations, similar to thread-local storage — perfect for propagating request context without callback-drilling."},
+  {cat:"Advanced Node.js", q:"What does <code>vm.runInNewContext(code, sandbox)</code> do?", opts:["Runs code in a Docker container","Executes JavaScript code in a new V8 context with an isolated global","Runs code in a worker thread","Sandboxes npm packages"], ans:1, exp:"<code>vm.runInNewContext()</code> compiles and runs JavaScript code within a new V8 context (isolated global object), providing a sandboxed execution environment. Note: it is NOT a security sandbox."},
+  {cat:"Advanced Node.js", q:"What is WASM (WebAssembly) support in Node.js?", opts:["Not supported","Node.js can import and instantiate .wasm modules natively, running near-native speed code","Only via npm packages","Only in worker threads"], ans:1, exp:"Node.js has built-in support for WebAssembly via the global <code>WebAssembly</code> object. You can instantiate <code>.wasm</code> modules and call their exported functions, enabling near-native performance for compute-heavy tasks."},
+  {cat:"Advanced Node.js", q:"What is the purpose of <code>--enable-source-maps</code> flag?", opts:["Generates source maps","Enables parsing of source maps for stack traces pointing to original TypeScript/minified source","Only useful in production","Speeds up module loading"], ans:1, exp:"<code>--enable-source-maps</code> causes Node.js to read and apply source map files when generating stack traces, so errors point to original TypeScript or pre-minified source lines rather than transpiled output."},
+  {cat:"Advanced Node.js", q:"What is CLS (Continuation-Local Storage)?", opts:["A caching layer","Storage that persists along a chain of asynchronous operations (similar to thread-local storage); implemented via AsyncLocalStorage in Node.js","A class loader system","A cluster load balancer"], ans:1, exp:"CLS maintains context through chains of async operations. <code>AsyncLocalStorage</code> is Node.js's native, high-performance implementation replacing older <code>continuation-local-storage</code> and <code>cls-hooked</code> packages."},
+  {cat:"Advanced Node.js", q:"What does <code>--experimental-loader</code> allow?", opts:["Loading WASM only","Providing custom ES module resolution and transformation hooks","Loading private npm packages","GPU acceleration"], ans:1, exp:"The <code>--experimental-loader</code> flag (or <code>--import</code> in newer Node) registers a custom ESM loader that can intercept module resolution, loading, and transformation — used by tools like TypeScript loaders and mocking libraries."},
+  {cat:"Advanced Node.js", q:"What is the Streams API's <code>pipeline</code> function's async version?", opts:["pipelineAsync","stream.promises.pipeline","util.promisify(stream.pipeline)","Both B and C"], ans:3, exp:"Both <code>stream.promises.pipeline(...streams)</code> and <code>util.promisify(stream.pipeline)</code> give a promise-based version that resolves when the pipeline completes and rejects on error."},
+  {cat:"Advanced Node.js", q:"What is the difference between <code>emitter.on()</code> and <code>emitter.once()</code>?", opts:["once is faster","on() registers a persistent listener; once() registers a listener that fires only the first time","They are identical","once() is for error events only"], ans:1, exp:"<code>emitter.on(event, listener)</code> registers a listener that fires every time the event is emitted. <code>emitter.once(event, listener)</code> registers it to fire only once, then automatically removes itself."},
+
+  // ── ENVIRONMENT & CONFIG ──
+  {cat:"Environment & Config", q:"What is <code>process.env</code>?", opts:["A file containing env variables","An object containing the user environment variables as key-value strings","A method to set environment variables","The shell configuration"], ans:1, exp:"<code>process.env</code> is an object populated with the process's environment variables. Values are always strings (or undefined if not set)."},
+  {cat:"Environment & Config", q:"What does the <code>dotenv</code> package do?", opts:["Validates environment variables","Loads environment variables from a .env file into process.env","Creates environment variable documentation","Sets production environment"], ans:1, exp:"<code>dotenv</code> reads a <code>.env</code> file (key=value pairs) and merges the variables into <code>process.env</code>, making local development configuration easy without modifying the shell environment."},
+  {cat:"Environment & Config", q:"What is the <code>NODE_ENV</code> environment variable commonly used for?", opts:["Node.js version selection","Switching between development, test, and production behavior in applications","Database selection","Port configuration"], ans:1, exp:"<code>NODE_ENV</code> is a convention (not enforced by Node.js) for signaling the runtime environment. Libraries like Express enable optimizations and disable verbose logging when <code>NODE_ENV=production</code>."},
+  {cat:"Environment & Config", q:"What does <code>process.exit(1)</code> do?", opts:["Restarts the process","Terminates the process with exit code 1 (indicating an error)","Sends SIGTERM","Pauses the event loop"], ans:1, exp:"<code>process.exit(code)</code> immediately terminates the Node.js process. By convention, exit code <code>0</code> means success and any non-zero code (like <code>1</code>) indicates an error."},
+  {cat:"Environment & Config", q:"What does <code>process.on('SIGTERM', handler)</code> allow you to do?", opts:["Catch all errors","Gracefully shut down when the OS or orchestrator sends a termination signal","Restart the process","Log all requests"], ans:1, exp:"Listening for <code>SIGTERM</code> lets you perform graceful shutdown (close servers, finish in-flight requests, flush logs) before exiting when Kubernetes, Docker, or the OS signals your process to terminate."},
+
+  // ── DATABASES ──
+  {cat:"Databases", q:"What is connection pooling and why is it important?", opts:["A caching strategy","Reusing a set of pre-established database connections rather than creating a new one per query — reduces latency and resource usage","A sharding technique","Load balancing between databases"], ans:1, exp:"Connection pooling maintains a pool of open database connections. Re-using them eliminates the overhead of TCP handshake and authentication on every query, critical for high-throughput applications."},
+  {cat:"Databases", q:"What is an ORM in the Node.js context?", opts:["Object Request Manager","Object-Relational Mapper — maps database tables to JavaScript classes (e.g. Sequelize, TypeORM, Prisma)","Optional Request Module","An npm registry tool"], ans:1, exp:"An ORM (Object-Relational Mapper) abstracts database tables as JavaScript classes/objects, letting you query with code rather than raw SQL. Popular Node.js ORMs include Sequelize, TypeORM, and Prisma."},
+  {cat:"Databases", q:"What is the purpose of database transactions?", opts:["Speeding up queries","Ensuring a group of operations either all succeed or all fail atomically (ACID compliance)","Caching query results","Replicating data"], ans:1, exp:"Transactions guarantee ACID (Atomicity, Consistency, Isolation, Durability) properties — all operations within a transaction are committed together or rolled back if any operation fails."},
+  {cat:"Databases", q:"What is the N+1 query problem?", opts:["Having more than one database connection","Executing 1 query to get a list, then N additional queries for each item's related data, causing performance issues","Using N databases","Having N+1 indexes"], ans:1, exp:"The N+1 problem occurs when you fetch N records and then execute an additional query per record to get related data. Fix it with JOIN queries, eager loading, or DataLoader (batching)."},
+  {cat:"Databases", q:"What is Redis commonly used for with Node.js?", opts:["Primary SQL storage","Caching, session storage, pub/sub messaging, and rate limiting due to its in-memory speed","Logging only","File storage"], ans:1, exp:"Redis is an in-memory data structure store used in Node.js for caching (reducing database load), session storage, rate limiting, leaderboards, and as a pub/sub message broker."},
+
+  // ── MICROSERVICES ──
+  {cat:"Microservices", q:"What is the purpose of an API Gateway in microservices?", opts:["A database router","A single entry point that handles routing, auth, rate limiting, and protocol translation for multiple backend services","A load balancer only","An ORM layer"], ans:1, exp:"An API Gateway is the single entry point for all clients. It handles cross-cutting concerns like authentication, rate limiting, request routing to downstream microservices, and response aggregation."},
+  {cat:"Microservices", q:"What is gRPC and how does it relate to Node.js microservices?", opts:["A REST framework","A high-performance RPC framework using Protocol Buffers; Node.js has official gRPC support via @grpc/grpc-js","A message queue","A GraphQL implementation"], ans:1, exp:"gRPC is a high-performance Remote Procedure Call framework from Google using Protocol Buffers for serialization. Node.js services communicate with it via the <code>@grpc/grpc-js</code> package with significantly lower overhead than JSON REST."},
+  {cat:"Microservices", q:"What is the Circuit Breaker pattern?", opts:["A security mechanism","A resilience pattern that detects failures and prevents cascading by temporarily stopping calls to a failing service","A rate limiter","A database failover mechanism"], ans:1, exp:"The Circuit Breaker pattern monitors failures to a downstream service. When failures exceed a threshold, it 'opens' the circuit to fail fast and prevent overloading the failing service, closing again after a timeout."},
+  {cat:"Microservices", q:"What is a message queue (e.g. RabbitMQ, SQS) used for in Node.js?", opts:["Storing images","Decoupling services by allowing asynchronous, reliable communication via message passing","Caching responses","Storing sessions"], ans:1, exp:"Message queues decouple producers from consumers. A Node.js service publishes messages; another service consumes them asynchronously. This provides resilience, load buffering, and independent scaling."},
+  {cat:"Microservices", q:"What is service discovery in a microservices architecture?", opts:["Finding bugs in services","The mechanism by which services automatically find and communicate with each other without hardcoded addresses","An API documentation tool","A deployment strategy"], ans:1, exp:"Service discovery (e.g. Consul, etcd, Kubernetes DNS) allows microservices to dynamically locate each other's addresses/ports rather than relying on hardcoded configuration, essential in dynamic container environments."},
+
+  // ── ADDITIONAL CORE TOPICS ──
+  {cat:"Core Modules", q:"What does <code>os.platform()</code> return?", opts:["The Node.js version","A string identifying the operating system platform (e.g. 'linux', 'darwin', 'win32')","The CPU architecture","Available memory"], ans:1, exp:"<code>os.platform()</code> returns a string identifying the OS platform such as <code>'linux'</code>, <code>'darwin'</code> (macOS), or <code>'win32'</code> (Windows)."},
+  {cat:"Core Modules", q:"Which <code>util</code> method formats a string like C's printf?", opts:["util.sprintf","util.format","util.printf","util.template"], ans:1, exp:"<code>util.format(format, ...args)</code> returns a formatted string using printf-like format specifiers such as <code>%s</code>, <code>%d</code>, <code>%j</code> (JSON). It's used internally by <code>console.log</code>."},
+  {cat:"Core Modules", q:"What does <code>querystring.stringify({ a: 1, b: 2 })</code> return?", opts:["JSON string","'a=1&b=2'","{ a: '1', b: '2' }","'?a=1&b=2'"], ans:1, exp:"<code>querystring.stringify()</code> serializes an object to a URL query string format. <code>{ a: 1, b: 2 }</code> becomes <code>'a=1&b=2'</code>. (Use <code>URLSearchParams</code> in modern code.)"},
+  {cat:"Core Modules", q:"What does <code>zlib.gzip(buffer, callback)</code> do?", opts:["Encrypts data","Compresses data using the gzip algorithm","Decodes base64","Hashes data"], ans:1, exp:"<code>zlib.gzip()</code> compresses the input buffer using the gzip algorithm and returns the compressed buffer to the callback. The inverse operation is <code>zlib.gunzip()</code>."},
+  {cat:"Core Modules", q:"What is the purpose of the <code>readline</code> module?", opts:["Reading binary files","Reading line-by-line from a Readable stream (e.g. stdin or file streams)","Parsing CSV","Tokenizing code"], ans:1, exp:"The <code>readline</code> module provides an interface for reading data from a Readable stream one line at a time, commonly used for interactive CLI prompts or processing large text files."},
+
+  {cat:"Event Loop", q:"What is the maximum number of listeners for an EventEmitter by default?", opts:["5","10","100","Unlimited"], ans:1, exp:"By default, Node.js EventEmitter allows up to <strong>10</strong> listeners per event. Exceeding this logs a memory leak warning. Change it with <code>emitter.setMaxListeners(n)</code>."},
+  {cat:"Event Loop", q:"What does <code>emitter.removeAllListeners(event)</code> do?", opts:["Destroys the emitter","Removes all listeners for the specified event (or all events if no event is given)","Pauses event emission","Resets listener count"], ans:1, exp:"<code>emitter.removeAllListeners([event])</code> removes all registered listeners for a specific event, or for all events if called without arguments."},
+  {cat:"Event Loop", q:"What does <code>--pending-deprecation</code> flag do?", opts:["Prevents deprecated API use","Emits pending deprecation warnings (warnings that are not yet active in stable releases)","Enables future V8 features","Enables all deprecations as errors"], ans:1, exp:"<code>--pending-deprecation</code> enables deprecation warnings for APIs that are on track to be deprecated but haven't been officially deprecated yet, useful for forward-compatibility checks."},
+  {cat:"Event Loop", q:"What happens if an 'error' event is emitted with no listeners on an EventEmitter?", opts:["It is silently ignored","An unhandled exception is thrown, potentially crashing the process","It goes to process.stderr","It triggers process.nextTick"], ans:1, exp:"If an <code>error</code> event is emitted and there is no listener for it, Node.js throws the error as an uncaught exception. Always attach an <code>error</code> listener to EventEmitters."},
+  {cat:"Event Loop", q:"What is the difference between <code>process.nextTick(fn)</code> and <code>Promise.resolve().then(fn)</code>?", opts:["They are equivalent","nextTick fires before Promise microtasks; both fire before the next I/O phase","Promise fires first","nextTick is synchronous"], ans:1, exp:"Both are microtasks, but <code>process.nextTick</code> callbacks execute before resolved Promise callbacks in the same microtask checkpoint, because <code>nextTick</code> has its own higher-priority queue."},
+
+  {cat:"Async / Promises", q:"What is the purpose of <code>AbortController</code> in Node.js?", opts:["Stopping the process","Providing a cancellation signal for async operations (fetch, setTimeout, streams, etc.)","Aborting failed database connections","Cancelling event listeners"], ans:1, exp:"<code>AbortController</code> and its <code>AbortSignal</code> provide a standard way to cancel async operations. Pass <code>signal</code> to <code>fetch</code>, <code>setTimeout</code>, Node streams, and other APIs to abort them."},
+  {cat:"Async / Promises", q:"What does <code>async function*</code> create?", opts:["An async function","An async generator that yields values asynchronously, consumed with for-await-of","A Promise factory","A worker thread"], ans:1, exp:"An async generator function returns an AsyncGenerator object. Each <code>yield</code> can involve awaited async work. Consume with <code>for await (const value of asyncGenerator) {}</code>."},
+  {cat:"Async / Promises", q:"What is <code>for await...of</code> used for?", opts:["Iterating arrays faster","Iterating over async iterables, awaiting each value as it becomes available","Parallelizing loops","Replacing Promise.all"], ans:1, exp:"<code>for await...of</code> iterates an async iterable (e.g. readable stream, async generator), awaiting each yielded value in sequence before advancing to the next iteration."},
+  {cat:"Async / Promises", q:"How do you implement a timeout for a Promise?", opts:["Promise has a built-in timeout option","Use Promise.race() with a timeout promise that rejects after a delay","Use setTimeout directly on the promise","Use AbortController only"], ans:1, exp:"<code>Promise.race([originalPromise, new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), ms))])</code> races the original promise against a delayed rejection."},
+  {cat:"Async / Promises", q:"What is <code>util.promisify</code>'s <code>util.promisify.custom</code> symbol used for?", opts:["Marking functions as async","Providing a custom promisification implementation on a function, used when the default convention doesn't apply","Deprecating callback APIs","Enabling debug mode"], ans:1, exp:"Setting <code>fn[util.promisify.custom] = customPromisifiedFn</code> allows a function to specify its own promisified version when the standard error-first callback pattern doesn't apply."},
+
+  {cat:"Streams", q:"What does the <code>highWaterMark</code> option control in streams?", opts:["Maximum file size","The buffer size threshold (in bytes for binary, or object count) at which backpressure is applied","Maximum connections","Memory limit"], ans:1, exp:"<code>highWaterMark</code> is the buffer size threshold. When internal buffer size reaches it, <code>write()</code> returns <code>false</code> (triggering backpressure) or the readable stops reading from its source."},
+  {cat:"Streams", q:"What does calling <code>readable.resume()</code> do?", opts:["Destroys the stream","Switches the readable to flowing mode, consuming data and discarding it if no data handler is attached","Pauses the stream","Flushes the buffer"], ans:1, exp:"<code>readable.resume()</code> causes the stream to flow, reading all data. If no <code>data</code> event handler is attached, the data is discarded. Useful for fully draining a stream."},
+  {cat:"Streams", q:"What is the difference between Readable modes: flowing and paused?", opts:["Flowing uses less memory","In flowing mode, data is delivered to handlers automatically; in paused mode, you must call read() explicitly","Paused mode is deprecated","They refer to stream types"], ans:1, exp:"In <strong>flowing</strong> mode (via <code>data</code> event or <code>resume()</code>), data flows automatically. In <strong>paused</strong> mode (default), you call <code>readable.read()</code> explicitly to pull chunks."},
+  {cat:"Streams", q:"What is <code>stream.finished(stream, callback)</code> used for?", opts:["Pausing a stream","Getting notified when a stream is no longer readable, writable, or has errored — works for all stream types","Flushing stream buffers","Creating a new stream from completion"], ans:1, exp:"<code>stream.finished(stream, (err) => {})</code> fires when the stream finishes, errors, or is destroyed. It's more reliable than listening to <code>end</code>/<code>finish</code> individually."},
+  {cat:"Streams", q:"Which Node.js version introduced the streams3 API?", opts:["Node.js 0.10","Node.js 4","Node.js 8","Node.js 12"], ans:0, exp:"Streams3 was introduced in Node.js 0.10, adding the <code>readable</code> event and the pull-based interface to fix issues in Streams2 that complicated piping and event handling."},
+
+  {cat:"Cluster & Workers", q:"What is the <code>workerData</code> property in Worker Threads?", opts:["Thread metadata","Initial data passed to the worker thread via the workerData option of the Worker constructor","Runtime data shared with all workers","The worker's exit code"], ans:1, exp:"<code>workerData</code> is a clone of the data passed as the <code>workerData</code> option when creating a <code>new Worker(path, { workerData })</code>. The worker reads it via <code>require('worker_threads').workerData</code>."},
+  {cat:"Cluster & Workers", q:"How do Worker Threads communicate with the parent?", opts:["Only via files","Via MessagePort / parentPort using postMessage() and the message event","Via process.send() like cluster workers","Via shared database"], ans:1, exp:"Worker threads communicate through the built-in <code>parentPort</code> (a <code>MessagePort</code>). The worker calls <code>parentPort.postMessage(data)</code> and the parent listens via <code>worker.on('message', handler)</code>."},
+  {cat:"Cluster & Workers", q:"Can Worker Threads share a <code>SharedArrayBuffer</code> without copying?", opts:["No, all data is copied","Yes, SharedArrayBuffer is transferred by reference — all threads access the same memory","Only with Atomics.wait","Only read access is shared"], ans:1, exp:"Yes. <code>SharedArrayBuffer</code> is shared by reference across worker threads. Multiple threads read/write the same memory, requiring <code>Atomics</code> for safe synchronized access."},
+  {cat:"Cluster & Workers", q:"What does <code>Atomics.wait()</code> do?", opts:["Waits for a Promise","Blocks the current thread until a SharedArrayBuffer element changes or timeout occurs","Waits for the event loop","Sleeps the main thread"], ans:1, exp:"<code>Atomics.wait(typedArray, index, value[, timeout])</code> blocks the thread (not allowed on main thread) until the value at the index changes or the timeout expires, enabling synchronization between worker threads."},
+  {cat:"Cluster & Workers", q:"What is the <code>CLUSTER_WORKER_ID</code> used for?", opts:["A built-in Node.js variable","An environment variable you set manually to identify workers","cluster.worker.id identifies each worker process within the cluster; useful for logging and coordination","A k8s pod identifier"], ans:2, exp:"<code>cluster.worker.id</code> is a unique integer identifier for each worker process within a cluster, useful for debugging and worker-specific logic like acquiring different shard ranges."},
+
+  {cat:"Networking / HTTP", q:"What does <code>http.createServer()</code> receive as its callback arguments?", opts:["socket, data","request (IncomingMessage), response (ServerResponse)","error, data","url, method"], ans:1, exp:"The callback receives <code>(req, res)</code> — an <code>IncomingMessage</code> (readable stream with headers, method, url) and a <code>ServerResponse</code> (writable stream to send the response)."},
+  {cat:"Networking / HTTP", q:"What does <code>res.write(chunk)</code> do in an HTTP server?", opts:["Ends the response","Sends a chunk of response body without ending the response","Sets a header","Flushes the connection"], ans:1, exp:"<code>res.write(chunk[, encoding][, callback])</code> sends a chunk of the response body. The response remains open; call <code>res.end()</code> to finalize it."},
+  {cat:"Networking / HTTP", q:"What is SNI (Server Name Indication) in TLS?", opts:["A DNS record type","A TLS extension that allows a server to present multiple certificates on the same IP/port by reading the hostname from the handshake","An SSL version","A Node.js-specific feature"], ans:1, exp:"SNI is a TLS extension included in the ClientHello message that specifies which hostname the client is connecting to, allowing one server to use different TLS certificates for different virtual hosts on the same IP."},
+  {cat:"Networking / HTTP", q:"What does <code>net.createServer()</code> return?", opts:["An HTTP server","A TCP server instance that emits 'connection' events for each socket","A UDP socket","A WebSocket server"], ans:1, exp:"<code>net.createServer([options], [connectionListener])</code> creates a TCP server. Each incoming connection triggers the <code>connection</code> event (or the callback) with a <code>net.Socket</code> instance."},
+  {cat:"Networking / HTTP", q:"What is long polling?", opts:["HTTP keep-alive","A technique where the client makes a request and the server holds it open until data is available, then responds","A WebSocket variant","Server-Sent Events"], ans:1, exp:"Long polling is a pattern where the client sends a request and the server holds the connection open until it has new data to send. Upon receiving the response, the client immediately sends a new request."},
+
+  {cat:"Express.js", q:"What is the order of middleware execution in Express?", opts:["Random order","Top-to-bottom in the order they are defined with app.use() / app.METHOD()","Alphabetical","By middleware priority"], ans:1, exp:"Express middleware executes in the exact order it is registered with <code>app.use()</code> or <code>app.METHOD()</code>. Order matters — place authentication before route handlers, error handlers last."},
+  {cat:"Express.js", q:"What does <code>express.static(root)</code> serve?", opts:["Database queries","Static files (HTML, CSS, JS, images) from the root directory","API documentation","Rendered templates"], ans:1, exp:"<code>express.static(root, [options])</code> is built-in middleware that serves static files from the specified root directory, setting appropriate Content-Type and caching headers."},
+  {cat:"Express.js", q:"How do you handle 404 errors in Express?", opts:["Express handles them automatically","Add a middleware at the end of all routes that calls next() with a 404 error or sends a 404 response","Use the built-in notFound() method","Configure it in package.json"], ans:1, exp:"Since Express doesn't automatically send a 404, place a catch-all middleware after all routes: <code>app.use((req, res) => res.status(404).send('Not Found'))</code>."},
+  {cat:"Express.js", q:"What is the difference between <code>app.use('/api', router)</code> and <code>app.use(router)</code>?", opts:["They are identical","With '/api', the router only handles requests starting with /api and req.url is relative to /api inside the router","'/api' adds an auth header","app.use(router) is deprecated"], ans:1, exp:"Mounting a router at <code>'/api'</code> means the router only activates for URLs starting with <code>/api</code>, and inside the router, <code>req.url</code> has the <code>/api</code> prefix stripped."},
+  {cat:"Express.js", q:"What does <code>res.redirect(301, '/new-url')</code> do?", opts:["Forwards the request internally","Sends a 301 HTTP redirect response to the client, instructing the browser to navigate to '/new-url'","Changes the route handler","Rewrites req.url"], ans:1, exp:"<code>res.redirect([status,] url)</code> sends an HTTP redirect response. Status 301 is 'Moved Permanently'. The browser will navigate to the new URL and update bookmarks/caches."},
+
+  {cat:"Performance", q:"What is flame graph profiling?", opts:["A graph of errors over time","A visualization of CPU profiling data where stack depth is on the Y-axis and time is on the X-axis, showing which functions consume most CPU","A memory allocation graph","A network request graph"], ans:1, exp:"A flame graph visualizes sampled call stacks. Wide bars mean a function (or its callees) is 'hot' — consuming significant CPU time. Tools like <code>0x</code> or <code>clinic flame</code> generate them for Node.js."},
+  {cat:"Performance", q:"What is lazy loading in Node.js module context?", opts:["Loading modules from npm lazily","Deferring the require() of a module until it is first needed, reducing startup time","Caching modules","Loading modules in parallel"], ans:1, exp:"Lazy loading defers <code>require()</code> calls to when the module is actually needed (e.g., inside a function), rather than at the top of the file, reducing startup time for large applications."},
+  {cat:"Performance", q:"What is the purpose of <code>node --trace-gc</code>?", opts:["Traces garbage in logs","Prints garbage collection events to stderr, useful for diagnosing GC pressure and pause times","Shows memory allocation","Enables GC-based profiling"], ans:1, exp:"<code>--trace-gc</code> outputs V8 garbage collection events (scavenge, mark-compact, etc.) with timestamps and heap sizes, helping diagnose if GC pauses are contributing to latency."},
+  {cat:"Performance", q:"What is 'preloading' and how is it done in Node.js?", opts:["Pre-fetching URLs","Using --require or --import to load modules before the main script, useful for instrumentation or polyfills","Caching module bytecode","Warming up V8 JIT"], ans:1, exp:"<code>node --require ./instrument.js app.js</code> (or <code>--import</code> for ESM) preloads a module before the main script, used for APM instrumentation, source map support, or environment setup."},
+  {cat:"Performance", q:"What is the V8 snapshot (<code>--build-snapshot</code>) feature?", opts:["A database backup","Serializing the V8 heap state after startup so subsequent runs can restore it, dramatically reducing startup time","Taking memory snapshots","Compiling to native code"], ans:1, exp:"V8 startup snapshots serialize the heap after module initialization. On the next run, V8 deserializes the snapshot instead of executing all the initialization code, significantly reducing application startup time."},
+
+  {cat:"Security", q:"What is the <code>x-powered-by</code> header and why should you disable it?", opts:["It shows Node.js version","Express sets it to 'Express', revealing framework info to attackers; disable with app.disable('x-powered-by')","It enables CORS","It's required by HTTP spec"], ans:1, exp:"Express adds an <code>X-Powered-By: Express</code> header by default, which reveals your technology stack to potential attackers. Disable it with <code>app.disable('x-powered-by')</code> or use <code>helmet()</code>."},
+  {cat:"Security", q:"What is JWT (JSON Web Token) and how is it used in Node.js APIs?", opts:["A database format","A compact, self-contained token for securely transmitting claims between parties; used for stateless authentication via Authorization header","A session storage mechanism","An encryption algorithm"], ans:1, exp:"A JWT contains a header, payload (claims), and signature. In Node.js APIs, the server issues a JWT on login; the client sends it in the <code>Authorization: Bearer token</code> header on subsequent requests for stateless authentication."},
+  {cat:"Security", q:"What is SSRF (Server-Side Request Forgery)?", opts:["A client-side attack","An attack where an attacker tricks the server into making requests to internal/unintended resources","A SQL injection variant","A CORS bypass"], ans:1, exp:"SSRF exploits server-side HTTP requests by providing malicious URLs targeting internal services (e.g. metadata API at 169.254.169.254, internal databases). Validate and whitelist URLs for any server-side HTTP requests."},
+  {cat:"Security", q:"What is rate limiting and why is it important for Node.js APIs?", opts:["Limiting response payload size","Restricting the number of requests a client can make in a time window to prevent abuse, DDoS, and brute-force attacks","Limiting concurrent connections","Throttling database queries"], ans:1, exp:"Rate limiting (via middleware like <code>express-rate-limit</code>) caps requests per IP per time window. It protects against brute-force login attacks, API abuse, and DDoS amplification."},
+  {cat:"Security", q:"What is prototype pollution and how does it affect Node.js?", opts:["A memory leak type","An attack that modifies Object.prototype via user-supplied keys like __proto__, potentially affecting all objects in the process","A stream error","A dependency vulnerability"], ans:1, exp:"Prototype pollution occurs when an attacker sets properties like <code>__proto__</code> or <code>constructor.prototype</code> via user input (e.g., deep merge of untrusted data), potentially injecting properties onto all objects and causing security issues."},
+
+  {cat:"Error Handling", q:"What is the 'fail fast' principle in error handling?", opts:["Letting errors crash the process always","Detecting and reporting errors as early as possible, rather than allowing corrupted state to propagate further","Retrying all failed operations","Logging errors silently"], ans:1, exp:"Fail fast means validating inputs and detecting errors at the earliest possible point. It prevents corrupted or inconsistent state from propagating through your system, making bugs easier to trace."},
+  {cat:"Error Handling", q:"What is exponential backoff in retry logic?", opts:["Increasing server capacity","Increasing the delay between retry attempts exponentially to reduce load on a failing dependency","Logging retries exponentially","Decreasing retry count over time"], ans:1, exp:"Exponential backoff increases the wait time between retries by a factor (e.g., 2x) with each attempt, often with jitter. This prevents thundering herd problems when many clients retry a failing service simultaneously."},
+  {cat:"Error Handling", q:"What does <code>Error.captureStackTrace(targetObject, constructorOpt)</code> do?", opts:["Logs the stack trace","Creates a .stack property on targetObject, with constructorOpt as the top frame (hiding internal error construction)","Captures V8 heap state","Records network request history"], ans:1, exp:"<code>Error.captureStackTrace(obj, fn)</code> is a V8 extension that creates a stack trace on <code>obj.stack</code>, starting from the call site of <code>fn</code>, hiding internal class frames for cleaner custom error stack traces."},
+  {cat:"Error Handling", q:"What is a 'zombie worker' in cluster context?", opts:["A slow worker","A worker process that has exited but whose exit event hasn't been handled, leaving it in the workers object","A worker handling too many requests","A worker with a memory leak"], ans:1, exp:"A zombie worker is one that has died but is still referenced. In cluster, listen for the <code>exit</code> event and clean up references to dead workers, then fork replacements if needed."},
+  {cat:"Error Handling", q:"What is structured logging and why is it preferred for Node.js production apps?", opts:["Logging to a database","Logging in JSON/key-value format so logs can be parsed, queried, and analyzed by log aggregators like Elasticsearch or Datadog","Logging with colors","Logging only errors"], ans:1, exp:"Structured logging emits logs as JSON objects with consistent fields (timestamp, level, message, context). Tools like Pino or Winston emit structured logs that can be efficiently parsed and queried in log aggregation platforms."},
+
+
+];
+
+let currentQ = 0;
+let score = 0;
+let answered = false;
+
+function startQuiz() {
+  document.getElementById('splash').style.display = 'none';
+  document.getElementById('quiz').style.display = 'block';
+  renderQuestion();
+}
+
+function renderQuestion() {
+  const q = questions[currentQ];
+  answered = false;
+
+  document.getElementById('qNum').textContent = currentQ + 1;
+  document.getElementById('qNumLabel').textContent = `Question ${currentQ + 1} of 200`;
+  document.getElementById('catTag').textContent = `⬡ ${q.cat}`;
+  document.getElementById('qText').innerHTML = q.q;
+  document.getElementById('scoreDisplay').textContent = score;
+  document.getElementById('progressFill').style.width = ((currentQ + 1) / 200 * 100) + '%';
+
+  const explanation = document.getElementById('explanation');
+  explanation.classList.remove('show');
+  document.getElementById('expText').innerHTML = q.exp;
+
+  const btnNext = document.getElementById('btnNext');
+  btnNext.classList.remove('show');
+  btnNext.textContent = currentQ < 199 ? 'Next →' : 'See Results →';
+
+  const container = document.getElementById('optionsContainer');
+  container.innerHTML = '';
+  const letters = ['A', 'B', 'C', 'D'];
+  q.opts.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'opt';
+    btn.innerHTML = `<span class="opt-letter">${letters[i]}</span>${opt}`;
+    btn.onclick = () => selectAnswer(i);
+    container.appendChild(btn);
+  });
+}
+
+function selectAnswer(idx) {
+  if (answered) return;
+  answered = true;
+
+  const q = questions[currentQ];
+  const opts = document.querySelectorAll('.opt');
+
+  opts.forEach((btn, i) => {
+    btn.classList.add('disabled');
+    if (i === q.ans) btn.classList.add('correct');
+    else if (i === idx) btn.classList.add('wrong');
+  });
+
+  if (idx === q.ans) score++;
+
+  document.getElementById('explanation').classList.add('show');
+  document.getElementById('btnNext').classList.add('show');
+  document.getElementById('scoreDisplay').textContent = score;
+}
+
+function nextQuestion() {
+  if (currentQ < 199) {
+    currentQ++;
+    renderQuestion();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } else {
+    showResults();
+  }
+}
+
+function showResults() {
+  document.getElementById('quiz').style.display = 'none';
+  const results = document.getElementById('results');
+  results.style.display = 'flex';
+
+  const pct = score / 200;
+  const circumference = 2 * Math.PI * 80; // 502.65
+
+  document.getElementById('finalScore').textContent = score;
+  document.getElementById('finalCorrect').textContent = score;
+  document.getElementById('finalWrong').textContent = 200 - score;
+
+  const titles = [
+    [0.9, "🏆 Node.js Master!", "Outstanding! You have exceptional Node.js knowledge."],
+    [0.7, "🎯 Advanced Developer", "Great job! You have solid Node.js expertise."],
+    [0.5, "📚 Intermediate Developer", "Good effort! Keep studying the advanced topics."],
+    [0, "🌱 Keep Learning!", "Review the fundamentals and try again."]
+  ];
+
+  for (const [threshold, title, subtitle] of titles) {
+    if (pct >= threshold) {
+      document.getElementById('resultTitle').textContent = title;
+      document.getElementById('resultSubtitle').textContent = subtitle;
+      break;
+    }
+  }
+
+  setTimeout(() => {
+    const offset = circumference * (1 - pct);
+    document.getElementById('ringFill').style.strokeDashoffset = offset;
+  }, 100);
+}
+
+function restartQuiz() {
+  currentQ = 0;
+  score = 0;
+  answered = false;
+  document.getElementById('results').style.display = 'none';
+  document.getElementById('quiz').style.display = 'block';
+  renderQuestion();
+  window.scrollTo({ top: 0 });
+}
+</script>
+</body>
+</html>
