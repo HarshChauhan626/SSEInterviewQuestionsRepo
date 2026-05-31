@@ -2,6 +2,135 @@
 
 ---
 
+## Priority Reference Table
+
+> **Priority Guide:**
+> - 🔴 **P1 — Must Do** · Core pattern every interviewer tests. Master these before anything else.
+> - 🟡 **P2 — Good to Know** · Commonly asked; covers important variations. Study after P1.
+> - 🟢 **P3 — Good to Have** · Occasionally asked, niche problems. Study when time permits.
+
+| # | Problem | Category | Priority |
+|---|---|---|:---:|
+| 1 | Two Sum | Arrays / Hashing | 🔴 P1 |
+| 2 | Best Time to Buy and Sell Stock | Arrays / Hashing | 🔴 P1 |
+| 3 | Contains Duplicate | Arrays / Hashing | 🔴 P1 |
+| 4 | Product of Array Except Self | Arrays / Hashing | 🔴 P1 |
+| 5 | Maximum Subarray (Kadane's) | Arrays / Hashing | 🔴 P1 |
+| 6 | Move Zeroes | Arrays / Hashing | 🟡 P2 |
+| 7 | Merge Sorted Array | Arrays / Hashing | 🟡 P2 |
+| 8 | Majority Element | Arrays / Hashing | 🟡 P2 |
+| 9 | Missing Number | Arrays / Hashing | 🟡 P2 |
+| 10 | Top K Frequent Elements | Arrays / Hashing | 🔴 P1 |
+| 11 | Valid Anagram | Strings | 🔴 P1 |
+| 12 | Group Anagrams | Strings | 🔴 P1 |
+| 13 | Longest Common Prefix | Strings | 🟢 P3 |
+| 14 | Valid Palindrome | Strings | 🔴 P1 |
+| 15 | Reverse Words in a String | Strings | 🟢 P3 |
+| 16 | Longest Substring Without Repeating Characters | Strings | 🔴 P1 |
+| 17 | String Compression | Strings | 🟡 P2 |
+| 18 | Roman to Integer | Strings | 🟢 P3 |
+| 19 | Implement strStr() | Strings | 🟢 P3 |
+| 20 | Palindromic Substrings | Strings | 🟡 P2 |
+| 21 | Container With Most Water | Sliding Window / Two Pointers | 🔴 P1 |
+| 22 | Minimum Size Subarray Sum | Sliding Window / Two Pointers | 🟡 P2 |
+| 23 | Permutation in String | Sliding Window / Two Pointers | 🟡 P2 |
+| 24 | 3Sum | Sliding Window / Two Pointers | 🔴 P1 |
+| 25 | Remove Duplicates from Sorted Array | Sliding Window / Two Pointers | 🟡 P2 |
+| 26 | Sort Colors | Sliding Window / Two Pointers | 🟡 P2 |
+| 27 | Find All Anagrams in a String | Sliding Window / Two Pointers | 🟡 P2 |
+| 28 | Subarray Sum Equals K | Sliding Window / Two Pointers | 🔴 P1 |
+| 29 | Valid Parentheses | Stack / Queue | 🔴 P1 |
+| 30 | Min Stack | Stack / Queue | 🔴 P1 |
+| 31 | Daily Temperatures | Stack / Queue | 🔴 P1 |
+| 32 | Next Greater Element | Stack / Queue | 🟡 P2 |
+| 33 | Implement Queue Using Stacks | Stack / Queue | 🟡 P2 |
+| 34 | Reverse Linked List | Linked List | 🔴 P1 |
+| 35 | Merge Two Sorted Lists | Linked List | 🔴 P1 |
+| 36 | Linked List Cycle | Linked List | 🔴 P1 |
+| 37 | Middle of Linked List | Linked List | 🟡 P2 |
+| 38 | Remove Nth Node From End of List | Linked List | 🔴 P1 |
+| 39 | Intersection of Two Linked Lists | Linked List | 🟡 P2 |
+| 40 | Maximum Depth of Binary Tree | Trees / BFS / DFS | 🔴 P1 |
+| 41 | Invert Binary Tree | Trees / BFS / DFS | 🔴 P1 |
+| 42 | Same Tree | Trees / BFS / DFS | 🟡 P2 |
+| 43 | Binary Tree Level Order Traversal | Trees / BFS / DFS | 🔴 P1 |
+| 44 | Lowest Common Ancestor of a BST | Trees / BFS / DFS | 🔴 P1 |
+| 45 | Validate Binary Search Tree | Trees / BFS / DFS | 🔴 P1 |
+| 46 | Binary Search | Binary Search | 🔴 P1 |
+| 47 | Search in Rotated Sorted Array | Binary Search | 🔴 P1 |
+| 48 | Task Scheduler | Stack / Queue | 🟡 P2 |
+| 49 | Trapping Rain Water | Sliding Window / Two Pointers | 🔴 P1 |
+| 50 | Sliding Window Maximum | Sliding Window / Two Pointers | 🟡 P2 |
+| 51 | Flood Fill | Matrix / 2D Grid | 🟡 P2 |
+| 52 | Set Matrix Zeroes | Matrix / 2D Grid | 🟡 P2 |
+| 53 | Spiral Matrix | Matrix / 2D Grid | 🟡 P2 |
+| 54 | Rotate Image | Matrix / 2D Grid | 🟡 P2 |
+| 55 | Search a 2D Matrix | Matrix / 2D Grid | 🔴 P1 |
+| 56 | Number of Islands | Graphs | 🔴 P1 |
+| 57 | Clone Graph | Graphs | 🟡 P2 |
+| 58 | Course Schedule | Graphs | 🔴 P1 |
+| 59 | Number of Connected Components | Graphs | 🟡 P2 |
+| 60 | Rotting Oranges | Graphs | 🔴 P1 |
+| 61 | Pacific Atlantic Water Flow | Graphs | 🟡 P2 |
+| 62 | Kth Largest Element in an Array | Heap / Priority Queue | 🔴 P1 |
+| 63 | Merge K Sorted Lists | Heap / Priority Queue | 🔴 P1 |
+| 64 | Find Median from Data Stream | Heap / Priority Queue | 🟡 P2 |
+| 65 | K Closest Points to Origin | Heap / Priority Queue | 🟡 P2 |
+| 66 | Climbing Stairs | Dynamic Programming | 🔴 P1 |
+| 67 | House Robber | Dynamic Programming | 🔴 P1 |
+| 68 | Coin Change | Dynamic Programming | 🔴 P1 |
+| 69 | Longest Increasing Subsequence | Dynamic Programming | 🔴 P1 |
+| 70 | 0/1 Knapsack | Dynamic Programming | 🔴 P1 |
+| 71 | Longest Common Subsequence | Dynamic Programming | 🔴 P1 |
+| 72 | Unique Paths | Dynamic Programming | 🔴 P1 |
+| 73 | Jump Game | Dynamic Programming | 🔴 P1 |
+| 74 | Word Break | Dynamic Programming | 🔴 P1 |
+| 75 | Maximum Product Subarray | Dynamic Programming | 🔴 P1 |
+| 76 | Decode Ways | Dynamic Programming | 🟡 P2 |
+| 77 | Subsets | Backtracking | 🔴 P1 |
+| 78 | Permutations | Backtracking | 🔴 P1 |
+| 79 | Combination Sum | Backtracking | 🔴 P1 |
+| 80 | Letter Combinations of a Phone Number | Backtracking | 🟡 P2 |
+| 81 | Generate Parentheses | Backtracking | 🔴 P1 |
+| 82 | N-Queens | Backtracking | 🟡 P2 |
+| 83 | Path Sum | Trees / BFS / DFS | 🟡 P2 |
+| 84 | Diameter of Binary Tree | Trees / BFS / DFS | 🟡 P2 |
+| 85 | Symmetric Tree | Trees / BFS / DFS | 🟡 P2 |
+| 86 | Binary Tree Zigzag Level Order Traversal | Trees / BFS / DFS | 🟡 P2 |
+| 87 | Construct Binary Tree from Preorder & Inorder | Trees / BFS / DFS | 🟡 P2 |
+| 88 | Reorder List | Linked List | 🟡 P2 |
+| 89 | Palindrome Linked List | Linked List | 🟡 P2 |
+| 90 | Find Minimum in Rotated Sorted Array | Binary Search | 🔴 P1 |
+| 91 | First Bad Version | Binary Search | 🟡 P2 |
+| 92 | Capacity to Ship Packages Within D Days | Binary Search | 🟡 P2 |
+| 93 | Longest Consecutive Sequence | Arrays / Hashing | 🔴 P1 |
+| 94 | Find the Duplicate Number | Arrays / Hashing | 🔴 P1 |
+| 95 | Squares of a Sorted Array | Two Pointers | 🟡 P2 |
+| 96 | Two Sum II — Input Array Is Sorted | Two Pointers | 🔴 P1 |
+| 97 | Evaluate Reverse Polish Notation | Stack / Queue | 🔴 P1 |
+| 98 | Decode String | Stack / Queue | 🔴 P1 |
+| 99 | Balanced Binary Tree | Trees / BFS / DFS | 🔴 P1 |
+| 100 | Binary Tree Right Side View | Trees / BFS / DFS | 🔴 P1 |
+| 101 | Kth Smallest Element in a BST | Trees / BFS / DFS | 🔴 P1 |
+| 102 | Merge Intervals | Intervals | 🔴 P1 |
+| 103 | Insert Interval | Intervals | 🔴 P1 |
+| 104 | Non-overlapping Intervals | Intervals | 🟡 P2 |
+| 105 | Find Peak Element | Binary Search | 🟡 P2 |
+| 106 | Koko Eating Bananas | Binary Search | 🔴 P1 |
+| 107 | Find First and Last Position of Element | Binary Search | 🔴 P1 |
+| 108 | Longest Palindromic Substring | Dynamic Programming | 🔴 P1 |
+| 109 | Edit Distance | Dynamic Programming | 🔴 P1 |
+| 110 | Partition Equal Subset Sum | Dynamic Programming | 🔴 P1 |
+| 111 | Implement Trie (Prefix Tree) | Trie | 🔴 P1 |
+| 112 | Word Search | Backtracking | 🔴 P1 |
+| 113 | Number of 1 Bits | Bit Manipulation | 🟡 P2 |
+| 114 | Reverse Bits | Bit Manipulation | 🟢 P3 |
+| 115 | Sum of Two Integers | Bit Manipulation | 🟡 P2 |
+
+> **Quick Stats:** 🔴 66 Must-Do · 🟡 44 Good to Know · 🟢 5 Good to Have
+
+---
+
 ## Table of Contents
 1. [Arrays / Hashing](#arrays--hashing)
 2. [Strings](#strings)
