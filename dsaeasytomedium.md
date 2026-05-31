@@ -3565,5 +3565,950 @@ public class CapacityToShipPackages {
 
 ---
 
-*End of document — **92 problems** covered across **12 categories**.*
-*Topics: Arrays, Strings, Sliding Window, Stack/Queue, Linked List, Trees, Binary Search, Matrix, Graphs, Heap, Dynamic Programming, Backtracking.*
+## Arrays / Hashing (Extended)
+
+---
+
+### 93. Longest Consecutive Sequence
+**Difficulty:** Medium
+
+**Problem Statement:**
+Given an unsorted array of integers `nums`, return the length of the longest consecutive elements sequence. You must write an algorithm that runs in O(N) time.
+
+**Test Cases:**
+```
+Input:  nums = [100,4,200,1,3,2]    →  Output: 4  ([1,2,3,4])
+Input:  nums = [0,3,7,2,5,8,4,6,0,1]  →  Output: 9
+```
+
+**Complexity:**
+- Time: O(N) | Space: O(N)
+
+**Java Solution:**
+```java
+import java.util.HashSet;
+
+public class LongestConsecutiveSequence {
+    public int longestConsecutive(int[] nums) {
+        HashSet<Integer> set = new HashSet<>();
+        for (int n : nums) set.add(n);
+
+        int maxLen = 0;
+        for (int n : set) {
+            if (!set.contains(n - 1)) { // Start of a sequence
+                int len = 1;
+                while (set.contains(n + len)) len++;
+                maxLen = Math.max(maxLen, len);
+            }
+        }
+        return maxLen;
+    }
+}
+```
+
+---
+
+### 94. Find the Duplicate Number
+**Difficulty:** Medium
+
+**Problem Statement:**
+Given an array `nums` containing `n + 1` integers where each integer is between `1` and `n` (inclusive), there is only one duplicate number. Find it without modifying the array and using only O(1) extra space.
+
+**Test Cases:**
+```
+Input:  nums = [1,3,4,2,2]  →  Output: 2
+Input:  nums = [3,1,3,4,2]  →  Output: 3
+Input:  nums = [1,1]        →  Output: 1
+```
+
+**Complexity:**
+- Time: O(N) | Space: O(1)
+
+**Java Solution:**
+```java
+public class FindDuplicateNumber {
+    public int findDuplicate(int[] nums) {
+        // Floyd's Cycle Detection — treat array as linked list: index -> nums[index]
+        int slow = nums[0], fast = nums[0];
+        do {
+            slow = nums[slow];
+            fast = nums[nums[fast]];
+        } while (slow != fast);
+        // Phase 2: find entry point of cycle
+        slow = nums[0];
+        while (slow != fast) {
+            slow = nums[slow];
+            fast = nums[fast];
+        }
+        return slow;
+    }
+}
+```
+
+---
+
+### 95. Squares of a Sorted Array
+**Difficulty:** Easy
+
+**Problem Statement:**
+Given an integer array `nums` sorted in non-decreasing order, return an array of the squares of each number sorted in non-decreasing order.
+
+**Test Cases:**
+```
+Input:  nums = [-4,-1,0,3,10]  →  Output: [0,1,9,16,100]
+Input:  nums = [-7,-3,2,3,11]  →  Output: [4,9,9,49,121]
+```
+
+**Complexity:**
+- Time: O(N) | Space: O(N)
+
+**Java Solution:**
+```java
+public class SquaresOfSortedArray {
+    public int[] sortedSquares(int[] nums) {
+        int n = nums.length;
+        int[] result = new int[n];
+        int left = 0, right = n - 1, pos = n - 1;
+        while (left <= right) {
+            int lSq = nums[left] * nums[left];
+            int rSq = nums[right] * nums[right];
+            if (lSq > rSq) { result[pos--] = lSq; left++; }
+            else            { result[pos--] = rSq; right--; }
+        }
+        return result;
+    }
+}
+```
+
+---
+
+## Two Pointers (Extended)
+
+---
+
+### 96. Two Sum II — Input Array Is Sorted
+**Difficulty:** Medium
+
+**Problem Statement:**
+Given a 1-indexed array of integers `numbers` that is already sorted in non-decreasing order, find two numbers that add up to `target`. Return the indices of the two numbers (1-indexed). Use O(1) extra space.
+
+**Test Cases:**
+```
+Input:  numbers = [2,7,11,15], target = 9   →  Output: [1,2]
+Input:  numbers = [2,3,4],     target = 6   →  Output: [1,3]
+Input:  numbers = [-1,0],      target = -1  →  Output: [1,2]
+```
+
+**Complexity:**
+- Time: O(N) | Space: O(1)
+
+**Java Solution:**
+```java
+public class TwoSumII {
+    public int[] twoSum(int[] numbers, int target) {
+        int left = 0, right = numbers.length - 1;
+        while (left < right) {
+            int sum = numbers[left] + numbers[right];
+            if      (sum == target) return new int[]{left + 1, right + 1};
+            else if (sum < target)  left++;
+            else                    right--;
+        }
+        return new int[]{};
+    }
+}
+```
+
+---
+
+## Stack / Queue (Extended)
+
+---
+
+### 97. Evaluate Reverse Polish Notation
+**Difficulty:** Medium
+
+**Problem Statement:**
+Evaluate the value of an arithmetic expression in Reverse Polish Notation (postfix). Valid operators are `+`, `-`, `*`, `/`. Each operand may be an integer or another expression. Division truncates toward zero.
+
+**Test Cases:**
+```
+Input:  tokens = ["2","1","+","3","*"]         →  Output: 9   ((2+1)*3)
+Input:  tokens = ["4","13","5","/","+"]        →  Output: 6   (4+(13/5))
+Input:  tokens = ["10","6","9","3","+","-11","*","/","*","17","+","5","+"]  →  Output: 22
+```
+
+**Complexity:**
+- Time: O(N) | Space: O(N)
+
+**Java Solution:**
+```java
+import java.util.Stack;
+
+public class EvaluateRPN {
+    public int evalRPN(String[] tokens) {
+        Stack<Integer> stack = new Stack<>();
+        for (String t : tokens) {
+            if (t.equals("+") || t.equals("-") || t.equals("*") || t.equals("/")) {
+                int b = stack.pop(), a = stack.pop();
+                switch (t) {
+                    case "+": stack.push(a + b); break;
+                    case "-": stack.push(a - b); break;
+                    case "*": stack.push(a * b); break;
+                    case "/": stack.push(a / b); break;
+                }
+            } else {
+                stack.push(Integer.parseInt(t));
+            }
+        }
+        return stack.pop();
+    }
+}
+```
+
+---
+
+### 98. Decode String
+**Difficulty:** Medium
+
+**Problem Statement:**
+Given an encoded string, return its decoded string. The encoding rule is: `k[encoded_string]` means the `encoded_string` inside the brackets is repeated exactly `k` times.
+
+**Test Cases:**
+```
+Input:  s = "3[a]2[bc]"      →  Output: "aaabcbc"
+Input:  s = "3[a2[c]]"       →  Output: "accaccacc"
+Input:  s = "2[abc]3[cd]ef"  →  Output: "abcabccdcdcdef"
+```
+
+**Complexity:**
+- Time: O(decoded_length) | Space: O(N)
+
+**Java Solution:**
+```java
+import java.util.Stack;
+
+public class DecodeString {
+    public String decodeString(String s) {
+        Stack<Integer> countStack = new Stack<>();
+        Stack<StringBuilder> strStack = new Stack<>();
+        StringBuilder current = new StringBuilder();
+        int k = 0;
+        for (char c : s.toCharArray()) {
+            if (Character.isDigit(c)) {
+                k = k * 10 + (c - '0'); // Handle multi-digit numbers like "12["
+            } else if (c == '[') {
+                countStack.push(k);
+                strStack.push(current);
+                current = new StringBuilder();
+                k = 0;
+            } else if (c == ']') {
+                int repeat = countStack.pop();
+                StringBuilder prev = strStack.pop();
+                for (int i = 0; i < repeat; i++) prev.append(current);
+                current = prev;
+            } else {
+                current.append(c);
+            }
+        }
+        return current.toString();
+    }
+}
+```
+
+---
+
+## Trees / BFS / DFS (Extended)
+
+---
+
+### 99. Balanced Binary Tree
+**Difficulty:** Easy
+
+**Problem Statement:**
+Given a binary tree, determine if it is height-balanced. A height-balanced binary tree is a binary tree in which the depth of the two subtrees of every node never differs by more than one.
+
+**Test Cases:**
+```
+Input:  [3,9,20,null,null,15,7]  →  Output: true
+Input:  [1,2,2,3,3,null,null,4,4]  →  Output: false
+Input:  []  →  Output: true
+```
+
+**Complexity:**
+- Time: O(N) | Space: O(H)
+
+**Java Solution:**
+```java
+public class BalancedBinaryTree {
+    public boolean isBalanced(TreeNode root) {
+        return checkHeight(root) != -1;
+    }
+
+    private int checkHeight(TreeNode node) {
+        if (node == null) return 0;
+        int left  = checkHeight(node.left);
+        int right = checkHeight(node.right);
+        if (left == -1 || right == -1) return -1;          // Propagate imbalance
+        if (Math.abs(left - right) > 1) return -1;         // Imbalance detected here
+        return 1 + Math.max(left, right);                  // Return height
+    }
+}
+```
+
+---
+
+### 100. Binary Tree Right Side View
+**Difficulty:** Medium
+
+**Problem Statement:**
+Given the root of a binary tree, imagine yourself standing on the right side of it. Return the values of the nodes you can see ordered from top to bottom.
+
+**Test Cases:**
+```
+Input:  [1,2,3,null,5,null,4]  →  Output: [1,3,4]
+Input:  [1,null,3]             →  Output: [1,3]
+Input:  []                     →  Output: []
+```
+
+**Complexity:**
+- Time: O(N) | Space: O(N)
+
+**Java Solution:**
+```java
+import java.util.*;
+
+public class BinaryTreeRightSideView {
+    public List<Integer> rightSideView(TreeNode root) {
+        List<Integer> result = new ArrayList<>();
+        if (root == null) return result;
+        Queue<TreeNode> queue = new LinkedList<>();
+        queue.offer(root);
+        while (!queue.isEmpty()) {
+            int size = queue.size();
+            for (int i = 0; i < size; i++) {
+                TreeNode node = queue.poll();
+                if (i == size - 1) result.add(node.val); // Last node of each level
+                if (node.left  != null) queue.offer(node.left);
+                if (node.right != null) queue.offer(node.right);
+            }
+        }
+        return result;
+    }
+}
+```
+
+---
+
+### 101. Kth Smallest Element in a BST
+**Difficulty:** Medium
+
+**Problem Statement:**
+Given the root of a binary search tree and an integer `k`, return the `k`-th smallest value (1-indexed) of all the values of the nodes in the tree.
+
+**Test Cases:**
+```
+Input:  root = [3,1,4,null,2], k = 1  →  Output: 1
+Input:  root = [5,3,6,2,4,null,null,1], k = 3  →  Output: 3
+```
+
+**Complexity:**
+- Time: O(H + k) | Space: O(H)
+
+**Java Solution:**
+```java
+public class KthSmallestInBST {
+    private int count = 0, result = 0;
+
+    public int kthSmallest(TreeNode root, int k) {
+        inorder(root, k);
+        return result;
+    }
+
+    private void inorder(TreeNode node, int k) {
+        if (node == null) return;
+        inorder(node.left, k);     // Visit left (smallest first in BST)
+        if (++count == k) { result = node.val; return; }
+        inorder(node.right, k);
+    }
+}
+```
+
+---
+
+## Intervals
+
+---
+
+### 102. Merge Intervals
+**Difficulty:** Medium
+
+**Problem Statement:**
+Given an array of `intervals` where `intervals[i] = [starti, endi]`, merge all overlapping intervals, and return an array of the non-overlapping intervals that cover all the intervals in the input.
+
+**Test Cases:**
+```
+Input:  intervals = [[1,3],[2,6],[8,10],[15,18]]  →  Output: [[1,6],[8,10],[15,18]]
+Input:  intervals = [[1,4],[4,5]]                  →  Output: [[1,5]]
+```
+
+**Complexity:**
+- Time: O(N log N) | Space: O(N)
+
+**Java Solution:**
+```java
+import java.util.*;
+
+public class MergeIntervals {
+    public int[][] merge(int[][] intervals) {
+        Arrays.sort(intervals, (a, b) -> a[0] - b[0]);
+        List<int[]> result = new ArrayList<>();
+        int[] current = intervals[0];
+        for (int i = 1; i < intervals.length; i++) {
+            if (intervals[i][0] <= current[1]) {
+                current[1] = Math.max(current[1], intervals[i][1]); // Overlap — extend
+            } else {
+                result.add(current);
+                current = intervals[i];
+            }
+        }
+        result.add(current);
+        return result.toArray(new int[0][]);
+    }
+}
+```
+
+---
+
+### 103. Insert Interval
+**Difficulty:** Medium
+
+**Problem Statement:**
+You are given an array of non-overlapping intervals `intervals` sorted by start time, and a `newInterval`. Insert `newInterval` into `intervals` and merge if necessary. Return the resulting array.
+
+**Test Cases:**
+```
+Input:  intervals = [[1,3],[6,9]], newInterval = [2,5]   →  Output: [[1,5],[6,9]]
+Input:  intervals = [[1,2],[3,5],[6,7],[8,10],[12,16]], newInterval = [4,8]
+Output: [[1,2],[3,10],[12,16]]
+```
+
+**Complexity:**
+- Time: O(N) | Space: O(N)
+
+**Java Solution:**
+```java
+import java.util.*;
+
+public class InsertInterval {
+    public int[][] insert(int[][] intervals, int[] newInterval) {
+        List<int[]> result = new ArrayList<>();
+        int i = 0, n = intervals.length;
+        // Add all intervals that end before newInterval starts
+        while (i < n && intervals[i][1] < newInterval[0])
+            result.add(intervals[i++]);
+        // Merge all overlapping intervals with newInterval
+        while (i < n && intervals[i][0] <= newInterval[1]) {
+            newInterval[0] = Math.min(newInterval[0], intervals[i][0]);
+            newInterval[1] = Math.max(newInterval[1], intervals[i][1]);
+            i++;
+        }
+        result.add(newInterval);
+        // Add remaining intervals
+        while (i < n) result.add(intervals[i++]);
+        return result.toArray(new int[0][]);
+    }
+}
+```
+
+---
+
+### 104. Non-overlapping Intervals
+**Difficulty:** Medium
+
+**Problem Statement:**
+Given an array of intervals, return the minimum number of intervals you need to remove to make the rest of the intervals non-overlapping.
+
+**Test Cases:**
+```
+Input:  intervals = [[1,2],[2,3],[3,4],[1,3]]  →  Output: 1  (remove [1,3])
+Input:  intervals = [[1,2],[1,2],[1,2]]        →  Output: 2
+Input:  intervals = [[1,2],[2,3]]              →  Output: 0
+```
+
+**Complexity:**
+- Time: O(N log N) | Space: O(1)
+
+**Java Solution:**
+```java
+import java.util.Arrays;
+
+public class NonOverlappingIntervals {
+    public int eraseOverlapIntervals(int[][] intervals) {
+        Arrays.sort(intervals, (a, b) -> a[1] - b[1]); // Sort by END time
+        int count = 0, prevEnd = Integer.MIN_VALUE;
+        for (int[] interval : intervals) {
+            if (interval[0] >= prevEnd) {
+                prevEnd = interval[1]; // No overlap — keep this interval
+            } else {
+                count++; // Overlap — remove this interval (the one with larger end is already excluded by sorting)
+            }
+        }
+        return count;
+    }
+}
+```
+
+---
+
+## Binary Search (Extended)
+
+---
+
+### 105. Find Peak Element
+**Difficulty:** Medium
+
+**Problem Statement:**
+A peak element is an element that is strictly greater than its neighbors. Given an integer array `nums`, find a peak element and return its index. If the array contains multiple peaks, return the index to any of the peak elements. You must write an O(log n) solution.
+
+**Test Cases:**
+```
+Input:  nums = [1,2,3,1]     →  Output: 2  (nums[2]=3 is a peak)
+Input:  nums = [1,2,1,3,5,6,4]  →  Output: 5 or 1
+```
+
+**Complexity:**
+- Time: O(log N) | Space: O(1)
+
+**Java Solution:**
+```java
+public class FindPeakElement {
+    public int findPeakElement(int[] nums) {
+        int left = 0, right = nums.length - 1;
+        while (left < right) {
+            int mid = left + (right - left) / 2;
+            if (nums[mid] < nums[mid + 1]) left = mid + 1; // Peak is to the right
+            else right = mid;                               // Peak is at mid or to the left
+        }
+        return left;
+    }
+}
+```
+
+---
+
+### 106. Koko Eating Bananas
+**Difficulty:** Medium
+
+**Problem Statement:**
+Koko has `piles` of bananas and `h` hours to eat them all. She can eat at most `k` bananas per hour from a single pile. Find the minimum integer `k` such that she can eat all bananas within `h` hours.
+
+**Test Cases:**
+```
+Input:  piles = [3,6,7,11], h = 8  →  Output: 4
+Input:  piles = [30,11,23,4,20], h = 5  →  Output: 30
+Input:  piles = [30,11,23,4,20], h = 6  →  Output: 23
+```
+
+**Complexity:**
+- Time: O(N log M) where M = max pile | Space: O(1)
+
+**Java Solution:**
+```java
+public class KokoEatingBananas {
+    public int minEatingSpeed(int[] piles, int h) {
+        int left = 1, right = 0;
+        for (int p : piles) right = Math.max(right, p);
+        while (left < right) {
+            int mid = left + (right - left) / 2;
+            if (canEat(piles, h, mid)) right = mid;
+            else left = mid + 1;
+        }
+        return left;
+    }
+
+    private boolean canEat(int[] piles, int h, int speed) {
+        int hours = 0;
+        for (int p : piles) hours += (p + speed - 1) / speed; // ceil division
+        return hours <= h;
+    }
+}
+```
+
+---
+
+### 107. Find First and Last Position of Element in Sorted Array
+**Difficulty:** Medium
+
+**Problem Statement:**
+Given an array of integers `nums` sorted in non-decreasing order, find the starting and ending position of a given `target` value. If `target` is not found, return `[-1, -1]`. Must run in O(log n).
+
+**Test Cases:**
+```
+Input:  nums = [5,7,7,8,8,10], target = 8  →  Output: [3,4]
+Input:  nums = [5,7,7,8,8,10], target = 6  →  Output: [-1,-1]
+Input:  nums = [], target = 0             →  Output: [-1,-1]
+```
+
+**Complexity:**
+- Time: O(log N) | Space: O(1)
+
+**Java Solution:**
+```java
+public class FindFirstAndLastPosition {
+    public int[] searchRange(int[] nums, int target) {
+        return new int[]{findBound(nums, target, true), findBound(nums, target, false)};
+    }
+
+    private int findBound(int[] nums, int target, boolean findFirst) {
+        int left = 0, right = nums.length - 1, bound = -1;
+        while (left <= right) {
+            int mid = left + (right - left) / 2;
+            if      (nums[mid] == target) { bound = mid; if (findFirst) right = mid - 1; else left = mid + 1; }
+            else if (nums[mid] < target)  left = mid + 1;
+            else                          right = mid - 1;
+        }
+        return bound;
+    }
+}
+```
+
+---
+
+## Dynamic Programming (Extended)
+
+---
+
+### 108. Longest Palindromic Substring
+**Difficulty:** Medium
+
+**Problem Statement:**
+Given a string `s`, return the longest palindromic substring in `s`.
+
+**Test Cases:**
+```
+Input:  s = "babad"   →  Output: "bab" or "aba"
+Input:  s = "cbbd"    →  Output: "bb"
+Input:  s = "a"       →  Output: "a"
+```
+
+**Complexity:**
+- Time: O(N²) | Space: O(1)
+
+**Java Solution:**
+```java
+public class LongestPalindromicSubstring {
+    private int start = 0, maxLen = 1;
+
+    public String longestPalindrome(String s) {
+        for (int i = 0; i < s.length(); i++) {
+            expand(s, i, i);     // Odd-length palindromes
+            expand(s, i, i + 1); // Even-length palindromes
+        }
+        return s.substring(start, start + maxLen);
+    }
+
+    private void expand(String s, int left, int right) {
+        while (left >= 0 && right < s.length() && s.charAt(left) == s.charAt(right)) {
+            if (right - left + 1 > maxLen) {
+                start = left;
+                maxLen = right - left + 1;
+            }
+            left--; right++;
+        }
+    }
+}
+```
+
+---
+
+### 109. Edit Distance
+**Difficulty:** Medium
+
+**Problem Statement:**
+Given two strings `word1` and `word2`, return the minimum number of operations (insert, delete, replace) required to convert `word1` to `word2`.
+
+**Test Cases:**
+```
+Input:  word1 = "horse", word2 = "ros"   →  Output: 3
+Input:  word1 = "intention", word2 = "execution"  →  Output: 5
+Input:  word1 = "", word2 = "a"          →  Output: 1
+```
+
+**Complexity:**
+- Time: O(M × N) | Space: O(M × N)
+
+**Java Solution:**
+```java
+public class EditDistance {
+    public int minDistance(String word1, String word2) {
+        int m = word1.length(), n = word2.length();
+        int[][] dp = new int[m + 1][n + 1];
+        for (int i = 0; i <= m; i++) dp[i][0] = i; // Delete all chars from word1
+        for (int j = 0; j <= n; j++) dp[0][j] = j; // Insert all chars for word2
+        for (int i = 1; i <= m; i++)
+            for (int j = 1; j <= n; j++) {
+                if (word1.charAt(i - 1) == word2.charAt(j - 1))
+                    dp[i][j] = dp[i - 1][j - 1]; // Characters match — no operation needed
+                else
+                    dp[i][j] = 1 + Math.min(dp[i - 1][j - 1],   // Replace
+                                   Math.min(dp[i - 1][j],         // Delete
+                                            dp[i][j - 1]));       // Insert
+            }
+        return dp[m][n];
+    }
+}
+```
+
+---
+
+### 110. Partition Equal Subset Sum
+**Difficulty:** Medium
+
+**Problem Statement:**
+Given an integer array `nums`, return `true` if you can partition the array into two subsets such that the sum of the elements in both subsets is equal.
+
+**Test Cases:**
+```
+Input:  nums = [1,5,11,5]  →  Output: true   ([1,5,5] and [11])
+Input:  nums = [1,2,3,5]   →  Output: false
+```
+
+**Complexity:**
+- Time: O(N × sum/2) | Space: O(sum/2)
+
+**Java Solution:**
+```java
+public class PartitionEqualSubsetSum {
+    public boolean canPartition(int[] nums) {
+        int total = 0;
+        for (int n : nums) total += n;
+        if (total % 2 != 0) return false; // Odd sum can't be split equally
+        int target = total / 2;
+        boolean[] dp = new boolean[target + 1];
+        dp[0] = true;
+        for (int num : nums)
+            for (int j = target; j >= num; j--) // Backwards to avoid reuse (0/1 knapsack)
+                dp[j] = dp[j] || dp[j - num];
+        return dp[target];
+    }
+}
+```
+
+---
+
+## Trie
+
+---
+
+### 111. Implement Trie (Prefix Tree)
+**Difficulty:** Medium
+
+**Problem Statement:**
+Implement a trie with `insert`, `search`, and `startsWith` methods.
+
+**Test Cases:**
+```
+Trie trie = new Trie();
+trie.insert("apple");
+trie.search("apple");    → true
+trie.search("app");      → false
+trie.startsWith("app");  → true
+trie.insert("app");
+trie.search("app");      → true
+```
+
+**Complexity:**
+- Time: O(M) per operation (M = word length) | Space: O(M × N)
+
+**Java Solution:**
+```java
+public class Trie {
+    private TrieNode root = new TrieNode();
+
+    public void insert(String word) {
+        TrieNode node = root;
+        for (char c : word.toCharArray()) {
+            if (node.children[c - 'a'] == null)
+                node.children[c - 'a'] = new TrieNode();
+            node = node.children[c - 'a'];
+        }
+        node.isEnd = true;
+    }
+
+    public boolean search(String word) {
+        TrieNode node = find(word);
+        return node != null && node.isEnd;
+    }
+
+    public boolean startsWith(String prefix) {
+        return find(prefix) != null;
+    }
+
+    private TrieNode find(String s) {
+        TrieNode node = root;
+        for (char c : s.toCharArray()) {
+            if (node.children[c - 'a'] == null) return null;
+            node = node.children[c - 'a'];
+        }
+        return node;
+    }
+}
+
+class TrieNode {
+    TrieNode[] children = new TrieNode[26];
+    boolean isEnd = false;
+}
+```
+
+---
+
+## Backtracking (Extended)
+
+---
+
+### 112. Word Search
+**Difficulty:** Medium
+
+**Problem Statement:**
+Given an `m x n` grid of characters `board` and a string `word`, return `true` if `word` exists in the grid. The word can be constructed from sequentially adjacent cells (horizontally or vertically), and the same cell may not be used more than once.
+
+**Test Cases:**
+```
+Input:  board = [["A","B","C","E"],["S","F","C","S"],["A","D","E","E"]], word = "ABCCED"
+Output: true
+
+Input:  board = same, word = "SEE"   →  Output: true
+Input:  board = same, word = "ABCB"  →  Output: false
+```
+
+**Complexity:**
+- Time: O(M × N × 4^L) where L = word length | Space: O(L)
+
+**Java Solution:**
+```java
+public class WordSearch {
+    public boolean exist(char[][] board, String word) {
+        int m = board.length, n = board[0].length;
+        for (int i = 0; i < m; i++)
+            for (int j = 0; j < n; j++)
+                if (dfs(board, word, i, j, 0)) return true;
+        return false;
+    }
+
+    private boolean dfs(char[][] board, String word, int r, int c, int idx) {
+        if (idx == word.length()) return true;
+        if (r < 0 || r >= board.length || c < 0 || c >= board[0].length) return false;
+        if (board[r][c] != word.charAt(idx)) return false;
+        char temp = board[r][c];
+        board[r][c] = '#'; // Mark as visited
+        boolean found = dfs(board, word, r+1, c, idx+1) || dfs(board, word, r-1, c, idx+1)
+                     || dfs(board, word, r, c+1, idx+1) || dfs(board, word, r, c-1, idx+1);
+        board[r][c] = temp; // Restore (backtrack)
+        return found;
+    }
+}
+```
+
+---
+
+## Bit Manipulation
+
+---
+
+### 113. Number of 1 Bits
+**Difficulty:** Easy
+
+**Problem Statement:**
+Write a function that takes the binary representation of a positive integer and returns the number of set bits (also known as the Hamming weight).
+
+**Test Cases:**
+```
+Input:  n = 11 (binary: 00001011)  →  Output: 3
+Input:  n = 128 (binary: 10000000)  →  Output: 1
+Input:  n = 2147483645              →  Output: 30
+```
+
+**Complexity:**
+- Time: O(number of set bits) | Space: O(1)
+
+**Java Solution:**
+```java
+public class NumberOf1Bits {
+    public int hammingWeight(int n) {
+        int count = 0;
+        while (n != 0) {
+            n = n & (n - 1); // Removes the lowest set bit each iteration
+            count++;
+        }
+        return count;
+    }
+}
+```
+
+---
+
+### 114. Reverse Bits
+**Difficulty:** Easy
+
+**Problem Statement:**
+Reverse bits of a given 32-bit unsigned integer.
+
+**Test Cases:**
+```
+Input:  n = 00000010100101000001111010011100  →  Output: 964176192 (reversed bits)
+Input:  n = 11111111111111111111111111111101  →  Output: 3221225471
+```
+
+**Complexity:**
+- Time: O(32) = O(1) | Space: O(1)
+
+**Java Solution:**
+```java
+public class ReverseBits {
+    public int reverseBits(int n) {
+        int result = 0;
+        for (int i = 0; i < 32; i++) {
+            result = (result << 1) | (n & 1); // Take LSB of n, place at LSB of result
+            n >>>= 1; // Unsigned right shift
+        }
+        return result;
+    }
+}
+```
+
+---
+
+### 115. Sum of Two Integers (Without + or -)
+**Difficulty:** Medium
+
+**Problem Statement:**
+Given two integers `a` and `b`, return the sum of the two integers without using the `+` or `-` operators.
+
+**Test Cases:**
+```
+Input:  a = 1,  b = 2   →  Output: 3
+Input:  a = 2,  b = 3   →  Output: 5
+Input:  a = -1, b = 1   →  Output: 0
+```
+
+**Complexity:**
+- Time: O(1) | Space: O(1)
+
+**Java Solution:**
+```java
+public class SumOfTwoIntegers {
+    public int getSum(int a, int b) {
+        while (b != 0) {
+            int carry = (a & b) << 1; // Carry: bits that need to be added to next position
+            a = a ^ b;                 // Sum without carry (XOR)
+            b = carry;                 // Carry becomes the new b for next iteration
+        }
+        return a;
+    }
+}
+```
+
+---
+
+*End of document — **115 problems** covered across **15 categories**.*
+*Topics: Arrays, Strings, Sliding Window, Two Pointers, Stack/Queue, Linked List, Trees, Binary Search, Intervals, Matrix, Graphs, Heap, Dynamic Programming, Trie, Backtracking, Bit Manipulation.*
