@@ -10,6 +10,11 @@
 5. [Linked List](#linked-list)
 6. [Trees / BFS / DFS](#trees--bfs--dfs)
 7. [Binary Search](#binary-search)
+8. [Matrix / 2D Grid](#matrix--2d-grid)
+9. [Graphs (BFS / DFS)](#graphs-bfs--dfs)
+10. [Heap / Priority Queue](#heap--priority-queue)
+11. [Dynamic Programming](#dynamic-programming)
+12. [Backtracking](#backtracking)
 
 ---
 
@@ -1862,4 +1867,1703 @@ public class SlidingWindowMaximum {
 
 ---
 
-*End of document — 50 problems covered across 7 categories.*
+---
+
+## Matrix / 2D Grid
+
+---
+
+### 51. Flood Fill
+**Difficulty:** Easy
+
+**Problem Statement:**
+An image is represented as an `m x n` integer grid `image`. Given three integers `sr`, `sc`, and `color`, perform a **flood fill** starting from pixel `image[sr][sc]`. Change all pixels with the same color as `image[sr][sc]` that are connected 4-directionally to color `color`. Return the modified image.
+
+**Test Cases:**
+```
+Input:  image = [[1,1,1],[1,1,0],[1,0,1]], sr=1, sc=1, color=2
+Output: [[2,2,2],[2,2,0],[2,0,1]]
+
+Input:  image = [[0,0,0],[0,0,0]], sr=0, sc=0, color=0
+Output: [[0,0,0],[0,0,0]]
+```
+
+**Complexity:**
+- Time: O(M × N) | Space: O(M × N)
+
+**Java Solution:**
+```java
+public class FloodFill {
+    public int[][] floodFill(int[][] image, int sr, int sc, int color) {
+        int original = image[sr][sc];
+        if (original != color) dfs(image, sr, sc, original, color);
+        return image;
+    }
+
+    private void dfs(int[][] image, int r, int c, int original, int color) {
+        if (r < 0 || r >= image.length || c < 0 || c >= image[0].length
+                || image[r][c] != original) return;
+        image[r][c] = color;
+        dfs(image, r + 1, c, original, color);
+        dfs(image, r - 1, c, original, color);
+        dfs(image, r, c + 1, original, color);
+        dfs(image, r, c - 1, original, color);
+    }
+}
+```
+
+---
+
+### 52. Set Matrix Zeroes
+**Difficulty:** Medium
+
+**Problem Statement:**
+Given an `m x n` integer matrix, if an element is `0`, set its entire row and column to `0`s. Do it in-place.
+
+**Test Cases:**
+```
+Input:  [[1,1,1],[1,0,1],[1,1,1]]  →  Output: [[1,0,1],[0,0,0],[1,0,1]]
+Input:  [[0,1,2,0],[3,4,5,2],[1,3,1,5]]
+Output: [[0,0,0,0],[0,4,5,0],[0,3,1,0]]
+```
+
+**Complexity:**
+- Time: O(M × N) | Space: O(1)
+
+**Java Solution:**
+```java
+public class SetMatrixZeroes {
+    public void setZeroes(int[][] matrix) {
+        int m = matrix.length, n = matrix[0].length;
+        boolean firstRowZero = false, firstColZero = false;
+        for (int j = 0; j < n; j++) if (matrix[0][j] == 0) firstRowZero = true;
+        for (int i = 0; i < m; i++) if (matrix[i][0] == 0) firstColZero = true;
+        for (int i = 1; i < m; i++)
+            for (int j = 1; j < n; j++)
+                if (matrix[i][j] == 0) { matrix[i][0] = 0; matrix[0][j] = 0; }
+        for (int i = 1; i < m; i++)
+            for (int j = 1; j < n; j++)
+                if (matrix[i][0] == 0 || matrix[0][j] == 0) matrix[i][j] = 0;
+        if (firstRowZero) for (int j = 0; j < n; j++) matrix[0][j] = 0;
+        if (firstColZero) for (int i = 0; i < m; i++) matrix[i][0] = 0;
+    }
+}
+```
+
+---
+
+### 53. Spiral Matrix
+**Difficulty:** Medium
+
+**Problem Statement:**
+Given an `m x n` matrix, return all elements of the matrix in spiral order.
+
+**Test Cases:**
+```
+Input:  [[1,2,3],[4,5,6],[7,8,9]]  →  Output: [1,2,3,6,9,8,7,4,5]
+Input:  [[1,2,3,4],[5,6,7,8],[9,10,11,12]]  →  Output: [1,2,3,4,8,12,11,10,9,5,6,7]
+```
+
+**Complexity:**
+- Time: O(M × N) | Space: O(1)
+
+**Java Solution:**
+```java
+import java.util.*;
+
+public class SpiralMatrix {
+    public List<Integer> spiralOrder(int[][] matrix) {
+        List<Integer> result = new ArrayList<>();
+        int top = 0, bottom = matrix.length - 1;
+        int left = 0, right = matrix[0].length - 1;
+        while (top <= bottom && left <= right) {
+            for (int i = left; i <= right; i++) result.add(matrix[top][i]);
+            top++;
+            for (int i = top; i <= bottom; i++) result.add(matrix[i][right]);
+            right--;
+            if (top <= bottom) {
+                for (int i = right; i >= left; i--) result.add(matrix[bottom][i]);
+                bottom--;
+            }
+            if (left <= right) {
+                for (int i = bottom; i >= top; i--) result.add(matrix[i][left]);
+                left++;
+            }
+        }
+        return result;
+    }
+}
+```
+
+---
+
+### 54. Rotate Image
+**Difficulty:** Medium
+
+**Problem Statement:**
+You are given an `n x n` 2D matrix representing an image. Rotate the image by **90 degrees clockwise** in-place.
+
+**Test Cases:**
+```
+Input:  [[1,2,3],[4,5,6],[7,8,9]]  →  Output: [[7,4,1],[8,5,2],[9,6,3]]
+Input:  [[5,1,9,11],[2,4,8,10],[13,3,6,7],[15,14,12,16]]
+Output: [[15,13,2,5],[14,3,4,1],[12,6,8,9],[16,7,10,11]]
+```
+
+**Complexity:**
+- Time: O(N^2) | Space: O(1)
+
+**Java Solution:**
+```java
+public class RotateImage {
+    public void rotate(int[][] matrix) {
+        int n = matrix.length;
+        // Transpose
+        for (int i = 0; i < n; i++)
+            for (int j = i + 1; j < n; j++) {
+                int temp = matrix[i][j];
+                matrix[i][j] = matrix[j][i];
+                matrix[j][i] = temp;
+            }
+        // Reverse each row
+        for (int i = 0; i < n; i++) {
+            int left = 0, right = n - 1;
+            while (left < right) {
+                int temp = matrix[i][left];
+                matrix[i][left++] = matrix[i][right];
+                matrix[i][right--] = temp;
+            }
+        }
+    }
+}
+```
+
+---
+
+### 55. Search a 2D Matrix
+**Difficulty:** Medium
+
+**Problem Statement:**
+You are given an `m x n` integer matrix where each row is sorted and the first integer of each row is greater than the last integer of the previous row. Return `true` if `target` is in the matrix, `false` otherwise. Must run in O(log(m × n)).
+
+**Test Cases:**
+```
+Input:  matrix = [[1,3,5,7],[10,11,16,20],[23,30,34,60]], target = 3  →  Output: true
+Input:  matrix = [[1,3,5,7],[10,11,16,20],[23,30,34,60]], target = 13 →  Output: false
+```
+
+**Complexity:**
+- Time: O(log(M × N)) | Space: O(1)
+
+**Java Solution:**
+```java
+public class SearchA2DMatrix {
+    public boolean searchMatrix(int[][] matrix, int target) {
+        int m = matrix.length, n = matrix[0].length;
+        int left = 0, right = m * n - 1;
+        while (left <= right) {
+            int mid = left + (right - left) / 2;
+            int val = matrix[mid / n][mid % n];
+            if (val == target) return true;
+            else if (val < target) left = mid + 1;
+            else right = mid - 1;
+        }
+        return false;
+    }
+}
+```
+
+---
+
+## Graphs (BFS / DFS)
+
+---
+
+### 56. Number of Islands
+**Difficulty:** Medium
+
+**Problem Statement:**
+Given an `m x n` 2D binary grid of `'1'`s (land) and `'0'`s (water), return the number of islands. An island is surrounded by water and is formed by connecting adjacent lands horizontally or vertically.
+
+**Test Cases:**
+```
+Input:  [["1","1","1","1","0"],
+          ["1","1","0","1","0"],
+          ["1","1","0","0","0"],
+          ["0","0","0","0","0"]]  →  Output: 1
+
+Input:  [["1","1","0","0","0"],
+          ["1","1","0","0","0"],
+          ["0","0","1","0","0"],
+          ["0","0","0","1","1"]]  →  Output: 3
+```
+
+**Complexity:**
+- Time: O(M × N) | Space: O(M × N)
+
+**Java Solution:**
+```java
+public class NumberOfIslands {
+    public int numIslands(char[][] grid) {
+        int count = 0;
+        for (int i = 0; i < grid.length; i++)
+            for (int j = 0; j < grid[0].length; j++)
+                if (grid[i][j] == '1') { dfs(grid, i, j); count++; }
+        return count;
+    }
+
+    private void dfs(char[][] grid, int r, int c) {
+        if (r < 0 || r >= grid.length || c < 0 || c >= grid[0].length || grid[r][c] != '1') return;
+        grid[r][c] = '0'; // mark visited
+        dfs(grid, r + 1, c); dfs(grid, r - 1, c);
+        dfs(grid, r, c + 1); dfs(grid, r, c - 1);
+    }
+}
+```
+
+---
+
+### 57. Clone Graph
+**Difficulty:** Medium
+
+**Problem Statement:**
+Given a reference of a node in a connected undirected graph, return a deep copy (clone) of the graph. Each node contains a value `val` (int) and a list of its neighbors.
+
+**Test Cases:**
+```
+Input:  adjList = [[2,4],[1,3],[2,4],[1,3]]  →  Output: [[2,4],[1,3],[2,4],[1,3]]
+Input:  adjList = [[]]  →  Output: [[]]
+Input:  adjList = []    →  Output: []
+```
+
+**Complexity:**
+- Time: O(V + E) | Space: O(V)
+
+**Java Solution:**
+```java
+import java.util.*;
+
+public class CloneGraph {
+    private Map<Node, Node> visited = new HashMap<>();
+
+    public Node cloneGraph(Node node) {
+        if (node == null) return null;
+        if (visited.containsKey(node)) return visited.get(node);
+        Node clone = new Node(node.val);
+        visited.put(node, clone);
+        for (Node neighbor : node.neighbors)
+            clone.neighbors.add(cloneGraph(neighbor));
+        return clone;
+    }
+}
+
+class Node {
+    int val;
+    List<Node> neighbors = new ArrayList<>();
+    Node(int val) { this.val = val; }
+}
+```
+
+---
+
+### 58. Course Schedule (Cycle Detection)
+**Difficulty:** Medium
+
+**Problem Statement:**
+There are `numCourses` courses labeled `0` to `numCourses - 1`. You are given an array `prerequisites` where `prerequisites[i] = [ai, bi]` indicates you must take course `bi` first if you want to take course `ai`. Return `true` if you can finish all courses, `false` otherwise (i.e., detect if a cycle exists).
+
+**Test Cases:**
+```
+Input:  numCourses = 2, prerequisites = [[1,0]]       →  Output: true
+Input:  numCourses = 2, prerequisites = [[1,0],[0,1]]  →  Output: false
+Input:  numCourses = 5, prerequisites = [[0,1],[0,2],[1,3],[1,4],[3,4]]  →  Output: true
+```
+
+**Complexity:**
+- Time: O(V + E) | Space: O(V + E)
+
+**Java Solution:**
+```java
+import java.util.*;
+
+public class CourseSchedule {
+    public boolean canFinish(int numCourses, int[][] prerequisites) {
+        List<List<Integer>> adj = new ArrayList<>();
+        for (int i = 0; i < numCourses; i++) adj.add(new ArrayList<>());
+        for (int[] pre : prerequisites) adj.get(pre[1]).add(pre[0]);
+
+        int[] state = new int[numCourses]; // 0=unvisited, 1=visiting, 2=done
+        for (int i = 0; i < numCourses; i++)
+            if (hasCycle(adj, state, i)) return false;
+        return true;
+    }
+
+    private boolean hasCycle(List<List<Integer>> adj, int[] state, int node) {
+        if (state[node] == 1) return true;
+        if (state[node] == 2) return false;
+        state[node] = 1;
+        for (int neighbor : adj.get(node))
+            if (hasCycle(adj, state, neighbor)) return true;
+        state[node] = 2;
+        return false;
+    }
+}
+```
+
+---
+
+### 59. Number of Connected Components in Undirected Graph
+**Difficulty:** Medium
+
+**Problem Statement:**
+You have `n` nodes labeled `0` to `n - 1` and a list of undirected edges. Return the number of connected components in the graph. *(Union-Find or DFS)*
+
+**Test Cases:**
+```
+Input:  n = 5, edges = [[0,1],[1,2],[3,4]]  →  Output: 2
+Input:  n = 5, edges = [[0,1],[1,2],[2,3],[3,4]]  →  Output: 1
+```
+
+**Complexity:**
+- Time: O(V + E) | Space: O(V + E)
+
+**Java Solution:**
+```java
+import java.util.*;
+
+public class NumberOfConnectedComponents {
+    public int countComponents(int n, int[][] edges) {
+        int[] parent = new int[n];
+        for (int i = 0; i < n; i++) parent[i] = i;
+        int components = n;
+        for (int[] edge : edges) {
+            int p1 = find(parent, edge[0]);
+            int p2 = find(parent, edge[1]);
+            if (p1 != p2) { parent[p1] = p2; components--; }
+        }
+        return components;
+    }
+
+    private int find(int[] parent, int x) {
+        if (parent[x] != x) parent[x] = find(parent, parent[x]);
+        return parent[x];
+    }
+}
+```
+
+---
+
+### 60. Rotting Oranges (Multi-source BFS)
+**Difficulty:** Medium
+
+**Problem Statement:**
+You are given an `m x n` grid where each cell can be `0` (empty), `1` (fresh orange), or `2` (rotten orange). Every minute, any fresh orange 4-directionally adjacent to a rotten orange becomes rotten. Return the minimum number of minutes until no fresh orange remains, or `-1` if impossible.
+
+**Test Cases:**
+```
+Input:  [[2,1,1],[1,1,0],[0,1,1]]  →  Output: 4
+Input:  [[2,1,1],[0,1,1],[1,0,1]]  →  Output: -1
+Input:  [[0,2]]                    →  Output: 0
+```
+
+**Complexity:**
+- Time: O(M × N) | Space: O(M × N)
+
+**Java Solution:**
+```java
+import java.util.*;
+
+public class RottingOranges {
+    public int orangesRotting(int[][] grid) {
+        int m = grid.length, n = grid[0].length;
+        Queue<int[]> queue = new LinkedList<>();
+        int fresh = 0;
+        for (int i = 0; i < m; i++)
+            for (int j = 0; j < n; j++) {
+                if (grid[i][j] == 2) queue.offer(new int[]{i, j});
+                else if (grid[i][j] == 1) fresh++;
+            }
+        if (fresh == 0) return 0;
+        int[][] dirs = {{1,0},{-1,0},{0,1},{0,-1}};
+        int minutes = 0;
+        while (!queue.isEmpty() && fresh > 0) {
+            minutes++;
+            int size = queue.size();
+            for (int i = 0; i < size; i++) {
+                int[] curr = queue.poll();
+                for (int[] d : dirs) {
+                    int r = curr[0] + d[0], c = curr[1] + d[1];
+                    if (r >= 0 && r < m && c >= 0 && c < n && grid[r][c] == 1) {
+                        grid[r][c] = 2;
+                        fresh--;
+                        queue.offer(new int[]{r, c});
+                    }
+                }
+            }
+        }
+        return fresh == 0 ? minutes : -1;
+    }
+}
+```
+
+---
+
+### 61. Pacific Atlantic Water Flow
+**Difficulty:** Medium
+
+**Problem Statement:**
+There is an `m x n` rectangular island. The island touches the Pacific Ocean on the top/left and the Atlantic Ocean on the bottom/right. Water can flow to an adjacent cell if its height is **less than or equal** to the current cell. Return a list of cells from which water can flow to **both** oceans.
+
+**Test Cases:**
+```
+Input:  heights = [[1,2,2,3,5],[3,2,3,4,4],[2,4,5,3,1],[6,7,1,4,5],[5,1,1,2,4]]
+Output: [[0,4],[1,3],[1,4],[2,2],[3,0],[3,1],[4,0]]
+
+Input:  heights = [[1]]  →  Output: [[0,0]]
+```
+
+**Complexity:**
+- Time: O(M × N) | Space: O(M × N)
+
+**Java Solution:**
+```java
+import java.util.*;
+
+public class PacificAtlanticWaterFlow {
+    private int[][] dirs = {{1,0},{-1,0},{0,1},{0,-1}};
+
+    public List<List<Integer>> pacificAtlantic(int[][] heights) {
+        int m = heights.length, n = heights[0].length;
+        boolean[][] pacific = new boolean[m][n];
+        boolean[][] atlantic = new boolean[m][n];
+        Queue<int[]> pq = new LinkedList<>(), aq = new LinkedList<>();
+        for (int i = 0; i < m; i++) {
+            pq.offer(new int[]{i, 0}); pacific[i][0] = true;
+            aq.offer(new int[]{i, n - 1}); atlantic[i][n - 1] = true;
+        }
+        for (int j = 0; j < n; j++) {
+            pq.offer(new int[]{0, j}); pacific[0][j] = true;
+            aq.offer(new int[]{m - 1, j}); atlantic[m - 1][j] = true;
+        }
+        bfs(heights, pq, pacific); bfs(heights, aq, atlantic);
+        List<List<Integer>> result = new ArrayList<>();
+        for (int i = 0; i < m; i++)
+            for (int j = 0; j < n; j++)
+                if (pacific[i][j] && atlantic[i][j])
+                    result.add(Arrays.asList(i, j));
+        return result;
+    }
+
+    private void bfs(int[][] heights, Queue<int[]> queue, boolean[][] visited) {
+        while (!queue.isEmpty()) {
+            int[] curr = queue.poll();
+            for (int[] d : dirs) {
+                int r = curr[0] + d[0], c = curr[1] + d[1];
+                if (r < 0 || r >= heights.length || c < 0 || c >= heights[0].length
+                        || visited[r][c] || heights[r][c] < heights[curr[0]][curr[1]]) continue;
+                visited[r][c] = true;
+                queue.offer(new int[]{r, c});
+            }
+        }
+    }
+}
+```
+
+---
+
+## Heap / Priority Queue
+
+---
+
+### 62. Kth Largest Element in an Array
+**Difficulty:** Medium
+
+**Problem Statement:**
+Given an integer array `nums` and an integer `k`, return the `k`-th largest element in the array. Note it is the k-th largest in sorted order, not the k-th distinct element.
+
+**Test Cases:**
+```
+Input:  nums = [3,2,1,5,6,4], k = 2  →  Output: 5
+Input:  nums = [3,2,3,1,2,4,5,5,6], k = 4  →  Output: 4
+```
+
+**Complexity:**
+- Time: O(N log K) | Space: O(K)
+
+**Java Solution:**
+```java
+import java.util.PriorityQueue;
+
+public class KthLargestElement {
+    public int findKthLargest(int[] nums, int k) {
+        PriorityQueue<Integer> minHeap = new PriorityQueue<>();
+        for (int num : nums) {
+            minHeap.offer(num);
+            if (minHeap.size() > k) minHeap.poll();
+        }
+        return minHeap.peek();
+    }
+}
+```
+
+---
+
+### 63. Merge K Sorted Lists
+**Difficulty:** Hard (frequently asked at tier-2 product companies)
+
+**Problem Statement:**
+You are given an array of `k` linked lists, each sorted in ascending order. Merge all the linked lists into one sorted linked list and return it.
+
+**Test Cases:**
+```
+Input:  lists = [[1,4,5],[1,3,4],[2,6]]  →  Output: 1→1→2→3→4→4→5→6
+Input:  lists = []                        →  Output: []
+Input:  lists = [[]]                      →  Output: []
+```
+
+**Complexity:**
+- Time: O(N log K) | Space: O(K)
+
+**Java Solution:**
+```java
+import java.util.PriorityQueue;
+
+public class MergeKSortedLists {
+    public ListNode mergeKLists(ListNode[] lists) {
+        PriorityQueue<ListNode> pq = new PriorityQueue<>((a, b) -> a.val - b.val);
+        for (ListNode node : lists) if (node != null) pq.offer(node);
+        ListNode dummy = new ListNode(0), curr = dummy;
+        while (!pq.isEmpty()) {
+            curr.next = pq.poll();
+            curr = curr.next;
+            if (curr.next != null) pq.offer(curr.next);
+        }
+        return dummy.next;
+    }
+}
+```
+
+---
+
+### 64. Find Median from Data Stream
+**Difficulty:** Hard (very commonly asked in product companies)
+
+**Problem Statement:**
+Design a data structure that supports adding integers from a data stream and finding the median of all elements so far. Implement `MedianFinder` with `addNum(int num)` and `findMedian()`.
+
+**Test Cases:**
+```
+MedianFinder mf = new MedianFinder();
+mf.addNum(1); mf.addNum(2);
+mf.findMedian(); → 1.5
+mf.addNum(3);
+mf.findMedian(); → 2.0
+```
+
+**Complexity:**
+- Time: O(log N) addNum, O(1) findMedian | Space: O(N)
+
+**Java Solution:**
+```java
+import java.util.*;
+
+public class MedianFinder {
+    // maxHeap for left half, minHeap for right half
+    private PriorityQueue<Integer> maxHeap = new PriorityQueue<>(Collections.reverseOrder());
+    private PriorityQueue<Integer> minHeap = new PriorityQueue<>();
+
+    public void addNum(int num) {
+        maxHeap.offer(num);
+        minHeap.offer(maxHeap.poll());
+        if (maxHeap.size() < minHeap.size()) maxHeap.offer(minHeap.poll());
+    }
+
+    public double findMedian() {
+        if (maxHeap.size() > minHeap.size()) return maxHeap.peek();
+        return (maxHeap.peek() + minHeap.peek()) / 2.0;
+    }
+}
+```
+
+---
+
+### 65. K Closest Points to Origin
+**Difficulty:** Medium
+
+**Problem Statement:**
+Given an array of `points` where `points[i] = [xi, yi]`, and an integer `k`, return the `k` closest points to the origin `(0, 0)`. Distance is Euclidean. The answer may be in any order.
+
+**Test Cases:**
+```
+Input:  points = [[1,3],[-2,2]], k = 1  →  Output: [[-2,2]]
+Input:  points = [[3,3],[5,-1],[-2,4]], k = 2  →  Output: [[3,3],[-2,4]]
+```
+
+**Complexity:**
+- Time: O(N log K) | Space: O(K)
+
+**Java Solution:**
+```java
+import java.util.PriorityQueue;
+
+public class KClosestPointsToOrigin {
+    public int[][] kClosest(int[][] points, int k) {
+        // max-heap by distance
+        PriorityQueue<int[]> pq = new PriorityQueue<>(
+            (a, b) -> (b[0]*b[0] + b[1]*b[1]) - (a[0]*a[0] + a[1]*a[1])
+        );
+        for (int[] p : points) {
+            pq.offer(p);
+            if (pq.size() > k) pq.poll();
+        }
+        return pq.toArray(new int[k][]);
+    }
+}
+```
+
+---
+
+## Dynamic Programming
+
+---
+
+### 66. Climbing Stairs
+**Difficulty:** Easy
+
+**Problem Statement:**
+You are climbing a staircase. It takes `n` steps to reach the top. Each time you can either climb `1` or `2` steps. In how many distinct ways can you climb to the top?
+
+**Test Cases:**
+```
+Input:  n = 2  →  Output: 2   (1+1, 2)
+Input:  n = 3  →  Output: 3   (1+1+1, 1+2, 2+1)
+Input:  n = 5  →  Output: 8
+```
+
+**Complexity:**
+- Time: O(N) | Space: O(1)
+
+**Java Solution:**
+```java
+public class ClimbingStairs {
+    public int climbStairs(int n) {
+        if (n <= 1) return 1;
+        int prev2 = 1, prev1 = 1;
+        for (int i = 2; i <= n; i++) {
+            int curr = prev1 + prev2;
+            prev2 = prev1;
+            prev1 = curr;
+        }
+        return prev1;
+    }
+}
+```
+
+---
+
+### 67. House Robber
+**Difficulty:** Medium
+
+**Problem Statement:**
+You are a professional robber planning to rob houses along a street. Each house has a certain amount of money stashed. Adjacent houses have a security system — robbing two adjacent houses triggers the alarm. Given an integer array `nums`, return the maximum amount of money you can rob tonight without alerting the police.
+
+**Test Cases:**
+```
+Input:  nums = [1,2,3,1]    →  Output: 4  (rob house 1 and 3)
+Input:  nums = [2,7,9,3,1]  →  Output: 12 (rob house 1, 3, 5)
+```
+
+**Complexity:**
+- Time: O(N) | Space: O(1)
+
+**Java Solution:**
+```java
+public class HouseRobber {
+    public int rob(int[] nums) {
+        int prev2 = 0, prev1 = 0;
+        for (int num : nums) {
+            int curr = Math.max(prev1, prev2 + num);
+            prev2 = prev1;
+            prev1 = curr;
+        }
+        return prev1;
+    }
+}
+```
+
+---
+
+### 68. Coin Change
+**Difficulty:** Medium
+
+**Problem Statement:**
+You are given an integer array `coins` representing coins of different denominations and an integer `amount`. Return the fewest number of coins needed to make up that amount. If it cannot be made up, return `-1`.
+
+**Test Cases:**
+```
+Input:  coins = [1,5,11], amount = 15  →  Output: 2   ([5,10]? No — [4,11]? Let's use [1*4+11=15] → 2? Actually ans is [5+5+5]=3 or [4+11=15] → 2)
+Input:  coins = [1,2,5], amount = 11   →  Output: 3   (5+5+1)
+Input:  coins = [2], amount = 3        →  Output: -1
+Input:  coins = [1], amount = 0        →  Output: 0
+```
+
+**Complexity:**
+- Time: O(amount × coins.length) | Space: O(amount)
+
+**Java Solution:**
+```java
+import java.util.Arrays;
+
+public class CoinChange {
+    public int coinChange(int[] coins, int amount) {
+        int[] dp = new int[amount + 1];
+        Arrays.fill(dp, amount + 1);
+        dp[0] = 0;
+        for (int i = 1; i <= amount; i++)
+            for (int coin : coins)
+                if (coin <= i) dp[i] = Math.min(dp[i], dp[i - coin] + 1);
+        return dp[amount] > amount ? -1 : dp[amount];
+    }
+}
+```
+
+---
+
+### 69. Longest Increasing Subsequence (LIS)
+**Difficulty:** Medium
+
+**Problem Statement:**
+Given an integer array `nums`, return the length of the longest strictly increasing subsequence.
+
+**Test Cases:**
+```
+Input:  nums = [10,9,2,5,3,7,101,18]  →  Output: 4  ([2,3,7,101])
+Input:  nums = [0,1,0,3,2,3]          →  Output: 4
+Input:  nums = [7,7,7,7,7,7,7]        →  Output: 1
+```
+
+**Complexity:**
+- Time: O(N log N) with binary search | Space: O(N)
+
+**Java Solution:**
+```java
+import java.util.ArrayList;
+
+public class LongestIncreasingSubsequence {
+    public int lengthOfLIS(int[] nums) {
+        ArrayList<Integer> sub = new ArrayList<>();
+        for (int num : nums) {
+            int lo = 0, hi = sub.size();
+            while (lo < hi) {
+                int mid = (lo + hi) / 2;
+                if (sub.get(mid) < num) lo = mid + 1;
+                else hi = mid;
+            }
+            if (lo == sub.size()) sub.add(num);
+            else sub.set(lo, num);
+        }
+        return sub.size();
+    }
+}
+```
+
+---
+
+### 70. 0/1 Knapsack
+**Difficulty:** Medium
+
+**Problem Statement:**
+Given weights and values of `n` items, and a knapsack of capacity `W`, find the maximum value that can be put in the knapsack. Each item can be picked at most once.
+
+**Test Cases:**
+```
+Input:  weights = [2,3,4,5], values = [3,4,5,6], W = 8  →  Output: 10
+Input:  weights = [1,2,3], values = [6,10,12], W = 5      →  Output: 22
+```
+
+**Complexity:**
+- Time: O(N × W) | Space: O(N × W) or O(W) optimized
+
+**Java Solution:**
+```java
+public class Knapsack01 {
+    public int knapsack(int[] weights, int[] values, int W) {
+        int n = weights.length;
+        int[] dp = new int[W + 1];
+        for (int i = 0; i < n; i++)
+            for (int w = W; w >= weights[i]; w--)
+                dp[w] = Math.max(dp[w], dp[w - weights[i]] + values[i]);
+        return dp[W];
+    }
+}
+```
+
+---
+
+### 71. Longest Common Subsequence (LCS)
+**Difficulty:** Medium
+
+**Problem Statement:**
+Given two strings `text1` and `text2`, return the length of their longest common subsequence. A subsequence is a sequence derived from a string by deleting some characters without changing the relative order of the remaining characters.
+
+**Test Cases:**
+```
+Input:  text1 = "abcde", text2 = "ace"  →  Output: 3  (ace)
+Input:  text1 = "abc",   text2 = "abc"  →  Output: 3
+Input:  text1 = "abc",   text2 = "def"  →  Output: 0
+```
+
+**Complexity:**
+- Time: O(M × N) | Space: O(M × N)
+
+**Java Solution:**
+```java
+public class LongestCommonSubsequence {
+    public int longestCommonSubsequence(String text1, String text2) {
+        int m = text1.length(), n = text2.length();
+        int[][] dp = new int[m + 1][n + 1];
+        for (int i = 1; i <= m; i++)
+            for (int j = 1; j <= n; j++) {
+                if (text1.charAt(i - 1) == text2.charAt(j - 1))
+                    dp[i][j] = dp[i - 1][j - 1] + 1;
+                else
+                    dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
+            }
+        return dp[m][n];
+    }
+}
+```
+
+---
+
+### 72. Unique Paths
+**Difficulty:** Medium
+
+**Problem Statement:**
+A robot is on an `m x n` grid at the top-left corner. It can only move right or down at each step. How many unique paths are there to reach the bottom-right corner?
+
+**Test Cases:**
+```
+Input:  m = 3, n = 7  →  Output: 28
+Input:  m = 3, n = 2  →  Output: 3
+Input:  m = 1, n = 1  →  Output: 1
+```
+
+**Complexity:**
+- Time: O(M × N) | Space: O(N)
+
+**Java Solution:**
+```java
+public class UniquePaths {
+    public int uniquePaths(int m, int n) {
+        int[] dp = new int[n];
+        java.util.Arrays.fill(dp, 1);
+        for (int i = 1; i < m; i++)
+            for (int j = 1; j < n; j++)
+                dp[j] += dp[j - 1];
+        return dp[n - 1];
+    }
+}
+```
+
+---
+
+### 73. Jump Game
+**Difficulty:** Medium
+
+**Problem Statement:**
+You are given an integer array `nums`. You are initially positioned at the first index. Each element in the array represents your maximum jump length at that position. Return `true` if you can reach the last index, `false` otherwise.
+
+**Test Cases:**
+```
+Input:  nums = [2,3,1,1,4]  →  Output: true
+Input:  nums = [3,2,1,0,4]  →  Output: false
+```
+
+**Complexity:**
+- Time: O(N) | Space: O(1)
+
+**Java Solution:**
+```java
+public class JumpGame {
+    public boolean canJump(int[] nums) {
+        int maxReach = 0;
+        for (int i = 0; i < nums.length; i++) {
+            if (i > maxReach) return false;
+            maxReach = Math.max(maxReach, i + nums[i]);
+        }
+        return true;
+    }
+}
+```
+
+---
+
+### 74. Word Break
+**Difficulty:** Medium
+
+**Problem Statement:**
+Given a string `s` and a dictionary of strings `wordDict`, return `true` if `s` can be segmented into a space-separated sequence of one or more dictionary words.
+
+**Test Cases:**
+```
+Input:  s = "leetcode", wordDict = ["leet","code"]  →  Output: true
+Input:  s = "applepenapple", wordDict = ["apple","pen"]  →  Output: true
+Input:  s = "catsandog", wordDict = ["cats","dog","sand","and","cat"]  →  Output: false
+```
+
+**Complexity:**
+- Time: O(N^2) | Space: O(N)
+
+**Java Solution:**
+```java
+import java.util.*;
+
+public class WordBreak {
+    public boolean wordBreak(String s, List<String> wordDict) {
+        Set<String> dict = new HashSet<>(wordDict);
+        boolean[] dp = new boolean[s.length() + 1];
+        dp[0] = true;
+        for (int i = 1; i <= s.length(); i++)
+            for (int j = 0; j < i; j++)
+                if (dp[j] && dict.contains(s.substring(j, i))) { dp[i] = true; break; }
+        return dp[s.length()];
+    }
+}
+```
+
+---
+
+### 75. Maximum Product Subarray
+**Difficulty:** Medium
+
+**Problem Statement:**
+Given an integer array `nums`, find a contiguous non-empty subarray whose product is the largest and return the product.
+
+**Test Cases:**
+```
+Input:  nums = [2,3,-2,4]    →  Output: 6   ([2,3])
+Input:  nums = [-2,0,-1]     →  Output: 0
+Input:  nums = [-2,3,-4]     →  Output: 24
+```
+
+**Complexity:**
+- Time: O(N) | Space: O(1)
+
+**Java Solution:**
+```java
+public class MaximumProductSubarray {
+    public int maxProduct(int[] nums) {
+        int maxProd = nums[0], minProd = nums[0], result = nums[0];
+        for (int i = 1; i < nums.length; i++) {
+            if (nums[i] < 0) { int tmp = maxProd; maxProd = minProd; minProd = tmp; }
+            maxProd = Math.max(nums[i], maxProd * nums[i]);
+            minProd = Math.min(nums[i], minProd * nums[i]);
+            result = Math.max(result, maxProd);
+        }
+        return result;
+    }
+}
+```
+
+---
+
+### 76. Decode Ways
+**Difficulty:** Medium
+
+**Problem Statement:**
+A message containing letters `A-Z` can be encoded into numbers. Given a string `s` of digits, return the number of ways to decode it. `'0'` alone cannot be decoded; leading zeros are invalid.
+
+**Test Cases:**
+```
+Input:  s = "12"   →  Output: 2   (AB or L)
+Input:  s = "226"  →  Output: 3   (BZ, VF, BBF)
+Input:  s = "06"   →  Output: 0
+```
+
+**Complexity:**
+- Time: O(N) | Space: O(1)
+
+**Java Solution:**
+```java
+public class DecodeWays {
+    public int numDecodings(String s) {
+        int n = s.length();
+        int prev2 = 1, prev1 = s.charAt(0) != '0' ? 1 : 0;
+        for (int i = 1; i < n; i++) {
+            int curr = 0;
+            int oneDigit = s.charAt(i) - '0';
+            int twoDigit = Integer.parseInt(s.substring(i - 1, i + 1));
+            if (oneDigit != 0) curr += prev1;
+            if (twoDigit >= 10 && twoDigit <= 26) curr += prev2;
+            prev2 = prev1;
+            prev1 = curr;
+        }
+        return prev1;
+    }
+}
+```
+
+---
+
+## Backtracking
+
+---
+
+### 77. Subsets
+**Difficulty:** Medium
+
+**Problem Statement:**
+Given an integer array `nums` of unique elements, return all possible subsets (the power set). The solution set must not contain duplicate subsets.
+
+**Test Cases:**
+```
+Input:  nums = [1,2,3]  →  Output: [[],[1],[2],[1,2],[3],[1,3],[2,3],[1,2,3]]
+Input:  nums = [0]      →  Output: [[],[0]]
+```
+
+**Complexity:**
+- Time: O(2^N) | Space: O(N)
+
+**Java Solution:**
+```java
+import java.util.*;
+
+public class Subsets {
+    public List<List<Integer>> subsets(int[] nums) {
+        List<List<Integer>> result = new ArrayList<>();
+        backtrack(nums, 0, new ArrayList<>(), result);
+        return result;
+    }
+
+    private void backtrack(int[] nums, int start, List<Integer> curr, List<List<Integer>> result) {
+        result.add(new ArrayList<>(curr));
+        for (int i = start; i < nums.length; i++) {
+            curr.add(nums[i]);
+            backtrack(nums, i + 1, curr, result);
+            curr.remove(curr.size() - 1);
+        }
+    }
+}
+```
+
+---
+
+### 78. Permutations
+**Difficulty:** Medium
+
+**Problem Statement:**
+Given an array `nums` of distinct integers, return all the possible permutations. You can return the answer in any order.
+
+**Test Cases:**
+```
+Input:  nums = [1,2,3]  →  Output: [[1,2,3],[1,3,2],[2,1,3],[2,3,1],[3,1,2],[3,2,1]]
+Input:  nums = [0,1]    →  Output: [[0,1],[1,0]]
+Input:  nums = [1]      →  Output: [[1]]
+```
+
+**Complexity:**
+- Time: O(N! × N) | Space: O(N)
+
+**Java Solution:**
+```java
+import java.util.*;
+
+public class Permutations {
+    public List<List<Integer>> permute(int[] nums) {
+        List<List<Integer>> result = new ArrayList<>();
+        backtrack(nums, new boolean[nums.length], new ArrayList<>(), result);
+        return result;
+    }
+
+    private void backtrack(int[] nums, boolean[] used, List<Integer> curr, List<List<Integer>> result) {
+        if (curr.size() == nums.length) { result.add(new ArrayList<>(curr)); return; }
+        for (int i = 0; i < nums.length; i++) {
+            if (used[i]) continue;
+            used[i] = true;
+            curr.add(nums[i]);
+            backtrack(nums, used, curr, result);
+            curr.remove(curr.size() - 1);
+            used[i] = false;
+        }
+    }
+}
+```
+
+---
+
+### 79. Combination Sum
+**Difficulty:** Medium
+
+**Problem Statement:**
+Given an array of distinct integers `candidates` and a target integer `target`, return a list of all unique combinations of `candidates` where the chosen numbers sum to `target`. The same number may be chosen from `candidates` an unlimited number of times.
+
+**Test Cases:**
+```
+Input:  candidates = [2,3,6,7], target = 7  →  Output: [[2,2,3],[7]]
+Input:  candidates = [2,3,5], target = 8    →  Output: [[2,2,2,2],[2,3,3],[3,5]]
+Input:  candidates = [2], target = 1        →  Output: []
+```
+
+**Complexity:**
+- Time: O(N^(T/M)) where T=target, M=min candidate | Space: O(T/M)
+
+**Java Solution:**
+```java
+import java.util.*;
+
+public class CombinationSum {
+    public List<List<Integer>> combinationSum(int[] candidates, int target) {
+        List<List<Integer>> result = new ArrayList<>();
+        backtrack(candidates, target, 0, new ArrayList<>(), result);
+        return result;
+    }
+
+    private void backtrack(int[] candidates, int remaining, int start,
+                           List<Integer> curr, List<List<Integer>> result) {
+        if (remaining == 0) { result.add(new ArrayList<>(curr)); return; }
+        for (int i = start; i < candidates.length; i++) {
+            if (candidates[i] > remaining) continue;
+            curr.add(candidates[i]);
+            backtrack(candidates, remaining - candidates[i], i, curr, result);
+            curr.remove(curr.size() - 1);
+        }
+    }
+}
+```
+
+---
+
+### 80. Letter Combinations of a Phone Number
+**Difficulty:** Medium
+
+**Problem Statement:**
+Given a string containing digits from `2-9`, return all possible letter combinations that the number could represent (as on a telephone keypad). Return an empty list if the input is empty.
+
+**Test Cases:**
+```
+Input:  digits = "23"  →  Output: ["ad","ae","af","bd","be","bf","cd","ce","cf"]
+Input:  digits = ""    →  Output: []
+Input:  digits = "2"   →  Output: ["a","b","c"]
+```
+
+**Complexity:**
+- Time: O(4^N × N) | Space: O(N)
+
+**Java Solution:**
+```java
+import java.util.*;
+
+public class LetterCombinationsPhoneNumber {
+    private String[] phone = {"", "", "abc", "def", "ghi", "jkl", "mno", "pqrs", "tuv", "wxyz"};
+
+    public List<String> letterCombinations(String digits) {
+        List<String> result = new ArrayList<>();
+        if (digits.isEmpty()) return result;
+        backtrack(digits, 0, new StringBuilder(), result);
+        return result;
+    }
+
+    private void backtrack(String digits, int index, StringBuilder curr, List<String> result) {
+        if (index == digits.length()) { result.add(curr.toString()); return; }
+        for (char c : phone[digits.charAt(index) - '0'].toCharArray()) {
+            curr.append(c);
+            backtrack(digits, index + 1, curr, result);
+            curr.deleteCharAt(curr.length() - 1);
+        }
+    }
+}
+```
+
+---
+
+### 81. Generate Parentheses
+**Difficulty:** Medium
+
+**Problem Statement:**
+Given `n` pairs of parentheses, write a function to generate all combinations of well-formed parentheses.
+
+**Test Cases:**
+```
+Input:  n = 3  →  Output: ["((()))","(()())","(())()","()(())","()()()"]
+Input:  n = 1  →  Output: ["()"]
+```
+
+**Complexity:**
+- Time: O(4^N / √N) (Catalan number) | Space: O(N)
+
+**Java Solution:**
+```java
+import java.util.*;
+
+public class GenerateParentheses {
+    public List<String> generateParenthesis(int n) {
+        List<String> result = new ArrayList<>();
+        backtrack(result, new StringBuilder(), 0, 0, n);
+        return result;
+    }
+
+    private void backtrack(List<String> result, StringBuilder curr,
+                           int open, int close, int max) {
+        if (curr.length() == max * 2) { result.add(curr.toString()); return; }
+        if (open < max) {
+            curr.append('(');
+            backtrack(result, curr, open + 1, close, max);
+            curr.deleteCharAt(curr.length() - 1);
+        }
+        if (close < open) {
+            curr.append(')');
+            backtrack(result, curr, open, close + 1, max);
+            curr.deleteCharAt(curr.length() - 1);
+        }
+    }
+}
+```
+
+---
+
+### 82. N-Queens (Bonus — asked at top service companies)
+**Difficulty:** Hard
+
+**Problem Statement:**
+The n-queens puzzle is the problem of placing `n` queens on an `n x n` chessboard such that no two queens attack each other. Given an integer `n`, return all distinct solutions to the n-queens puzzle. Each solution contains a distinct board configuration, where `'Q'` indicates a queen and `'.'` indicates an empty cell.
+
+**Test Cases:**
+```
+Input:  n = 4  →  Output: [[".Q..","...Q","Q...","..Q."],["..Q.","Q...","...Q",".Q.."]]
+Input:  n = 1  →  Output: [["Q"]]
+```
+
+**Complexity:**
+- Time: O(N!) | Space: O(N)
+
+**Java Solution:**
+```java
+import java.util.*;
+
+public class NQueens {
+    public List<List<String>> solveNQueens(int n) {
+        List<List<String>> result = new ArrayList<>();
+        char[][] board = new char[n][n];
+        for (char[] row : board) Arrays.fill(row, '.');
+        backtrack(board, 0, new HashSet<>(), new HashSet<>(), new HashSet<>(), result);
+        return result;
+    }
+
+    private void backtrack(char[][] board, int row,
+                           Set<Integer> cols, Set<Integer> diag1, Set<Integer> diag2,
+                           List<List<String>> result) {
+        if (row == board.length) {
+            List<String> solution = new ArrayList<>();
+            for (char[] r : board) solution.add(new String(r));
+            result.add(solution);
+            return;
+        }
+        for (int col = 0; col < board.length; col++) {
+            int d1 = row - col, d2 = row + col;
+            if (cols.contains(col) || diag1.contains(d1) || diag2.contains(d2)) continue;
+            board[row][col] = 'Q';
+            cols.add(col); diag1.add(d1); diag2.add(d2);
+            backtrack(board, row + 1, cols, diag1, diag2, result);
+            board[row][col] = '.';
+            cols.remove(col); diag1.remove(d1); diag2.remove(d2);
+        }
+    }
+}
+```
+
+---
+
+## Additional Must-Know: Trees (Extended)
+
+---
+
+### 83. Binary Tree Path Sum (Root to Leaf)
+**Difficulty:** Easy
+
+**Problem Statement:**
+Given the root of a binary tree and an integer `targetSum`, return `true` if there is a root-to-leaf path such that adding up all the values along the path equals `targetSum`.
+
+**Test Cases:**
+```
+Input:  root = [5,4,8,11,null,13,4,7,2,null,null,null,1], targetSum = 22  →  Output: true
+Input:  root = [1,2,3], targetSum = 5  →  Output: false
+Input:  root = [], targetSum = 0       →  Output: false
+```
+
+**Complexity:**
+- Time: O(N) | Space: O(H)
+
+**Java Solution:**
+```java
+public class PathSum {
+    public boolean hasPathSum(TreeNode root, int targetSum) {
+        if (root == null) return false;
+        if (root.left == null && root.right == null) return root.val == targetSum;
+        return hasPathSum(root.left, targetSum - root.val)
+            || hasPathSum(root.right, targetSum - root.val);
+    }
+}
+```
+
+---
+
+### 84. Diameter of Binary Tree
+**Difficulty:** Easy
+
+**Problem Statement:**
+Given the root of a binary tree, return the length of the diameter of the tree. The diameter is the length of the longest path between any two nodes. The path may or may not pass through the root.
+
+**Test Cases:**
+```
+Input:  root = [1,2,3,4,5]  →  Output: 3  (path: 4→2→1→3 or 5→2→1→3)
+Input:  root = [1,2]         →  Output: 1
+```
+
+**Complexity:**
+- Time: O(N) | Space: O(H)
+
+**Java Solution:**
+```java
+public class DiameterOfBinaryTree {
+    private int maxDiameter = 0;
+
+    public int diameterOfBinaryTree(TreeNode root) {
+        depth(root);
+        return maxDiameter;
+    }
+
+    private int depth(TreeNode node) {
+        if (node == null) return 0;
+        int left = depth(node.left);
+        int right = depth(node.right);
+        maxDiameter = Math.max(maxDiameter, left + right);
+        return 1 + Math.max(left, right);
+    }
+}
+```
+
+---
+
+### 85. Symmetric Tree
+**Difficulty:** Easy
+
+**Problem Statement:**
+Given the root of a binary tree, check whether it is a mirror of itself (i.e., symmetric around its center).
+
+**Test Cases:**
+```
+Input:  root = [1,2,2,3,4,4,3]  →  Output: true
+Input:  root = [1,2,2,null,3,null,3]  →  Output: false
+```
+
+**Complexity:**
+- Time: O(N) | Space: O(H)
+
+**Java Solution:**
+```java
+public class SymmetricTree {
+    public boolean isSymmetric(TreeNode root) {
+        return isMirror(root, root);
+    }
+
+    private boolean isMirror(TreeNode t1, TreeNode t2) {
+        if (t1 == null && t2 == null) return true;
+        if (t1 == null || t2 == null) return false;
+        return (t1.val == t2.val)
+            && isMirror(t1.left, t2.right)
+            && isMirror(t1.right, t2.left);
+    }
+}
+```
+
+---
+
+### 86. Binary Tree Zigzag Level Order Traversal
+**Difficulty:** Medium
+
+**Problem Statement:**
+Given the root of a binary tree, return the zigzag level order traversal of its nodes' values. (i.e., from left to right, then right to left for the next level and alternate between).
+
+**Test Cases:**
+```
+Input:  root = [3,9,20,null,null,15,7]  →  Output: [[3],[20,9],[15,7]]
+Input:  root = [1]                       →  Output: [[1]]
+```
+
+**Complexity:**
+- Time: O(N) | Space: O(N)
+
+**Java Solution:**
+```java
+import java.util.*;
+
+public class ZigzagLevelOrder {
+    public List<List<Integer>> zigzagLevelOrder(TreeNode root) {
+        List<List<Integer>> result = new ArrayList<>();
+        if (root == null) return result;
+        Queue<TreeNode> queue = new LinkedList<>();
+        queue.offer(root);
+        boolean leftToRight = true;
+        while (!queue.isEmpty()) {
+            int size = queue.size();
+            LinkedList<Integer> level = new LinkedList<>();
+            for (int i = 0; i < size; i++) {
+                TreeNode node = queue.poll();
+                if (leftToRight) level.addLast(node.val);
+                else level.addFirst(node.val);
+                if (node.left != null) queue.offer(node.left);
+                if (node.right != null) queue.offer(node.right);
+            }
+            result.add(level);
+            leftToRight = !leftToRight;
+        }
+        return result;
+    }
+}
+```
+
+---
+
+### 87. Construct Binary Tree from Preorder and Inorder Traversal
+**Difficulty:** Medium
+
+**Problem Statement:**
+Given two integer arrays `preorder` and `inorder` where `preorder` is the preorder traversal and `inorder` is the inorder traversal of the same tree, construct and return the binary tree.
+
+**Test Cases:**
+```
+Input:  preorder = [3,9,20,15,7], inorder = [9,3,15,20,7]  →  Output: [3,9,20,null,null,15,7]
+Input:  preorder = [-1], inorder = [-1]  →  Output: [-1]
+```
+
+**Complexity:**
+- Time: O(N) | Space: O(N)
+
+**Java Solution:**
+```java
+import java.util.*;
+
+public class ConstructBinaryTree {
+    private Map<Integer, Integer> inorderIndex = new HashMap<>();
+
+    public TreeNode buildTree(int[] preorder, int[] inorder) {
+        for (int i = 0; i < inorder.length; i++) inorderIndex.put(inorder[i], i);
+        return build(preorder, 0, preorder.length - 1, 0);
+    }
+
+    private TreeNode build(int[] preorder, int preLeft, int preRight, int inLeft) {
+        if (preLeft > preRight) return null;
+        int rootVal = preorder[preLeft];
+        TreeNode root = new TreeNode(rootVal);
+        int mid = inorderIndex.get(rootVal);
+        int leftSize = mid - inLeft;
+        root.left = build(preorder, preLeft + 1, preLeft + leftSize, inLeft);
+        root.right = build(preorder, preLeft + leftSize + 1, preRight, mid + 1);
+        return root;
+    }
+}
+```
+
+---
+
+## Additional Must-Know: Linked List (Extended)
+
+---
+
+### 88. Reorder List
+**Difficulty:** Medium
+
+**Problem Statement:**
+You are given the head of a singly linked list: `L0 → L1 → ... → Ln-1 → Ln`. Reorder it to: `L0 → Ln → L1 → Ln-1 → L2 → Ln-2 → ...`. Do this in-place without altering node values.
+
+**Test Cases:**
+```
+Input:  1→2→3→4    →  Output: 1→4→2→3
+Input:  1→2→3→4→5  →  Output: 1→5→2→4→3
+```
+
+**Complexity:**
+- Time: O(N) | Space: O(1)
+
+**Java Solution:**
+```java
+public class ReorderList {
+    public void reorderList(ListNode head) {
+        // 1. Find middle
+        ListNode slow = head, fast = head;
+        while (fast.next != null && fast.next.next != null) {
+            slow = slow.next; fast = fast.next.next;
+        }
+        // 2. Reverse second half
+        ListNode prev = null, curr = slow.next;
+        slow.next = null;
+        while (curr != null) { ListNode next = curr.next; curr.next = prev; prev = curr; curr = next; }
+        // 3. Merge two halves
+        ListNode first = head, second = prev;
+        while (second != null) {
+            ListNode tmp1 = first.next, tmp2 = second.next;
+            first.next = second; second.next = tmp1;
+            first = tmp1; second = tmp2;
+        }
+    }
+}
+```
+
+---
+
+### 89. Palindrome Linked List
+**Difficulty:** Easy
+
+**Problem Statement:**
+Given the head of a singly linked list, return `true` if it is a palindrome, or `false` otherwise. Solve in O(N) time and O(1) space.
+
+**Test Cases:**
+```
+Input:  1→2→2→1  →  Output: true
+Input:  1→2       →  Output: false
+```
+
+**Complexity:**
+- Time: O(N) | Space: O(1)
+
+**Java Solution:**
+```java
+public class PalindromeLinkedList {
+    public boolean isPalindrome(ListNode head) {
+        ListNode slow = head, fast = head;
+        while (fast != null && fast.next != null) { slow = slow.next; fast = fast.next.next; }
+        // Reverse from slow
+        ListNode prev = null;
+        while (slow != null) { ListNode next = slow.next; slow.next = prev; prev = slow; slow = next; }
+        // Compare
+        ListNode left = head, right = prev;
+        while (right != null) {
+            if (left.val != right.val) return false;
+            left = left.next; right = right.next;
+        }
+        return true;
+    }
+}
+```
+
+---
+
+## Additional Must-Know: Binary Search (Extended)
+
+---
+
+### 90. Find Minimum in Rotated Sorted Array
+**Difficulty:** Medium
+
+**Problem Statement:**
+Suppose an array of length `n` sorted in ascending order is rotated between 1 and `n` times. Given the sorted rotated array `nums` of unique elements, return the minimum element. Must run in O(log n).
+
+**Test Cases:**
+```
+Input:  nums = [3,4,5,1,2]       →  Output: 1
+Input:  nums = [4,5,6,7,0,1,2]   →  Output: 0
+Input:  nums = [11,13,15,17]      →  Output: 11
+```
+
+**Complexity:**
+- Time: O(log N) | Space: O(1)
+
+**Java Solution:**
+```java
+public class FindMinimumInRotatedSortedArray {
+    public int findMin(int[] nums) {
+        int left = 0, right = nums.length - 1;
+        while (left < right) {
+            int mid = left + (right - left) / 2;
+            if (nums[mid] > nums[right]) left = mid + 1;
+            else right = mid;
+        }
+        return nums[left];
+    }
+}
+```
+
+---
+
+### 91. First Bad Version
+**Difficulty:** Easy
+
+**Problem Statement:**
+You are a product manager and currently leading a team to develop a new product. You have `n` versions `[1, 2, ..., n]` and you want to find out the first bad one, which causes all the following ones to be bad. Use the API `boolean isBadVersion(int version)`.
+
+**Test Cases:**
+```
+Input:  n = 5, bad = 4  →  Output: 4
+Input:  n = 1, bad = 1  →  Output: 1
+```
+
+**Complexity:**
+- Time: O(log N) | Space: O(1)
+
+**Java Solution:**
+```java
+/* The isBadVersion API is defined as: boolean isBadVersion(int version); */
+public class FirstBadVersion {
+    public int firstBadVersion(int n) {
+        int left = 1, right = n;
+        while (left < right) {
+            int mid = left + (right - left) / 2;
+            if (isBadVersion(mid)) right = mid;
+            else left = mid + 1;
+        }
+        return left;
+    }
+
+    // Simulated API for context
+    private boolean isBadVersion(int version) { return version >= 4; }
+}
+```
+
+---
+
+### 92. Capacity to Ship Packages Within D Days
+**Difficulty:** Medium
+
+**Problem Statement:**
+A conveyor belt has packages that must be shipped from one port to another within `days` days. The `i`-th package has a weight of `weights[i]`. Each day, we load the ship with packages (in order given) as long as they don't exceed the maximum weight capacity. Find the minimum weight capacity of the ship to ship all packages within `days` days.
+
+**Test Cases:**
+```
+Input:  weights = [1,2,3,4,5,6,7,8,9,10], days = 5  →  Output: 15
+Input:  weights = [3,2,2,4,1,4], days = 3            →  Output: 6
+Input:  weights = [1,2,3,1,1], days = 4              →  Output: 3
+```
+
+**Complexity:**
+- Time: O(N log S) where S = sum of weights | Space: O(1)
+
+**Java Solution:**
+```java
+public class CapacityToShipPackages {
+    public int shipWithinDays(int[] weights, int days) {
+        int left = 0, right = 0;
+        for (int w : weights) { left = Math.max(left, w); right += w; }
+        while (left < right) {
+            int mid = left + (right - left) / 2;
+            if (canShip(weights, days, mid)) right = mid;
+            else left = mid + 1;
+        }
+        return left;
+    }
+
+    private boolean canShip(int[] weights, int days, int capacity) {
+        int daysNeeded = 1, load = 0;
+        for (int w : weights) {
+            if (load + w > capacity) { daysNeeded++; load = 0; }
+            load += w;
+        }
+        return daysNeeded <= days;
+    }
+}
+```
+
+---
+
+*End of document — **92 problems** covered across **12 categories**.*
+*Topics: Arrays, Strings, Sliding Window, Stack/Queue, Linked List, Trees, Binary Search, Matrix, Graphs, Heap, Dynamic Programming, Backtracking.*
