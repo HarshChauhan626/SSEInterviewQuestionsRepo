@@ -83,15 +83,18 @@ Input: s = ""         →  Output: 0
 ```java
 class Solution {
     public int lengthOfLongestSubstring(String s) {
+        // map stores: character → last seen index
         Map<Character, Integer> map = new HashMap<>();
         int left = 0, maxLen = 0;
         for (int right = 0; right < s.length(); right++) {
             char c = s.charAt(right);
+            // if c was seen AND its last position is inside current window [left, right]
+            // → move left past the duplicate so the window is valid again
             if (map.containsKey(c) && map.get(c) >= left) {
-                left = map.get(c) + 1;
+                left = map.get(c) + 1; // skip over the old occurrence
             }
-            map.put(c, right);
-            maxLen = Math.max(maxLen, right - left + 1);
+            map.put(c, right); // record/update latest index of c
+            maxLen = Math.max(maxLen, right - left + 1); // update best window size
         }
         return maxLen;
     }
@@ -116,17 +119,20 @@ Input: s = "AAAA", k = 0    →  Output: 4
 ```java
 class Solution {
     public int characterReplacement(String s, int k) {
-        int[] freq = new int[26];
+        int[] freq = new int[26]; // frequency count of chars in current window
         int left = 0, maxFreq = 0, maxLen = 0;
         for (int right = 0; right < s.length(); right++) {
-            freq[s.charAt(right) - 'A']++;
+            freq[s.charAt(right) - 'A']++; // expand window by including s[right]
+            // track the max frequency of any single char in the window
+            // → tells us how many chars we DON'T need to replace
             maxFreq = Math.max(maxFreq, freq[s.charAt(right) - 'A']);
             // window size - most frequent char count > k → shrink
+            // (window size - maxFreq) = chars that need replacing; if > k, window is invalid
             if (right - left + 1 - maxFreq > k) {
-                freq[s.charAt(left) - 'A']--;
-                left++;
+                freq[s.charAt(left) - 'A']--; // remove leftmost char from window
+                left++; // shrink from left
             }
-            maxLen = Math.max(maxLen, right - left + 1);
+            maxLen = Math.max(maxLen, right - left + 1); // update best window size
         }
         return maxLen;
     }
@@ -152,25 +158,32 @@ Input: s = "a", t = "aa"              →  Output: ""
 class Solution {
     public String minWindow(String s, String t) {
         if (s.isEmpty() || t.isEmpty()) return "";
+        // need: how many of each char from t we still require
         Map<Character, Integer> need = new HashMap<>();
         for (char c : t.toCharArray()) need.merge(c, 1, Integer::sum);
 
         int left = 0, formed = 0, required = need.size();
+        // formed = number of unique chars whose window count meets need count
+        // required = total unique chars we must satisfy
         int minLen = Integer.MAX_VALUE, minLeft = 0;
-        Map<Character, Integer> window = new HashMap<>();
+        Map<Character, Integer> window = new HashMap<>(); // counts in current window
 
         for (int right = 0; right < s.length(); right++) {
             char c = s.charAt(right);
-            window.merge(c, 1, Integer::sum);
+            window.merge(c, 1, Integer::sum); // add s[right] to window
+            // if this char is needed AND we just hit exact required count → one more char satisfied
             if (need.containsKey(c) && window.get(c).equals(need.get(c))) formed++;
 
+            // when all required chars are satisfied → try to shrink from left
             while (formed == required) {
+                // record this window if it's smaller than previous best
                 if (right - left + 1 < minLen) {
                     minLen = right - left + 1;
                     minLeft = left;
                 }
-                char lc = s.charAt(left++);
+                char lc = s.charAt(left++); // remove leftmost char from window
                 window.merge(lc, -1, Integer::sum);
+                // if removed char was needed and now count drops below need → window is invalid again
                 if (need.containsKey(lc) && window.get(lc) < need.get(lc)) formed--;
             }
         }
@@ -199,11 +212,13 @@ class Solution {
     public boolean checkInclusion(String s1, String s2) {
         if (s1.length() > s2.length()) return false;
         int[] need = new int[26], window = new int[26];
-        for (char c : s1.toCharArray()) need[c - 'a']++;
-        int k = s1.length();
+        for (char c : s1.toCharArray()) need[c - 'a']++; // build frequency map for s1
+        int k = s1.length(); // fixed window size = length of s1
         for (int i = 0; i < s2.length(); i++) {
-            window[s2.charAt(i) - 'a']++;
+            window[s2.charAt(i) - 'a']++; // add right char of window
+            // once window is larger than k, remove the leftmost char (slide the window)
             if (i >= k) window[s2.charAt(i - k) - 'a']--;
+            // if frequency arrays match → current window is a permutation of s1
             if (Arrays.equals(need, window)) return true;
         }
         return false;
@@ -232,11 +247,13 @@ class Solution {
         List<Integer> result = new ArrayList<>();
         if (s.length() < p.length()) return result;
         int[] need = new int[26], window = new int[26];
-        for (char c : p.toCharArray()) need[c - 'a']++;
-        int k = p.length();
+        for (char c : p.toCharArray()) need[c - 'a']++; // frequency of each char in p
+        int k = p.length(); // fixed window size
         for (int i = 0; i < s.length(); i++) {
-            window[s.charAt(i) - 'a']++;
+            window[s.charAt(i) - 'a']++; // slide right: add new char
+            // slide left: remove char that left the window
             if (i >= k) window[s.charAt(i - k) - 'a']--;
+            // if window frequencies == p frequencies → anagram found at start index (i - k + 1)
             if (Arrays.equals(need, window)) result.add(i - k + 1);
         }
         return result;
@@ -262,17 +279,19 @@ Input: s = "abc",   k = 0  →  Output: 0
 ```java
 class Solution {
     public int lengthOfLongestSubstringKDistinct(String s, int k) {
+        // map stores: char → count in current window
         Map<Character, Integer> map = new HashMap<>();
         int left = 0, maxLen = 0;
         for (int right = 0; right < s.length(); right++) {
             char c = s.charAt(right);
-            map.merge(c, 1, Integer::sum);
+            map.merge(c, 1, Integer::sum); // add s[right] to window
+            // if we now have more than k distinct chars → window is invalid, shrink from left
             while (map.size() > k) {
                 char lc = s.charAt(left++);
-                map.merge(lc, -1, Integer::sum);
-                if (map.get(lc) == 0) map.remove(lc);
+                map.merge(lc, -1, Integer::sum); // reduce count of leftmost char
+                if (map.get(lc) == 0) map.remove(lc); // if count hits 0, remove it (reduces distinct count)
             }
-            maxLen = Math.max(maxLen, right - left + 1);
+            maxLen = Math.max(maxLen, right - left + 1); // valid window → update best
         }
         return maxLen;
     }
@@ -299,14 +318,16 @@ Input: ["a"]      →  Output: [["a"]]
 ```java
 class Solution {
     public List<List<String>> groupAnagrams(String[] strs) {
+        // key = sorted version of string (anagrams share the same sorted form)
         Map<String, List<String>> map = new HashMap<>();
         for (String s : strs) {
             char[] ca = s.toCharArray();
-            Arrays.sort(ca);
+            Arrays.sort(ca); // sort chars → all anagrams produce identical sorted key
             String key = new String(ca);
+            // if key not yet in map, create new list; then add original string to its group
             map.computeIfAbsent(key, x -> new ArrayList<>()).add(s);
         }
-        return new ArrayList<>(map.values());
+        return new ArrayList<>(map.values()); // each map value is one anagram group
     }
 }
 // Time: O(n * k log k)  Space: O(n * k)
@@ -329,12 +350,13 @@ Input: s = "a",       t = "ab"       →  Output: false
 ```java
 class Solution {
     public boolean isAnagram(String s, String t) {
-        if (s.length() != t.length()) return false;
-        int[] count = new int[26];
+        if (s.length() != t.length()) return false; // different lengths → can't be anagrams
+        int[] count = new int[26]; // net frequency difference
         for (int i = 0; i < s.length(); i++) {
-            count[s.charAt(i) - 'a']++;
-            count[t.charAt(i) - 'a']--;
+            count[s.charAt(i) - 'a']++; // +1 for each char in s
+            count[t.charAt(i) - 'a']--; // -1 for each char in t
         }
+        // if every count is 0, both strings have identical char frequencies → anagram
         for (int v : count) if (v != 0) return false;
         return true;
     }
@@ -360,12 +382,17 @@ Input: s = "ab",   t = "aa"   →  Output: false
 ```java
 class Solution {
     public boolean isIsomorphic(String s, String t) {
+        // sMap[c] = last index+1 where char c appeared in s
+        // tMap[c] = last index+1 where char c appeared in t
+        // Using i+1 so the default 0 means "never seen"
         int[] sMap = new int[256], tMap = new int[256];
         for (int i = 0; i < s.length(); i++) {
             int sc = s.charAt(i), tc = t.charAt(i);
+            // if sMap[sc] != tMap[tc], the two chars last appeared at different positions
+            // → the mapping is inconsistent → not isomorphic
             if (sMap[sc] != tMap[tc]) return false;
-            sMap[sc] = i + 1;
-            tMap[tc] = i + 1;
+            sMap[sc] = i + 1; // record when this s-char was last seen
+            tMap[tc] = i + 1; // record when this t-char was last seen
         }
         return true;
     }
@@ -391,16 +418,18 @@ Input: pattern = "aaaa", s = "dog cat cat dog"  →  Output: false
 class Solution {
     public boolean wordPattern(String pattern, String s) {
         String[] words = s.split(" ");
-        if (pattern.length() != words.length) return false;
-        Map<Character, String> p2w = new HashMap<>();
-        Map<String, Character> w2p = new HashMap<>();
+        if (pattern.length() != words.length) return false; // mismatch count → false
+        Map<Character, String> p2w = new HashMap<>(); // pattern char → word
+        Map<String, Character> w2p = new HashMap<>(); // word → pattern char (bijective check)
         for (int i = 0; i < pattern.length(); i++) {
             char p = pattern.charAt(i);
             String w = words[i];
+            // if pattern char p already maps to a DIFFERENT word → conflict
             if (p2w.containsKey(p) && !p2w.get(p).equals(w)) return false;
+            // if word w already maps to a DIFFERENT pattern char → conflict (ensures bijection)
             if (w2p.containsKey(w) && w2p.get(w) != p) return false;
-            p2w.put(p, w);
-            w2p.put(w, p);
+            p2w.put(p, w); // establish / confirm mapping p → w
+            w2p.put(w, p); // establish / confirm reverse mapping w → p
         }
         return true;
     }
@@ -426,17 +455,21 @@ Input: word1 = "cabbba",word2 = "aabbss" →  Output: false
 ```java
 class Solution {
     public boolean closeStrings(String word1, String word2) {
-        if (word1.length() != word2.length()) return false;
+        if (word1.length() != word2.length()) return false; // must have same length
         int[] f1 = new int[26], f2 = new int[26];
-        for (char c : word1.toCharArray()) f1[c - 'a']++;
-        for (char c : word2.toCharArray()) f2[c - 'a']++;
+        for (char c : word1.toCharArray()) f1[c - 'a']++; // frequency of each char in word1
+        for (char c : word2.toCharArray()) f2[c - 'a']++; // frequency of each char in word2
+        // Condition 1: both strings must use the SAME SET of characters
+        // (op 2 lets us swap frequencies but not introduce new characters)
         // Same set of characters
         for (int i = 0; i < 26; i++)
-            if ((f1[i] == 0) != (f2[i] == 0)) return false;
+            if ((f1[i] == 0) != (f2[i] == 0)) return false; // one has char, other doesn't
+        // Condition 2: the MULTISET of frequencies must match
+        // (op 1 lets us rearrange chars; op 2 lets us swap frequency values between chars)
         // Same multiset of frequencies
         Arrays.sort(f1);
         Arrays.sort(f2);
-        return Arrays.equals(f1, f2);
+        return Arrays.equals(f1, f2); // sorted freq arrays equal → close
     }
 }
 // Time: O(n)  Space: O(1)
@@ -460,8 +493,11 @@ Input: s = "a",    t = "aa"     →  Output: 'a'
 class Solution {
     public char findTheDifference(String s, String t) {
         int xor = 0;
+        // XOR all chars in s: each char cancels itself if it appears twice
         for (char c : s.toCharArray()) xor ^= c;
+        // XOR all chars in t: the extra char in t won't cancel → it's left in xor
         for (char c : t.toCharArray()) xor ^= c;
+        // xor now holds the ASCII value of the single added character
         return (char) xor;
     }
 }
@@ -485,11 +521,13 @@ Input: "a good   example"    →  Output: "example good a"
 ```java
 class Solution {
     public String reverseWords(String s) {
+        // trim() removes leading/trailing spaces; \\s+ splits on any whitespace run
         String[] words = s.trim().split("\\s+");
         StringBuilder sb = new StringBuilder();
+        // iterate from last word to first → builds reversed word order
         for (int i = words.length - 1; i >= 0; i--) {
             sb.append(words[i]);
-            if (i > 0) sb.append(' ');
+            if (i > 0) sb.append(' '); // add space between words (not after last)
         }
         return sb.toString();
     }
@@ -515,18 +553,21 @@ Input: ["a","b","b","b","b","b","b","b","b","b","b","b","b"]
 ```java
 class Solution {
     public int compress(char[] chars) {
-        int write = 0, i = 0;
+        int write = 0, i = 0; // write = pointer to write compressed output in-place; i = read pointer
         while (i < chars.length) {
-            char cur = chars[i];
+            char cur = chars[i]; // current group character
             int count = 0;
+            // count how many consecutive identical chars starting at i
             while (i < chars.length && chars[i] == cur) { i++; count++; }
-            chars[write++] = cur;
+            chars[write++] = cur; // write the character itself
             if (count > 1) {
+                // write the count as individual digit characters (e.g. 12 → '1','2')
                 for (char c : String.valueOf(count).toCharArray())
                     chars[write++] = c;
             }
+            // if count == 1, don't write any digit (per problem rules)
         }
-        return write;
+        return write; // new length of compressed array
     }
 }
 // Time: O(n)  Space: O(1)
@@ -549,17 +590,18 @@ Input: s = "A",              numRows = 1  →  Output: "A"
 ```java
 class Solution {
     public String convert(String s, int numRows) {
-        if (numRows == 1 || numRows >= s.length()) return s;
+        if (numRows == 1 || numRows >= s.length()) return s; // no zigzag needed
         StringBuilder[] rows = new StringBuilder[numRows];
-        for (int i = 0; i < numRows; i++) rows[i] = new StringBuilder();
-        int cur = 0, dir = -1;
+        for (int i = 0; i < numRows; i++) rows[i] = new StringBuilder(); // one builder per row
+        int cur = 0, dir = -1; // cur = current row; dir = +1 (going down) or -1 (going up)
         for (char c : s.toCharArray()) {
-            rows[cur].append(c);
+            rows[cur].append(c); // place char in current row
+            // reverse direction at top row (0) or bottom row (numRows-1)
             if (cur == 0 || cur == numRows - 1) dir = -dir;
-            cur += dir;
+            cur += dir; // move to next row
         }
         StringBuilder sb = new StringBuilder();
-        for (StringBuilder row : rows) sb.append(row);
+        for (StringBuilder row : rows) sb.append(row); // concatenate rows top to bottom
         return sb.toString();
     }
 }
@@ -583,15 +625,19 @@ Input: s = "pbbcggttciiippooaais", k = 2  →  Output: "ps"
 ```java
 class Solution {
     public String removeDuplicates(String s, int k) {
-        Deque<int[]> stack = new ArrayDeque<>(); // [char, count]
+        Deque<int[]> stack = new ArrayDeque<>(); // stack stores [char_ascii, consecutive_count]
         for (char c : s.toCharArray()) {
+            // if top of stack has same char, increment its run count
             if (!stack.isEmpty() && stack.peek()[0] == c) {
                 stack.peek()[1]++;
+                // if run reaches k, pop it (those k chars are removed)
                 if (stack.peek()[1] == k) stack.pop();
             } else {
+                // new char different from top → push with count 1
                 stack.push(new int[]{c, 1});
             }
         }
+        // Rebuild string from stack (stack is in reverse order, so reverse at end)
         StringBuilder sb = new StringBuilder();
         for (int[] pair : stack) {
             for (int i = 0; i < pair[1]; i++) sb.append((char) pair[0]);
@@ -620,17 +666,21 @@ Input: num1 = "0",   num2 = "0"    →  Output: "0"
 class Solution {
     public String multiply(String num1, String num2) {
         int m = num1.length(), n = num2.length();
+        // Product of m-digit and n-digit numbers has at most m+n digits
         int[] pos = new int[m + n];
+        // Multiply each digit pair, just like grade-school multiplication
         for (int i = m - 1; i >= 0; i--) {
             for (int j = n - 1; j >= 0; j--) {
                 int mul = (num1.charAt(i) - '0') * (num2.charAt(j) - '0');
+                // p1 is the carry position, p2 is the units position for this partial product
                 int p1 = i + j, p2 = i + j + 1;
-                int sum = mul + pos[p2];
-                pos[p2] = sum % 10;
-                pos[p1] += sum / 10;
+                int sum = mul + pos[p2]; // add existing carry-over in pos[p2]
+                pos[p2] = sum % 10;     // units digit goes to p2
+                pos[p1] += sum / 10;    // carry propagates to p1
             }
         }
         StringBuilder sb = new StringBuilder();
+        // Skip leading zeros when building result string
         for (int d : pos) if (!(sb.length() == 0 && d == 0)) sb.append(d);
         return sb.length() == 0 ? "0" : sb.toString();
     }
@@ -655,11 +705,12 @@ Input: "a"                            →  Output: "a"
 ```java
 class Solution {
     public String reverseWords(String s) {
-        String[] words = s.split(" ");
+        String[] words = s.split(" "); // split on single space (spaces preserved)
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < words.length; i++) {
+            // reverse each individual word and append to result
             sb.append(new StringBuilder(words[i]).reverse());
-            if (i < words.length - 1) sb.append(' ');
+            if (i < words.length - 1) sb.append(' '); // preserve original spaces between words
         }
         return sb.toString();
     }
@@ -687,12 +738,16 @@ class Solution {
     public int myAtoi(String s) {
         int i = 0, n = s.length(), sign = 1;
         long result = 0;
+        // Step 1: skip leading whitespace
         while (i < n && s.charAt(i) == ' ') i++;
+        // Step 2: read optional sign character
         if (i < n && (s.charAt(i) == '+' || s.charAt(i) == '-')) {
             sign = s.charAt(i++) == '-' ? -1 : 1;
         }
+        // Step 3: read consecutive digit characters and build number
         while (i < n && Character.isDigit(s.charAt(i))) {
-            result = result * 10 + (s.charAt(i++) - '0');
+            result = result * 10 + (s.charAt(i++) - '0'); // shift left and add next digit
+            // Step 4: clamp to 32-bit signed int range before overflow
             if (result * sign > Integer.MAX_VALUE) return Integer.MAX_VALUE;
             if (result * sign < Integer.MIN_VALUE) return Integer.MIN_VALUE;
         }
@@ -719,26 +774,27 @@ Input: "2[abc]3[cd]ef"  →  Output: "abcabccdcdcdef"
 ```java
 class Solution {
     public String decodeString(String s) {
-        Deque<Integer> countStack = new ArrayDeque<>();
-        Deque<StringBuilder> strStack = new ArrayDeque<>();
-        StringBuilder cur = new StringBuilder();
-        int k = 0;
+        Deque<Integer> countStack = new ArrayDeque<>();    // stores repetition counts
+        Deque<StringBuilder> strStack = new ArrayDeque<>(); // stores strings built before '['
+        StringBuilder cur = new StringBuilder(); // current string being built
+        int k = 0; // accumulates multi-digit numbers
         for (char c : s.toCharArray()) {
             if (Character.isDigit(c)) {
-                k = k * 10 + (c - '0');
+                k = k * 10 + (c - '0'); // build number digit by digit (handles multi-digit k)
             } else if (c == '[') {
-                countStack.push(k);
-                strStack.push(cur);
-                cur = new StringBuilder();
-                k = 0;
+                countStack.push(k);   // save current repeat count
+                strStack.push(cur);   // save current string (what was built before this '[')
+                cur = new StringBuilder(); // start fresh for the inner string
+                k = 0; // reset count for next number
             } else if (c == ']') {
-                int repeat = countStack.pop();
-                StringBuilder prev = strStack.pop();
+                int repeat = countStack.pop(); // how many times to repeat inner string
+                StringBuilder prev = strStack.pop(); // the string built before this bracket
                 String inner = cur.toString();
+                // append inner string 'repeat' times to the previous context
                 for (int i = 0; i < repeat; i++) prev.append(inner);
-                cur = prev;
+                cur = prev; // restore context
             } else {
-                cur.append(c);
+                cur.append(c); // regular char: just append to current string
             }
         }
         return cur.toString();
@@ -764,16 +820,19 @@ Input: version1 = "1.0",   version2 = "1.0.0" →  Output: 0
 ```java
 class Solution {
     public int compareVersion(String version1, String version2) {
+        // split by escaped '.' to get individual revision tokens
         String[] v1 = version1.split("\\.");
         String[] v2 = version2.split("\\.");
-        int len = Math.max(v1.length, v2.length);
+        int len = Math.max(v1.length, v2.length); // compare up to the longer version
         for (int i = 0; i < len; i++) {
+            // missing revisions are treated as 0 (e.g. "1.0" vs "1.0.0")
             int n1 = i < v1.length ? Integer.parseInt(v1[i]) : 0;
             int n2 = i < v2.length ? Integer.parseInt(v2[i]) : 0;
-            if (n1 < n2) return -1;
-            if (n1 > n2) return 1;
+            if (n1 < n2) return -1; // version1 is smaller
+            if (n1 > n2) return 1;  // version1 is larger
+            // equal → move to next revision
         }
-        return 0;
+        return 0; // all revisions equal
     }
 }
 // Time: O(n)  Space: O(n)
@@ -799,12 +858,15 @@ class Solution {
     public String simplifyPath(String path) {
         Deque<String> stack = new ArrayDeque<>();
         for (String part : path.split("/")) {
+            // ".." means go up one directory: pop the stack if not empty
             if (part.equals("..")) { if (!stack.isEmpty()) stack.pop(); }
+            // skip empty parts (from leading/trailing/multiple slashes) and current dir "."
             else if (!part.isEmpty() && !part.equals(".")) stack.push(part);
         }
+        // Rebuild path: stack is LIFO so insert each component at front
         StringBuilder sb = new StringBuilder();
         for (String s : stack) sb.insert(0, "/" + s);
-        return sb.length() == 0 ? "/" : sb.toString();
+        return sb.length() == 0 ? "/" : sb.toString(); // empty stack → root
     }
 }
 // Time: O(n)  Space: O(n)
@@ -833,19 +895,22 @@ class Solution {
     }
 
     private void backtrack(String s, int start, List<String> parts, List<String> result) {
+        // base case: exactly 4 parts and we've consumed the whole string
         if (parts.size() == 4 && start == s.length()) {
-            result.add(String.join(".", parts));
+            result.add(String.join(".", parts)); // valid IP address found
             return;
         }
+        // prune: too many parts already, or ran out of string with fewer than 4 parts
         if (parts.size() == 4 || start == s.length()) return;
+        // try segments of length 1, 2, or 3
         for (int len = 1; len <= 3; len++) {
             if (start + len > s.length()) break;
             String seg = s.substring(start, start + len);
             if (seg.length() > 1 && seg.charAt(0) == '0') break; // no leading zeros
-            if (Integer.parseInt(seg) > 255) break;
+            if (Integer.parseInt(seg) > 255) break; // octet must be 0-255
             parts.add(seg);
-            backtrack(s, start + len, parts, result);
-            parts.remove(parts.size() - 1);
+            backtrack(s, start + len, parts, result); // recurse with this segment chosen
+            parts.remove(parts.size() - 1); // backtrack: undo choice
         }
     }
 }
@@ -871,21 +936,24 @@ class Solution {
     public int calculate(String s) {
         Deque<Integer> stack = new ArrayDeque<>();
         int num = 0;
-        char op = '+';
+        char op = '+'; // start with '+' so first number is pushed as-is
         for (int i = 0; i < s.length(); i++) {
             char c = s.charAt(i);
-            if (Character.isDigit(c)) num = num * 10 + (c - '0');
+            if (Character.isDigit(c)) num = num * 10 + (c - '0'); // build multi-digit number
+            // process when we hit an operator or end of string
             if ((!Character.isDigit(c) && c != ' ') || i == s.length() - 1) {
                 switch (op) {
-                    case '+': stack.push(num);  break;
-                    case '-': stack.push(-num); break;
+                    case '+': stack.push(num);  break;  // push positive number
+                    case '-': stack.push(-num); break;  // push as negative number
+                    // for * and /, pop top, compute, push result (handles precedence)
                     case '*': stack.push(stack.pop() * num); break;
                     case '/': stack.push(stack.pop() / num); break;
                 }
-                op = c;
-                num = 0;
+                op = c;  // update operator for next iteration
+                num = 0; // reset number accumulator
             }
         }
+        // sum all values on stack (additions/subtractions are already sign-encoded)
         int result = 0;
         while (!stack.isEmpty()) result += stack.pop();
         return result;
@@ -915,17 +983,20 @@ class Solution {
     public String longestPalindrome(String s) {
         if (s.length() < 2) return s;
         for (int i = 0; i < s.length(); i++) {
-            expand(s, i, i);     // odd-length
-            expand(s, i, i + 1); // even-length
+            expand(s, i, i);     // odd-length palindromes centered at i
+            expand(s, i, i + 1); // even-length palindromes centered between i and i+1
         }
         return s.substring(start, start + maxLen);
     }
 
     private void expand(String s, int l, int r) {
+        // expand outward as long as characters match
         while (l >= 0 && r < s.length() && s.charAt(l) == s.charAt(r)) { l--; r++; }
+        // after loop, [l+1, r-1] is the palindrome
+        // length = r - l - 1; update global best if this is longer
         if (r - l - 1 > maxLen) {
             maxLen = r - l - 1;
-            start = l + 1;
+            start = l + 1; // start index of this palindrome
         }
     }
 }
@@ -951,16 +1022,17 @@ class Solution {
 
     public int countSubstrings(String s) {
         for (int i = 0; i < s.length(); i++) {
-            expand(s, i, i);
-            expand(s, i, i + 1);
+            expand(s, i, i);     // expand from single center (odd-length)
+            expand(s, i, i + 1); // expand from gap between i and i+1 (even-length)
         }
         return count;
     }
 
     private void expand(String s, int l, int r) {
+        // each successful expansion is a valid palindromic substring
         while (l >= 0 && r < s.length() && s.charAt(l) == s.charAt(r)) {
-            count++;
-            l--; r++;
+            count++; // found one palindrome
+            l--; r++; // try to expand further
         }
     }
 }
@@ -987,15 +1059,17 @@ class Solution {
         int l = 0, r = s.length() - 1;
         while (l < r) {
             if (s.charAt(l) != s.charAt(r))
+                // mismatch found: try skipping either left or right character
+                // if either of the resulting substrings is a palindrome, we're good
                 return isPalin(s, l + 1, r) || isPalin(s, l, r - 1);
-            l++; r--;
+            l++; r--; // characters match, move inward
         }
-        return true;
+        return true; // no mismatch found → already a palindrome
     }
 
     private boolean isPalin(String s, int l, int r) {
         while (l < r) {
-            if (s.charAt(l++) != s.charAt(r--)) return false;
+            if (s.charAt(l++) != s.charAt(r--)) return false; // mismatch → not palindrome
         }
         return true;
     }
@@ -1022,25 +1096,31 @@ class Solution {
         int n = s.length();
         long MOD = 1_000_000_007L;
         long[][] dp = new long[n][n];
-        for (int i = 0; i < n; i++) dp[i][i] = 1;
+        // dp[i][j] = number of distinct palindromic subsequences in s[i..j]
+        for (int i = 0; i < n; i++) dp[i][i] = 1; // each single char is 1 palindrome
         for (int len = 2; len <= n; len++) {
             for (int i = 0; i <= n - len; i++) {
                 int j = i + len - 1;
                 if (s.charAt(i) == s.charAt(j)) {
+                    // find innermost occurrences of the same char within (i, j)
                     int lo = i + 1, hi = j - 1;
                     while (lo <= hi && s.charAt(lo) != s.charAt(i)) lo++;
                     while (lo <= hi && s.charAt(hi) != s.charAt(j)) hi--;
                     if (lo > hi) {
+                        // char s[i] does NOT appear inside → add 2 new palindromes (s[i] alone and s[i]s[j])
                         dp[i][j] = dp[i + 1][j - 1] * 2 + 2;
                     } else if (lo == hi) {
+                        // char appears exactly once inside → add 1 new palindrome (s[i]s[j] wrap)
                         dp[i][j] = dp[i + 1][j - 1] * 2 + 1;
                     } else {
+                        // char appears at least twice inside → subtract duplicates (lo+1..hi-1 was counted twice)
                         dp[i][j] = dp[i + 1][j - 1] * 2 - dp[lo + 1][hi - 1];
                     }
                 } else {
+                    // chars differ: inclusion-exclusion to avoid double-counting
                     dp[i][j] = dp[i + 1][j] + dp[i][j - 1] - dp[i + 1][j - 1];
                 }
-                dp[i][j] = ((dp[i][j] % MOD) + MOD) % MOD;
+                dp[i][j] = ((dp[i][j] % MOD) + MOD) % MOD; // keep result positive mod
             }
         }
         return (int) dp[0][n - 1];
@@ -1067,14 +1147,17 @@ Input: "a"                        →  Output: [1]
 class Solution {
     public List<Integer> partitionLabels(String s) {
         int[] last = new int[26];
+        // record the last occurrence index of each character
         for (int i = 0; i < s.length(); i++) last[s.charAt(i) - 'a'] = i;
         List<Integer> result = new ArrayList<>();
-        int start = 0, end = 0;
+        int start = 0, end = 0; // current partition boundaries
         for (int i = 0; i < s.length(); i++) {
+            // extend the partition end to include the last occurrence of current char
             end = Math.max(end, last[s.charAt(i) - 'a']);
+            // if we've reached the end of the partition → close it
             if (i == end) {
-                result.add(end - start + 1);
-                start = end + 1;
+                result.add(end - start + 1); // record partition size
+                start = end + 1; // start next partition right after
             }
         }
         return result;
@@ -1099,22 +1182,24 @@ Input: "cbacdcbc"→  Output: "acdb"
 ```java
 class Solution {
     public String removeDuplicateLetters(String s) {
-        int[] count = new int[26];
-        boolean[] inStack = new boolean[26];
+        int[] count = new int[26];    // remaining occurrences of each char
+        boolean[] inStack = new boolean[26]; // whether char is already in result stack
         for (char c : s.toCharArray()) count[c - 'a']++;
-        Deque<Character> stack = new ArrayDeque<>();
+        Deque<Character> stack = new ArrayDeque<>(); // monotonic stack (result built here)
         for (char c : s.toCharArray()) {
-            count[c - 'a']--;
-            if (inStack[c - 'a']) continue;
+            count[c - 'a']--; // one fewer occurrence remaining
+            if (inStack[c - 'a']) continue; // already in result, skip duplicate
+            // Pop chars that are: (a) larger than c [not smallest] AND
+            //                     (b) will appear again later [safe to remove now]
             while (!stack.isEmpty() && stack.peek() > c && count[stack.peek() - 'a'] > 0) {
-                inStack[stack.pop() - 'a'] = false;
+                inStack[stack.pop() - 'a'] = false; // mark as no longer in stack
             }
-            stack.push(c);
-            inStack[c - 'a'] = true;
+            stack.push(c);          // add current char to result
+            inStack[c - 'a'] = true; // mark it as in stack
         }
         StringBuilder sb = new StringBuilder();
         for (char c : stack) sb.append(c);
-        return sb.reverse().toString();
+        return sb.reverse().toString(); // stack is LIFO, reverse to get correct order
     }
 }
 // Time: O(n)  Space: O(1)
@@ -1138,21 +1223,23 @@ Input: "vvvlo" →  Output: "vlvov" (or similar valid)
 class Solution {
     public String reorganizeString(String s) {
         int[] freq = new int[26];
-        for (char c : s.toCharArray()) freq[c - 'a']++;
-        // Max-heap: [frequency, character]
+        for (char c : s.toCharArray()) freq[c - 'a']++; // count frequency of each char
+        // Max-heap: [frequency, character index] — always process most frequent char first
         PriorityQueue<int[]> pq = new PriorityQueue<>((a, b) -> b[0] - a[0]);
         for (int i = 0; i < 26; i++) if (freq[i] > 0) pq.offer(new int[]{freq[i], i});
         StringBuilder sb = new StringBuilder();
+        // Always take top two most frequent chars and alternate them
         while (pq.size() >= 2) {
-            int[] a = pq.poll(), b = pq.poll();
-            sb.append((char)('a' + a[1]));
-            sb.append((char)('a' + b[1]));
-            if (--a[0] > 0) pq.offer(a);
+            int[] a = pq.poll(), b = pq.poll(); // two most frequent
+            sb.append((char)('a' + a[1])); // append char a
+            sb.append((char)('a' + b[1])); // append char b (different from a)
+            if (--a[0] > 0) pq.offer(a); // reinsert if still has remaining count
             if (--b[0] > 0) pq.offer(b);
         }
         if (!pq.isEmpty()) {
+            // one char left: if it appears more than once we can't avoid adjacency
             if (pq.peek()[0] > 1) return "";
-            sb.append((char)('a' + pq.poll()[1]));
+            sb.append((char)('a' + pq.poll()[1])); // safely append single remaining char
         }
         return sb.toString();
     }
@@ -1176,14 +1263,15 @@ Input: "ssssss"   →  Output: 6
 ```java
 class Solution {
     public int partitionString(String s) {
-        Set<Character> seen = new HashSet<>();
-        int parts = 1;
+        Set<Character> seen = new HashSet<>(); // chars in current partition
+        int parts = 1; // start with 1 partition
         for (char c : s.toCharArray()) {
             if (seen.contains(c)) {
+                // char already seen in this partition → start a new one
                 parts++;
-                seen.clear();
+                seen.clear(); // reset for new partition
             }
-            seen.add(c);
+            seen.add(c); // add char to current partition
         }
         return parts;
     }
@@ -1209,26 +1297,28 @@ Input: haystack = "hello",     needle = "ll"    →  Output: 2
 class Solution {
     public int strStr(String haystack, String needle) {
         if (needle.isEmpty()) return 0;
-        int[] lps = buildLPS(needle);
-        int i = 0, j = 0;
+        int[] lps = buildLPS(needle); // precompute LPS (Longest Prefix Suffix) array
+        int i = 0, j = 0; // i = haystack pointer, j = needle pointer
         while (i < haystack.length()) {
-            if (haystack.charAt(i) == needle.charAt(j)) { i++; j++; }
-            if (j == needle.length()) return i - j;
+            if (haystack.charAt(i) == needle.charAt(j)) { i++; j++; } // chars match, advance both
+            if (j == needle.length()) return i - j; // full needle matched, return start index
             else if (i < haystack.length() && haystack.charAt(i) != needle.charAt(j)) {
-                if (j != 0) j = lps[j - 1];
-                else i++;
+                // mismatch: use LPS to skip redundant comparisons (don't reset j to 0)
+                if (j != 0) j = lps[j - 1]; // fall back to best matching prefix
+                else i++; // no prefix to fall back to, advance haystack
             }
         }
         return -1;
     }
 
     private int[] buildLPS(String pat) {
+        // lps[i] = length of longest proper prefix of pat[0..i] which is also a suffix
         int[] lps = new int[pat.length()];
-        int len = 0, i = 1;
+        int len = 0, i = 1; // len = current longest prefix-suffix length
         while (i < pat.length()) {
-            if (pat.charAt(i) == pat.charAt(len)) lps[i++] = ++len;
-            else if (len != 0) len = lps[len - 1];
-            else lps[i++] = 0;
+            if (pat.charAt(i) == pat.charAt(len)) lps[i++] = ++len; // extend prefix-suffix
+            else if (len != 0) len = lps[len - 1]; // mismatch: fall back
+            else lps[i++] = 0; // no prefix-suffix possible
         }
         return lps;
     }
@@ -1254,7 +1344,8 @@ class Solution {
     public List<String> findRepeatedDnaSequences(String s) {
         Set<String> seen = new HashSet<>(), repeated = new HashSet<>();
         for (int i = 0; i + 10 <= s.length(); i++) {
-            String sub = s.substring(i, i + 10);
+            String sub = s.substring(i, i + 10); // extract 10-char window
+            // if seen.add returns false, the substring was already in the set → it's repeated
             if (!seen.add(sub)) repeated.add(sub);
         }
         return new ArrayList<>(repeated);
@@ -1282,13 +1373,16 @@ Input: "a"              →  Output: ""
 class Solution {
     public String longestPrefix(String s) {
         int n = s.length();
+        // Build KMP failure function (LPS array) for the string itself
+        // lps[i] = length of longest proper prefix of s[0..i] that is also a suffix
         int[] lps = new int[n];
         int len = 0, i = 1;
         while (i < n) {
-            if (s.charAt(i) == s.charAt(len)) lps[i++] = ++len;
-            else if (len != 0) len = lps[len - 1];
+            if (s.charAt(i) == s.charAt(len)) lps[i++] = ++len; // extend prefix-suffix
+            else if (len != 0) len = lps[len - 1]; // fall back
             else lps[i++] = 0;
         }
+        // lps[n-1] gives the length of the longest happy prefix
         return s.substring(0, lps[n - 1]);
     }
 }
@@ -1312,15 +1406,17 @@ Input: s = "catsandog",  wordDict = ["cats","dog","sand","and","cat"] → false
 ```java
 class Solution {
     public boolean wordBreak(String s, List<String> wordDict) {
-        Set<String> set = new HashSet<>(wordDict);
+        Set<String> set = new HashSet<>(wordDict); // O(1) lookup for each word
         int n = s.length();
         boolean[] dp = new boolean[n + 1];
-        dp[0] = true;
+        dp[0] = true; // empty string is always segmentable
         for (int i = 1; i <= n; i++) {
+            // try every possible last word ending at index i
             for (int j = 0; j < i; j++) {
+                // if s[0..j-1] was segmentable AND s[j..i-1] is a dictionary word
                 if (dp[j] && set.contains(s.substring(j, i))) {
                     dp[i] = true;
-                    break;
+                    break; // no need to check more splits for index i
                 }
             }
         }
@@ -1350,12 +1446,14 @@ class Solution {
     public int numDecodings(String s) {
         int n = s.length();
         int[] dp = new int[n + 1];
-        dp[0] = 1;
-        dp[1] = s.charAt(0) != '0' ? 1 : 0;
+        dp[0] = 1; // empty string → 1 way (base case)
+        dp[1] = s.charAt(0) != '0' ? 1 : 0; // single digit: 1 way if non-zero, else 0
         for (int i = 2; i <= n; i++) {
-            int one = s.charAt(i - 1) - '0';
-            int two = Integer.parseInt(s.substring(i - 2, i));
+            int one = s.charAt(i - 1) - '0'; // last single digit
+            int two = Integer.parseInt(s.substring(i - 2, i)); // last two digits
+            // if single digit is valid (1-9), we can decode it as one character
             if (one >= 1) dp[i] += dp[i - 1];
+            // if two-digit number is valid (10-26), we can decode it as one character
             if (two >= 10 && two <= 26) dp[i] += dp[i - 2];
         }
         return dp[n];
@@ -1382,13 +1480,18 @@ Input: s1="", s2="", s3=""                       →  true
 class Solution {
     public boolean isInterleave(String s1, String s2, String s3) {
         int m = s1.length(), n = s2.length();
-        if (m + n != s3.length()) return false;
+        if (m + n != s3.length()) return false; // total length must match
+        // dp[i][j] = true if s3[0..i+j-1] can be formed by interleaving s1[0..i-1] and s2[0..j-1]
         boolean[][] dp = new boolean[m + 1][n + 1];
-        dp[0][0] = true;
+        dp[0][0] = true; // empty strings trivially interleave to empty s3
+        // fill first column: use only s1
         for (int i = 1; i <= m; i++) dp[i][0] = dp[i-1][0] && s1.charAt(i-1) == s3.charAt(i-1);
+        // fill first row: use only s2
         for (int j = 1; j <= n; j++) dp[0][j] = dp[0][j-1] && s2.charAt(j-1) == s3.charAt(j-1);
         for (int i = 1; i <= m; i++)
             for (int j = 1; j <= n; j++)
+                // either take from s1 (if prev state valid and s1 char matches s3 char)
+                // or take from s2 (if prev state valid and s2 char matches s3 char)
                 dp[i][j] = (dp[i-1][j] && s1.charAt(i-1) == s3.charAt(i+j-1))
                          || (dp[i][j-1] && s2.charAt(j-1) == s3.charAt(i+j-1));
         return dp[m][n];
@@ -1415,9 +1518,12 @@ Input: text1 = "abc",   text2 = "def"   →  Output: 0
 class Solution {
     public int longestCommonSubsequence(String text1, String text2) {
         int m = text1.length(), n = text2.length();
+        // dp[i][j] = LCS length for text1[0..i-1] and text2[0..j-1]
         int[][] dp = new int[m + 1][n + 1];
         for (int i = 1; i <= m; i++)
             for (int j = 1; j <= n; j++)
+                // if chars match → extend the LCS from diagonal (both shrink by 1)
+                // else → take the best of skipping one char from either string
                 dp[i][j] = text1.charAt(i-1) == text2.charAt(j-1)
                           ? dp[i-1][j-1] + 1
                           : Math.max(dp[i-1][j], dp[i][j-1]);
@@ -1495,11 +1601,15 @@ Input: word1 = "",      word2 = "a"      →  Output: 1
 class Solution {
     public int minDistance(String word1, String word2) {
         int m = word1.length(), n = word2.length();
+        // dp[i][j] = min edits to convert word1[0..i-1] to word2[0..j-1]
         int[][] dp = new int[m + 1][n + 1];
+        // base cases: converting to/from empty string costs i or j deletions/insertions
         for (int i = 0; i <= m; i++) dp[i][0] = i;
         for (int j = 0; j <= n; j++) dp[0][j] = j;
         for (int i = 1; i <= m; i++)
             for (int j = 1; j <= n; j++)
+                // if chars match → no new operation needed (take diagonal)
+                // else → 1 op + min(replace dp[i-1][j-1], delete dp[i-1][j], insert dp[i][j-1])
                 dp[i][j] = word1.charAt(i-1) == word2.charAt(j-1)
                           ? dp[i-1][j-1]
                           : 1 + Math.min(dp[i-1][j-1], Math.min(dp[i-1][j], dp[i][j-1]));
@@ -1526,11 +1636,13 @@ Input: s = "babgbag",  t = "bag"    →  Output: 5
 class Solution {
     public int numDistinct(String s, String t) {
         int m = s.length(), n = t.length();
+        // dp[i][j] = number of ways s[0..i-1] contains t[0..j-1] as a subsequence
         long[][] dp = new long[m + 1][n + 1];
-        for (int i = 0; i <= m; i++) dp[i][0] = 1;
+        for (int i = 0; i <= m; i++) dp[i][0] = 1; // empty t is always a subsequence: 1 way
         for (int i = 1; i <= m; i++)
             for (int j = 1; j <= n; j++) {
-                dp[i][j] = dp[i-1][j];
+                dp[i][j] = dp[i-1][j]; // always: don't use s[i-1] (skip it)
+                // if s[i-1] == t[j-1], also add the ways where we USE s[i-1] to match t[j-1]
                 if (s.charAt(i-1) == t.charAt(j-1)) dp[i][j] += dp[i-1][j-1];
             }
         return (int) dp[m][n];
@@ -1558,10 +1670,11 @@ Input: board=[["a","b"],["c","d"]], words=["abcb"]  →  Output: []
 class Solution {
     class TrieNode {
         TrieNode[] children = new TrieNode[26];
-        String word = null;
+        String word = null; // non-null if this node marks end of a word
     }
 
     public List<String> findWords(char[][] board, String[] words) {
+        // Step 1: Insert all words into Trie for efficient prefix matching
         TrieNode root = new TrieNode();
         for (String w : words) {
             TrieNode node = root;
@@ -1570,9 +1683,10 @@ class Solution {
                 if (node.children[i] == null) node.children[i] = new TrieNode();
                 node = node.children[i];
             }
-            node.word = w;
+            node.word = w; // mark end of word
         }
         List<String> result = new ArrayList<>();
+        // Step 2: Start DFS from every cell on the board
         for (int i = 0; i < board.length; i++)
             for (int j = 0; j < board[0].length; j++)
                 dfs(board, i, j, root, result);
@@ -1580,17 +1694,17 @@ class Solution {
     }
 
     private void dfs(char[][] board, int i, int j, TrieNode node, List<String> result) {
-        if (i < 0 || i >= board.length || j < 0 || j >= board[0].length) return;
+        if (i < 0 || i >= board.length || j < 0 || j >= board[0].length) return; // out of bounds
         char c = board[i][j];
-        if (c == '#' || node.children[c - 'a'] == null) return;
-        node = node.children[c - 'a'];
-        if (node.word != null) { result.add(node.word); node.word = null; }
-        board[i][j] = '#';
-        dfs(board, i+1, j, node, result);
+        if (c == '#' || node.children[c - 'a'] == null) return; // visited or no trie path
+        node = node.children[c - 'a']; // descend into trie
+        if (node.word != null) { result.add(node.word); node.word = null; } // word found, dedup
+        board[i][j] = '#'; // mark cell as visited (avoid reuse in same word)
+        dfs(board, i+1, j, node, result); // explore all 4 directions
         dfs(board, i-1, j, node, result);
         dfs(board, i, j+1, node, result);
         dfs(board, i, j-1, node, result);
-        board[i][j] = c;
+        board[i][j] = c; // restore cell (backtrack)
     }
 }
 // Time: O(m*n*4^L)  Space: O(W*L)
@@ -1616,35 +1730,41 @@ class Solution {
     public String alienOrder(String[] words) {
         Map<Character, Set<Character>> graph = new HashMap<>();
         Map<Character, Integer> inDegree = new HashMap<>();
+        // Initialize graph nodes for every unique character seen
         for (String w : words) for (char c : w.toCharArray()) {
             graph.putIfAbsent(c, new HashSet<>());
             inDegree.putIfAbsent(c, 0);
         }
+        // Compare adjacent words to extract ordering constraints
         for (int i = 0; i < words.length - 1; i++) {
             String w1 = words[i], w2 = words[i + 1];
             int minLen = Math.min(w1.length(), w2.length());
+            // invalid: longer word is a prefix of shorter → bad ordering
             if (w1.length() > w2.length() && w1.startsWith(w2)) return "";
             for (int j = 0; j < minLen; j++) {
                 if (w1.charAt(j) != w2.charAt(j)) {
+                    // first differing char gives us an edge: w1[j] comes before w2[j]
                     if (!graph.get(w1.charAt(j)).contains(w2.charAt(j))) {
                         graph.get(w1.charAt(j)).add(w2.charAt(j));
-                        inDegree.merge(w2.charAt(j), 1, Integer::sum);
+                        inDegree.merge(w2.charAt(j), 1, Integer::sum); // increment in-degree
                     }
-                    break;
+                    break; // only first difference counts between adjacent words
                 }
             }
         }
+        // BFS topological sort (Kahn's algorithm)
         Queue<Character> queue = new LinkedList<>();
-        for (char c : inDegree.keySet()) if (inDegree.get(c) == 0) queue.offer(c);
+        for (char c : inDegree.keySet()) if (inDegree.get(c) == 0) queue.offer(c); // start with 0 in-degree
         StringBuilder sb = new StringBuilder();
         while (!queue.isEmpty()) {
             char c = queue.poll();
-            sb.append(c);
+            sb.append(c); // add char to result order
             for (char next : graph.get(c)) {
-                inDegree.merge(next, -1, Integer::sum);
-                if (inDegree.get(next) == 0) queue.offer(next);
+                inDegree.merge(next, -1, Integer::sum); // remove edge
+                if (inDegree.get(next) == 0) queue.offer(next); // now processable
             }
         }
+        // if result has all chars → valid; else there's a cycle → invalid
         return sb.length() == inDegree.size() ? sb.toString() : "";
     }
 }
@@ -1673,27 +1793,32 @@ class Solution {
         List<String> result = new ArrayList<>();
         int i = 0, n = words.length;
         while (i < n) {
+            // Greedily pack words into current line
             int lineLen = words[i].length(), j = i + 1;
             while (j < n && lineLen + 1 + words[j].length() <= maxWidth) {
-                lineLen += 1 + words[j++].length();
+                lineLen += 1 + words[j++].length(); // +1 for minimum 1 space between words
             }
-            int numWords = j - i, numSpaces = maxWidth - lineLen + (numWords - 1);
+            int numWords = j - i;
+            // numSpaces: total spaces needed (maxWidth minus actual word chars)
+            int numSpaces = maxWidth - lineLen + (numWords - 1);
             StringBuilder sb = new StringBuilder(words[i]);
             if (j == n || numWords == 1) {
-                // Last line or single word: left-justify
+                // Last line or single word: left-justify (single space between, pad right)
                 for (int k = i + 1; k < j; k++) sb.append(' ').append(words[k]);
                 while (sb.length() < maxWidth) sb.append(' ');
             } else {
+                // Full justification: distribute spaces as evenly as possible
                 int gaps = numWords - 1;
-                int spaceEach = numSpaces / gaps, extra = numSpaces % gaps;
+                int spaceEach = numSpaces / gaps;   // base spaces per gap
+                int extra = numSpaces % gaps;         // first 'extra' gaps get one extra space
                 for (int k = i + 1; k < j; k++) {
-                    int sp = spaceEach + (k - i <= extra ? 1 : 0);
+                    int sp = spaceEach + (k - i <= extra ? 1 : 0); // extra space for early gaps
                     for (int s = 0; s < sp; s++) sb.append(' ');
                     sb.append(words[k]);
                 }
             }
             result.add(sb.toString());
-            i = j;
+            i = j; // move to next line
         }
         return result;
     }
@@ -1721,16 +1846,22 @@ class Solution {
     public int shortestWay(String source, String target) {
         boolean[] inSource = new boolean[26];
         for (char c : source.toCharArray()) inSource[c - 'a'] = true;
+        // if any target char doesn't exist in source → impossible
         for (char c : target.toCharArray())
             if (!inSource[c - 'a']) return -1;
 
-        int count = 1, j = 0;
+        int count = 1; // number of source subsequence passes used
+        int j = 0;     // pointer into source
         for (int i = 0; i < target.length(); i++) {
             boolean found = false;
+            // scan source from current position to find target[i]
             while (j < source.length()) {
                 if (source.charAt(j++) == target.charAt(i)) { found = true; break; }
             }
-            if (!found) { count++; j = 0; i--; }
+            if (!found) {
+                // exhausted source without finding target[i] → start a new pass
+                count++; j = 0; i--; // retry target[i] from beginning of source
+            }
         }
         return count;
     }
@@ -1756,15 +1887,17 @@ Input: "ceabaacb" →  Output: 2
 class Solution {
     public int minDeletions(String s) {
         int[] freq = new int[26];
-        for (char c : s.toCharArray()) freq[c - 'a']++;
-        Arrays.sort(freq);
+        for (char c : s.toCharArray()) freq[c - 'a']++; // count each char's frequency
+        Arrays.sort(freq); // sort ascending so we process from highest frequency downwards
         int deletions = 0;
+        // iterate from second-highest to lowest (compare with its right neighbor)
         for (int i = 24; i >= 0; i--) {
-            if (freq[i] == 0) break;
+            if (freq[i] == 0) break; // no more non-zero frequencies
             if (freq[i] >= freq[i + 1]) {
-                int newFreq = Math.max(0, freq[i + 1] - 1);
-                deletions += freq[i] - newFreq;
-                freq[i] = newFreq;
+                // current freq must be strictly less than freq[i+1]; reduce it
+                int newFreq = Math.max(0, freq[i + 1] - 1); // target unique freq below right neighbor
+                deletions += freq[i] - newFreq; // deletions needed to go from freq[i] to newFreq
+                freq[i] = newFreq; // update so next left neighbor compares correctly
             }
         }
         return deletions;
@@ -1791,6 +1924,8 @@ Input: ["Hello", "World"]            →  Encode → Decode → ["Hello", "World
 class Codec {
     public String encode(List<String> strs) {
         StringBuilder sb = new StringBuilder();
+        // Format: "<length>#<string>" for each string
+        // Using '#' as delimiter after length makes decoding unambiguous regardless of string content
         for (String s : strs) sb.append(s.length()).append('#').append(s);
         return sb.toString();
     }
@@ -1799,10 +1934,10 @@ class Codec {
         List<String> result = new ArrayList<>();
         int i = 0;
         while (i < s.length()) {
-            int j = s.indexOf('#', i);
-            int len = Integer.parseInt(s.substring(i, j));
-            result.add(s.substring(j + 1, j + 1 + len));
-            i = j + 1 + len;
+            int j = s.indexOf('#', i); // find '#' to locate the length prefix
+            int len = Integer.parseInt(s.substring(i, j)); // parse the length
+            result.add(s.substring(j + 1, j + 1 + len)); // extract exactly 'len' chars after '#'
+            i = j + 1 + len; // advance past this entry
         }
         return result;
     }
@@ -1829,17 +1964,22 @@ Input: words=["a","b","c"], pattern="a"  →  Output: ["a","b","c"]
 class Solution {
     public List<String> findAndReplacePattern(String[] words, String pattern) {
         List<String> result = new ArrayList<>();
+        // check each word against the pattern
         for (String word : words) if (matches(word, pattern)) result.add(word);
         return result;
     }
 
     private boolean matches(String word, String pattern) {
         if (word.length() != pattern.length()) return false;
+        // w2p[c] = last index+1 where word char c was seen
+        // p2w[c] = last index+1 where pattern char c was seen
+        // same trick as Isomorphic Strings (problem 9)
         int[] w2p = new int[256], p2w = new int[256];
         for (int i = 0; i < word.length(); i++) {
             char w = word.charAt(i), p = pattern.charAt(i);
+            // if the last-seen timestamps differ → inconsistent bijection
             if (w2p[w] != p2w[p]) return false;
-            w2p[w] = i + 1;
+            w2p[w] = i + 1; // update timestamps to current position
             p2w[p] = i + 1;
         }
         return true;
@@ -1866,15 +2006,18 @@ Input: "a"         →  Output: "a"
 class Solution {
     public String shortestPalindrome(String s) {
         String rev = new StringBuilder(s).reverse().toString();
+        // Combine s + '#' + rev; '#' acts as sentinel to prevent prefix of s matching into rev
+        // We want: longest prefix of s that is a palindrome (= longest prefix that is also a suffix of rev)
         String combined = s + "#" + rev;
         int[] lps = new int[combined.length()];
         for (int i = 1; i < combined.length(); i++) {
-            int j = lps[i - 1];
+            int j = lps[i - 1]; // start from last known prefix-suffix length
             while (j > 0 && combined.charAt(i) != combined.charAt(j)) j = lps[j - 1];
             if (combined.charAt(i) == combined.charAt(j)) j++;
-            lps[i] = j;
+            lps[i] = j; // KMP failure function value
         }
-        int overlap = lps[combined.length() - 1];
+        int overlap = lps[combined.length() - 1]; // length of longest palindromic prefix of s
+        // Prepend the reverse of the suffix that isn't part of the palindrome
         return rev.substring(0, s.length() - overlap) + s;
     }
 }
@@ -1899,11 +2042,12 @@ Input: ["a"]                       →  Output: "a"
 class Solution {
     public String longestCommonPrefix(String[] strs) {
         if (strs.length == 0) return "";
-        String prefix = strs[0];
+        String prefix = strs[0]; // start with first string as the candidate prefix
         for (int i = 1; i < strs.length; i++) {
+            // shrink prefix from the right until strs[i] starts with it
             while (!strs[i].startsWith(prefix))
                 prefix = prefix.substring(0, prefix.length() - 1);
-            if (prefix.isEmpty()) return "";
+            if (prefix.isEmpty()) return ""; // no common prefix possible
         }
         return prefix;
     }
@@ -1929,10 +2073,11 @@ Input: "aabb"      →  Output: -1
 class Solution {
     public int firstUniqChar(String s) {
         int[] count = new int[26];
-        for (char c : s.toCharArray()) count[c - 'a']++;
+        for (char c : s.toCharArray()) count[c - 'a']++; // Step 1: count all char frequencies
+        // Step 2: scan again and return first index where count is exactly 1 (unique)
         for (int i = 0; i < s.length(); i++)
             if (count[s.charAt(i) - 'a'] == 1) return i;
-        return -1;
+        return -1; // no unique character found
     }
 }
 // Time: O(n)  Space: O(1)
@@ -1956,8 +2101,9 @@ Input: ransomNote = "aa",  magazine = "aab"  →  true
 class Solution {
     public boolean canConstruct(String ransomNote, String magazine) {
         int[] count = new int[26];
-        for (char c : magazine.toCharArray()) count[c - 'a']++;
+        for (char c : magazine.toCharArray()) count[c - 'a']++; // count available letters
         for (char c : ransomNote.toCharArray()) {
+            // consume one of this letter; if it goes below 0 → not enough in magazine
             if (--count[c - 'a'] < 0) return false;
         }
         return true;
@@ -1985,12 +2131,13 @@ class Solution {
     public boolean hasAllCodes(String s, int k) {
         if (s.length() < k) return false;
         Set<String> seen = new HashSet<>();
-        int need = 1 << k;
+        int need = 1 << k; // total distinct binary codes of length k = 2^k
         for (int i = 0; i + k <= s.length(); i++) {
-            seen.add(s.substring(i, i + k));
+            seen.add(s.substring(i, i + k)); // add each k-length window
+            // early exit: once we've collected all 2^k codes, we're done
             if (seen.size() == need) return true;
         }
-        return false;
+        return false; // didn't collect all 2^k codes
     }
 }
 // Time: O(n*k)  Space: O(2^k * k)
@@ -2016,9 +2163,10 @@ class Solution {
         Set<Character> vowels = Set.of('a','e','i','o','u');
         int count = 0, max = 0;
         for (int i = 0; i < s.length(); i++) {
-            if (vowels.contains(s.charAt(i))) count++;
+            if (vowels.contains(s.charAt(i))) count++; // expand: add new right char if vowel
+            // shrink: once window exceeds k, remove the char that fell off the left
             if (i >= k && vowels.contains(s.charAt(i - k))) count--;
-            max = Math.max(max, count);
+            max = Math.max(max, count); // update best vowel count seen
         }
         return max;
     }
@@ -2045,22 +2193,23 @@ Input: "abccc"   →  Output: 3
 class Solution {
     public int maxRepOpt1(String text) {
         int[] freq = new int[26];
-        for (char c : text.toCharArray()) freq[c - 'a']++;
+        for (char c : text.toCharArray()) freq[c - 'a']++; // global freq of each char
         int max = 0, n = text.length();
         int i = 0;
         while (i < n) {
             int j = i;
+            // measure current run of same character
             while (j < n && text.charAt(j) == text.charAt(i)) j++;
             int left = j - i; // current run length
-            // skip one different char and check if next run is same
+            // skip one different char and check if next run is same character
             int k = j + 1;
             while (k < n && text.charAt(k) == text.charAt(i)) k++;
-            int right = k - j - 1;
-            int total = left + right;
-            // can extend by 1 if there's another character of same type elsewhere
+            int right = k - j - 1; // length of run after the gap (0 if different char)
+            int total = left + right; // combined length if we swap in the gap char
+            // can extend by 1 more if there's another occurrence of this char elsewhere to swap in
             if (total < freq[text.charAt(i) - 'a']) total++;
             max = Math.max(max, total);
-            i = j;
+            i = j; // move to next run
         }
         return max;
     }
@@ -2086,17 +2235,19 @@ Input: 6  →  Output: "312211"
 ```java
 class Solution {
     public String countAndSay(int n) {
-        String result = "1";
+        String result = "1"; // seed: first term is "1"
         for (int i = 1; i < n; i++) {
             StringBuilder sb = new StringBuilder();
             int j = 0;
             while (j < result.length()) {
-                char c = result.charAt(j);
+                char c = result.charAt(j); // current digit being described
                 int count = 0;
+                // count consecutive occurrences of digit c
                 while (j < result.length() && result.charAt(j) == c) { j++; count++; }
+                // say "<count><digit>" → describes the run
                 sb.append(count).append(c);
             }
-            result = sb.toString();
+            result = sb.toString(); // this term becomes input for next term
         }
         return result;
     }
@@ -2120,13 +2271,14 @@ Input: "cbacdcbc" →  Output: "acdb"
 ```java
 class Solution {
     public String removeDuplicateLetters(String s) {
-        int[] count = new int[26];
-        boolean[] inStack = new boolean[26];
+        int[] count = new int[26];    // remaining occurrences of each char
+        boolean[] inStack = new boolean[26]; // whether char is already in result stack
         for (char c : s.toCharArray()) count[c - 'a']++;
-        Deque<Character> stack = new ArrayDeque<>();
+        Deque<Character> stack = new ArrayDeque<>(); // monotonic stack
         for (char c : s.toCharArray()) {
-            count[c - 'a']--;
-            if (inStack[c - 'a']) continue;
+            count[c - 'a']--; // one fewer remaining occurrence
+            if (inStack[c - 'a']) continue; // already added, skip
+            // pop larger chars that still appear later (can be re-added in better position)
             while (!stack.isEmpty() && stack.peek() > c && count[stack.peek() - 'a'] > 0) {
                 inStack[stack.pop() - 'a'] = false;
             }
@@ -2135,7 +2287,7 @@ class Solution {
         }
         StringBuilder sb = new StringBuilder();
         for (char c : stack) sb.append(c);
-        return sb.reverse().toString();
+        return sb.reverse().toString(); // reverse because stack is LIFO
     }
 }
 // Time: O(n)  Space: O(1)
@@ -2159,9 +2311,11 @@ Input: order = "kqep",  s = "pekeq" → Output: "kqeep" (or "qkpee" etc.)
 class Solution {
     public String customSortString(String order, String s) {
         int[] rank = new int[26];
+        // Assign rank 1..order.length() to chars in order; chars not in order get rank 0
         for (int i = 0; i < order.length(); i++) rank[order.charAt(i) - 'a'] = i + 1;
         char[] chars = s.toCharArray();
         // Sort using custom comparator based on rank
+        // Chars with rank 0 (not in order) will group together at front but order among them is arbitrary
         Integer[] idx = new Integer[chars.length];
         for (int i = 0; i < idx.length; i++) idx[i] = i;
         Arrays.sort(idx, (a, b) -> rank[chars[a] - 'a'] - rank[chars[b] - 'a']);
@@ -2191,22 +2345,23 @@ Input: "cbacdcbc" →  Output: "acdb"
 ```java
 class Solution {
     public String smallestSubsequence(String s) {
-        int[] count = new int[26];
-        boolean[] inStack = new boolean[26];
+        int[] count = new int[26];    // remaining occurrences
+        boolean[] inStack = new boolean[26]; // in result?
         for (char c : s.toCharArray()) count[c - 'a']++;
-        Deque<Character> stack = new ArrayDeque<>();
+        Deque<Character> stack = new ArrayDeque<>(); // monotonic stack = result
         for (char c : s.toCharArray()) {
-            count[c - 'a']--;
-            if (inStack[c - 'a']) continue;
+            count[c - 'a']--; // fewer remaining
+            if (inStack[c - 'a']) continue; // already included, skip
+            // pop larger chars that will appear again later (safe to postpone them)
             while (!stack.isEmpty() && stack.peek() > c && count[stack.peek() - 'a'] > 0) {
                 inStack[stack.pop() - 'a'] = false;
             }
-            stack.push(c);
+            stack.push(c); // include this char
             inStack[c - 'a'] = true;
         }
         StringBuilder sb = new StringBuilder();
         for (char c : stack) sb.append(c);
-        return sb.reverse().toString();
+        return sb.reverse().toString(); // reverse LIFO stack
     }
 }
 // Time: O(n)  Space: O(1)
