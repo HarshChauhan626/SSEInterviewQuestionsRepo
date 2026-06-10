@@ -1,73 +1,72 @@
 # String Problems — Complete Reference
 
 ## Table of Contents
-
-| # | Problem | Jump to Solution |
-|---|---------|-----------------|
-| 1 | Longest Substring Without Repeating Characters | [→ #1](#1-longest-substring-without-repeating-characters) |
-| 2 | Longest Repeating Character Replacement | [→ #2](#2-longest-repeating-character-replacement) |
-| 3 | Minimum Window Substring | [→ #3](#3-minimum-window-substring) |
-| 4 | Permutation in String | [→ #4](#4-permutation-in-string) |
-| 5 | Find All Anagrams in a String | [→ #5](#5-find-all-anagrams-in-a-string) |
-| 6 | Longest Substring with At Most K Distinct Characters | [→ #6](#6-longest-substring-with-at-most-k-distinct-characters) |
-| 7 | Group Anagrams | [→ #7](#7-group-anagrams) |
-| 8 | Valid Anagram | [→ #8](#8-valid-anagram) |
-| 9 | Isomorphic Strings | [→ #9](#9-isomorphic-strings) |
-| 10 | Word Pattern | [→ #10](#10-word-pattern) |
-| 11 | Determine if Two Strings Are Close | [→ #11](#11-determine-if-two-strings-are-close) |
-| 12 | Find the Difference | [→ #12](#12-find-the-difference) |
-| 13 | Reverse Words in a String | [→ #13](#13-reverse-words-in-a-string) |
-| 14 | String Compression | [→ #14](#14-string-compression) |
-| 15 | Zigzag Conversion | [→ #15](#15-zigzag-conversion) |
-| 16 | Remove All Adjacent Duplicates in String II | [→ #16](#16-remove-all-adjacent-duplicates-in-string-ii) |
-| 17 | Multiply Strings | [→ #17](#17-multiply-strings) |
-| 18 | Reverse Words in a String III | [→ #18](#18-reverse-words-in-a-string-iii) |
-| 19 | String to Integer (atoi) | [→ #19](#19-string-to-integer-atoi) |
-| 20 | Decode String | [→ #20](#20-decode-string) |
-| 21 | Compare Version Numbers | [→ #21](#21-compare-version-numbers) |
-| 22 | Simplify Path | [→ #22](#22-simplify-path) |
-| 23 | Restore IP Addresses | [→ #23](#23-restore-ip-addresses) |
-| 24 | Basic Calculator II | [→ #24](#24-basic-calculator-ii) |
-| 25 | Longest Palindromic Substring | [→ #25](#25-longest-palindromic-substring) |
-| 26 | Palindromic Substrings | [→ #26](#26-palindromic-substrings) |
-| 27 | Valid Palindrome II | [→ #27](#27-valid-palindrome-ii) |
-| 28 | Count Palindromic Subsequences | [→ #28](#28-count-palindromic-subsequences) |
-| 29 | Partition Labels | [→ #29](#29-partition-labels) |
-| 30 | Remove Duplicate Letters | [→ #30](#30-remove-duplicate-letters) |
-| 31 | Reorganize String | [→ #31](#31-reorganize-string) |
-| 32 | Partition String Into Substrings With Unique Characters | [→ #32](#32-partition-string-into-substrings-with-unique-characters) |
-| 33 | Implement strStr() | [→ #33](#33-implement-strstr) |
-| 34 | Repeated DNA Sequences | [→ #34](#34-repeated-dna-sequences) |
-| 35 | Longest Happy Prefix | [→ #35](#35-longest-happy-prefix) |
-| 36 | Word Break | [→ #36](#36-word-break) |
-| 37 | Decode Ways | [→ #37](#37-decode-ways) |
-| 38 | Interleaving String | [→ #38](#38-interleaving-string) |
-| 39 | Longest Common Subsequence | [→ #39](#39-longest-common-subsequence) |
-| 40 | Word Ladder | [→ #40](#40-word-ladder) |
-| 41 | Edit Distance | [→ #41](#41-edit-distance) |
-| 42 | Distinct Subsequences | [→ #42](#42-distinct-subsequences) |
-| 43 | Word Search II | [→ #43](#43-word-search-ii) |
-| 44 | Alien Dictionary | [→ #44](#44-alien-dictionary) |
-| 45 | Text Justification | [→ #45](#45-text-justification) |
-| 46 | Shortest Way to Form String | [→ #46](#46-shortest-way-to-form-string) |
-| 47 | Minimum Deletions to Make Character Frequencies Unique | [→ #47](#47-minimum-deletions-to-make-character-frequencies-unique) |
-| 48 | Encode and Decode Strings | [→ #48](#48-encode-and-decode-strings) |
-| 49 | Find and Replace Pattern | [→ #49](#49-find-and-replace-pattern) |
-| 50 | Shortest Palindrome | [→ #50](#50-shortest-palindrome) |
-| 51 | Longest Common Prefix | [→ #51](#51-longest-common-prefix) |
-| 52 | First Unique Character in a String | [→ #52](#52-first-unique-character-in-a-string) |
-| 53 | Ransom Note | [→ #53](#53-ransom-note) |
-| 54 | Check if a String Contains All Binary Codes of Size K | [→ #54](#54-check-if-a-string-contains-all-binary-codes-of-size-k) |
-| 55 | Maximum Number of Vowels in a Substring of Given Length | [→ #55](#55-maximum-number-of-vowels-in-a-substring-of-given-length) |
-| 56 | Swap For Longest Repeated Character Substring | [→ #56](#56-swap-for-longest-repeated-character-substring) |
-| 57 | Count and Say | [→ #57](#57-count-and-say) |
-| 58 | Remove Duplicate Letters to Obtain Lexicographically Smallest Result | [→ #58](#58-remove-duplicate-letters-to-obtain-lexicographically-smallest-result) |
-| 59 | Custom Sort String | [→ #59](#59-custom-sort-string) |
-| 60 | Smallest Subsequence of Distinct Characters | [→ #60](#60-smallest-subsequence-of-distinct-characters) |
+| # | Problem | Difficulty | Jump to Solution |
+|---|---------|:----------:|-----------------|
+| 1 | Longest Substring Without Repeating Characters | 🟡 Medium | [→ #1](#1-longest-substring-without-repeating-characters) |
+| 2 | Longest Repeating Character Replacement | 🟡 Medium | [→ #2](#2-longest-repeating-character-replacement) |
+| 3 | Minimum Window Substring | 🔴 Hard | [→ #3](#3-minimum-window-substring) |
+| 4 | Permutation in String | 🟡 Medium | [→ #4](#4-permutation-in-string) |
+| 5 | Find All Anagrams in a String | 🟡 Medium | [→ #5](#5-find-all-anagrams-in-a-string) |
+| 6 | Longest Substring with At Most K Distinct Characters | 🟡 Medium | [→ #6](#6-longest-substring-with-at-most-k-distinct-characters) |
+| 7 | Group Anagrams | 🟡 Medium | [→ #7](#7-group-anagrams) |
+| 8 | Valid Anagram | 🟢 Easy | [→ #8](#8-valid-anagram) |
+| 9 | Isomorphic Strings | 🟢 Easy | [→ #9](#9-isomorphic-strings) |
+| 10 | Word Pattern | 🟢 Easy | [→ #10](#10-word-pattern) |
+| 11 | Determine if Two Strings Are Close | 🟡 Medium | [→ #11](#11-determine-if-two-strings-are-close) |
+| 12 | Find the Difference | 🟢 Easy | [→ #12](#12-find-the-difference) |
+| 13 | Reverse Words in a String | 🟡 Medium | [→ #13](#13-reverse-words-in-a-string) |
+| 14 | String Compression | 🟡 Medium | [→ #14](#14-string-compression) |
+| 15 | Zigzag Conversion | 🟡 Medium | [→ #15](#15-zigzag-conversion) |
+| 16 | Remove All Adjacent Duplicates in String II | 🟡 Medium | [→ #16](#16-remove-all-adjacent-duplicates-in-string-ii) |
+| 17 | Multiply Strings | 🟡 Medium | [→ #17](#17-multiply-strings) |
+| 18 | Reverse Words in a String III | 🟢 Easy | [→ #18](#18-reverse-words-in-a-string-iii) |
+| 19 | String to Integer (atoi) | 🟡 Medium | [→ #19](#19-string-to-integer-atoi) |
+| 20 | Decode String | 🟡 Medium | [→ #20](#20-decode-string) |
+| 21 | Compare Version Numbers | 🟡 Medium | [→ #21](#21-compare-version-numbers) |
+| 22 | Simplify Path | 🟡 Medium | [→ #22](#22-simplify-path) |
+| 23 | Restore IP Addresses | 🟡 Medium | [→ #23](#23-restore-ip-addresses) |
+| 24 | Basic Calculator II | 🟡 Medium | [→ #24](#24-basic-calculator-ii) |
+| 25 | Longest Palindromic Substring | 🟡 Medium | [→ #25](#25-longest-palindromic-substring) |
+| 26 | Palindromic Substrings | 🟡 Medium | [→ #26](#26-palindromic-substrings) |
+| 27 | Valid Palindrome II | 🟢 Easy | [→ #27](#27-valid-palindrome-ii) |
+| 28 | Count Palindromic Subsequences | 🔴 Hard | [→ #28](#28-count-palindromic-subsequences) |
+| 29 | Partition Labels | 🟡 Medium | [→ #29](#29-partition-labels) |
+| 30 | Remove Duplicate Letters | 🟡 Medium | [→ #30](#30-remove-duplicate-letters) |
+| 31 | Reorganize String | 🟡 Medium | [→ #31](#31-reorganize-string) |
+| 32 | Partition String Into Substrings With Unique Characters | 🟡 Medium | [→ #32](#32-partition-string-into-substrings-with-unique-characters) |
+| 33 | Implement strStr() | 🟢 Easy | [→ #33](#33-implement-strstr) |
+| 34 | Repeated DNA Sequences | 🟡 Medium | [→ #34](#34-repeated-dna-sequences) |
+| 35 | Longest Happy Prefix | 🔴 Hard | [→ #35](#35-longest-happy-prefix) |
+| 36 | Word Break | 🟡 Medium | [→ #36](#36-word-break) |
+| 37 | Decode Ways | 🟡 Medium | [→ #37](#37-decode-ways) |
+| 38 | Interleaving String | 🔴 Hard | [→ #38](#38-interleaving-string) |
+| 39 | Longest Common Subsequence | 🟡 Medium | [→ #39](#39-longest-common-subsequence) |
+| 40 | Word Ladder | 🔴 Hard | [→ #40](#40-word-ladder) |
+| 41 | Edit Distance | 🟡 Medium | [→ #41](#41-edit-distance) |
+| 42 | Distinct Subsequences | 🔴 Hard | [→ #42](#42-distinct-subsequences) |
+| 43 | Word Search II | 🔴 Hard | [→ #43](#43-word-search-ii) |
+| 44 | Alien Dictionary | 🔴 Hard | [→ #44](#44-alien-dictionary) |
+| 45 | Text Justification | 🔴 Hard | [→ #45](#45-text-justification) |
+| 46 | Shortest Way to Form String | 🟡 Medium | [→ #46](#46-shortest-way-to-form-string) |
+| 47 | Minimum Deletions to Make Character Frequencies Unique | 🟡 Medium | [→ #47](#47-minimum-deletions-to-make-character-frequencies-unique) |
+| 48 | Encode and Decode Strings | 🟡 Medium | [→ #48](#48-encode-and-decode-strings) |
+| 49 | Find and Replace Pattern | 🟡 Medium | [→ #49](#49-find-and-replace-pattern) |
+| 50 | Shortest Palindrome | 🔴 Hard | [→ #50](#50-shortest-palindrome) |
+| 51 | Longest Common Prefix | 🟢 Easy | [→ #51](#51-longest-common-prefix) |
+| 52 | First Unique Character in a String | 🟢 Easy | [→ #52](#52-first-unique-character-in-a-string) |
+| 53 | Ransom Note | 🟢 Easy | [→ #53](#53-ransom-note) |
+| 54 | Check if a String Contains All Binary Codes of Size K | 🟡 Medium | [→ #54](#54-check-if-a-string-contains-all-binary-codes-of-size-k) |
+| 55 | Maximum Number of Vowels in a Substring of Given Length | 🟡 Medium | [→ #55](#55-maximum-number-of-vowels-in-a-substring-of-given-length) |
+| 56 | Swap For Longest Repeated Character Substring | 🟡 Medium | [→ #56](#56-swap-for-longest-repeated-character-substring) |
+| 57 | Count and Say | 🟡 Medium | [→ #57](#57-count-and-say) |
+| 58 | Remove Duplicate Letters to Obtain Lexicographically Smallest Result | 🟡 Medium | [→ #58](#58-remove-duplicate-letters-to-obtain-lexicographically-smallest-result) |
+| 59 | Custom Sort String | 🟡 Medium | [→ #59](#59-custom-sort-string) |
+| 60 | Smallest Subsequence of Distinct Characters | 🟡 Medium | [→ #60](#60-smallest-subsequence-of-distinct-characters) |
 
 ---
 
-## 1. Longest Substring Without Repeating Characters
+## 1. 🟡 Longest Substring Without Repeating Characters
 
 **Problem:** Given a string `s`, find the length of the longest substring without repeating characters.
 
@@ -104,7 +103,7 @@ class Solution {
 
 ---
 
-## 2. Longest Repeating Character Replacement
+## 2. 🟡 Longest Repeating Character Replacement
 
 **Problem:** Given a string `s` and an integer `k`, you can replace at most `k` characters. Return the length of the longest substring containing the same letter after replacements.
 
@@ -142,7 +141,7 @@ class Solution {
 
 ---
 
-## 3. Minimum Window Substring
+## 3. 🔴 Minimum Window Substring
 
 **Problem:** Given strings `s` and `t`, return the minimum window substring of `s` that contains every character of `t`. If none exists, return `""`.
 
@@ -195,7 +194,7 @@ class Solution {
 
 ---
 
-## 4. Permutation in String
+## 4. 🟡 Permutation in String
 
 **Problem:** Given strings `s1` and `s2`, return `true` if `s2` contains a permutation of `s1`.
 
@@ -229,7 +228,7 @@ class Solution {
 
 ---
 
-## 5. Find All Anagrams in a String
+## 5. 🟡 Find All Anagrams in a String
 
 **Problem:** Given strings `s` and `p`, return all start indices of `p`'s anagrams in `s`.
 
@@ -264,7 +263,7 @@ class Solution {
 
 ---
 
-## 6. Longest Substring with At Most K Distinct Characters
+## 6. 🟡 Longest Substring with At Most K Distinct Characters
 
 **Problem:** Given a string `s` and integer `k`, return the length of the longest substring with at most `k` distinct characters.
 
@@ -301,7 +300,7 @@ class Solution {
 
 ---
 
-## 7. Group Anagrams
+## 7. 🟡 Group Anagrams
 
 **Problem:** Given an array of strings, group the anagrams together.
 
@@ -335,7 +334,7 @@ class Solution {
 
 ---
 
-## 8. Valid Anagram
+## 8. 🟢 Valid Anagram
 
 **Problem:** Given strings `s` and `t`, return `true` if `t` is an anagram of `s`.
 
@@ -366,7 +365,7 @@ class Solution {
 
 ---
 
-## 9. Isomorphic Strings
+## 9. 🟢 Isomorphic Strings
 
 **Problem:** Given strings `s` and `t`, determine if they are isomorphic (characters in `s` can be replaced to get `t`).
 
@@ -402,7 +401,7 @@ class Solution {
 
 ---
 
-## 10. Word Pattern
+## 10. 🟢 Word Pattern
 
 **Problem:** Given a pattern string and a string `s`, return `true` if `s` follows the same pattern (bijective mapping).
 
@@ -439,7 +438,7 @@ class Solution {
 
 ---
 
-## 11. Determine if Two Strings Are Close
+## 11. 🟡 Determine if Two Strings Are Close
 
 **Problem:** Two strings are "close" if you can make one from the other using: (1) swap any two existing characters; (2) transform every occurrence of one character into another and vice versa. Return `true` if `word1` and `word2` are close.
 
@@ -477,7 +476,7 @@ class Solution {
 
 ---
 
-## 12. Find the Difference
+## 12. 🟢 Find the Difference
 
 **Problem:** You are given two strings `s` and `t` where `t` is generated by randomly shuffling `s` and then adding one more random character. Find the added character.
 
@@ -506,7 +505,7 @@ class Solution {
 
 ---
 
-## 13. Reverse Words in a String
+## 13. 🟡 Reverse Words in a String
 
 **Problem:** Given a string `s`, reverse the order of words (words separated by spaces; leading/trailing/multiple spaces should be trimmed).
 
@@ -537,7 +536,7 @@ class Solution {
 
 ---
 
-## 14. String Compression
+## 14. 🟡 String Compression
 
 **Problem:** Compress the array of characters `chars` in-place. For each group of consecutive repeating characters, write the character followed by its count (if > 1). Return the new length.
 
@@ -575,7 +574,7 @@ class Solution {
 
 ---
 
-## 15. Zigzag Conversion
+## 15. 🟡 Zigzag Conversion
 
 **Problem:** Write the string `s` in a zigzag pattern on a given number of rows, then read line by line.
 
@@ -610,7 +609,7 @@ class Solution {
 
 ---
 
-## 16. Remove All Adjacent Duplicates in String II
+## 16. 🟡 Remove All Adjacent Duplicates in String II
 
 **Problem:** Given a string `s` and an integer `k`, repeatedly remove `k` adjacent identical characters until no more can be removed. Return the final string.
 
@@ -650,7 +649,7 @@ class Solution {
 
 ---
 
-## 17. Multiply Strings
+## 17. 🟡 Multiply Strings
 
 **Problem:** Given two non-negative integers `num1` and `num2` represented as strings, return their product as a string (cannot use BigInteger or convert directly to int).
 
@@ -690,7 +689,7 @@ class Solution {
 
 ---
 
-## 18. Reverse Words in a String III
+## 18. 🟢 Reverse Words in a String III
 
 **Problem:** Reverse each word in the string while preserving whitespace and word order.
 
@@ -720,7 +719,7 @@ class Solution {
 
 ---
 
-## 19. String to Integer (atoi)
+## 19. 🟡 String to Integer (atoi)
 
 **Problem:** Implement `myAtoi(string s)` which converts a string to a 32-bit signed integer, handling leading whitespace, optional sign, and overflow.
 
@@ -759,7 +758,7 @@ class Solution {
 
 ---
 
-## 20. Decode String
+## 20. 🟡 Decode String
 
 **Problem:** Given an encoded string, return its decoded form. The encoding rule is `k[encoded_string]` where `encoded_string` is repeated `k` times.
 
@@ -805,7 +804,7 @@ class Solution {
 
 ---
 
-## 21. Compare Version Numbers
+## 21. 🟡 Compare Version Numbers
 
 **Problem:** Compare two version numbers `version1` and `version2`. Return -1, 1, or 0 if version1 < version2, > version2, or == version2.
 
@@ -840,7 +839,7 @@ class Solution {
 
 ---
 
-## 22. Simplify Path
+## 22. 🟡 Simplify Path
 
 **Problem:** Given an absolute Unix file path, simplify it (handle `.`, `..`, and multiple slashes).
 
@@ -874,7 +873,7 @@ class Solution {
 
 ---
 
-## 23. Restore IP Addresses
+## 23. 🟡 Restore IP Addresses
 
 **Problem:** Given a string containing only digits, return all possible valid IP addresses that can be obtained from it.
 
@@ -919,7 +918,7 @@ class Solution {
 
 ---
 
-## 24. Basic Calculator II
+## 24. 🟡 Basic Calculator II
 
 **Problem:** Implement a basic calculator to evaluate a string expression with `+`, `-`, `*`, `/` (integer division). No parentheses.
 
@@ -964,7 +963,7 @@ class Solution {
 
 ---
 
-## 25. Longest Palindromic Substring
+## 25. 🟡 Longest Palindromic Substring
 
 **Problem:** Given a string `s`, return the longest palindromic substring.
 
@@ -1005,7 +1004,7 @@ class Solution {
 
 ---
 
-## 26. Palindromic Substrings
+## 26. 🟡 Palindromic Substrings
 
 **Problem:** Given a string `s`, return the number of palindromic substrings in it.
 
@@ -1041,7 +1040,7 @@ class Solution {
 
 ---
 
-## 27. Valid Palindrome II
+## 27. 🟢 Valid Palindrome II
 
 **Problem:** Given a string `s`, return `true` if it can become a palindrome after deleting at most one character.
 
@@ -1079,7 +1078,7 @@ class Solution {
 
 ---
 
-## 28. Count Palindromic Subsequences
+## 28. 🔴 Count Palindromic Subsequences
 
 **Problem:** Given a string `s`, return the number of distinct, non-empty palindromic subsequences. Since the answer may be very large, return it modulo 10^9 + 7.
 
@@ -1131,7 +1130,7 @@ class Solution {
 
 ---
 
-## 29. Partition Labels
+## 29. 🟡 Partition Labels
 
 **Problem:** Partition string `s` into as many parts as possible so that each letter appears in at most one part. Return the list of partition sizes.
 
@@ -1168,7 +1167,7 @@ class Solution {
 
 ---
 
-## 30. Remove Duplicate Letters
+## 30. 🟡 Remove Duplicate Letters
 
 **Problem:** Given a string `s`, remove duplicate letters so that every letter appears once and the result is the smallest in lexicographic order among all possible results.
 
