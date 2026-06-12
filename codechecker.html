@@ -1,0 +1,1088 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Code Checker — Dev Notes</title>
+  <meta name="description" content="Practice writing Java solutions from memory. Pick a random DSA problem and check if your code matches the reference solution.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300;0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;0,14..32,800;1,14..32,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:          #0a0c10;
+      --surface:     #111318;
+      --surface2:    #181c23;
+      --surface3:    #1e2330;
+      --border:      rgba(255,255,255,0.08);
+      --border-hi:   rgba(255,255,255,0.16);
+      --text:        #e8edf5;
+      --text-2:      #8b95a8;
+      --text-3:      #565f70;
+      --accent:      #6c8cff;
+      --accent-dim:  rgba(108,140,255,0.12);
+      --accent-ring: rgba(108,140,255,0.22);
+      --green:       #22d3a6;
+      --green-dim:   rgba(34,211,166,0.12);
+      --red:         #f87171;
+      --red-dim:     rgba(248,113,113,0.12);
+      --yellow:      #fbbf24;
+      --orange:      #f97316;
+      --radius:      10px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Ambient blobs ── */
+    .blob {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(110px);
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.3;
+    }
+    .blob-1 { width:500px;height:400px;top:-140px;left:-180px;background:radial-gradient(circle,rgba(108,140,255,0.22) 0%,transparent 70%); }
+    .blob-2 { width:400px;height:320px;bottom:-80px;right:-120px;background:radial-gradient(circle,rgba(34,211,166,0.14) 0%,transparent 70%); }
+
+    /* ── Layout ── */
+    .shell {
+      position: relative;
+      z-index: 1;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Topbar ── */
+    .topbar {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      height: 58px;
+      padding: 0 20px;
+      background: rgba(10,12,16,0.85);
+      backdrop-filter: blur(20px) saturate(1.4);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .topbar-left { display:flex;align-items:center;gap:14px; }
+
+    .brand-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--text);
+      text-decoration: none;
+      letter-spacing: -0.01em;
+    }
+    .brand-dot {
+      width:7px;height:7px;border-radius:50%;
+      background:var(--accent);
+      box-shadow:0 0 8px var(--accent);
+      animation:pulse 2.5s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%,100%{opacity:1;transform:scale(1);}
+      50%{opacity:0.45;transform:scale(0.82);}
+    }
+
+    .topbar-sep { width:1px;height:20px;background:var(--border); }
+
+    .page-title {
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--text-2);
+      letter-spacing: -0.01em;
+    }
+
+    .topbar-right { display:flex;align-items:center;gap:20px; }
+
+    .stat-pill {
+      display:flex;flex-direction:column;align-items:flex-end;
+    }
+    .stat-pill strong {
+      font-size:1rem;font-weight:700;line-height:1;color:var(--text);
+      font-variant-numeric:tabular-nums;
+    }
+    .stat-pill span { font-size:0.68rem;color:var(--text-3); }
+
+    .streak-badge {
+      display:inline-flex;align-items:center;gap:5px;
+      padding:4px 10px;border-radius:999px;
+      font-size:0.75rem;font-weight:700;
+      background:rgba(251,191,36,0.1);
+      border:1px solid rgba(251,191,36,0.25);
+      color:var(--yellow);
+      font-variant-numeric:tabular-nums;
+    }
+
+    /* ── Main 2-col ── */
+    .main {
+      flex: 1;
+      min-height: 0;
+      display: grid;
+      grid-template-columns: 420px 1fr;
+      gap: 0;
+    }
+
+    /* ── Left: Problem Panel ── */
+    .problem-panel {
+      border-right: 1px solid var(--border);
+      background: var(--surface);
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .problem-header {
+      flex-shrink: 0;
+      padding: 16px 20px 12px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .problem-meta { min-width: 0; }
+
+    .problem-num {
+      font-size: 0.7rem;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text-3);
+      margin-bottom: 4px;
+    }
+
+    .problem-title {
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: -0.015em;
+      line-height: 1.3;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+
+    .badges { display:flex;gap:6px;align-items:center;flex-wrap:wrap; }
+
+    .badge {
+      display:inline-flex;align-items:center;gap:4px;
+      padding:3px 9px;border-radius:999px;
+      font-size:0.7rem;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;
+    }
+    .badge-easy   { background:rgba(34,211,166,0.1);border:1px solid rgba(34,211,166,0.2);color:var(--green); }
+    .badge-medium { background:rgba(251,191,36,0.1);border:1px solid rgba(251,191,36,0.25);color:var(--yellow); }
+    .badge-hard   { background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.25);color:var(--red); }
+    .badge-source { background:var(--accent-dim);border:1px solid rgba(108,140,255,0.2);color:var(--accent); }
+
+    .problem-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding: 18px 20px;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
+    }
+
+    .problem-section { margin-bottom: 20px; }
+
+    .section-label {
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-3);
+      margin-bottom: 8px;
+    }
+
+    .problem-statement {
+      font-size: 0.88rem;
+      line-height: 1.72;
+      color: var(--text-2);
+    }
+    .problem-statement code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.82em;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 1px 5px;
+      color: var(--accent);
+    }
+
+    .test-cases {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.78rem;
+      line-height: 1.7;
+      color: var(--text-2);
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px 14px;
+      white-space: pre-wrap;
+    }
+
+    .complexity-block {
+      font-size: 0.8rem;
+      color: var(--text-2);
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 10px 14px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* ── Filters ── */
+    .filter-bar {
+      flex-shrink: 0;
+      padding: 10px 20px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .filter-label { font-size:0.72rem;color:var(--text-3); }
+
+    .filter-btn {
+      padding:4px 10px;border-radius:999px;border:1px solid var(--border);
+      background:transparent;color:var(--text-2);font:0.75rem/1 'Inter',sans-serif;
+      cursor:pointer;transition:all 140ms;
+    }
+    .filter-btn:hover { border-color:var(--border-hi);color:var(--text); }
+    .filter-btn.active {
+      background:var(--accent-dim);border-color:rgba(108,140,255,0.3);
+      color:var(--accent);font-weight:600;
+    }
+
+    /* ── Right: Editor Panel ── */
+    .editor-panel {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      background: var(--bg);
+    }
+
+    .editor-topbar {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 8px 16px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+    }
+
+    .editor-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.8rem;
+      color: var(--text-3);
+    }
+    .editor-lang-dot {
+      width:8px;height:8px;border-radius:50%;
+      background:#f89820;
+      box-shadow:0 0 6px rgba(248,152,32,0.5);
+    }
+
+    .editor-hint {
+      font-size:0.72rem;color:var(--text-3);
+      font-family:'JetBrains Mono',monospace;
+    }
+
+    .editor-actions { display:flex;gap:8px; }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 16px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      font: 600 0.8rem/1 'Inter', sans-serif;
+      cursor: pointer;
+      transition: all 160ms;
+      white-space: nowrap;
+    }
+    .btn svg { width:13px;height:13px;flex-shrink:0; }
+
+    .btn-primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+    .btn-primary:hover { background:#8099ff;border-color:#8099ff; }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--text-2);
+    }
+    .btn-ghost:hover { border-color:var(--border-hi);color:var(--text); }
+
+    .btn-next {
+      background: var(--surface2);
+      border-color: var(--border);
+      color: var(--text);
+    }
+    .btn-next:hover { border-color:var(--border-hi);background:var(--surface3); }
+
+    .btn-reveal {
+      background: transparent;
+      border-color: rgba(251,191,36,0.3);
+      color: var(--yellow);
+    }
+    .btn-reveal:hover { background:rgba(251,191,36,0.08); }
+
+    /* Monaco container */
+    #editor-container {
+      flex: 1;
+      min-height: 0;
+    }
+
+    /* ── Result Panel ── */
+    .result-panel {
+      flex-shrink: 0;
+      max-height: 220px;
+      overflow-y: auto;
+      border-top: 1px solid var(--border);
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
+    }
+
+    .result-panel.hidden { display: none; }
+
+    .result-success {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 16px 20px;
+      background: var(--green-dim);
+      border-bottom: 1px solid rgba(34,211,166,0.15);
+    }
+    .result-success-icon { font-size: 1.8rem; }
+    .result-success-text strong {
+      display:block;font-size:1rem;font-weight:700;
+      color:var(--green);margin-bottom:3px;
+    }
+    .result-success-text span { font-size:0.82rem;color:var(--text-2); }
+
+    .result-fail {
+      padding: 14px 18px;
+      background: var(--red-dim);
+      border-bottom: 1px solid rgba(248,113,113,0.12);
+    }
+    .result-fail-header {
+      display:flex;align-items:center;gap:8px;
+      margin-bottom:12px;
+    }
+    .result-fail-header strong { font-size:0.9rem;font-weight:700;color:var(--red); }
+    .result-fail-header span { font-size:0.78rem;color:var(--text-3); }
+
+    /* Diff table */
+    .diff-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+    }
+    .diff-table th {
+      text-align: left;
+      padding: 5px 10px;
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-3);
+      border-bottom: 1px solid var(--border);
+      font-family: 'Inter', sans-serif;
+    }
+    .diff-table td {
+      padding: 3px 10px;
+      vertical-align: top;
+      white-space: pre-wrap;
+      word-break: break-all;
+      line-height: 1.55;
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+    }
+    .diff-line-num { color: var(--text-3); width: 36px; text-align: right; }
+    .diff-ok td { color: var(--text-2); }
+    .diff-bad .diff-your  { background:rgba(248,113,113,0.08);color:var(--red); }
+    .diff-bad .diff-exp   { background:rgba(34,211,166,0.07);color:var(--green); }
+    .diff-bad .diff-line-num { color: var(--red); }
+    .diff-only-bad .diff-your  { background:rgba(248,113,113,0.08);color:var(--red); }
+    .diff-only-bad .diff-line-num { color: var(--red); }
+    .diff-only-exp  { background:rgba(34,211,166,0.05); }
+    .diff-only-exp .diff-exp { color:var(--green); }
+
+    /* ── Loading state ── */
+    .loading {
+      position: absolute;
+      inset: 0;
+      z-index: 50;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      background: var(--bg);
+    }
+    .loading-spinner {
+      width: 36px; height: 36px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text { font-size: 0.88rem; color: var(--text-3); }
+
+    /* ── Empty/Error ── */
+    .status-msg {
+      padding:20px;text-align:center;
+      font-size:0.85rem;color:var(--text-3);
+    }
+    .status-msg strong { display:block;font-size:1rem;color:var(--text-2);margin-bottom:6px; }
+  </style>
+</head>
+<body>
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+
+  <div id="loading" class="loading">
+    <div class="loading-spinner"></div>
+    <div class="loading-text">Loading problems &amp; editor…</div>
+  </div>
+
+  <div class="shell" id="app" style="display:none">
+
+    <!-- Topbar -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <a href="index.html" class="brand-link">
+          <div class="brand-dot"></div>
+          Dev Notes
+        </a>
+        <div class="topbar-sep"></div>
+        <span class="page-title">Code Checker</span>
+      </div>
+      <div class="topbar-right">
+        <div class="stat-pill">
+          <strong id="stat-passed">0</strong>
+          <span>Passed</span>
+        </div>
+        <div class="stat-pill">
+          <strong id="stat-attempted">0</strong>
+          <span>Attempted</span>
+        </div>
+        <div class="stat-pill">
+          <strong id="stat-rate">—</strong>
+          <span>Pass Rate</span>
+        </div>
+        <div class="streak-badge" id="streak-badge" title="Current streak">
+          🔥 <span id="stat-streak">0</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main content -->
+    <div class="main">
+
+      <!-- Left: Problem panel -->
+      <div class="problem-panel">
+        <div class="problem-header">
+          <div class="problem-meta">
+            <div class="problem-num" id="prob-num">— / —</div>
+            <div class="problem-title" id="prob-title">Select a problem</div>
+            <div class="badges" id="prob-badges"></div>
+          </div>
+        </div>
+
+        <div class="problem-scroll" id="prob-scroll">
+          <div class="status-msg">
+            <strong>Ready</strong>
+            Click "New Random" to start practicing.
+          </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="filter-bar">
+          <span class="filter-label">Difficulty:</span>
+          <button class="filter-btn active" data-filter-diff="all">All</button>
+          <button class="filter-btn" data-filter-diff="easy">Easy</button>
+          <button class="filter-btn" data-filter-diff="medium">Medium</button>
+          <button class="filter-btn" data-filter-diff="hard">Hard</button>
+          &nbsp;
+          <span class="filter-label">Source:</span>
+          <button class="filter-btn active" data-filter-src="all">All</button>
+          <button class="filter-btn" data-filter-src="dsa">DSA</button>
+          <button class="filter-btn" data-filter-src="strings">Strings</button>
+        </div>
+      </div>
+
+      <!-- Right: Editor panel -->
+      <div class="editor-panel">
+        <div class="editor-topbar">
+          <div class="editor-label">
+            <div class="editor-lang-dot"></div>
+            Java &nbsp;·&nbsp; Write from memory, then check
+          </div>
+          <div class="editor-hint">Ctrl+Enter to check</div>
+          <div class="editor-actions">
+            <button class="btn btn-ghost" id="btn-clear" title="Clear editor">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+              Clear
+            </button>
+            <button class="btn btn-reveal" id="btn-reveal" title="Show reference solution">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              Reveal
+            </button>
+            <button class="btn btn-next" id="btn-next">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+              New Random
+            </button>
+            <button class="btn btn-primary" id="btn-check">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>
+              Check
+            </button>
+          </div>
+        </div>
+
+        <div id="editor-container"></div>
+
+        <div class="result-panel hidden" id="result-panel">
+          <!-- filled by JS -->
+        </div>
+      </div>
+
+    </div><!-- .main -->
+  </div><!-- .shell -->
+
+  <!-- Monaco loader -->
+  <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.50.0/min/vs/loader.js"></script>
+  <script>
+  'use strict';
+
+  /* ═══════════════════════════════════════════════════
+     STATE
+  ═══════════════════════════════════════════════════ */
+  let allProblems  = [];
+  let filtered     = [];
+  let current      = null;
+  let editor       = null;
+  let revealed     = false;
+
+  const stats = { attempted: 0, passed: 0, streak: 0 };
+  const filters = { diff: 'all', src: 'all' };
+
+  /* ═══════════════════════════════════════════════════
+     PARSING
+  ═══════════════════════════════════════════════════ */
+
+  /**
+   * Parse problems from dsaeasytomedium.md
+   * Format: ### N. Title  (h3 heading)
+   *         **Difficulty:** Easy
+   *         **Problem Statement:** ...
+   *         **Test Cases:** ```...```
+   *         **Java Solution:** ```java ... ```
+   */
+  function parseDSAFile(text) {
+    const problems = [];
+    // Split on ### N. headings
+    const parts = text.split(/(?=^### \d+\.)/m).filter(s => /^### \d+\./.test(s.trim()));
+
+    for (const part of parts) {
+      const numTitleMatch = part.match(/^### (\d+)\.\s*(.+?)$/m);
+      if (!numTitleMatch) continue;
+      const num   = parseInt(numTitleMatch[1]);
+      const title = numTitleMatch[2].trim();
+
+      const diffMatch = part.match(/\*\*Difficulty:\*\*\s*(.+?)[\r\n]/);
+      const diff = diffMatch ? diffMatch[1].trim() : '';
+
+      const stmtMatch = part.match(/\*\*Problem Statement:\*\*\s*[\r\n]+([\s\S]+?)(?=\*\*(?:Test Cases|Complexity|Java))/);
+      const statement = stmtMatch ? stmtMatch[1].trim() : '';
+
+      const testMatch = part.match(/\*\*Test Cases:\*\*\s*[\r\n]+```[^\n]*[\r\n]([\s\S]*?)```/);
+      const testCases = testMatch ? testMatch[1].trim() : '';
+
+      const compMatch = part.match(/\*\*Complexity:\*\*\s*[\r\n]+([\s\S]+?)(?=\n\n|\*\*|$)/);
+      const complexity = compMatch ? compMatch[1].replace(/^-\s*/gm,'').trim() : '';
+
+      const javaMatch = part.match(/\*\*Java Solution:\*\*\s*[\r\n]+```java\s*[\r\n]([\s\S]*?)```/);
+      if (!javaMatch) continue;
+
+      problems.push({ num, title, diff: normDiff(diff), statement, testCases, complexity, solution: javaMatch[1], source: 'DSA Easy-Medium' });
+    }
+    return problems;
+  }
+
+  /**
+   * Parse problems from strings.md
+   * Format: ## N. 🟡 Title  (h2 heading with emoji)
+   *         **Problem:** ...
+   *         **Test Cases:** ```...```
+   *         **Java Solution:** ```java ... ```
+   */
+  function parseStringsFile(text) {
+    const problems = [];
+    // Split on ## N. headings (strings.md uses h2)
+    const parts = text.split(/(?=^## \d+\.)/m).filter(s => /^## \d+\./.test(s.trim()));
+
+    for (const part of parts) {
+      const numTitleMatch = part.match(/^## (\d+)\.\s*[🟢🟡🔴]?\s*(.+?)$/m);
+      if (!numTitleMatch) continue;
+      const num   = parseInt(numTitleMatch[1]);
+      const title = numTitleMatch[2].trim().replace(/[🟢🟡🔴]\s*/g, '').trim();
+
+      // Difficulty from emoji in the heading
+      let diff = 'medium';
+      if (/🟢/.test(part.split('\n')[0])) diff = 'easy';
+      else if (/🔴/.test(part.split('\n')[0])) diff = 'hard';
+
+      // strings.md uses **Problem:** (not **Problem Statement:**)
+      const stmtMatch = part.match(/\*\*Problem:\*\*\s*(.+?)(?=\n\n|\*\*)/s);
+      const statement = stmtMatch ? stmtMatch[1].trim() : '';
+
+      const testMatch = part.match(/\*\*Test Cases:\*\*\s*[\r\n]+```[^\n]*[\r\n]([\s\S]*?)```/);
+      const testCases = testMatch ? testMatch[1].trim() : '';
+
+      const javaMatch = part.match(/\*\*Java Solution:\*\*\s*[\r\n]+```java\s*[\r\n]([\s\S]*?)```/);
+      if (!javaMatch) continue;
+
+      problems.push({ num, title, diff, statement, testCases, complexity: '', solution: javaMatch[1], source: 'Strings' });
+    }
+    return problems;
+  }
+
+  function normDiff(raw) {
+    const r = raw.toLowerCase();
+    if (r.includes('easy'))   return 'easy';
+    if (r.includes('hard'))   return 'hard';
+    return 'medium';
+  }
+
+  /* ═══════════════════════════════════════════════════
+     NORMALIZATION & DIFF
+  ═══════════════════════════════════════════════════ */
+
+  function normalize(code) {
+    return code
+      .replace(/\r\n/g, '\n')
+      .replace(/\r/g, '\n')
+      .split('\n')
+      .map(l => l.trimEnd())   // trim trailing whitespace per line
+      .join('\n')
+      .trim();                  // strip leading/trailing blank lines
+  }
+
+  function buildDiff(userNorm, expectedNorm) {
+    const ul = userNorm.split('\n');
+    const el = expectedNorm.split('\n');
+    const rows = [];
+    const max  = Math.max(ul.length, el.length);
+
+    for (let i = 0; i < max; i++) {
+      const u = ul[i] !== undefined ? ul[i] : null;
+      const e = el[i] !== undefined ? el[i] : null;
+      rows.push({ lineNum: i + 1, user: u, expected: e, match: u === e });
+    }
+    return rows;
+  }
+
+  /* ═══════════════════════════════════════════════════
+     RENDER HELPERS
+  ═══════════════════════════════════════════════════ */
+
+  function esc(str) {
+    return String(str)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function diffBadgeClass(diff) {
+    if (diff === 'easy')   return 'badge-easy';
+    if (diff === 'hard')   return 'badge-hard';
+    return 'badge-medium';
+  }
+
+  function diffLabel(diff) {
+    return diff.charAt(0).toUpperCase() + diff.slice(1);
+  }
+
+  function markdownStatement(text) {
+    // Inline code: `...`
+    return esc(text).replace(/`([^`]+)`/g, '<code>$1</code>');
+  }
+
+  /* ═══════════════════════════════════════════════════
+     DISPLAY PROBLEM
+  ═══════════════════════════════════════════════════ */
+
+  function displayProblem(p) {
+    document.getElementById('prob-num').textContent =
+      `${p.source} · #${p.num}`;
+    document.getElementById('prob-title').textContent = p.title;
+
+    document.getElementById('prob-badges').innerHTML =
+      `<span class="badge ${diffBadgeClass(p.diff)}">${diffLabel(p.diff)}</span>
+       <span class="badge badge-source">${esc(p.source)}</span>`;
+
+    let html = '';
+
+    if (p.statement) {
+      html += `<div class="problem-section">
+        <div class="section-label">Problem</div>
+        <div class="problem-statement">${markdownStatement(p.statement)}</div>
+      </div>`;
+    }
+
+    if (p.testCases) {
+      html += `<div class="problem-section">
+        <div class="section-label">Test Cases</div>
+        <pre class="test-cases">${esc(p.testCases)}</pre>
+      </div>`;
+    }
+
+    if (p.complexity) {
+      html += `<div class="problem-section">
+        <div class="section-label">Complexity</div>
+        <div class="complexity-block">${esc(p.complexity)}</div>
+      </div>`;
+    }
+
+    document.getElementById('prob-scroll').innerHTML = html || '<div class="status-msg">No details available.</div>';
+  }
+
+  /* ═══════════════════════════════════════════════════
+     CHECK
+  ═══════════════════════════════════════════════════ */
+
+  function checkSolution() {
+    if (!current) return;
+    const userCode = editor.getValue();
+    if (!userCode.trim()) {
+      showResultMsg('Write your Java solution first, then click Check.');
+      return;
+    }
+
+    const normUser     = normalize(userCode);
+    const normExpected = normalize(current.solution);
+
+    stats.attempted++;
+
+    if (normUser === normExpected) {
+      stats.passed++;
+      stats.streak++;
+      showSuccess();
+    } else {
+      stats.streak = 0;
+      showFail(normUser, normExpected);
+    }
+    updateStats();
+  }
+
+  function showSuccess() {
+    const panel = document.getElementById('result-panel');
+    panel.classList.remove('hidden');
+    panel.innerHTML = `
+      <div class="result-success">
+        <div class="result-success-icon">✅</div>
+        <div class="result-success-text">
+          <strong>Perfect Match!</strong>
+          <span>Your code matches the reference solution exactly (after normalization).</span>
+        </div>
+      </div>`;
+  }
+
+  function showFail(userNorm, expectedNorm) {
+    const rows   = buildDiff(userNorm, expectedNorm);
+    const misses = rows.filter(r => !r.match).length;
+
+    let tableRows = '';
+    for (const r of rows) {
+      if (r.match) {
+        // Only show matching lines if they're near a diff (context ±1) — keeps the table short
+        continue;
+      }
+      if (r.user !== null && r.expected !== null) {
+        // Line exists in both but differs
+        tableRows += `<tr class="diff-bad">
+          <td class="diff-line-num">${r.lineNum}</td>
+          <td class="diff-your">${esc(r.user)}</td>
+          <td class="diff-exp">${esc(r.expected)}</td>
+        </tr>`;
+      } else if (r.user !== null) {
+        // Extra line in user code
+        tableRows += `<tr class="diff-only-bad">
+          <td class="diff-line-num">${r.lineNum}</td>
+          <td class="diff-your">${esc(r.user)}</td>
+          <td class="diff-exp" style="color:var(--text-3);font-style:italic">(not expected)</td>
+        </tr>`;
+      } else {
+        // Missing line
+        tableRows += `<tr class="diff-only-exp">
+          <td class="diff-line-num">${r.lineNum}</td>
+          <td class="diff-your" style="color:var(--text-3);font-style:italic">(missing)</td>
+          <td class="diff-exp">${esc(r.expected)}</td>
+        </tr>`;
+      }
+    }
+
+    const panel = document.getElementById('result-panel');
+    panel.classList.remove('hidden');
+    panel.innerHTML = `
+      <div class="result-fail">
+        <div class="result-fail-header">
+          <strong>❌ ${misses} line${misses !== 1 ? 's' : ''} differ</strong>
+          <span>Only differing lines shown · Use "Reveal" to see full solution</span>
+        </div>
+        <table class="diff-table">
+          <thead>
+            <tr>
+              <th>Line</th>
+              <th>Your Code</th>
+              <th>Expected</th>
+            </tr>
+          </thead>
+          <tbody>${tableRows}</tbody>
+        </table>
+      </div>`;
+  }
+
+  function showResultMsg(msg) {
+    const panel = document.getElementById('result-panel');
+    panel.classList.remove('hidden');
+    panel.innerHTML = `<div class="status-msg">${esc(msg)}</div>`;
+  }
+
+  function hideResult() {
+    const panel = document.getElementById('result-panel');
+    panel.classList.add('hidden');
+    panel.innerHTML = '';
+  }
+
+  /* ═══════════════════════════════════════════════════
+     STATS
+  ═══════════════════════════════════════════════════ */
+
+  function updateStats() {
+    document.getElementById('stat-passed').textContent    = stats.passed;
+    document.getElementById('stat-attempted').textContent = stats.attempted;
+    document.getElementById('stat-streak').textContent    = stats.streak;
+
+    const rate = stats.attempted > 0
+      ? Math.round((stats.passed / stats.attempted) * 100) + '%'
+      : '—';
+    document.getElementById('stat-rate').textContent = rate;
+  }
+
+  /* ═══════════════════════════════════════════════════
+     FILTERS
+  ═══════════════════════════════════════════════════ */
+
+  function applyFilters() {
+    filtered = allProblems.filter(p => {
+      const diffOk = filters.diff === 'all' || p.diff === filters.diff;
+      const srcOk  = filters.src  === 'all'
+        || (filters.src === 'dsa'     && p.source === 'DSA Easy-Medium')
+        || (filters.src === 'strings' && p.source === 'Strings');
+      return diffOk && srcOk;
+    });
+  }
+
+  /* ═══════════════════════════════════════════════════
+     PICK RANDOM
+  ═══════════════════════════════════════════════════ */
+
+  function pickRandom() {
+    applyFilters();
+    if (!filtered.length) {
+      document.getElementById('prob-title').textContent = 'No problems match filter';
+      document.getElementById('prob-scroll').innerHTML = '<div class="status-msg">Change the filters to see problems.</div>';
+      return;
+    }
+
+    // Try not to repeat the last question
+    let pool = filtered.filter(p => p !== current);
+    if (!pool.length) pool = filtered;
+
+    current  = pool[Math.floor(Math.random() * pool.length)];
+    revealed = false;
+
+    displayProblem(current);
+    editor.setValue('');
+    editor.focus();
+    hideResult();
+  }
+
+  /* ═══════════════════════════════════════════════════
+     REVEAL
+  ═══════════════════════════════════════════════════ */
+
+  function revealSolution() {
+    if (!current) return;
+    editor.setValue(current.solution.trimEnd());
+    revealed = true;
+  }
+
+  /* ═══════════════════════════════════════════════════
+     LOAD PROBLEMS
+  ═══════════════════════════════════════════════════ */
+
+  async function loadProblems() {
+    const sources = [
+      { url: 'dsaeasytomedium.md', parser: parseDSAFile },
+      { url: 'strings.md',         parser: parseStringsFile }
+    ];
+
+    const results = await Promise.allSettled(
+      sources.map(s => fetch(s.url, { cache: 'no-store' }).then(r => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.text();
+      }))
+    );
+
+    for (let i = 0; i < sources.length; i++) {
+      if (results[i].status === 'fulfilled') {
+        try {
+          const parsed = sources[i].parser(results[i].value);
+          allProblems.push(...parsed);
+        } catch (e) {
+          console.warn(`Parse error in ${sources[i].url}:`, e);
+        }
+      } else {
+        console.warn(`Failed to fetch ${sources[i].url}:`, results[i].reason);
+      }
+    }
+  }
+
+  /* ═══════════════════════════════════════════════════
+     BOOT
+  ═══════════════════════════════════════════════════ */
+
+  async function init() {
+    // 1. Load problems
+    await loadProblems();
+
+    // 2. Init Monaco
+    await new Promise(resolve => {
+      require.config({ paths: { vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.50.0/min/vs' } });
+      require(['vs/editor/editor.main'], resolve);
+    });
+
+    // 3. Custom theme matching design system
+    monaco.editor.defineTheme('devnotes', {
+      base: 'vs-dark',
+      inherit: true,
+      rules: [
+        { token: 'comment',    foreground: '565f70', fontStyle: 'italic' },
+        { token: 'keyword',    foreground: '6c8cff' },
+        { token: 'string',     foreground: '22d3a6' },
+        { token: 'number',     foreground: 'fbbf24' },
+        { token: 'type',       foreground: 'a78bfa' },
+        { token: 'annotation', foreground: 'f97316' },
+      ],
+      colors: {
+        'editor.background':              '#0a0c10',
+        'editor.foreground':              '#e8edf5',
+        'editor.lineHighlightBackground': '#111318',
+        'editor.selectionBackground':     '#6c8cff33',
+        'editorLineNumber.foreground':    '#565f70',
+        'editorLineNumber.activeForeground': '#8b95a8',
+        'editorCursor.foreground':        '#6c8cff',
+        'editor.inactiveSelectionBackground': '#6c8cff22',
+        'editorIndentGuide.background':   '#1e2330',
+        'editorIndentGuide.activeBackground': '#2a3040',
+        'scrollbarSlider.background':     '#1e233080',
+        'scrollbarSlider.hoverBackground':'#2a304080',
+        'scrollbarSlider.activeBackground':'#3a4060',
+      }
+    });
+
+    // 4. Create editor
+    editor = monaco.editor.create(document.getElementById('editor-container'), {
+      value: '',
+      language: 'java',
+      theme: 'devnotes',
+      fontSize: 13,
+      fontFamily: "'JetBrains Mono', 'Fira Code', Consolas, 'Courier New', monospace",
+      fontLigatures: true,
+      lineHeight: 22,
+      minimap: { enabled: false },
+      scrollbar: { verticalScrollbarSize: 6, horizontalScrollbarSize: 6 },
+      overviewRulerLanes: 0,
+      renderLineHighlight: 'line',
+      smoothScrolling: true,
+      cursorBlinking: 'smooth',
+      cursorSmoothCaretAnimation: 'on',
+      padding: { top: 16, bottom: 16 },
+      wordWrap: 'on',
+      tabSize: 4,
+      insertSpaces: true,
+      automaticLayout: true,
+      suggestOnTriggerCharacters: true,
+    });
+
+    // Ctrl+Enter → check
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, checkSolution);
+
+    // 5. Wire up buttons
+    document.getElementById('btn-check').addEventListener('click', checkSolution);
+    document.getElementById('btn-next').addEventListener('click', pickRandom);
+    document.getElementById('btn-reveal').addEventListener('click', revealSolution);
+    document.getElementById('btn-clear').addEventListener('click', () => {
+      editor.setValue('');
+      hideResult();
+      editor.focus();
+    });
+
+    // 6. Filter buttons
+    document.querySelectorAll('[data-filter-diff]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('[data-filter-diff]').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        filters.diff = btn.dataset.filterDiff;
+      });
+    });
+    document.querySelectorAll('[data-filter-src]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('[data-filter-src]').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        filters.src = btn.dataset.filterSrc;
+      });
+    });
+
+    // 7. Show UI + pick first question
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('app').style.display     = 'flex';
+
+    if (allProblems.length) {
+      pickRandom();
+    } else {
+      document.getElementById('prob-title').textContent = 'No problems loaded';
+      document.getElementById('prob-scroll').innerHTML  = '<div class="status-msg"><strong>Could not load any problems</strong>Make sure dsaeasytomedium.md and strings.md are in the same directory.</div>';
+    }
+  }
+
+  init();
+  </script>
+</body>
+</html>
