@@ -529,10 +529,10 @@
           <button class="filter-btn" data-filter-diff="medium">Medium</button>
           <button class="filter-btn" data-filter-diff="hard">Hard</button>
           &nbsp;
-          <span class="filter-label">Source:</span>
-          <button class="filter-btn active" data-filter-src="all">All</button>
-          <button class="filter-btn" data-filter-src="dsa">DSA</button>
-          <button class="filter-btn" data-filter-src="strings">Strings</button>
+          <span class="filter-label">Topic:</span>
+          <select id="filter-src" class="filter-select">
+            <option value="all">All Topics</option>
+          </select>
         </div>
       </div>
 
@@ -591,83 +591,137 @@
   const stats = { attempted: 0, passed: 0, streak: 0 };
   const filters = { diff: 'all', src: 'all' };
 
+  // Add a CSS rule for the select element to match filter-btn style
+  const style = document.createElement('style');
+  style.textContent = `
+    .filter-select {
+      padding: 4px 10px; border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--surface2); color: var(--text-2);
+      font: 0.75rem/1 'Inter', sans-serif;
+      cursor: pointer; outline: none;
+      appearance: none; -webkit-appearance: none;
+      padding-right: 24px;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23565f70' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 8px center;
+      transition: border-color 140ms;
+    }
+    .filter-select:hover { border-color: var(--border-hi); color: var(--text); }
+    .filter-select:focus { border-color: rgba(108,140,255,0.4); color: var(--text); }
+    .filter-select option { background: #181c23; }
+  `;
+  document.head.appendChild(style);
+
   /* ═══════════════════════════════════════════════════
      PARSING
   ═══════════════════════════════════════════════════ */
 
   /**
-   * Parse problems from dsaeasytomedium.md
-   * Format: ### N. Title  (h3 heading)
-   *         **Difficulty:** Easy
-   *         **Problem Statement:** ...
-   *         **Test Cases:** ```...```
-   *         **Java Solution:** ```java ... ```
+   * Parser A — dsaeasytomedium.md
+   * Headings: ### N. Title
+   * Code:     **Java Solution:** ```java
    */
-  function parseDSAFile(text) {
+  function parseDSAFile(text, sourceName) {
     const problems = [];
-    // Split on ### N. headings
     const parts = text.split(/(?=^### \d+\.)/m).filter(s => /^### \d+\./.test(s.trim()));
-
     for (const part of parts) {
-      const numTitleMatch = part.match(/^### (\d+)\.\s*(.+?)$/m);
-      if (!numTitleMatch) continue;
-      const num   = parseInt(numTitleMatch[1]);
-      const title = numTitleMatch[2].trim();
-
+      const nm = part.match(/^### (\d+)\.\s*(.+?)$/m);
+      if (!nm) continue;
+      const num   = parseInt(nm[1]);
+      const title = nm[2].trim();
       const diffMatch = part.match(/\*\*Difficulty:\*\*\s*(.+?)[\r\n]/);
-      const diff = diffMatch ? diffMatch[1].trim() : '';
-
       const stmtMatch = part.match(/\*\*Problem Statement:\*\*\s*[\r\n]+([\s\S]+?)(?=\*\*(?:Test Cases|Complexity|Java))/);
-      const statement = stmtMatch ? stmtMatch[1].trim() : '';
-
       const testMatch = part.match(/\*\*Test Cases:\*\*\s*[\r\n]+```[^\n]*[\r\n]([\s\S]*?)```/);
-      const testCases = testMatch ? testMatch[1].trim() : '';
-
       const compMatch = part.match(/\*\*Complexity:\*\*\s*[\r\n]+([\s\S]+?)(?=\n\n|\*\*|$)/);
-      const complexity = compMatch ? compMatch[1].replace(/^-\s*/gm,'').trim() : '';
-
       const javaMatch = part.match(/\*\*Java Solution:\*\*\s*[\r\n]+```java\s*[\r\n]([\s\S]*?)```/);
       if (!javaMatch) continue;
-
-      problems.push({ num, title, diff: normDiff(diff), statement, testCases, complexity, solution: javaMatch[1], source: 'DSA Easy-Medium' });
+      problems.push({
+        num,
+        title,
+        diff: normDiff(diffMatch ? diffMatch[1].trim() : ''),
+        statement: stmtMatch ? stmtMatch[1].trim() : '',
+        testCases: testMatch ? testMatch[1].trim() : '',
+        complexity: compMatch ? compMatch[1].replace(/^-\s*/gm,'').trim() : '',
+        solution: javaMatch[1],
+        source: sourceName
+      });
     }
     return problems;
   }
 
   /**
-   * Parse problems from strings.md
-   * Format: ## N. 🟡 Title  (h2 heading with emoji)
-   *         **Problem:** ...
-   *         **Test Cases:** ```...```
-   *         **Java Solution:** ```java ... ```
+   * Parser B — strings.md
+   * Headings: ## N. 🟡 Title
+   * Code:     **Java Solution:** ```java
    */
-  function parseStringsFile(text) {
+  function parseStringsFile(text, sourceName) {
     const problems = [];
-    // Split on ## N. headings (strings.md uses h2)
     const parts = text.split(/(?=^## \d+\.)/m).filter(s => /^## \d+\./.test(s.trim()));
-
     for (const part of parts) {
-      const numTitleMatch = part.match(/^## (\d+)\.\s*[🟢🟡🔴]?\s*(.+?)$/m);
-      if (!numTitleMatch) continue;
-      const num   = parseInt(numTitleMatch[1]);
-      const title = numTitleMatch[2].trim().replace(/[🟢🟡🔴]\s*/g, '').trim();
-
-      // Difficulty from emoji in the heading
+      const nm = part.match(/^## (\d+)\.\s*[🟢🟡🔴]?\s*(.+?)$/m);
+      if (!nm) continue;
+      const num   = parseInt(nm[1]);
+      const title = nm[2].trim().replace(/[🟢🟡🔴]\s*/g, '').trim();
+      const firstLine = part.split('\n')[0];
       let diff = 'medium';
-      if (/🟢/.test(part.split('\n')[0])) diff = 'easy';
-      else if (/🔴/.test(part.split('\n')[0])) diff = 'hard';
-
-      // strings.md uses **Problem:** (not **Problem Statement:**)
+      if (/🟢/.test(firstLine)) diff = 'easy';
+      else if (/🔴/.test(firstLine)) diff = 'hard';
       const stmtMatch = part.match(/\*\*Problem:\*\*\s*(.+?)(?=\n\n|\*\*)/s);
-      const statement = stmtMatch ? stmtMatch[1].trim() : '';
-
       const testMatch = part.match(/\*\*Test Cases:\*\*\s*[\r\n]+```[^\n]*[\r\n]([\s\S]*?)```/);
-      const testCases = testMatch ? testMatch[1].trim() : '';
-
       const javaMatch = part.match(/\*\*Java Solution:\*\*\s*[\r\n]+```java\s*[\r\n]([\s\S]*?)```/);
       if (!javaMatch) continue;
+      problems.push({
+        num, title, diff,
+        statement: stmtMatch ? stmtMatch[1].trim() : '',
+        testCases: testMatch ? testMatch[1].trim() : '',
+        complexity: '',
+        solution: javaMatch[1],
+        source: sourceName
+      });
+    }
+    return problems;
+  }
 
-      problems.push({ num, title, diff, statement, testCases, complexity: '', solution: javaMatch[1], source: 'Strings' });
+  /**
+   * Parser C — all topic files (heap, backtracking, bitmanipulation, dp, graph, etc.)
+   * Headings: ## Problem N — Title  OR  ## N. Title
+   * Code:     ### Java Code  followed by ```java
+   */
+  function parseTopicFile(text, sourceName) {
+    const problems = [];
+    // Split on ## Problem N or ## N. headings
+    const parts = text
+      .split(/(?=^## (?:Problem \d+|\d+\.))/m)
+      .filter(s => /^## (?:Problem \d+|\d+\.)/.test(s.trim()));
+
+    for (const part of parts) {
+      // Match: ## Problem N — Title  OR  ## N. Title (with optional emojis)
+      const nm = part.match(/^## (?:Problem )?(\d+)[.\s—–-]+([^\r\n]+)/m);
+      if (!nm) continue;
+      const num   = parseInt(nm[1]);
+      const title = nm[2].trim().replace(/^[—–-]\s*/, '').replace(/[🟢🟡🔴]\s*/g, '').trim();
+
+      // Problem statement — text under ### Problem Statement
+      const stmtMatch = part.match(/### Problem Statement[^\r\n]*[\r\n]+([\s\S]+?)(?=###|$)/);
+      // Example / test cases
+      const testMatch = part.match(/(?:### (?:Test Cases|Example)[^\r\n]*[\r\n]+```[^\n]*[\r\n]([\s\S]*?)```|\*\*(?:Example|Test Cases):\*\*[^\r\n]*[\r\n]+```[^\n]*[\r\n]([\s\S]*?)```)/);
+      const testCases = testMatch ? (testMatch[1] || testMatch[2] || '').trim() : '';
+      // Complexity
+      const compMatch = part.match(/\*\*(?:Time|Space|Time:|Complexity).*?\*\*([^\r\n]*)/);
+      // Java code under ### Java Code
+      const javaMatch = part.match(/### Java Code[^\r\n]*[\r\n]+```java\s*[\r\n]([\s\S]*?)```/);
+      if (!javaMatch) continue;
+
+      problems.push({
+        num, title,
+        diff: 'medium',  // topic files don't always label difficulty
+        statement: stmtMatch ? stmtMatch[1].trim() : '',
+        testCases,
+        complexity: compMatch ? compMatch[0].trim() : '',
+        solution: javaMatch[1],
+        source: sourceName
+      });
     }
     return problems;
   }
@@ -949,8 +1003,26 @@
 
   async function loadProblems() {
     const sources = [
-      { url: 'dsaeasytomedium.md', parser: parseDSAFile },
-      { url: 'strings.md',         parser: parseStringsFile }
+      { url: 'dsaeasytomedium.md', parser: parseDSAFile,     name: 'DSA Easy-Medium' },
+      { url: 'strings.md',         parser: parseStringsFile, name: 'Strings' },
+      { url: 'backtracking.md',    parser: parseTopicFile,   name: 'Backtracking' },
+      { url: 'binarysearch.md',    parser: parseTopicFile,   name: 'Binary Search' },
+      { url: 'bitmanipulation.md', parser: parseTopicFile,   name: 'Bit Manipulation' },
+      { url: 'disjoinset.md',      parser: parseTopicFile,   name: 'Disjoint Set' },
+      { url: 'dp.md',              parser: parseTopicFile,   name: 'Dynamic Programming' },
+      { url: 'graph.md',           parser: parseTopicFile,   name: 'Graph' },
+      { url: 'greedy.md',          parser: parseTopicFile,   name: 'Greedy' },
+      { url: 'heap.md',            parser: parseTopicFile,   name: 'Heap' },
+      { url: 'intervals.md',       parser: parseTopicFile,   name: 'Intervals' },
+      { url: 'linkedlist.md',      parser: parseTopicFile,   name: 'Linked List' },
+      { url: 'monotonicstack.md',  parser: parseTopicFile,   name: 'Monotonic Stack' },
+      { url: 'prefixsum.md',       parser: parseTopicFile,   name: 'Prefix Sum' },
+      { url: 'queue.md',           parser: parseTopicFile,   name: 'Queue & Stack' },
+      { url: 'recursion.md',       parser: parseTopicFile,   name: 'Recursion' },
+      { url: 'slidingwindow.md',   parser: parseTopicFile,   name: 'Sliding Window' },
+      { url: 'trees.md',           parser: parseTopicFile,   name: 'Trees' },
+      { url: 'trie.md',            parser: parseTopicFile,   name: 'Trie' },
+      { url: 'twopointer.md',      parser: parseTopicFile,   name: 'Two Pointers' }
     ];
 
     const results = await Promise.allSettled(
@@ -960,11 +1032,21 @@
       }))
     );
 
+    const select = document.getElementById('filter-src');
+
     for (let i = 0; i < sources.length; i++) {
       if (results[i].status === 'fulfilled') {
         try {
-          const parsed = sources[i].parser(results[i].value);
+          const parsed = sources[i].parser(results[i].value, sources[i].name);
           allProblems.push(...parsed);
+          
+          // Add to dropdown if we got problems
+          if (parsed.length > 0) {
+            const opt = document.createElement('option');
+            opt.value = sources[i].name.toLowerCase();
+            opt.textContent = sources[i].name + ` (${parsed.length})`;
+            select.appendChild(opt);
+          }
         } catch (e) {
           console.warn(`Parse error in ${sources[i].url}:`, e);
         }
