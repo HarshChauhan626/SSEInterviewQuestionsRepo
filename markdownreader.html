@@ -3,87 +3,109 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Markdown Reader</title>
+  <title>Markdown Reader — Dev Notes</title>
+  <meta name="description" content="Read and explore DSA, system design, and interview prep notes with syntax highlighting and Mermaid diagrams.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300;0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;0,14..32,800;1,14..32,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@5.6.1/github-markdown-dark.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github-dark.min.css">
   <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
     :root {
       color-scheme: dark;
-      --bg: #070a0f;
-      --panel: rgba(16, 22, 31, 0.82);
-      --panel-strong: rgba(23, 32, 45, 0.96);
-      --text: #eef4ff;
-      --muted: #9aa9bf;
-      --line: rgba(255, 255, 255, 0.12);
-      --blue: #66d9ff;
-      --green: #7cf7bd;
-      --pink: #ff7ab6;
-      --yellow: #ffd166;
+      /* ── Shared design tokens (matches index.html) ── */
+      --bg:           #0a0c10;
+      --surface:      #111318;
+      --surface2:     #181c23;
+      --border:       rgba(255,255,255,0.08);
+      --border-hover: rgba(255,255,255,0.18);
+      --text:         #e8edf5;
+      --text-2:       #8b95a8;
+      --text-3:       #565f70;
+      --accent:       #6c8cff;
+      --accent-dim:   rgba(108,140,255,0.12);
+      --accent-ring:  rgba(108,140,255,0.22);
+      --red:          #f87171;
+      --radius:       12px;
     }
 
-    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
 
     body {
       margin: 0;
       min-height: 100vh;
       overflow: hidden;
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-family: 'Inter', system-ui, ui-sans-serif, -apple-system, sans-serif;
       color: var(--text);
-      background:
-        radial-gradient(circle at 20% 4%, rgba(102, 217, 255, 0.2), transparent 26rem),
-        radial-gradient(circle at 86% 16%, rgba(124, 247, 189, 0.11), transparent 26rem),
-        linear-gradient(135deg, #070a0f 0%, #111827 54%, #07131a 100%);
+      background: var(--bg);
+      -webkit-font-smoothing: antialiased;
     }
 
-    body::before {
-      content: "";
+    /* Ambient blobs — same as index.html */
+    body::before,
+    body::after {
+      content: '';
       position: fixed;
-      inset: 0;
+      border-radius: 50%;
+      filter: blur(110px);
       pointer-events: none;
-      background-image:
-        linear-gradient(rgba(255,255,255,0.032) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,0.032) 1px, transparent 1px);
-      background-size: 36px 36px;
-      mask-image: linear-gradient(to bottom, black, transparent 82%);
+      z-index: 0;
+    }
+    body::before {
+      width: 560px; height: 480px;
+      top: -160px; left: -200px;
+      background: radial-gradient(circle, rgba(108,140,255,0.2) 0%, transparent 70%);
+    }
+    body::after {
+      width: 440px; height: 380px;
+      bottom: -100px; right: -160px;
+      background: radial-gradient(circle, rgba(34,211,166,0.1) 0%, transparent 70%);
     }
 
+    /* ── Layout shell ── */
     .shell {
       position: relative;
+      z-index: 1;
       height: 100vh;
       display: grid;
       grid-template-columns: minmax(0, 1fr) 260px;
       gap: 1px;
-      background: var(--line);
+      background: var(--border);
     }
 
     aside,
     .reader {
       min-height: 0;
-      background: rgba(7, 10, 15, 0.78);
-      backdrop-filter: blur(22px);
+      background: rgba(10,12,16,0.9);
+      backdrop-filter: blur(24px);
     }
 
+    /* ── File drawer (slide-in panel) ── */
     aside {
       display: flex;
       flex-direction: column;
-      padding: 18px;
+      padding: 16px;
     }
 
     .file-panel {
       position: fixed;
       z-index: 30;
       inset: 0 auto 0 0;
-      width: min(320px, calc(100vw - 28px));
+      width: min(300px, calc(100vw - 28px));
       height: 100vh;
-      border-right: 1px solid var(--line);
-      box-shadow: 22px 0 70px rgba(0, 0, 0, 0.42);
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      box-shadow: 24px 0 72px rgba(0,0,0,0.5);
       transform: translateX(-104%);
-      transition: transform 180ms ease;
+      transition: transform 200ms cubic-bezier(.4,0,.2,1);
+      padding: 20px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
     }
-
-    body.files-open .file-panel {
-      transform: translateX(0);
-    }
+    body.files-open .file-panel { transform: translateX(0); }
 
     .drawer-backdrop {
       position: fixed;
@@ -93,60 +115,100 @@
       padding: 0;
       opacity: 0;
       pointer-events: none;
-      background: rgba(2, 6, 23, 0.58);
-      transition: opacity 180ms ease;
+      background: rgba(0,0,0,0.55);
+      transition: opacity 200ms ease;
+      cursor: default;
     }
-
     body.files-open .drawer-backdrop {
       opacity: 1;
       pointer-events: auto;
     }
 
+    /* ── Brand / drawer header ── */
     .brand {
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 12px;
-      margin-bottom: 14px;
+      margin-bottom: 16px;
     }
 
-    .brand a,
+    .brand a {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text);
+      text-decoration: none;
+      letter-spacing: -0.01em;
+    }
+    .brand-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 10px var(--accent);
+      animation: pulse 2.5s ease-in-out infinite;
+      flex-shrink: 0;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: 0.45; transform: scale(0.82); }
+    }
+
     .icon-btn {
       display: inline-grid;
       place-items: center;
-      width: 38px;
-      height: 38px;
-      border: 1px solid var(--line);
+      width: 36px;
+      height: 36px;
+      border: 1px solid var(--border);
       border-radius: 8px;
+      color: var(--text-2);
+      background: var(--surface2);
+      cursor: pointer;
+      transition: border-color 160ms, color 160ms, background 160ms;
+      text-decoration: none;
+      flex-shrink: 0;
+    }
+    .icon-btn:hover {
+      border-color: var(--border-hover);
       color: var(--text);
       background: rgba(255,255,255,0.07);
-      text-decoration: none;
     }
 
     .brand h1 {
       margin: 0;
-      font-size: 1rem;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text-2);
       letter-spacing: 0;
     }
 
+    /* ── Search in drawer ── */
     .search {
       display: flex;
       align-items: center;
       gap: 9px;
       flex: 0 0 auto;
-      height: 42px;
+      height: 40px;
       padding: 0 12px;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      background: rgba(255,255,255,0.06);
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      background: var(--surface2);
+      transition: border-color 160ms, box-shadow 160ms;
+    }
+    .search:focus-within {
+      border-color: rgba(108,140,255,0.4);
+      box-shadow: 0 0 0 3px var(--accent-ring);
     }
 
     .search svg,
     .icon-btn svg,
     .brand svg {
-      width: 18px;
-      height: 18px;
+      width: 16px;
+      height: 16px;
       flex: 0 0 auto;
+      color: var(--text-3);
     }
 
     input {
@@ -155,43 +217,54 @@
       outline: 0;
       background: transparent;
       color: var(--text);
-      font: inherit;
+      font: 0.88rem/1 'Inter', sans-serif;
     }
+    input::placeholder { color: var(--text-3); }
 
+    /* ── File list ── */
     .file-list,
     .toc {
       min-height: 0;
       overflow: auto;
-      margin-top: 14px;
-      padding-right: 4px;
+      margin-top: 12px;
+      padding-right: 2px;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
     }
 
     .file-link,
     .toc a {
       display: block;
-      margin-bottom: 7px;
-      padding: 10px 11px;
+      margin-bottom: 4px;
+      padding: 9px 10px;
       border: 1px solid transparent;
       border-radius: 8px;
-      color: var(--muted);
+      color: var(--text-2);
       text-decoration: none;
-      font-size: 0.9rem;
-      line-height: 1.25;
+      font-size: 0.875rem;
+      line-height: 1.3;
+      transition: color 140ms, border-color 140ms, background 140ms;
     }
-
     .file-link:hover,
-    .file-link.active,
     .toc a:hover {
       color: var(--text);
-      border-color: rgba(102, 217, 255, 0.4);
-      background: rgba(102, 217, 255, 0.09);
+      border-color: var(--border);
+      background: var(--surface2);
+    }
+    .file-link.active {
+      color: var(--accent);
+      border-color: var(--accent-dim);
+      background: var(--accent-dim);
+      font-weight: 600;
     }
 
+    /* ── Main reader pane ── */
     .reader {
       overflow: auto;
       scroll-behavior: smooth;
     }
 
+    /* ── Top bar ── */
     .topbar {
       position: sticky;
       top: 0;
@@ -200,11 +273,11 @@
       align-items: center;
       justify-content: space-between;
       gap: 16px;
-      min-height: 76px;
-      padding: 14px 26px;
-      border-bottom: 1px solid var(--line);
-      background: rgba(7, 10, 15, 0.76);
-      backdrop-filter: blur(20px);
+      min-height: 60px;
+      padding: 0 24px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(10,12,16,0.8);
+      backdrop-filter: blur(20px) saturate(1.4);
     }
 
     .topbar-left {
@@ -214,21 +287,21 @@
       min-width: 0;
     }
 
-    .doc-title {
-      min-width: 0;
-    }
-
+    .doc-title { min-width: 0; }
     .doc-title strong {
       display: block;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
-      font-size: 1.1rem;
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: var(--text);
     }
-
     .doc-title span {
-      color: var(--muted);
-      font-size: 0.84rem;
+      color: var(--text-3);
+      font-size: 0.78rem;
+      font-family: 'JetBrains Mono', monospace;
     }
 
     .actions {
@@ -237,94 +310,90 @@
       flex: 0 0 auto;
     }
 
+    /* ── Content area ── */
     .content-wrap {
-      width: min(980px, calc(100% - 36px));
+      width: min(960px, calc(100% - 36px));
       margin: 0 auto;
-      padding: 34px 0 72px;
+      padding: 32px 0 80px;
     }
 
     .markdown-body {
       padding: 36px;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      background: rgba(13, 18, 26, 0.76);
-      box-shadow: 0 28px 80px rgba(0, 0, 0, 0.35);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: rgba(17,19,24,0.85);
+      box-shadow: 0 24px 72px rgba(0,0,0,0.4);
+      backdrop-filter: blur(12px);
     }
 
     .markdown-body h1,
     .markdown-body h2,
     .markdown-body h3 {
-      letter-spacing: 0;
-      border-bottom-color: rgba(255, 255, 255, 0.12);
+      letter-spacing: -0.01em;
+      border-bottom-color: var(--border);
     }
-
-    .markdown-body a { color: var(--blue); }
-    .markdown-body code { border-radius: 6px; }
+    .markdown-body a { color: var(--accent); }
+    .markdown-body code {
+      border-radius: 5px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.875em;
+    }
     .markdown-body pre {
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 8px;
-      background: #0b1020;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: #0b0d12;
     }
+    .markdown-body table { display: table; width: 100%; }
+    .markdown-body tr:nth-child(even) { background: rgba(255,255,255,0.02); }
 
-    .markdown-body table {
-      display: table;
-      width: 100%;
-    }
-
+    /* ── Mermaid diagrams ── */
     .mermaid {
       display: flex;
       justify-content: center;
       overflow-x: auto;
-      padding: 18px;
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 8px;
-      background: #0c111b;
+      padding: 20px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: #0b0d12;
     }
 
+    /* ── TOC panel (right) ── */
     .side-title {
-      margin: 10px 0 0;
-      color: var(--muted);
-      font-size: 0.78rem;
-      font-weight: 800;
+      margin: 16px 0 4px;
+      color: var(--text-3);
+      font-size: 0.7rem;
+      font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.12em;
     }
-
     .toc a {
       padding-left: calc(10px + var(--depth, 0) * 12px);
-      font-size: 0.86rem;
+      font-size: 0.83rem;
     }
 
+    /* ── States ── */
     .empty,
     .error {
       padding: 24px;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      color: var(--muted);
-      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text-2);
+      background: var(--surface);
+      font-size: 0.9rem;
     }
+    .error strong { color: var(--red); }
 
-    .error strong { color: var(--pink); }
-
+    /* ── Responsive ── */
     @media (max-width: 1100px) {
       .shell { grid-template-columns: minmax(0, 1fr); }
       .toc-panel { display: none; }
     }
-
     @media (max-width: 760px) {
-      .shell {
-        height: 100vh;
-        grid-template-columns: 1fr;
-      }
-      .topbar {
-        padding: 14px;
-      }
+      .shell { height: 100vh; grid-template-columns: 1fr; }
+      .topbar { padding: 0 14px; }
       .topbar-left { gap: 10px; }
-      .content-wrap {
-        width: min(100% - 24px, 980px);
-        padding-top: 18px;
-      }
-      .markdown-body { padding: 22px; }
+      .content-wrap { width: min(100% - 24px, 960px); padding-top: 20px; }
+      .markdown-body { padding: 20px; }
     }
   </style>
 </head>
@@ -332,12 +401,11 @@
   <div class="shell">
     <aside class="file-panel">
       <div class="brand">
-        <a href="index.html" title="Back to library" aria-label="Back to library">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-            <path d="m15 18-6-6 6-6"></path>
-          </svg>
+        <a href="index.html" title="Back to library" aria-label="Back to Dev Notes library">
+          <div class="brand-dot"></div>
+          Dev Notes
         </a>
-        <h1>Library</h1>
+        <h1>Notes</h1>
       </div>
       <label class="search">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
