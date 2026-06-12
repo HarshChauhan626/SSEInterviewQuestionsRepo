@@ -1,0 +1,2278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Frontend Interview Quiz — React · Next.js · DOM · Web</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0c0e14;
+    --surface: #13161f;
+    --surface2: #1a1e2e;
+    --surface3: #222740;
+    --border: #2a2f45;
+    --accent: #6c63ff;
+    --accent2: #00d4aa;
+    --accent3: #ff6b6b;
+    --accent4: #ffd166;
+    --text: #e8eaf0;
+    --text2: #9095ae;
+    --text3: #5c6280;
+    --correct: #00d4aa;
+    --wrong: #ff6b6b;
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'Inter', sans-serif;
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.6;
+  }
+
+  /* SPLASH */
+  #splash {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    text-align: center;
+    background: radial-gradient(ellipse 80% 60% at 50% -10%, rgba(108,99,255,0.18) 0%, transparent 60%);
+  }
+
+  .splash-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(108,99,255,0.12);
+    border: 1px solid rgba(108,99,255,0.3);
+    border-radius: 100px;
+    padding: 6px 16px;
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: var(--accent);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 2rem;
+  }
+
+  .splash-title {
+    font-size: clamp(2.2rem, 5vw, 3.6rem);
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: -0.03em;
+    margin-bottom: 1.2rem;
+  }
+
+  .splash-title span.grad {
+    background: linear-gradient(135deg, #6c63ff 0%, #00d4aa 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .splash-sub {
+    font-size: 1.05rem;
+    color: var(--text2);
+    max-width: 520px;
+    margin-bottom: 2.8rem;
+    font-weight: 400;
+  }
+
+  .topic-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 3rem;
+    max-width: 600px;
+  }
+
+  .pill {
+    padding: 5px 14px;
+    border-radius: 100px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    border: 1px solid var(--border);
+    color: var(--text2);
+    background: var(--surface);
+    font-family: var(--mono);
+  }
+
+  .stats-row {
+    display: flex;
+    gap: 2rem;
+    margin-bottom: 3rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .stat-item {
+    text-align: center;
+  }
+
+  .stat-num {
+    font-size: 2rem;
+    font-weight: 700;
+    font-family: var(--mono);
+    background: linear-gradient(135deg, #6c63ff, #00d4aa);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    display: block;
+  }
+
+  .stat-label {
+    font-size: 0.75rem;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-weight: 500;
+  }
+
+  .mode-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+    width: 100%;
+    max-width: 660px;
+  }
+
+  .mode-card {
+    padding: 1.4rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: left;
+  }
+
+  .mode-card:hover, .mode-card.active {
+    border-color: var(--accent);
+    background: var(--surface2);
+    box-shadow: 0 0 0 1px var(--accent), inset 0 0 20px rgba(108,99,255,0.06);
+  }
+
+  .mode-card.active .mode-icon { color: var(--accent); }
+
+  .mode-icon {
+    font-size: 1.5rem;
+    margin-bottom: 0.6rem;
+    display: block;
+    color: var(--text2);
+    transition: color 0.2s;
+  }
+
+  .mode-name {
+    font-weight: 600;
+    font-size: 0.95rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .mode-desc {
+    font-size: 0.78rem;
+    color: var(--text3);
+    line-height: 1.4;
+  }
+
+  .btn-start {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    padding: 15px 40px;
+    border-radius: 100px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: var(--sans);
+    letter-spacing: 0.01em;
+  }
+
+  .btn-start:hover {
+    background: #7b73ff;
+    transform: translateY(-2px);
+    box-shadow: 0 12px 32px rgba(108,99,255,0.35);
+  }
+
+  /* QUIZ */
+  #quiz { display: none; padding: 1.5rem; max-width: 860px; margin: 0 auto; }
+
+  .quiz-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .q-counter {
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    color: var(--text2);
+  }
+
+  .q-counter strong {
+    color: var(--accent);
+    font-size: 1.1rem;
+  }
+
+  .score-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    padding: 6px 16px;
+    font-size: 0.82rem;
+    font-family: var(--mono);
+  }
+
+  .score-badge .s-correct { color: var(--correct); font-weight: 600; }
+  .score-badge .s-wrong { color: var(--wrong); font-weight: 600; }
+
+  .progress-wrap {
+    height: 3px;
+    background: var(--surface2);
+    border-radius: 100px;
+    margin-bottom: 2rem;
+    overflow: hidden;
+  }
+
+  .progress-bar {
+    height: 100%;
+    border-radius: 100px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    transition: width 0.4s ease;
+  }
+
+  .topic-tag {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    padding: 3px 10px;
+    border-radius: 4px;
+    background: rgba(108,99,255,0.12);
+    color: var(--accent);
+    border: 1px solid rgba(108,99,255,0.2);
+    margin-bottom: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 500;
+  }
+
+  .q-number-inline {
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    color: var(--text3);
+    margin-bottom: 0.4rem;
+  }
+
+  .question-text {
+    font-size: 1.15rem;
+    font-weight: 500;
+    line-height: 1.55;
+    margin-bottom: 1.6rem;
+    color: var(--text);
+  }
+
+  .question-text code {
+    font-family: var(--mono);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-size: 0.92em;
+    color: var(--accent2);
+  }
+
+  .options-grid {
+    display: grid;
+    gap: 0.65rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .opt-btn {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem 1.2rem;
+    cursor: pointer;
+    transition: all 0.18s;
+    text-align: left;
+    font-family: var(--sans);
+    font-size: 0.95rem;
+    color: var(--text);
+    line-height: 1.45;
+    width: 100%;
+  }
+
+  .opt-btn:hover:not(:disabled) {
+    border-color: var(--accent);
+    background: var(--surface2);
+  }
+
+  .opt-btn:disabled { cursor: default; }
+
+  .opt-btn.correct {
+    border-color: var(--correct);
+    background: rgba(0,212,170,0.08);
+    color: var(--text);
+  }
+
+  .opt-btn.wrong {
+    border-color: var(--wrong);
+    background: rgba(255,107,107,0.08);
+    color: var(--text2);
+  }
+
+  .opt-btn.selected-wrong {
+    border-color: var(--wrong);
+    background: rgba(255,107,107,0.12);
+    color: var(--text);
+  }
+
+  .opt-label {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    font-weight: 600;
+    min-width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 5px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text2);
+    flex-shrink: 0;
+    margin-top: 1px;
+    transition: all 0.18s;
+  }
+
+  .opt-btn.correct .opt-label { background: var(--correct); border-color: var(--correct); color: #000; }
+  .opt-btn.selected-wrong .opt-label { background: var(--wrong); border-color: var(--wrong); color: #fff; }
+  .opt-btn.wrong .opt-label { opacity: 0.5; }
+
+  .explanation-box {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent2);
+    border-radius: var(--radius);
+    padding: 1.1rem 1.3rem;
+    margin-bottom: 1.5rem;
+    display: none;
+    animation: fadeIn 0.25s ease;
+  }
+
+  .explanation-box.show { display: block; }
+
+  .explanation-box .exp-label {
+    font-size: 0.72rem;
+    font-family: var(--mono);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--accent2);
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+  }
+
+  .explanation-box p {
+    font-size: 0.9rem;
+    color: var(--text2);
+    line-height: 1.6;
+  }
+
+  .explanation-box code {
+    font-family: var(--mono);
+    background: var(--surface3);
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 0.88em;
+    color: var(--accent);
+  }
+
+  .quiz-actions {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+  }
+
+  .btn {
+    padding: 10px 24px;
+    border-radius: 100px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    font-family: var(--sans);
+    transition: all 0.18s;
+  }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--text2);
+    border: 1px solid var(--border);
+  }
+
+  .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  .btn-primary:hover { background: #7b73ff; transform: translateY(-1px); }
+
+  .btn-secondary {
+    background: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+
+  .btn-secondary:hover { border-color: var(--text2); }
+
+  /* RESULT */
+  #result {
+    display: none;
+    min-height: 100vh;
+    padding: 2rem;
+    max-width: 800px;
+    margin: 0 auto;
+    text-align: center;
+  }
+
+  .result-score-ring {
+    width: 160px;
+    height: 160px;
+    margin: 2rem auto;
+    position: relative;
+  }
+
+  .result-score-ring svg { transform: rotate(-90deg); }
+
+  .ring-track { fill: none; stroke: var(--surface2); stroke-width: 10; }
+  .ring-fill {
+    fill: none;
+    stroke-width: 10;
+    stroke-linecap: round;
+    stroke: url(#ringGrad);
+    transition: stroke-dashoffset 1s ease;
+  }
+
+  .ring-label {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .ring-pct {
+    font-size: 2rem;
+    font-weight: 700;
+    font-family: var(--mono);
+    background: linear-gradient(135deg, #6c63ff, #00d4aa);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .ring-total { font-size: 0.72rem; color: var(--text3); }
+
+  .result-title { font-size: 1.8rem; font-weight: 700; margin-bottom: 0.5rem; }
+  .result-sub { color: var(--text2); margin-bottom: 2rem; }
+
+  .result-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-bottom: 2.5rem;
+  }
+
+  .result-stat {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.2rem;
+  }
+
+  .result-stat .n { font-size: 2rem; font-weight: 700; font-family: var(--mono); }
+  .result-stat .l { font-size: 0.75rem; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; margin-top: 4px; }
+  .result-stat.c .n { color: var(--correct); }
+  .result-stat.w .n { color: var(--wrong); }
+  .result-stat.s .n { color: var(--accent4); }
+
+  .result-actions { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+
+  .review-section { margin-top: 2.5rem; text-align: left; }
+  .review-title { font-size: 1rem; font-weight: 600; margin-bottom: 1rem; color: var(--text2); padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); }
+  .review-item { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 1rem; margin-bottom: 0.6rem; }
+  .review-item .rq { font-size: 0.88rem; color: var(--text); margin-bottom: 0.4rem; font-weight: 500; }
+  .review-item .ra { font-size: 0.82rem; }
+  .review-item .ra .lbl { color: var(--text3); }
+  .review-item .correct-ans { color: var(--correct); }
+  .review-item .your-ans { color: var(--wrong); }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+  .hidden { display: none !important; }
+
+  .filter-bar {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+  }
+
+  .filter-btn {
+    padding: 5px 14px;
+    border-radius: 100px;
+    font-size: 0.78rem;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text2);
+    font-family: var(--mono);
+    transition: all 0.15s;
+  }
+
+  .filter-btn:hover, .filter-btn.active {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(108,99,255,0.08);
+  }
+
+  @media (max-width: 600px) {
+    .result-grid { grid-template-columns: repeat(3, 1fr); }
+    .mode-grid { grid-template-columns: 1fr; }
+    .question-text { font-size: 1rem; }
+    #quiz { padding: 1rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- SPLASH -->
+<div id="splash">
+  <div class="splash-badge">🎯 Interview Prep</div>
+  <h1 class="splash-title">Frontend <span class="grad">Deep Dive</span><br>Quiz</h1>
+  <p class="splash-sub">200 hand-picked MCQs covering the topics that actually get asked in modern frontend interviews.</p>
+
+  <div class="topic-pills">
+    <span class="pill">React</span>
+    <span class="pill">Next.js</span>
+    <span class="pill">Browser DOM</span>
+    <span class="pill">Redux</span>
+    <span class="pill">Web APIs</span>
+    <span class="pill">Performance</span>
+    <span class="pill">Security</span>
+    <span class="pill">TypeScript</span>
+    <span class="pill">Webpack</span>
+    <span class="pill">Testing</span>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-item"><span class="stat-num">200</span><span class="stat-label">Questions</span></div>
+    <div class="stat-item"><span class="stat-num">10</span><span class="stat-label">Topic Areas</span></div>
+    <div class="stat-item"><span class="stat-num">90%+</span><span class="stat-label">Coverage</span></div>
+  </div>
+
+  <div class="mode-grid">
+    <div class="mode-card active" data-mode="all" onclick="selectMode(this,'all')">
+      <span class="mode-icon">📚</span>
+      <div class="mode-name">All 200 Questions</div>
+      <div class="mode-desc">Complete interview prep — every topic</div>
+    </div>
+    <div class="mode-card" data-mode="random50" onclick="selectMode(this,'random50')">
+      <span class="mode-icon">🎲</span>
+      <div class="mode-name">Random 50</div>
+      <div class="mode-desc">Quick mixed practice session</div>
+    </div>
+    <div class="mode-card" data-mode="weak" onclick="selectMode(this,'weak')">
+      <span class="mode-icon">🔥</span>
+      <div class="mode-name">Practice Mode</div>
+      <div class="mode-desc">See explanation after each answer</div>
+    </div>
+  </div>
+
+  <button class="btn-start" onclick="startQuiz()">Start Quiz →</button>
+</div>
+
+<!-- QUIZ -->
+<div id="quiz">
+  <div class="quiz-header">
+    <div class="q-counter">Question <strong id="qNum">1</strong> of <span id="qTotal">200</span></div>
+    <div class="score-badge">
+      ✓ <span class="s-correct" id="sCorrect">0</span> &nbsp;✗ <span class="s-wrong" id="sWrong">0</span>
+    </div>
+    <button class="btn btn-ghost" onclick="endQuiz()">End & Review</button>
+  </div>
+  <div class="progress-wrap"><div class="progress-bar" id="progressBar" style="width:0%"></div></div>
+
+  <div class="filter-bar" id="topicFilterBar"></div>
+
+  <div class="topic-tag" id="topicTag"></div>
+  <div class="q-number-inline" id="qNumInline"></div>
+  <div class="question-text" id="questionText"></div>
+  <div class="options-grid" id="optionsGrid"></div>
+  <div class="explanation-box" id="explanationBox">
+    <div class="exp-label">💡 Explanation</div>
+    <p id="explanationText"></p>
+  </div>
+  <div class="quiz-actions">
+    <button class="btn btn-secondary hidden" id="skipBtn" onclick="skipQuestion()">Skip</button>
+    <button class="btn btn-primary hidden" id="nextBtn" onclick="nextQuestion()">Next Question →</button>
+  </div>
+</div>
+
+<!-- RESULT -->
+<div id="result">
+  <h2 class="result-title" id="resultTitle">Quiz Complete!</h2>
+  <p class="result-sub" id="resultSub"></p>
+  <div class="result-score-ring">
+    <svg viewBox="0 0 160 160" width="160" height="160">
+      <defs>
+        <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" style="stop-color:#6c63ff"/>
+          <stop offset="100%" style="stop-color:#00d4aa"/>
+        </linearGradient>
+      </defs>
+      <circle class="ring-track" cx="80" cy="80" r="70"/>
+      <circle class="ring-fill" cx="80" cy="80" r="70" id="ringFill" stroke-dasharray="439.8" stroke-dashoffset="439.8"/>
+    </svg>
+    <div class="ring-label">
+      <span class="ring-pct" id="ringPct">0%</span>
+      <span class="ring-total" id="ringTotal"></span>
+    </div>
+  </div>
+  <div class="result-grid">
+    <div class="result-stat c"><div class="n" id="rCorrect">0</div><div class="l">Correct</div></div>
+    <div class="result-stat w"><div class="n" id="rWrong">0</div><div class="l">Wrong</div></div>
+    <div class="result-stat s"><div class="n" id="rSkipped">0</div><div class="l">Skipped</div></div>
+  </div>
+  <div class="result-actions">
+    <button class="btn btn-primary" onclick="restartQuiz()">Restart Quiz</button>
+    <button class="btn btn-ghost" onclick="toggleReview()">Review Answers</button>
+  </div>
+  <div class="review-section hidden" id="reviewSection">
+    <div class="review-title">Review — Incorrect & Skipped</div>
+    <div id="reviewList"></div>
+  </div>
+</div>
+
+<script>
+const QUESTIONS = [
+  // ────────── REACT CORE (Q1–50) ──────────
+  {
+    topic: "React",
+    q: "What is the output of <code>useState</code>'s updater function when called with a function instead of a value?",
+    opts: ["It schedules an async update","It receives the previous state and returns the new state","It merges the object like setState in class components","It resets state to initial value"],
+    ans: 1,
+    exp: "When you pass a function to the state updater (functional update form), React passes the previous state as the argument to that function and uses the return value as the new state. This is especially useful when the new state depends on the old state."
+  },
+  {
+    topic: "React",
+    q: "Which hook should you use to run a side effect only once when the component mounts?",
+    opts: ["useEffect(() => {}, [undefined])","useEffect(() => {})","useEffect(() => {}, [])","useLayoutEffect(() => {}, null)"],
+    ans: 2,
+    exp: "useEffect with an empty dependency array [] runs once after the initial render (mount) and never again. An empty deps array tells React there are no reactive values to watch."
+  },
+  {
+    topic: "React",
+    q: "What does React's reconciliation algorithm use to decide whether to reuse or replace a DOM element?",
+    opts: ["Object identity","The element's type and key","The element's props","The component display name"],
+    ans: 1,
+    exp: "React's diffing algorithm first compares element types. If types differ it tears down the old tree. For elements of the same type it updates props. The key prop helps React identify which items have changed, been added, or been removed in lists."
+  },
+  {
+    topic: "React",
+    q: "In React 18, what does <code>startTransition</code> do?",
+    opts: ["Defers rendering updates to be non-urgent","Batches all setState calls synchronously","Suspends a component until a Promise resolves","Enables concurrent rendering for a single component"],
+    ans: 0,
+    exp: "startTransition marks state updates inside it as non-urgent (transitions). React can interrupt these updates to handle more urgent ones like user input, improving perceived responsiveness."
+  },
+  {
+    topic: "React",
+    q: "What is the correct way to update a nested object in state without mutation?",
+    opts: ["setState(state.nested.val = x)","setState({...state, nested: {...state.nested, val: x}})","setState(Object.assign(state, {nested: {val: x}}))","setState(state.nested = {val: x})"],
+    ans: 1,
+    exp: "React requires state updates to be immutable. You must create a new object using spread syntax to avoid mutating the existing state, including nested properties."
+  },
+  {
+    topic: "React",
+    q: "When using React.memo, a component re-renders when:",
+    opts: ["Any state in the app changes","Its parent re-renders regardless","Its props change via shallow comparison","The context it consumes changes"],
+    ans: 2,
+    exp: "React.memo is a higher-order component that memoizes the rendered output. It re-renders only when props change via a shallow comparison. You can provide a custom comparison function as the second argument."
+  },
+  {
+    topic: "React",
+    q: "What is the purpose of the <code>key</code> prop in React lists?",
+    opts: ["It provides accessibility for screen readers","It uniquely identifies elements to help React optimize re-renders","It links a form input to a label","It prevents prop drilling"],
+    ans: 1,
+    exp: "The key prop gives React a way to identify which items in a list have changed, been added, or removed. Keys should be stable, unique sibling identifiers — ideally from your data, not array indices."
+  },
+  {
+    topic: "React",
+    q: "What does <code>useCallback</code> return?",
+    opts: ["A memoized value","A memoized function reference","A ref object","A cloned component"],
+    ans: 1,
+    exp: "useCallback returns a memoized version of the callback function that only changes when one of the dependencies changes. It's useful for passing stable callbacks to child components that rely on reference equality to prevent re-renders."
+  },
+  {
+    topic: "React",
+    q: "What is the difference between <code>useMemo</code> and <code>useCallback</code>?",
+    opts: ["There is no difference","useMemo memoizes a value; useCallback memoizes a function","useMemo is for async; useCallback is for sync","useMemo accepts no deps; useCallback does"],
+    ans: 1,
+    exp: "useMemo caches the result of a computation (any value). useCallback caches a function definition itself. useCallback(fn, deps) is equivalent to useMemo(() => fn, deps)."
+  },
+  {
+    topic: "React",
+    q: "What happens when you call <code>setState</code> inside a <code>useEffect</code> without proper dependency management?",
+    opts: ["Nothing — it's safe by default","It causes an infinite re-render loop","It batches all updates into one","It throws a React error"],
+    ans: 1,
+    exp: "If you setState inside useEffect and that state is part of or triggers the effect's dependencies without proper guard conditions, it will cause an infinite loop: state change → effect runs → setState → state change → …"
+  },
+  {
+    topic: "React",
+    q: "What is the role of <code>React.StrictMode</code>?",
+    opts: ["It enforces TypeScript types","It double-invokes some lifecycle methods in development to detect side effects","It prevents production builds from being used in development","It disables concurrent features"],
+    ans: 1,
+    exp: "StrictMode is a development-only tool that helps identify potential problems. It intentionally double-invokes render functions, state initializers, and certain hooks (like useEffect cleanup/setup in React 18) to surface impure code and side effects."
+  },
+  {
+    topic: "React",
+    q: "Which of the following is true about React Context?",
+    opts: ["It replaces Redux for all use cases","All consumers re-render when any part of the context value changes","It uses memoization internally to prevent re-renders","Consumers only re-render when they explicitly subscribe to a slice"],
+    ans: 1,
+    exp: "When the Context value changes, all components that consume that context (via useContext or Consumer) will re-render, even if only a portion of the value they care about changed. This is a common performance pitfall."
+  },
+  {
+    topic: "React",
+    q: "What does the <code>useRef</code> hook return?",
+    opts: ["A reactive state variable","A mutable ref object whose .current property persists across renders","A copy of the DOM node","An immutable reference"],
+    ans: 1,
+    exp: "useRef returns a mutable ref object { current: initialValue }. The .current property can be mutated without causing a re-render, making it useful for storing DOM references or any mutable value that should persist across renders."
+  },
+  {
+    topic: "React",
+    q: "What is a 'controlled component' in React?",
+    opts: ["A component wrapped in React.memo","A component whose form input value is driven by React state","A component that controls its own lifecycle","A component inside a Context.Provider"],
+    ans: 1,
+    exp: "A controlled component has its value derived from React state and updates via event handlers. The React state is the single source of truth, giving full control over the form data."
+  },
+  {
+    topic: "React",
+    q: "What problem does <code>useReducer</code> solve compared to multiple <code>useState</code> calls?",
+    opts: ["It is faster for all state operations","It centralizes complex state transitions with related logic","It automatically persists state to localStorage","It avoids prop drilling without Context"],
+    ans: 1,
+    exp: "useReducer is preferable when state logic is complex, involves multiple sub-values, or when the next state depends on the previous one in non-trivial ways. It centralizes state transitions in a reducer function, making logic easier to test and understand."
+  },
+  {
+    topic: "React",
+    q: "In React's Fiber architecture, what is a 'fiber'?",
+    opts: ["A thread for concurrent rendering","A unit of work representing a component instance or DOM element","A type of React hook","A memoized selector"],
+    ans: 1,
+    exp: "A fiber is an internal data structure (essentially a plain object) that represents a unit of work. Each React element has a corresponding fiber. Fiber enables React to break rendering work into chunks, pause, and resume it — the foundation for Concurrent Mode."
+  },
+  {
+    topic: "React",
+    q: "What is the purpose of <code>React.lazy</code>?",
+    opts: ["Memoizing expensive components","Dynamically importing a component with code splitting","Deferring initial state initialization","Lazy-evaluating context values"],
+    ans: 1,
+    exp: "React.lazy lets you render a dynamically imported component as a regular component. It must be used with React.Suspense and enables code splitting at the component level."
+  },
+  {
+    topic: "React",
+    q: "What does the <code>flushSync</code> API do in React 18?",
+    opts: ["Forces a synchronous state update outside of React's batching","Flushes the render queue to the DOM immediately","Cancels all pending transitions","Enables streaming SSR"],
+    ans: 0,
+    exp: "flushSync forces React to synchronously flush state updates and DOM mutations within its callback, bypassing the normal batching behavior introduced in React 18. Useful for third-party integrations that need immediate DOM measurements."
+  },
+  {
+    topic: "React",
+    q: "Which phase of the React lifecycle runs after the DOM has been updated?",
+    opts: ["render","componentWillMount","componentDidMount / useEffect","getDerivedStateFromProps"],
+    ans: 2,
+    exp: "componentDidMount (class) and useEffect (hooks) run after React has committed the changes to the DOM. This is where you can safely access the DOM, trigger network requests, or set up subscriptions."
+  },
+  {
+    topic: "React",
+    q: "What does <code>React.forwardRef</code> enable?",
+    opts: ["Forwarding props from parent to child","Passing a ref through a component to a DOM element or child component","Creating a ref that can be shared across components","Preventing a component from re-rendering"],
+    ans: 1,
+    exp: "React.forwardRef creates a component that forwards its ref to a child DOM element or another component. This is used to give parent components access to the DOM nodes of child components, useful for focus management, animations, and measurements."
+  },
+  {
+    topic: "React",
+    q: "What is the virtual DOM?",
+    opts: ["A copy of the DOM stored in the browser's memory","A lightweight in-memory representation of the real DOM used by React to calculate minimum updates","An alternative to the real DOM provided by the browser","A DOM node rendered off-screen"],
+    ans: 1,
+    exp: "The virtual DOM is a JavaScript object tree that mirrors the real DOM structure. React updates the virtual DOM first, diffs it with the previous snapshot, and applies only the necessary changes (patches) to the real DOM — minimizing expensive DOM operations."
+  },
+  {
+    topic: "React",
+    q: "In React 18, what is automatic batching?",
+    opts: ["All setState calls in a component are merged into one","State updates inside setTimeout, Promises, and native event handlers are now batched like React event handlers","Redux actions are automatically batched","useEffect cleanup functions are batched"],
+    ans: 1,
+    exp: "Before React 18, batching only occurred inside React event handlers. React 18 extends batching to all contexts including async operations like Promise callbacks, setTimeout, and native event handlers, reducing unnecessary re-renders."
+  },
+  {
+    topic: "React",
+    q: "What is the correct type for an event handler prop in TypeScript React for a button click?",
+    opts: ["() => void","React.MouseEvent","React.EventHandler<HTMLButtonElement>","React.MouseEventHandler<HTMLButtonElement>"],
+    ans: 3,
+    exp: "React.MouseEventHandler<HTMLButtonElement> is the correct type for a click handler on a button element. It is equivalent to (event: React.MouseEvent<HTMLButtonElement>) => void."
+  },
+  {
+    topic: "React",
+    q: "What does <code>useImperativeHandle</code> do?",
+    opts: ["Directly mutates props","Customizes the instance value exposed when using ref with forwardRef","Creates a new imperative API for state management","Accesses a parent component's refs"],
+    ans: 1,
+    exp: "useImperativeHandle is used with forwardRef to customize the value that is exposed to the parent component through a ref. This lets you expose only specific methods or values instead of the entire DOM node."
+  },
+  {
+    topic: "React",
+    q: "When does <code>useLayoutEffect</code> run compared to <code>useEffect</code>?",
+    opts: ["Identically — they're interchangeable","useLayoutEffect runs synchronously after DOM mutations but before the browser paints","useLayoutEffect runs after the browser paints","useLayoutEffect only runs during SSR"],
+    ans: 1,
+    exp: "useLayoutEffect fires synchronously after all DOM mutations but before the browser paints. It's the hook equivalent of componentDidMount/componentDidUpdate. Use it when you need to read layout from the DOM and synchronously re-render before paint."
+  },
+  {
+    topic: "React",
+    q: "What is the purpose of the <code>Suspense</code> component?",
+    opts: ["It suspends all re-renders in a subtree","It provides a fallback UI while waiting for a lazy component or data to load","It prevents error boundaries from catching errors","It delays the initial render by 300ms"],
+    ans: 1,
+    exp: "React.Suspense lets you display a fallback (like a loading spinner) while waiting for a child component to finish loading — whether that's a lazy-loaded component or, in newer React, data fetching via use()."
+  },
+  {
+    topic: "React",
+    q: "What is an Error Boundary in React?",
+    opts: ["A try-catch block inside render","A class component that catches JS errors in its child tree and displays a fallback UI","A hook that wraps async operations","A special HTML attribute"],
+    ans: 1,
+    exp: "Error Boundaries are class components (cannot be function components) that implement componentDidCatch and/or static getDerivedStateFromError. They catch JavaScript errors in the component tree below them and render a fallback UI instead of crashing."
+  },
+  {
+    topic: "React",
+    q: "What is the difference between <code>props.children</code> and using slots/named exports?",
+    opts: ["There is no difference","props.children is a single implicit slot; named slots require explicit prop passing","props.children only works with class components","Named exports can't contain JSX"],
+    ans: 1,
+    exp: "props.children is React's built-in slot pattern — everything between opening and closing tags. Named slots are implemented by passing JSX as regular named props (e.g. header={<Header/>}), allowing multiple distinct regions of content composition."
+  },
+  {
+    topic: "React",
+    q: "Which React 18 hook would you use to subscribe to an external store (like Redux) safely?",
+    opts: ["useEffect","useRef","useSyncExternalStore","useState"],
+    ans: 2,
+    exp: "useSyncExternalStore was introduced in React 18 to safely subscribe to external data sources. It avoids tearing issues in concurrent mode and is the official hook for integrating external state management solutions."
+  },
+  {
+    topic: "React",
+    q: "What happens when you provide a stale closure in a <code>useEffect</code> dependency array?",
+    opts: ["React throws a warning","The effect captures old state/prop values and doesn't update correctly","The effect never runs","React automatically handles stale closures"],
+    ans: 1,
+    exp: "A stale closure occurs when useEffect captures values from a previous render because they weren't included in the dependency array. This results in the effect working with outdated data. The eslint-plugin-react-hooks exhaustive-deps rule helps catch this."
+  },
+  {
+    topic: "React",
+    q: "What is React Hydration?",
+    opts: ["Loading data on the client","Attaching React event handlers to server-rendered HTML","Converting JSX to JavaScript","Creating a fresh render from scratch on the client"],
+    ans: 1,
+    exp: "Hydration is the process where React takes server-rendered HTML and attaches event listeners and React state to it on the client. It makes server-rendered pages interactive without having to re-create the DOM from scratch."
+  },
+  {
+    topic: "React",
+    q: "In React, what causes a component to re-render?",
+    opts: ["Only when its own state changes","When its state changes, its parent re-renders, or its consumed context changes","Only when props change","When any component in the app updates"],
+    ans: 1,
+    exp: "A React component re-renders when: (1) its own state changes, (2) its parent re-renders (causing new props), or (3) any Context it consumes changes. React.memo and PureComponent can prevent unnecessary re-renders from parent re-renders."
+  },
+  {
+    topic: "React",
+    q: "What is the purpose of the <code>act()</code> utility in React testing?",
+    opts: ["It simulates user actions","It wraps code that causes React state updates, ensuring they are processed before assertions","It provides a mock fetch API","It renders components in isolation"],
+    ans: 1,
+    exp: "act() ensures that all updates related to state changes, effects, and re-renders are processed and applied to the DOM before you make assertions in tests. React Testing Library's utilities are already wrapped in act() internally."
+  },
+  {
+    topic: "React",
+    q: "What is the <code>useId</code> hook used for?",
+    opts: ["Generating user IDs for authentication","Generating stable, unique IDs for accessibility attributes that work across server and client","Creating unique keys for list items","Generating random numbers"],
+    ans: 1,
+    exp: "useId (React 18+) generates a stable unique ID that is consistent between server and client rendering, making it safe for SSR. It's designed for accessibility attributes like aria-labelledby and htmlFor, not list keys."
+  },
+  {
+    topic: "React",
+    q: "What is the difference between React's synthetic events and native browser events?",
+    opts: ["Synthetic events are slower","Synthetic events are cross-browser wrappers around native events, pooled for performance in older React versions","Synthetic events don't support stopPropagation","Synthetic events are only for keyboard input"],
+    ans: 1,
+    exp: "React's SyntheticEvent is a cross-browser wrapper around the browser's native event, normalizing behavior across browsers. In React 17+, event pooling was removed, so synthetic events persist past the handler. They still support the same interface as native events."
+  },
+  {
+    topic: "React",
+    q: "What does the <code>getDerivedStateFromProps</code> lifecycle method do?",
+    opts: ["It runs after every render","It is a static method that derives state from props before rendering, replacing componentWillReceiveProps","It runs on mount only","It is the same as shouldComponentUpdate"],
+    ans: 1,
+    exp: "getDerivedStateFromProps is a static class lifecycle method that is called before every render. It allows components to update state in response to prop changes. Being static, it has no access to 'this', discouraging side effects."
+  },
+  {
+    topic: "React",
+    q: "In React portals, where does the component render in the DOM tree?",
+    opts: ["Always at the body level","At a DOM node outside the parent component's DOM hierarchy, specified in createPortal","Inline where it's declared in JSX","Inside the nearest Suspense boundary"],
+    ans: 1,
+    exp: "React.createPortal(children, domNode) renders children into a different DOM node than where the React component tree is mounted. Despite the different DOM location, the portal still behaves like a React child — events bubble up through the React tree."
+  },
+  {
+    topic: "React",
+    q: "What is 'prop drilling' and what are common solutions?",
+    opts: ["Passing refs down — solved with forwardRef","Passing props through many intermediary components — solved with Context or state management libraries","A performance issue with too many props — solved with memo","A TypeScript issue — solved with generics"],
+    ans: 1,
+    exp: "Prop drilling occurs when you pass data through many layers of components that don't need it, just to reach a deep child. Solutions include React Context (for global/shared state), state management (Redux, Zustand), or component composition."
+  },
+  {
+    topic: "React",
+    q: "How does React's batching work in event handlers?",
+    opts: ["Each setState triggers a separate render","Multiple setState calls in the same event handler are batched into a single re-render","setState is always async and batched in a microtask","setState calls inside loops are not batched"],
+    ans: 1,
+    exp: "Inside React event handlers, multiple setState calls are batched together, resulting in a single re-render. This was the only case for batching before React 18, which extended batching to all asynchronous operations."
+  },
+  {
+    topic: "React",
+    q: "What is the <code>children</code> prop's type in React TypeScript?",
+    opts: ["string | null","React.ReactNode","React.FC","HTMLElement"],
+    ans: 1,
+    exp: "React.ReactNode is the broadest type for children — it accepts React elements, strings, numbers, arrays, fragments, portals, booleans, null, and undefined. For just JSX elements, use React.ReactElement."
+  },
+  {
+    topic: "React",
+    q: "What is concurrent rendering in React 18?",
+    opts: ["Running React on multiple threads","React can pause, interrupt, and resume rendering to keep the UI responsive","Components render in random order","Multiple roots render simultaneously"],
+    ans: 1,
+    exp: "Concurrent rendering allows React to work on multiple tasks simultaneously. It can pause an in-progress render, handle a more urgent update (like a keypress), then resume the original render — all without the user seeing an inconsistent UI."
+  },
+  {
+    topic: "React",
+    q: "What is the difference between a controlled and uncontrolled input in React?",
+    opts: ["Controlled uses refs; uncontrolled uses state","Controlled: value driven by React state; Uncontrolled: value managed by DOM via ref","Controlled: class component; Uncontrolled: function component","There is no practical difference"],
+    ans: 1,
+    exp: "A controlled input has its value set by React state and updates via onChange. An uncontrolled input stores its value in the DOM itself; you access it via ref.current.value when needed. Controlled inputs give you full control over the input's behavior."
+  },
+  {
+    topic: "React",
+    q: "What does <code>React.cloneElement</code> do?",
+    opts: ["Creates a deep copy of a component","Clones a React element and allows you to modify or add props","Duplicates a DOM node","Copies a component's state"],
+    ans: 1,
+    exp: "React.cloneElement(element, [props], [...children]) clones and returns a new React element using the original as a starting point. The new props are shallowly merged. It's useful in compound component patterns to inject props into children."
+  },
+  {
+    topic: "React",
+    q: "What is the <code>useTransition</code> hook?",
+    opts: ["An animation hook for CSS transitions","Returns [isPending, startTransition] to mark non-urgent state updates as transitions","Manages page transitions in React Router","Animates component mount/unmount"],
+    ans: 1,
+    exp: "useTransition returns [isPending, startTransition]. Wrapping a state update in startTransition marks it as non-urgent. isPending is true while React is preparing the transition, allowing you to show loading indicators without hiding the current UI."
+  },
+  {
+    topic: "React",
+    q: "Why should you avoid using array indices as <code>key</code> props?",
+    opts: ["It's a performance issue","If items reorder, React may reuse wrong component state and cause bugs","Indices are not unique","React doesn't allow numeric keys"],
+    ans: 1,
+    exp: "Using array indices as keys is problematic when the list can reorder, filter, or have items prepended. React uses keys to match components between renders — if the order changes, a key that was index 0 now refers to a different item, causing incorrect state reuse."
+  },
+  {
+    topic: "React",
+    q: "What is the purpose of the <code>displayName</code> property on a React component?",
+    opts: ["Sets the title bar text","Used by React DevTools and error messages to identify the component","Sets accessible names","Required for HoC patterns"],
+    ans: 1,
+    exp: "Setting displayName on a component (e.g. wrapping function or class) provides a human-readable name used in React DevTools and error messages. Helpful when component names are mangled in production or when using HOCs."
+  },
+  {
+    topic: "React",
+    q: "What is <code>React.Fragment</code> used for?",
+    opts: ["To create re-usable component groups","To group multiple elements without adding extra DOM nodes","To wrap asynchronous components","To create portal containers"],
+    ans: 1,
+    exp: "React.Fragment (or <>...</>) lets you group multiple children elements without adding an extra DOM wrapper element. This keeps the rendered HTML cleaner and avoids unnecessary div wrappers."
+  },
+  {
+    topic: "React",
+    q: "In React, what is 'lifting state up'?",
+    opts: ["Using Redux to centralize state","Moving shared state to the nearest common ancestor component","Using Context to lift state globally","A performance optimization pattern"],
+    ans: 1,
+    exp: "Lifting state up means moving state from individual child components to their closest common ancestor when multiple siblings need to share or coordinate that state. The ancestor then passes the state and handlers as props."
+  },
+  {
+    topic: "React",
+    q: "What does the <code>use</code> hook (React 19+) do?",
+    opts: ["It's a shorthand for useState","Reads the value of a resource like a Promise or Context — allows async inside render","Replaces all other hooks","Creates a new Context"],
+    ans: 1,
+    exp: "The use() hook (available in React 19) can read the value of a Promise or Context directly in a component body. When a Promise is passed, it suspends the component until the promise resolves — enabling async in render with Suspense boundaries."
+  },
+  {
+    topic: "React",
+    q: "What is the difference between <code>React.Component</code> and <code>React.PureComponent</code>?",
+    opts: ["PureComponent is for functional components","PureComponent implements shouldComponentUpdate with a shallow prop and state comparison","PureComponent skips all re-renders","PureComponent is deprecated"],
+    ans: 1,
+    exp: "React.PureComponent automatically implements shouldComponentUpdate with a shallow comparison of props and state. If neither has changed shallowly, it skips re-rendering. React.Component always re-renders when setState is called."
+  },
+
+  // ────────── NEXT.JS (Q51–90) ──────────
+  {
+    topic: "Next.js",
+    q: "What is the difference between <code>getStaticProps</code> and <code>getServerSideProps</code> in Next.js Pages Router?",
+    opts: ["getStaticProps is async; getServerSideProps is sync","getStaticProps runs at build time; getServerSideProps runs on every request","getStaticProps requires a database; getServerSideProps does not","They are identical"],
+    ans: 1,
+    exp: "getStaticProps runs at build time (SSG) to fetch data and bake it into static HTML. getServerSideProps runs on every incoming request (SSR) to fetch fresh data per request. The choice depends on data freshness requirements."
+  },
+  {
+    topic: "Next.js",
+    q: "What is Incremental Static Regeneration (ISR) in Next.js?",
+    opts: ["Lazy loading of static pages","Updating static pages after deployment at a specified interval without full rebuilds","Serving different static pages to different users","A cache invalidation strategy"],
+    ans: 1,
+    exp: "ISR allows you to update static pages after the initial build by specifying a revalidate interval in getStaticProps. After the interval, the next request triggers a background regeneration of the page while serving the cached version."
+  },
+  {
+    topic: "Next.js",
+    q: "In Next.js App Router, what is a Server Component?",
+    opts: ["A component that runs on the server only during SSR","A component that renders on the server by default and can't use hooks, browser APIs, or event handlers","A component in the /api directory","A component that fetches from a server"],
+    ans: 1,
+    exp: "Server Components (React Server Components) render exclusively on the server. They have zero client-side JS, can directly access databases/filesystems, but cannot use browser APIs, React hooks, or event handlers. In Next.js App Router, all components are Server Components by default."
+  },
+  {
+    topic: "Next.js",
+    q: "How do you make a component a Client Component in Next.js App Router?",
+    opts: ["Export it as default from a /client directory","Add 'use client' directive at the top of the file","Import it inside a client-side route","Add client: true to the component props"],
+    ans: 1,
+    exp: "Adding 'use client' at the top of a file (before any imports) marks that file and all its descendants as a Client Component boundary. These components run on both server and client and can use hooks and browser APIs."
+  },
+  {
+    topic: "Next.js",
+    q: "What is the purpose of <code>next/image</code>?",
+    opts: ["A CDN for images","Automatic image optimization: lazy loading, size optimization, WebP conversion, preventing layout shift","A component for creating image galleries","It imports images from external URLs only"],
+    ans: 1,
+    exp: "The Next.js Image component automatically optimizes images — it serves modern formats like WebP/AVIF, lazy loads by default, prevents Cumulative Layout Shift (CLS) by reserving space, and resizes images for each device."
+  },
+  {
+    topic: "Next.js",
+    q: "What is the App Router in Next.js 13+?",
+    opts: ["A client-side router library","A new routing paradigm based on the file system inside the /app directory, supporting React Server Components, layouts, and streaming","The same as the Pages Router with a new name","A routing solution that replaces React Router"],
+    ans: 1,
+    exp: "The App Router introduced in Next.js 13 is a new file-system based router using the /app directory. It enables React Server Components, nested layouts, server-side streaming, and improved data fetching patterns — a fundamental shift from Pages Router."
+  },
+  {
+    topic: "Next.js",
+    q: "What does the <code>loading.js</code> file do in Next.js App Router?",
+    opts: ["Configures webpack loading rules","Creates an automatic loading UI using Suspense that shows while a route segment loads","Handles HTTP loading states for fetch calls","Provides a custom 404 page"],
+    ans: 1,
+    exp: "In App Router, creating a loading.js file in a route segment automatically wraps the page in a Suspense boundary. The loading UI is shown immediately while the page component loads, enabling streaming without manual Suspense setup."
+  },
+  {
+    topic: "Next.js",
+    q: "How does Next.js handle dynamic routes in the App Router?",
+    opts: ["Via query strings only","Using folder names with square brackets like [id] or [...slug]","Via a routes.config.js file","Using React Router's dynamic segments"],
+    ans: 1,
+    exp: "Dynamic routes use square bracket notation: [id] for a single dynamic segment, [slug] for named params, [...slug] for catch-all routes, and [[...slug]] for optional catch-all. These become params passed to page components."
+  },
+  {
+    topic: "Next.js",
+    q: "What is the purpose of <code>generateStaticParams</code> in App Router?",
+    opts: ["Generates random parameters","Statically generates a list of paths at build time for dynamic routes, replacing getStaticPaths","Validates route parameters","Generates metadata for pages"],
+    ans: 1,
+    exp: "generateStaticParams is the App Router equivalent of getStaticPaths. It returns an array of parameter objects used to pre-render dynamic route segments at build time, enabling fully static generation for dynamic routes."
+  },
+  {
+    topic: "Next.js",
+    q: "What are Route Handlers in Next.js App Router?",
+    opts: ["Middleware functions","API endpoints defined as route.ts/route.js files that replace the /api directory pattern","Custom 404/500 handlers","Functions to handle navigation events"],
+    ans: 1,
+    exp: "Route Handlers are defined in route.ts/route.js files within the /app directory. They let you create API endpoints using standard Web Request/Response APIs. They replace Next.js's old /pages/api/* pattern."
+  },
+  {
+    topic: "Next.js",
+    q: "What is Middleware in Next.js?",
+    opts: ["Server-side functions in route handlers","Code that runs before a request is completed, allowing you to rewrite, redirect, or modify requests at the edge","A function that runs inside every component","An alternative to getServerSideProps"],
+    ans: 1,
+    exp: "Next.js Middleware runs at the edge before a request is processed. It can rewrite, redirect, add headers, or modify requests. Defined in middleware.ts at the root, it's ideal for auth, A/B testing, and geo-routing."
+  },
+  {
+    topic: "Next.js",
+    q: "How does Next.js data caching work in App Router?",
+    opts: ["There is no built-in caching","fetch() calls are extended with cache options (force-cache, no-store) and can be tagged for revalidation via unstable_cache","Data is always cached in localStorage","All Server Component fetches are cached permanently"],
+    ans: 1,
+    exp: "Next.js extends the native fetch() API with caching semantics. By default, Server Component fetch calls are cached (force-cache). You can use no-store for no caching, revalidate for time-based ISR, or next.tags for on-demand revalidation with revalidateTag()."
+  },
+  {
+    topic: "Next.js",
+    q: "What is a Server Action in Next.js?",
+    opts: ["A server-side API endpoint","An async function marked with 'use server' that runs on the server and can be called from client or server components, enabling form mutations without API routes","A middleware function","A cron job in Vercel"],
+    ans: 1,
+    exp: "Server Actions are async functions that run on the server. Marked with 'use server', they can be called from Client or Server Components. They're ideal for form submissions, database writes, and mutations — replacing the need for API routes in many cases."
+  },
+  {
+    topic: "Next.js",
+    q: "What does <code>next/link</code> do differently from a regular <code>&lt;a&gt;</code> tag?",
+    opts: ["It opens links in a new tab","It enables client-side navigation between routes without full page reloads, and prefetches pages on hover","It adds tracking parameters to URLs","It validates URLs before navigation"],
+    ans: 1,
+    exp: "next/link provides client-side navigation using the browser's History API, avoiding full page reloads. It also prefetches linked pages in the background when they enter the viewport, dramatically improving perceived navigation speed."
+  },
+  {
+    topic: "Next.js",
+    q: "What is the purpose of <code>layout.js</code> in Next.js App Router?",
+    opts: ["To define page-level styles","To create shared UI that wraps child routes, preserving state across route changes","To export page metadata","To define route-level middleware"],
+    ans: 1,
+    exp: "layout.js defines UI that is shared across multiple pages. Unlike templates, layouts preserve their state and don't re-render when navigating between child routes. The root layout is required and replaces _app.js and _document.js."
+  },
+  {
+    topic: "Next.js",
+    q: "How do you generate dynamic <code>&lt;head&gt;</code> metadata in Next.js App Router?",
+    opts: ["Using next/head inside the page component","Exporting a metadata object or generateMetadata function from page.tsx","Using a MetaTags component","Adding it to _document.js"],
+    ans: 1,
+    exp: "In App Router, you export a static metadata object or an async generateMetadata() function from page.tsx or layout.tsx. Next.js automatically handles deduplication and merging of metadata down the tree."
+  },
+  {
+    topic: "Next.js",
+    q: "What is the difference between <code>redirect()</code> and <code>permanentRedirect()</code> in Next.js?",
+    opts: ["They are identical","redirect() sends 307 (temporary); permanentRedirect() sends 308 (permanent) — both work in Server Components and Route Handlers","redirect() works client-side; permanentRedirect() works server-side","redirect() replaces the URL; permanentRedirect() adds to history"],
+    ans: 1,
+    exp: "redirect() returns a 307 Temporary Redirect, telling browsers and search engines the move is temporary. permanentRedirect() returns 308, indicating the resource has permanently moved. SEO implications differ: 308 passes link equity."
+  },
+  {
+    topic: "Next.js",
+    q: "What is Parallel Routing in Next.js App Router?",
+    opts: ["Running multiple API requests in parallel","Rendering multiple pages simultaneously in the same layout using slots (e.g. @slot folders)","A pattern for A/B testing routes","Loading route segments in parallel"],
+    ans: 1,
+    exp: "Parallel Routes use named slots (@folderName) to simultaneously render multiple pages within the same layout. Useful for dashboards, modals, split views — each slot can have its own loading and error states."
+  },
+  {
+    topic: "Next.js",
+    q: "What is Intercepting Routes in Next.js App Router?",
+    opts: ["Blocking unauthorized route access","Showing a route's content in a different context (e.g. opening /photo/5 in a modal while keeping the current page)","Catching route errors","Using middleware to intercept requests"],
+    ans: 1,
+    exp: "Intercepting routes (using (.) or (..) conventions) allow you to load a route's content within a different layout context, like opening a photo in a modal overlay while keeping the background page active. Navigating directly to the URL shows the full page."
+  },
+  {
+    topic: "Next.js",
+    q: "What is <code>useRouter</code> used for in Next.js App Router?",
+    opts: ["Reading current route params","Programmatic navigation (push, replace, refresh, back, forward) from Client Components","Replacing Link component","Accessing server-side route data"],
+    ans: 1,
+    exp: "In App Router, useRouter() from 'next/navigation' provides programmatic navigation methods. Note: it no longer provides query/params — use useSearchParams() and useParams() instead. useRouter in App Router is a client-side only hook."
+  },
+  {
+    topic: "Next.js",
+    q: "What is <code>getStaticPaths</code> (Pages Router) and what does <code>fallback: 'blocking'</code> mean?",
+    opts: ["It pre-generates all pages; fallback blocking causes a 404","It returns paths to pre-render; fallback blocking SSR-renders non-pre-rendered paths on first request, then caches","It returns paths to skip; blocking prevents builds","It's deprecated in all Next.js versions"],
+    ans: 1,
+    exp: "getStaticPaths specifies which dynamic paths to pre-render at build time. With fallback: 'blocking', paths not pre-rendered will be server-side rendered on first request and the result cached as a static page — no loading state shown to user."
+  },
+  {
+    topic: "Next.js",
+    q: "What does <code>next.config.js</code> configure?",
+    opts: ["React component props","Next.js behavior: env variables, redirects, rewrites, image domains, webpack customization, headers, etc.","TypeScript settings","CSS modules naming"],
+    ans: 1,
+    exp: "next.config.js is Next.js's configuration file. It configures environment variables, redirects, URL rewrites, custom HTTP headers, image optimization domains, webpack, experimental features, and much more."
+  },
+  {
+    topic: "Next.js",
+    q: "How does Next.js handle environment variables?",
+    opts: ["All env vars are public by default","NEXT_PUBLIC_ prefix makes vars available to the browser; others are server-only. .env.local overrides all","Env vars must be defined in next.config.js","All env vars require next/env to be accessed"],
+    ans: 1,
+    exp: "Next.js reads .env files and exposes variables prefixed with NEXT_PUBLIC_ to the browser (inlined at build time). Variables without this prefix are only available in server-side code. .env.local is for local development overrides."
+  },
+  {
+    topic: "Next.js",
+    q: "What is the difference between <code>pages/_app.js</code> and <code>pages/_document.js</code>?",
+    opts: ["They serve the same purpose","_app.js wraps all pages (persistent layout, global state); _document.js customizes the HTML document structure (html, head, body)","_document.js wraps all pages; _app.js customizes HTML","_app.js is for SSR; _document.js is for SSG"],
+    ans: 1,
+    exp: "_app.js is the top-level React component that wraps all page components — used for persistent layouts, global CSS, and providers. _document.js runs only on the server and customizes the HTML structure (like adding fonts or lang attribute)."
+  },
+  {
+    topic: "Next.js",
+    q: "What is the <code>error.js</code> file in Next.js App Router?",
+    opts: ["A configuration file for HTTP errors","A Client Component that defines an error boundary for a route segment, catching runtime errors and showing a recovery UI","A server-side error logger","A TypeScript type file"],
+    ans: 1,
+    exp: "error.js creates an Error Boundary for its route segment. It must be a Client Component (it receives the error object). When an error occurs in a segment, error.js shows a fallback UI with a reset() function to attempt recovery."
+  },
+  {
+    topic: "Next.js",
+    q: "What does <code>revalidatePath()</code> do in Next.js?",
+    opts: ["Validates route parameters","On-demand invalidates the cached data for a specific path, triggering regeneration on next request","Reloads the current page","Validates form inputs on a path"],
+    ans: 1,
+    exp: "revalidatePath() allows on-demand invalidation of the Next.js cache for a specific URL path. When called (e.g., in a Server Action), the cache for that path is purged and the next request triggers a fresh render."
+  },
+  {
+    topic: "Next.js",
+    q: "How does <code>next/font</code> improve performance?",
+    opts: ["It serves fonts from Google CDN","It downloads fonts at build time, self-hosts them, eliminates external network requests for fonts, and prevents layout shift with automatic font-display settings","It converts fonts to SVG","It lazy loads all fonts"],
+    ans: 1,
+    exp: "next/font automatically optimizes fonts by self-hosting them at build time. No external requests are made to Google Fonts at runtime, improving privacy and performance. It automatically applies font-display: swap and inlines font CSS to eliminate layout shift."
+  },
+  {
+    topic: "Next.js",
+    q: "What is Streaming in Next.js App Router?",
+    opts: ["WebSocket-based real-time updates","Progressively sending chunks of HTML from the server to the client, allowing parts of the page to render before all data is ready","Streaming media files","Real-time data fetching"],
+    ans: 1,
+    exp: "Streaming lets Next.js break the server HTML into chunks and progressively send them. With Suspense boundaries, parts of the page can be shown immediately while slower data-fetching components load, dramatically improving Time to First Byte (TTFB)."
+  },
+  {
+    topic: "Next.js",
+    q: "What is <code>notFound()</code> in Next.js App Router?",
+    opts: ["Returns null to render nothing","Throws a Next.js Not Found error that renders the nearest not-found.js boundary or default 404 page","Logs a 404 to the console","Redirects to /404"],
+    ans: 1,
+    exp: "notFound() is a function from 'next/navigation' that throws a Not Found error. Next.js catches it and renders the nearest not-found.js file. It's used in Server Components when a resource doesn't exist (e.g., a blog post with a given ID wasn't found)."
+  },
+  {
+    topic: "Next.js",
+    q: "What are React Server Components' benefits over traditional SSR?",
+    opts: ["They are faster than client components in all cases","Zero client JavaScript for server components, can access server resources directly, no useEffect for data fetching, and results can be cached at component granularity","They avoid hydration entirely","They eliminate the need for any state management"],
+    ans: 1,
+    exp: "RSC advantages: zero JS bundle contribution from server components, direct access to databases/file system, no waterfall fetching with useEffect, granular component-level caching, and smaller client payloads. Hydration still happens for Client Components."
+  },
+  {
+    topic: "Next.js",
+    q: "What is <code>template.js</code> vs <code>layout.js</code> in App Router?",
+    opts: ["They are the same","layout.js persists state between navigations; template.js creates a fresh instance on every navigation (useful for enter/exit animations or analytics)","template.js is for pages only; layout.js is for segments","template.js is a TypeScript template"],
+    ans: 1,
+    exp: "Unlike layout.js which persists across navigations (preserving state), template.js creates a new instance for each child route. This means effects re-run and state resets on navigation — useful for page transition animations or logging page views."
+  },
+  {
+    topic: "Next.js",
+    q: "In Next.js, what is the purpose of <code>unstable_cache</code>?",
+    opts: ["A buggy cache API to avoid","Caches the result of a function on the server, allowing non-fetch calls (like database queries) to benefit from Next.js's data cache","Caches client-side data","Caches static assets"],
+    ans: 1,
+    exp: "unstable_cache wraps any async server function (like a DB query) in Next.js's Data Cache. It supports tags for revalidateTag() invalidation and time-based revalidation — extending ISR-style caching beyond just fetch() calls."
+  },
+  {
+    topic: "Next.js",
+    q: "How do you share state between a Server Component and a Client Component in Next.js?",
+    opts: ["Via window globals","Server Components pass serializable props to Client Components; they cannot share mutable state — Client Components own all interactive state","Via a shared database","Via Context Provider in Server Components"],
+    ans: 1,
+    exp: "Server Components can pass serializable data (strings, numbers, objects) as props to Client Components. They cannot share React state or context directly — Server Components don't have access to these. The data flows one-way: server → client via props."
+  },
+  {
+    topic: "Next.js",
+    q: "What is the purpose of the <code>public</code> folder in Next.js?",
+    opts: ["Server-side API files","Static assets served from the root URL path at /filename without any processing","Configuration files","Database files"],
+    ans: 1,
+    exp: "Files in the /public directory are served statically from the root URL. For example, /public/logo.png is accessible at /logo.png. These files are not processed by webpack and are ideal for favicons, robots.txt, and static images."
+  },
+  {
+    topic: "Next.js",
+    q: "What is Next.js's approach to CSS in App Router?",
+    opts: ["Only CSS Modules are supported","CSS Modules, Tailwind CSS, global CSS (in layout), CSS-in-JS (with caveats), and Sass are supported","Only inline styles work","CSS must be in _app.js"],
+    ans: 1,
+    exp: "Next.js App Router supports multiple styling approaches: CSS Modules (.module.css) for component-scoped styles, Global CSS imported in root layout, Tailwind CSS, Sass, and CSS-in-JS libraries (though many need client-side runtime and special setup for RSC compatibility)."
+  },
+  {
+    topic: "Next.js",
+    q: "What is the difference between <code>usePathname</code>, <code>useParams</code>, and <code>useSearchParams</code> in App Router?",
+    opts: ["They are identical","usePathname: current URL path; useParams: dynamic segment values; useSearchParams: query string parameters","useParams includes query strings","usePathname is server-side only"],
+    ans: 1,
+    exp: "In Next.js App Router: usePathname() returns the current URL pathname (e.g., '/blog/123'). useParams() returns dynamic route params (e.g., { id: '123' }). useSearchParams() returns URL query parameters as a URLSearchParams object. All are client-side hooks."
+  },
+  {
+    topic: "Next.js",
+    q: "What happens when you throw an error in a Next.js Server Action?",
+    opts: ["The app crashes","The error is sent to the client — but for security, only production errors should use user-safe messages. Use error.message carefully","Server Actions cannot throw errors","The error is silently swallowed"],
+    ans: 1,
+    exp: "Errors thrown in Server Actions are caught by the nearest error.js boundary on the client. The actual error object isn't sent to the client in production (for security). Instead, you should return error information explicitly or use error boundaries."
+  },
+  {
+    topic: "Next.js",
+    q: "What is <code>next/headers</code> used for?",
+    opts: ["Setting HTTP cache headers","Accessing request cookies and headers inside Server Components, Server Actions, and Route Handlers","Configuring security headers","Modifying response headers globally"],
+    ans: 1,
+    exp: "next/headers provides cookies() and headers() functions to read incoming request headers and cookies in Server Components, Server Actions, and Route Handlers. They're read-only in Server Components; you can set cookies in Server Actions."
+  },
+  {
+    topic: "Next.js",
+    q: "What does <code>draftMode()</code> do in Next.js?",
+    opts: ["Enables beta features","Enables Draft Mode, bypassing static caching to show unpublished CMS content during preview","Sets the environment to development","A placeholder for feature flags"],
+    ans: 1,
+    exp: "Draft Mode (previously Preview Mode) allows content editors to see unpublished content from a CMS. When enabled, Next.js bypasses the static cache and renders pages with fresh data. You enable it via a Route Handler that sets a cookie."
+  },
+
+  // ────────── BROWSER DOM & WEB APIs (Q91–130) ──────────
+  {
+    topic: "DOM",
+    q: "What is the difference between <code>event.target</code> and <code>event.currentTarget</code>?",
+    opts: ["They always refer to the same element","target is the element that triggered the event; currentTarget is the element the event listener is attached to","target is the parent; currentTarget is the child","currentTarget is only set during bubbling"],
+    ans: 1,
+    exp: "event.target is the element that originally triggered the event (where it happened). event.currentTarget is the element to which the event handler is attached. They can differ during event bubbling when a handler on an ancestor catches an event from a descendant."
+  },
+  {
+    topic: "DOM",
+    q: "What is event delegation?",
+    opts: ["Delegating events to a service worker","Attaching a single event listener to a parent element to handle events from all its descendants, using event bubbling","Passing events between components","Preventing default browser behavior"],
+    ans: 1,
+    exp: "Event delegation leverages event bubbling to handle events at a higher level in the DOM tree. Instead of attaching listeners to many child elements, you attach one to a parent and check event.target to determine which child triggered it. Efficient for dynamic lists."
+  },
+  {
+    topic: "DOM",
+    q: "What is the difference between <code>stopPropagation</code> and <code>preventDefault</code>?",
+    opts: ["They are identical","stopPropagation stops the event from bubbling up the DOM; preventDefault stops the browser's default action (like form submit or link navigation)","stopPropagation prevents re-renders; preventDefault stops async calls","preventDefault only works on keyboard events"],
+    ans: 1,
+    exp: "stopPropagation() prevents the event from bubbling up (or capturing down) the DOM tree. preventDefault() prevents the browser's default behavior for that event (e.g., preventing form submission, preventing a link from navigating). They're independent."
+  },
+  {
+    topic: "DOM",
+    q: "What is the DOM event lifecycle order?",
+    opts: ["Bubbling → Target → Capture","Capture (top-down) → Target → Bubbling (bottom-up)","Target → Capture → Bubbling","Bubbling → Capture → Target"],
+    ans: 1,
+    exp: "DOM events follow three phases: Capture phase (event travels from window down to the target's parent), Target phase (event reaches the target element), Bubbling phase (event bubbles back up from target to window). addEventListener's third argument controls capture vs bubble listener."
+  },
+  {
+    topic: "DOM",
+    q: "What does <code>requestAnimationFrame</code> do?",
+    opts: ["Runs a function after a set delay","Schedules a function to run before the browser's next repaint, used for smooth 60fps animations","Creates a CSS animation","Runs code on the GPU thread"],
+    ans: 1,
+    exp: "requestAnimationFrame (rAF) tells the browser to call a function before the next repaint. It's synchronized with the display refresh rate (~60fps), providing smooth animations and avoiding unnecessary work when the page isn't visible. It's better than setTimeout for animations."
+  },
+  {
+    topic: "DOM",
+    q: "What is the difference between <code>localStorage</code>, <code>sessionStorage</code>, and cookies?",
+    opts: ["They all store data the same way","localStorage: persists indefinitely, 5-10MB; sessionStorage: per-tab session, 5MB; cookies: sent with requests, expire, ~4KB, configurable scope","localStorage is server-side; cookies are client-side","sessionStorage syncs across tabs"],
+    ans: 1,
+    exp: "localStorage persists data with no expiry across sessions (~5-10MB). sessionStorage is cleared when the tab/window closes (~5MB). Cookies are sent with every HTTP request, have expiry dates, can be scoped to domains/paths, and are only ~4KB — used for auth tokens and server communication."
+  },
+  {
+    topic: "DOM",
+    q: "What is the Mutation Observer API used for?",
+    opts: ["Watching state mutations in Redux","Observing changes to the DOM tree (node additions/removals, attribute changes, text changes) asynchronously","Tracking component re-renders","Monitoring network mutations"],
+    ans: 1,
+    exp: "MutationObserver provides an asynchronous callback when observed DOM nodes change — including added/removed children, attribute changes, and text content changes. It's more efficient than polling and replaced the deprecated Mutation Events."
+  },
+  {
+    topic: "DOM",
+    q: "What is the difference between <code>innerHTML</code>, <code>textContent</code>, and <code>innerText</code>?",
+    opts: ["They are interchangeable","innerHTML parses/gets HTML; textContent gets/sets raw text (ignoring CSS, faster); innerText gets rendered text (respects CSS visibility, causes reflow)","textContent includes HTML tags","innerText is for input elements only"],
+    ans: 1,
+    exp: "innerHTML gets/sets HTML content (security risk: XSS if used with user input). textContent gets/sets raw text without HTML parsing (no XSS risk, faster, ignores styling). innerText returns only visible text (honors CSS display:none), triggers layout reflow."
+  },
+  {
+    topic: "DOM",
+    q: "What does <code>getBoundingClientRect()</code> return?",
+    opts: ["The element's computed styles","A DOMRect with the element's size and position relative to the viewport","The element's position relative to the document","Only the element's width and height"],
+    ans: 1,
+    exp: "getBoundingClientRect() returns a DOMRect object with properties: top, left, bottom, right, width, height, x, y — all relative to the viewport. It forces a layout/reflow, so use sparingly. For absolute position, add window.scrollX/scrollY."
+  },
+  {
+    topic: "DOM",
+    q: "What is the Intersection Observer API?",
+    opts: ["Observes DOM mutations","Asynchronously observes when a target element enters or exits the viewport (or another element), used for lazy loading and infinite scroll","Detects element overlapping","Monitors network intersections"],
+    ans: 1,
+    exp: "IntersectionObserver asynchronously detects when elements enter/exit the viewport or another specified root. It's ideal for lazy loading images, implementing infinite scroll, triggering animations on scroll, and tracking ad visibility — without causing scroll event performance issues."
+  },
+  {
+    topic: "DOM",
+    q: "What is the difference between <code>clientWidth</code>/<code>offsetWidth</code>/<code>scrollWidth</code>?",
+    opts: ["They are identical","clientWidth: content + padding; offsetWidth: content + padding + border + scrollbar; scrollWidth: full scrollable content width including overflow","clientWidth includes margin; offsetWidth does not","scrollWidth is always equal to offsetWidth"],
+    ans: 1,
+    exp: "clientWidth = content width + padding (no border, scrollbar). offsetWidth = content + padding + border + scrollbar width. scrollWidth = full width of content including parts hidden by overflow. Used for detecting scrollability: scrollWidth > clientWidth."
+  },
+  {
+    topic: "DOM",
+    q: "What is the Shadow DOM?",
+    opts: ["The server-rendered DOM","An encapsulated DOM subtree attached to an element, providing style and markup encapsulation — the foundation of Web Components","A read-only copy of the DOM","A virtual DOM implementation"],
+    ans: 1,
+    exp: "Shadow DOM provides encapsulation by attaching a hidden DOM subtree (shadow tree) to an element. Styles inside the shadow tree don't leak out, and external styles don't leak in (by default). It's the foundation for creating custom elements/web components."
+  },
+  {
+    topic: "DOM",
+    q: "What does <code>CustomEvent</code> allow you to do?",
+    opts: ["Extend native browser events with new properties","Create and dispatch custom DOM events with custom data via the detail property","Register event listeners","Prevent native events from firing"],
+    ans: 1,
+    exp: "CustomEvent lets you create custom DOM events with a name and optional detail data payload (new CustomEvent('my-event', { detail: { data }, bubbles: true })). Dispatch with element.dispatchEvent(). Useful for component communication in vanilla JS."
+  },
+  {
+    topic: "DOM",
+    q: "What is the Web Workers API?",
+    opts: ["A multi-threading API for the browser","Runs JavaScript in a background thread separate from the main thread, enabling CPU-intensive tasks without blocking UI","A service for running server code","CSS worker threads"],
+    ans: 1,
+    exp: "Web Workers run JS in a background thread with no access to DOM. They communicate with the main thread via postMessage()/onmessage. Ideal for heavy computation (parsing, encryption, image processing) that would otherwise freeze the UI."
+  },
+  {
+    topic: "DOM",
+    q: "What is a Service Worker?",
+    opts: ["A Web Worker variant for services","A script running in the background that intercepts network requests, enables offline caching (PWA), push notifications, and background sync","A server-side worker","A component that manages API calls"],
+    ans: 1,
+    exp: "Service Workers are a type of Web Worker that act as a proxy between the browser and network. They can intercept and cache requests (enabling offline PWAs), handle push notifications, and perform background sync. They run on HTTPS only (except localhost)."
+  },
+  {
+    topic: "DOM",
+    q: "What is the Fetch API and how does it differ from XMLHttpRequest?",
+    opts: ["They are identical","Fetch uses Promises and a cleaner API, supports streams, and separates concerns (headers, body, status); XHR uses callbacks and is more complex","Fetch only works for JSON","XHR is faster"],
+    ans: 1,
+    exp: "The Fetch API is a modern replacement for XHR. It uses Promises, has a cleaner API with separate Request/Response/Headers objects, supports ReadableStreams for streaming responses, and works with async/await. XHR uses callbacks and event listeners."
+  },
+  {
+    topic: "DOM",
+    q: "What is <code>AbortController</code> used for?",
+    opts: ["Stopping JavaScript execution","Cancelling ongoing fetch requests or other async operations by signaling an AbortSignal","Aborting Service Workers","Stopping event propagation"],
+    ans: 1,
+    exp: "AbortController creates an AbortSignal that you pass to fetch() (and other async ops). Calling controller.abort() cancels the fetch, causing the promise to reject with an AbortError. Essential for cleanup in React useEffect to cancel stale requests."
+  },
+  {
+    topic: "DOM",
+    q: "What is the difference between <code>setTimeout</code> and <code>queueMicrotask</code>?",
+    opts: ["Both are identical","setTimeout schedules a macro-task (runs after all microtasks and paint); queueMicrotask schedules a microtask (runs at end of current task, before the next macro-task)","queueMicrotask is browser-only","setTimeout is always async; queueMicrotask is sync"],
+    ans: 1,
+    exp: "Microtasks (queueMicrotask, Promise.then) run immediately after the current synchronous task completes, before the browser paints or processes other macro-tasks. setTimeout schedules a macro-task, running after all microtasks. Microtask queue is drained completely before any macro-task runs."
+  },
+  {
+    topic: "DOM",
+    q: "What is the Web Storage API's storage limit, and what happens when it's exceeded?",
+    opts: ["1MB, data is silently dropped","~5-10MB per origin; exceeding it throws a QuotaExceededError (DOMException)","Unlimited storage","Storage is reduced automatically"],
+    ans: 1,
+    exp: "Web Storage (localStorage/sessionStorage) has a limit of approximately 5-10MB per origin, varying by browser. When the quota is exceeded, setting an item throws a QuotaExceededError. Always wrap writes in try-catch for resilience."
+  },
+  {
+    topic: "DOM",
+    q: "What is the History API?",
+    opts: ["A record of past page loads","An API providing pushState(), replaceState(), and popstate event to programmatically navigate and manipulate browser history without page reloads","A database of browser history","An API to read browser bookmarks"],
+    ans: 1,
+    exp: "The History API (window.history) allows SPAs to manipulate the browser URL and history stack without page reloads. pushState() adds a new entry, replaceState() modifies the current entry, and the popstate event fires when navigating back/forward."
+  },
+  {
+    topic: "DOM",
+    q: "What is the difference between <code>document.querySelector</code> and <code>document.getElementById</code>?",
+    opts: ["They are identical","querySelector accepts any CSS selector and is more versatile; getElementById is limited to IDs but is faster","getElementById can return multiple elements","querySelector only works on IDs"],
+    ans: 1,
+    exp: "getElementById accepts only an ID string and is optimized/fast. querySelector accepts any valid CSS selector (#id, .class, tag, [attr], and complex selectors) but is slightly slower. querySelectorAll returns all matching NodeList; getElementsByTagName/ClassName return live HTMLCollections."
+  },
+  {
+    topic: "DOM",
+    q: "What is the Resize Observer API?",
+    opts: ["Observes changes to window dimensions","Observes changes to an element's size (content rect dimensions) and fires a callback, replacing layout-triggering resize event hacks","Monitors CSS resize property","Tracks font size changes"],
+    ans: 1,
+    exp: "ResizeObserver notifies when an element's content rect size changes. It's more efficient than listening to window resize events and polling element dimensions, and it works for element-level size changes regardless of cause (font change, CSS change, parent resize)."
+  },
+  {
+    topic: "DOM",
+    q: "What is a DocumentFragment?",
+    opts: ["A separate HTML document","A lightweight container to group DOM nodes in memory before inserting them into the DOM in a single operation, minimizing reflows","A type of web component","A read-only snapshot of the DOM"],
+    ans: 1,
+    exp: "DocumentFragment is a minimal DOM node that exists in memory without being part of the main DOM. You can append many child nodes to it, then append the fragment to the DOM in one operation — triggering only one reflow/repaint instead of many."
+  },
+  {
+    topic: "DOM",
+    q: "What is the Page Visibility API used for?",
+    opts: ["Hiding sensitive content from users","Detecting when a page is visible or hidden (e.g., tab switching), used to pause/resume expensive operations or analytics","Controlling element visibility","A privacy tool"],
+    ans: 1,
+    exp: "The Page Visibility API provides document.visibilityState ('visible'/'hidden') and a visibilitychange event. It's used to pause videos, timers, polling, or animations when the user switches tabs, saving resources and improving performance."
+  },
+  {
+    topic: "DOM",
+    q: "What is the Broadcast Channel API?",
+    opts: ["A server push notification API","Enables communication between same-origin browser contexts (tabs, windows, iframes) using a shared named channel","A WebSocket alternative","A pub-sub system for React components"],
+    ans: 1,
+    exp: "BroadcastChannel allows same-origin browsing contexts (tabs, iframes, workers) to send messages to each other. Unlike postMessage (which requires a reference), any context listening on the same channel name receives the message — useful for syncing auth state across tabs."
+  },
+  {
+    topic: "DOM",
+    q: "What is the <code>structuredClone</code> function?",
+    opts: ["A deep copy utility for React state","A native browser/Node function that creates a deep clone of a JavaScript value, supporting complex types like Map, Set, Date, RegExp — unlike JSON.parse(JSON.stringify())","A shallow clone utility","A serialization utility"],
+    ans: 1,
+    exp: "structuredClone() creates a deep clone using the structured clone algorithm, which handles circular references and complex types (Map, Set, Date, RegExp, ArrayBuffer) that JSON.parse/stringify cannot. Available in modern browsers and Node 17+."
+  },
+  {
+    topic: "DOM",
+    q: "What is the Clipboard API?",
+    opts: ["Manages the OS clipboard globally","Provides async access to the clipboard (navigator.clipboard.readText/writeText/read/write) for reading and writing text and rich content, requires user permission","Monitors clipboard changes","A legacy API that should be avoided"],
+    ans: 1,
+    exp: "The Clipboard API (navigator.clipboard) provides promise-based async access to read and write text and other data. writeText()/write() require the page to be focused; readText()/read() may need explicit user permission. It replaces the older document.execCommand('copy')."
+  },
+  {
+    topic: "DOM",
+    q: "What is the Web Crypto API?",
+    opts: ["A library for RSA encryption","A built-in browser API (window.crypto) for cryptographic operations: generating keys, encrypting/decrypting, signing, hashing, and generating random values","A password manager API","An authentication protocol"],
+    ans: 1,
+    exp: "The Web Crypto API (window.crypto.subtle) provides low-level cryptographic operations in the browser: key generation, encryption (AES-GCM), digital signatures, hashing (SHA-256), and key derivation (PBKDF2). window.crypto.getRandomValues() generates cryptographically secure random numbers."
+  },
+  {
+    topic: "DOM",
+    q: "What does <code>navigator.onLine</code> and the <code>online</code>/<code>offline</code> events provide?",
+    opts: ["Real-time connection quality metrics","Basic boolean online/offline status and events when connection changes; not fully reliable for detecting actual internet connectivity","Only works in mobile browsers","Checks if a specific URL is reachable"],
+    ans: 1,
+    exp: "navigator.onLine returns true/false indicating whether the browser has a network connection. The online/offline events fire on window when the status changes. Important caveat: true means connected to a network, NOT necessarily to the internet."
+  },
+  {
+    topic: "DOM",
+    q: "What is <code>requestIdleCallback</code>?",
+    opts: ["Cancels idle animations","Schedules a function to run during browser idle time (when there's no critical work), for non-essential background tasks","Runs after a fixed delay","Pauses JavaScript execution"],
+    ans: 1,
+    exp: "requestIdleCallback fires a callback during browser idle periods. It's ideal for non-critical tasks like analytics, prefetching, or cleanup that shouldn't compete with user interactions. The callback receives a deadline object to check remaining idle time. Not available in Safari."
+  },
+  {
+    topic: "DOM",
+    q: "What is the difference between <code>load</code> and <code>DOMContentLoaded</code> events?",
+    opts: ["They fire at the same time","DOMContentLoaded fires when HTML is parsed and DOM is ready (no waiting for images/styles); load fires when ALL resources (images, stylesheets, scripts) are loaded","load fires first; DOMContentLoaded second","DOMContentLoaded is deprecated"],
+    ans: 1,
+    exp: "DOMContentLoaded fires when the HTML document has been fully parsed and the DOM is built (without waiting for images, stylesheets, or subframes). window.load fires when the entire page including all dependent resources (images, stylesheets) has fully loaded."
+  },
+  {
+    topic: "DOM",
+    q: "What is the Drag and Drop API?",
+    opts: ["A CSS API for draggable elements","A set of events (dragstart, drag, dragover, dragenter, dragleave, drop, dragend) and DataTransfer API enabling drag-and-drop between elements or from the OS","A touch API for mobile dragging","A JavaScript library"],
+    ans: 1,
+    exp: "The HTML5 Drag and Drop API uses the draggable attribute on elements and events: dragstart (data set via dataTransfer.setData()), dragover (must call preventDefault() to allow drop), drop (read data via dataTransfer.getData()). The DataTransfer object carries data between source and target."
+  },
+
+  // ────────── BROWSER SECURITY (Q131–150) ──────────
+  {
+    topic: "Security",
+    q: "What is Cross-Site Scripting (XSS) and how does React prevent it?",
+    opts: ["A CSRF variant; React uses tokens","Injecting malicious scripts into web pages; React prevents it by escaping all values inserted into JSX by default (treating them as text, not HTML)","A network attack; React uses HTTPS","A cookie theft; React encrypts cookies"],
+    ans: 1,
+    exp: "XSS allows attackers to inject scripts into pages viewed by other users. React's JSX automatically escapes all string values before rendering them as DOM text nodes, preventing injection. The only way to bypass this is dangerouslySetInnerHTML — which should be used with DOMPurify sanitization."
+  },
+  {
+    topic: "Security",
+    q: "What is the Same-Origin Policy (SOP)?",
+    opts: ["A CSS inheritance rule","A browser security mechanism that restricts how documents/scripts from one origin can interact with resources from a different origin (origin = protocol + domain + port)","An HTTP caching policy","A cookie security attribute"],
+    ans: 1,
+    exp: "The Same-Origin Policy prevents malicious scripts from one origin from accessing sensitive data on another origin. Two URLs share an origin only if protocol, domain, and port all match. SOP blocks cross-origin DOM access, fetch requests, and cookie access."
+  },
+  {
+    topic: "Security",
+    q: "What is CORS and how does it work?",
+    opts: ["A caching mechanism","Cross-Origin Resource Sharing — a server-side mechanism using HTTP headers (Access-Control-Allow-Origin, etc.) to grant browsers permission to make cross-origin requests","A client-side security API","A VPN protocol"],
+    ans: 1,
+    exp: "CORS allows servers to specify who can access their resources. The server responds with Access-Control-Allow-Origin headers. For non-simple requests, browsers send a preflight OPTIONS request first. Without proper CORS headers, the browser blocks the response despite the server sending it."
+  },
+  {
+    topic: "Security",
+    q: "What is the difference between CORS preflight and simple requests?",
+    opts: ["There is no difference","Simple requests (GET/POST with safe headers/content-types) go directly; non-simple requests (custom headers, PUT/DELETE, JSON content-type) trigger a preflight OPTIONS request to check permissions first","Preflight is only for HTTPS","Simple requests require authentication"],
+    ans: 1,
+    exp: "Simple requests meet criteria: method is GET/HEAD/POST, only safe headers (Content-Type: application/x-www-form-urlencoded, multipart/form-data, text/plain). Non-simple requests (JSON body, custom headers, DELETE/PUT) trigger an OPTIONS preflight. The preflight checks CORS permission before the actual request."
+  },
+  {
+    topic: "Security",
+    q: "What is Cross-Site Request Forgery (CSRF) and how is it prevented?",
+    opts: ["An XSS variant — prevented with escaping","An attack that tricks authenticated users into submitting malicious requests; prevented with CSRF tokens, SameSite cookies, or checking Origin/Referer headers","A DDoS attack — prevented with rate limiting","A SQL injection — prevented with parameterized queries"],
+    ans: 1,
+    exp: "CSRF tricks browsers into sending authenticated requests to a different site. Defenses: CSRF tokens (synchronized pattern), SameSite=Strict/Lax cookies (prevents cross-site sending), Origin/Referer header validation, and CORS. Modern SPAs using JSON APIs are less vulnerable since browsers don't auto-send JSON."
+  },
+  {
+    topic: "Security",
+    q: "What is Content Security Policy (CSP)?",
+    opts: ["A cookie policy","An HTTP header (Content-Security-Policy) that specifies allowed sources for scripts, styles, images, etc., significantly mitigating XSS attacks","An HTTPS enforcement mechanism","A CORS variant"],
+    ans: 1,
+    exp: "CSP is an HTTP response header that tells browsers which content sources are trusted. By disallowing inline scripts and restricting script sources (e.g., Content-Security-Policy: script-src 'self'), you dramatically reduce XSS attack surfaces. Violations can be reported via report-uri."
+  },
+  {
+    topic: "Security",
+    q: "What is the <code>HttpOnly</code> cookie attribute?",
+    opts: ["Makes cookies only work over HTTP, not HTTPS","Prevents client-side JavaScript from accessing the cookie, protecting against XSS token theft","Restricts cookies to a specific HTTP method","Makes cookies expire when HTTP session ends"],
+    ans: 1,
+    exp: "The HttpOnly attribute prevents JavaScript (document.cookie) from accessing the cookie. This is crucial for session tokens — even if an XSS attack occurs, the script cannot steal HttpOnly cookies. The cookie is still sent with HTTP requests automatically."
+  },
+  {
+    topic: "Security",
+    q: "What does the <code>SameSite</code> cookie attribute do?",
+    opts: ["Restricts cookies to same protocol","Controls when cookies are sent with cross-site requests: Strict (never cross-site), Lax (GET navigations only), None (always, requires Secure)","Makes cookies only readable by same host","Encrypts cookies"],
+    ans: 1,
+    exp: "SameSite mitigates CSRF. Strict: cookie never sent cross-site. Lax: cookie sent with top-level navigation GET requests (links) but not cross-site POST/AJAX — a reasonable default. None: cookie sent in all cross-site requests (requires Secure attribute). Modern browsers default to Lax."
+  },
+  {
+    topic: "Security",
+    q: "What is Clickjacking and how is it prevented?",
+    opts: ["An XSS variant — prevented with CSP","Embedding your page in an invisible iframe to trick users into clicking on hidden elements; prevented with X-Frame-Options header or CSP frame-ancestors directive","A form of phishing — prevented with MFA","A DDoS attack"],
+    ans: 1,
+    exp: "Clickjacking overlays your page invisibly over another, tricking users into clicking your UI when they think they're clicking something else. Defenses: X-Frame-Options: DENY/SAMEORIGIN (legacy) or CSP frame-ancestors directive (modern). frame-ancestors takes precedence over X-Frame-Options."
+  },
+  {
+    topic: "Security",
+    q: "What is Subresource Integrity (SRI)?",
+    opts: ["Validating server certificates","A security feature that lets you verify that CDN-served resources haven't been tampered with, using a hash in the integrity attribute of script/link tags","An HTTP/2 push mechanism","A cookie integrity check"],
+    ans: 1,
+    exp: "SRI uses a cryptographic hash (SHA-256/384/512) in the integrity attribute of <script> and <link> tags. The browser computes the hash of the downloaded resource and rejects it if it doesn't match — preventing compromised CDN attacks."
+  },
+  {
+    topic: "Security",
+    q: "What is the Secure cookie attribute?",
+    opts: ["Encrypts cookie content","Ensures the cookie is only transmitted over HTTPS connections, preventing interception over unsecured HTTP","Marks cookies as high priority","Restricts cookie to authenticated sessions"],
+    ans: 1,
+    exp: "The Secure attribute ensures the cookie is only sent in requests over HTTPS, never HTTP. This prevents the cookie from being exposed in transit via man-in-the-middle attacks. Always combine with HttpOnly for session cookies."
+  },
+  {
+    topic: "Security",
+    q: "What is an Open Redirect vulnerability?",
+    opts: ["An XSS variant","When an application accepts user-controlled URL parameters for redirects without validation, allowing attackers to redirect users to malicious sites","A CSRF variant","An injection attack"],
+    ans: 1,
+    exp: "Open redirects occur when a page redirects to a URL from an untrusted source (e.g., /redirect?url=evil.com). Attackers exploit them for phishing — users trust the legitimate domain in the URL. Prevent by validating redirect URLs against a whitelist."
+  },
+  {
+    topic: "Security",
+    q: "What is the X-Content-Type-Options header?",
+    opts: ["Specifies the content encoding","Prevents browsers from MIME-sniffing responses away from the declared Content-Type (nosniff), preventing MIME confusion attacks","Controls cache behavior","Sets content language"],
+    ans: 1,
+    exp: "X-Content-Type-Options: nosniff instructs browsers not to perform MIME-type sniffing. Without it, browsers might interpret a text/plain response as JavaScript, enabling attacks where an attacker uploads a file that gets executed as a script."
+  },
+  {
+    topic: "Security",
+    q: "What is the Strict-Transport-Security (HSTS) header?",
+    opts: ["Forces HTTPS for scripts","Tells browsers to only access the site over HTTPS for a specified duration, and optionally include subdomains — preventing SSL stripping attacks","A cookie encryption standard","A CSP directive"],
+    ans: 1,
+    exp: "HSTS (Strict-Transport-Security: max-age=31536000; includeSubDomains) forces browsers to use HTTPS for all future connections to the domain for the specified duration. It prevents SSL stripping attacks where a MITM downgrades HTTPS to HTTP."
+  },
+  {
+    topic: "Security",
+    q: "What is a timing attack in web security?",
+    opts: ["An attack exploiting race conditions","An attack that infers sensitive information from variations in response time, e.g., a password comparison that takes longer for partial matches reveals information about the correct value","A DDoS technique","A JavaScript injection timing exploit"],
+    ans: 1,
+    exp: "Timing attacks exploit the fact that cryptographic and comparison operations take measurable different amounts of time depending on inputs. For string comparisons (passwords, tokens), use constant-time comparison functions to prevent leaking information about correct values."
+  },
+  {
+    topic: "Security",
+    q: "What does <code>rel='noopener noreferrer'</code> on links do?",
+    opts: ["Prevents link indexing","noopener: prevents opened window from accessing opener via window.opener (prevents reverse tabnapping); noreferrer: also omits Referer header and implies noopener","It's a SEO directive","It prevents cross-origin linking"],
+    ans: 1,
+    exp: "Without noopener, a new tab opened via window.open or target=_blank can access the opener's window object and redirect it (tabnapping). noopener severs this connection. noreferrer additionally suppresses the Referer header and implies noopener. Both are best practice for external links."
+  },
+  {
+    topic: "Security",
+    q: "What is prototype pollution in JavaScript?",
+    opts: ["Adding too many properties to objects","An attack where properties on Object.prototype are added or modified, affecting all objects in the application, potentially leading to RCE or logic bypasses","A memory leak pattern","A prototype chain misconfiguration"],
+    ans: 1,
+    exp: "Prototype pollution occurs when an attacker modifies Object.prototype properties (e.g., via __proto__ in JSON). Since all JS objects inherit from Object.prototype, polluting it can affect application behavior globally. Prevent by validating input, using Object.create(null), or using Map instead of plain objects."
+  },
+  {
+    topic: "Security",
+    q: "What is the difference between authentication and authorization?",
+    opts: ["They are the same concept","Authentication verifies who you are (identity); authorization verifies what you're allowed to do (permissions)","Authentication is server-side; authorization is client-side","Authorization comes before authentication"],
+    ans: 1,
+    exp: "Authentication (AuthN) establishes identity — who are you? (login, JWT, OAuth). Authorization (AuthZ) controls access — what can you do? (roles, permissions, scopes). You must authenticate before you can authorize. RBAC and ABAC are authorization models."
+  },
+  {
+    topic: "Security",
+    q: "What is a JWT (JSON Web Token) and what are its components?",
+    opts: ["An encrypted session cookie","A self-contained token with three base64url-encoded parts: Header (algorithm), Payload (claims), Signature — used for stateless authentication","A symmetric encryption standard","An OAuth 2.0 token type"],
+    ans: 1,
+    exp: "A JWT has three parts separated by dots: Header (token type and signing algorithm), Payload (claims: sub, iat, exp, custom data), Signature (HMAC-SHA256 or RSA signature). The signature verifies integrity. JWTs are not encrypted by default — don't put sensitive data in payload unless using JWE."
+  },
+  {
+    topic: "Security",
+    q: "What is OAuth 2.0's Authorization Code with PKCE flow used for?",
+    opts: ["Server-to-server authentication","Secure user authentication for SPAs and mobile apps that cannot keep a client secret, using a code verifier/challenge to prove the requester is the same who initiated the flow","API key management","Password storage"],
+    ans: 1,
+    exp: "PKCE (Proof Key for Code Exchange) was designed for public clients (SPAs, native apps) that can't store a client secret. The client generates a code_verifier, hashes it to code_challenge, and sends it with the auth request. When exchanging the code for tokens, the server verifies the original verifier — preventing auth code interception attacks."
+  },
+
+  // ────────── REDUX & STATE MANAGEMENT (Q151–170) ──────────
+  {
+    topic: "Redux",
+    q: "What are the three core principles of Redux?",
+    opts: ["Immutability, Reactivity, Purity","Single source of truth (one store), state is read-only (only actions change it), changes made with pure reducer functions","Unidirectional data flow, component isolation, lazy loading","Normalization, memoization, hydration"],
+    ans: 1,
+    exp: "Redux is built on: (1) Single source of truth — the entire app state lives in one store. (2) State is read-only — the only way to change state is dispatching an action. (3) Changes are made with pure reducers — predictable, testable functions."
+  },
+  {
+    topic: "Redux",
+    q: "What is Redux Toolkit and why was it created?",
+    opts: ["A UI component library for Redux","The official, opinionated Redux toolset that simplifies store setup, reduces boilerplate, includes Immer for immutable updates, and bundles common Redux patterns","An alternative to Redux","A middleware for async Redux actions"],
+    ans: 1,
+    exp: "Redux Toolkit (RTK) addresses Redux's verbosity. It includes configureStore (simple setup with DevTools), createSlice (combines actions + reducers), createAsyncThunk (async logic), and RTK Query (data fetching). It uses Immer internally to allow 'mutating' state syntax."
+  },
+  {
+    topic: "Redux",
+    q: "What does Redux Thunk middleware enable?",
+    opts: ["Synchronous dispatch only","Dispatching functions (thunks) instead of plain action objects, enabling async logic (API calls) within action creators","Real-time state synchronization","Batching multiple dispatches"],
+    ans: 1,
+    exp: "Redux Thunk intercepts dispatched functions. Instead of requiring plain objects, it calls the function with (dispatch, getState), allowing you to perform async operations and dispatch actions based on results. RTK's createAsyncThunk builds on this."
+  },
+  {
+    topic: "Redux",
+    q: "What is the purpose of Redux Saga?",
+    opts: ["A state management alternative to Redux","A middleware library that uses generator functions to handle complex async flows (like sequential requests, polling, cancellation) more declaratively than thunks","A form handling library","A routing solution"],
+    ans: 1,
+    exp: "Redux Saga uses ES6 generators to write async side effects as synchronous-looking code. Effects (call, put, take, select) are plain objects, making sagas highly testable. It excels at complex flows: retry logic, parallel requests, cancellation, and race conditions."
+  },
+  {
+    topic: "Redux",
+    q: "What is a Redux selector and why use <code>createSelector</code> from Reselect?",
+    opts: ["A function to dispatch actions","A function that reads data from state; createSelector creates memoized selectors that recompute only when inputs change, preventing unnecessary re-renders","A type-safe reducer creator","A middleware factory"],
+    ans: 1,
+    exp: "Selectors extract derived data from the Redux store. createSelector (Reselect) creates memoized selectors — they return cached results if inputs haven't changed. This prevents expensive recalculations and unnecessary component re-renders when unrelated state changes."
+  },
+  {
+    topic: "Redux",
+    q: "What is the Redux <code>combineReducers</code> utility?",
+    opts: ["Runs reducers in sequence","Combines multiple reducer functions into a single root reducer, where each manages an independent slice of the state tree","Merges action types","Creates a middleware pipeline"],
+    ans: 1,
+    exp: "combineReducers splits the root reducer into smaller functions, each responsible for a slice of state. The resulting reducer delegates state management for each key to the corresponding slice reducer. Each slice reducer receives only its own slice as state."
+  },
+  {
+    topic: "Redux",
+    q: "What does RTK Query provide?",
+    opts: ["A GraphQL client","Built-in data fetching and caching solution in Redux Toolkit with auto-generated hooks, cache management, polling, and optimistic updates — reducing boilerplate of fetch-with-Redux patterns","A real-time sync solution","A REST API generator"],
+    ans: 1,
+    exp: "RTK Query is an advanced data fetching and caching solution. Define API endpoints once, get auto-generated React hooks (useGetPostQuery, useAddPostMutation), automatic loading/error states, caching, deduplication, polling, and tag-based invalidation — without manual state management."
+  },
+  {
+    topic: "Redux",
+    q: "What is Zustand compared to Redux?",
+    opts: ["A React Native state library","A minimal (~1KB) state management library using a simpler hook-based API without reducers/actions/dispatch ceremony — state updates via direct mutations using Immer internally","A Redux middleware","A local state alternative to useState"],
+    ans: 1,
+    exp: "Zustand is a lightweight state management solution. You create a store with a set function, read and write state directly without dispatch/action/reducer boilerplate. It's simpler than Redux for moderate complexity and doesn't require a Provider (uses module-level store)."
+  },
+  {
+    topic: "Redux",
+    q: "What is Jotai's approach to state management?",
+    opts: ["A Flux-based library","Atomic state management — state is broken into individual 'atoms' (minimal state units), components subscribe to only the atoms they use, avoiding unnecessary re-renders","A server-side state library","A replacement for Context only"],
+    ans: 1,
+    exp: "Jotai uses atomic state: you define tiny state units (atoms), and components subscribe to individual atoms. Re-renders only happen when a specific atom changes, not the whole state tree. This is similar to Recoil but with a simpler API and less boilerplate."
+  },
+  {
+    topic: "Redux",
+    q: "What problem does React Query (TanStack Query) solve?",
+    opts: ["Client-side form state","Server state management: caching, deduplication, background refetching, stale-while-revalidate, optimistic updates, and synchronization for async data — removing the need for useEffect + useState for API calls","A local state alternative","An animation state library"],
+    ans: 1,
+    exp: "React Query distinguishes server state (async, remotely owned) from client state (synchronous, locally owned). It handles fetching, caching (with stale-time and gc-time), background refetching, pagination, infinite queries, and mutations with optimistic updates — things that useState/useEffect does poorly."
+  },
+  {
+    topic: "Redux",
+    q: "In Redux, what makes a reducer a 'pure function'?",
+    opts: ["It must use strict mode","It takes (state, action) and returns new state without side effects or mutating the input — same inputs always produce same outputs","It must be declared with const","It must handle all action types"],
+    ans: 1,
+    exp: "Pure functions: (1) no side effects (no API calls, no mutations, no I/O), (2) deterministic — same (state, action) inputs always return the same new state. This makes reducers predictable, testable, and enables time-travel debugging in Redux DevTools."
+  },
+  {
+    topic: "Redux",
+    q: "What is the flux data flow pattern?",
+    opts: ["A two-way data binding pattern","Unidirectional data flow: Action → Dispatcher → Store → View → Action; state only flows one way, making data flow predictable","A pub-sub pattern","A bidirectional event system"],
+    ans: 1,
+    exp: "Flux (and Redux) uses unidirectional data flow: UI dispatches an action → dispatcher routes it → store updates state → view re-renders. This predictable flow eliminates the complexity of two-way data binding and makes debugging easier."
+  },
+  {
+    topic: "Redux",
+    q: "What is Redux DevTools and what features does it provide?",
+    opts: ["A Redux UI component library","A browser extension enabling time-travel debugging (jump to any past state), action logging, state inspection, action replay, and diffing — integrated via configureStore or middleware","A performance profiler for Redux","A code generator"],
+    ans: 1,
+    exp: "Redux DevTools lets you inspect the entire history of dispatched actions and state changes, 'time-travel' to any point, and replay or skip actions. It integrates with RTK's configureStore automatically. Invaluable for debugging complex state interactions."
+  },
+  {
+    topic: "Redux",
+    q: "What is the purpose of Redux middleware?",
+    opts: ["Replaces reducers","Intercepts dispatched actions between dispatch and the reducer, enabling logging, async operations, crash reporting, and analytics — implemented as composable functions","Validates action schemas","Controls component re-renders"],
+    ans: 1,
+    exp: "Redux middleware sits between action dispatch and the reducer. It's a higher-order function pattern: middleware(store)(next)(action). This allows you to intercept, transform, log, delay, or skip actions. Thunk, Saga, and Logger are all middleware."
+  },
+  {
+    topic: "Redux",
+    q: "When should you choose Redux over React Context?",
+    opts: ["Always — Redux is better","For complex state logic with many updates, shared state across many components, time-travel debugging needs, or team-scale codebases; Context is fine for low-frequency updates like theme or auth","Context should never be used","Redux is only for server state"],
+    ans: 1,
+    exp: "Redux excels when: state update logic is complex (reducers/selectors), performance matters (granular subscriptions), you need dev tools, or team size requires conventions. Context is suitable for low-frequency global values (theme, locale, auth). Frequent Context updates can cause performance issues."
+  },
+  {
+    topic: "Redux",
+    q: "What is <code>createSlice</code> in Redux Toolkit?",
+    opts: ["A utility to split the Redux store","Generates a slice of the Redux state with a name, initial state, and reducers object — automatically creating action creators and action types from the reducer functions","A React component generator","A selector factory"],
+    ans: 1,
+    exp: "createSlice accepts a name, initial state, and reducers map. It auto-generates action creators (slice.actions.actionName), action type strings (name/actionName), and a reducer using Immer for immutable-seeming mutations. This eliminates the action type constant and action creator boilerplate."
+  },
+  {
+    topic: "Redux",
+    q: "What is MobX's approach to state management vs Redux?",
+    opts: ["They are identical","MobX uses observable state and automatic reaction tracking — components auto-update when observed data they use changes, without explicit subscriptions or actions","MobX is functional; Redux is OOP","MobX requires a store; Redux does not"],
+    ans: 1,
+    exp: "MobX uses observable data structures and automatically tracks which components use which state, updating only those when state changes. Redux requires explicit actions/reducers/subscriptions. MobX is more flexible and less boilerplate-heavy but less predictable/debuggable than Redux."
+  },
+  {
+    topic: "Redux",
+    q: "What is <code>createAsyncThunk</code> in RTK?",
+    opts: ["A saga generator","A utility that generates thunk action creators for async operations, automatically dispatching pending/fulfilled/rejected action types based on the Promise resolution","A middleware factory","An API caching utility"],
+    ans: 1,
+    exp: "createAsyncThunk accepts an action type string and an async payload creator. It dispatches actionType/pending before the async operation, actionType/fulfilled on success with the result, and actionType/rejected on failure. Use with extraReducers in createSlice to handle these states."
+  },
+  {
+    topic: "Redux",
+    q: "What is the purpose of the <code>extraReducers</code> field in <code>createSlice</code>?",
+    opts: ["Adds extra action types to the slice","Handles actions defined outside the slice — like createAsyncThunk actions from a different slice or RTK Query — in this slice's reducer","Extends the slice with new reducers dynamically","Provides fallback reducers"],
+    ans: 1,
+    exp: "extraReducers allows a slice to respond to actions it didn't define. Using the builder callback (builder.addCase, builder.addMatcher), you can handle createAsyncThunk results, RTK Query endpoints, or other slice actions within this slice's reducer — enabling cross-slice state updates."
+  },
+  {
+    topic: "Redux",
+    q: "In RTK Query, what is cache invalidation via tags?",
+    opts: ["Clearing the browser cache","Associating cached data with tags and invalidating (clearing) specific cached data by dispatching mutations that invalidate those tags, triggering automatic re-fetching","Manual cache clearing","A TTL-based expiry system"],
+    ans: 1,
+    exp: "RTK Query uses a tagging system: queries provide tags (providesTags), mutations invalidate tags (invalidatesTags). When a mutation invalidates a tag, all queries with that tag are re-fetched automatically. This keeps UI in sync without manual cache management."
+  },
+
+  // ────────── PERFORMANCE & BUNDLING (Q171–190) ──────────
+  {
+    topic: "Performance",
+    q: "What is code splitting and how does it improve performance?",
+    opts: ["Splitting JS into separate syntax chunks","Breaking an application's JavaScript bundle into smaller chunks loaded on demand, reducing initial bundle size and improving Time to Interactive","Running code on multiple CPU cores","Splitting CSS from JavaScript"],
+    ans: 1,
+    exp: "Code splitting uses dynamic import() to split code into separate bundles loaded only when needed. Tools like webpack and Rollup support this natively. React.lazy/Suspense enable component-level splitting. Reduces initial JS payload, improving TTI and LCP."
+  },
+  {
+    topic: "Performance",
+    q: "What are Core Web Vitals?",
+    opts: ["JavaScript API performance metrics","Google's essential page experience metrics: LCP (Largest Contentful Paint — loading), FID/INP (Interaction to Next Paint — interactivity), and CLS (Cumulative Layout Shift — visual stability)","Lighthouse score categories","Server response time metrics"],
+    ans: 1,
+    exp: "Core Web Vitals are: LCP (<2.5s) measures how quickly the main content loads. INP (replaced FID in 2024, <200ms) measures responsiveness to interactions. CLS (<0.1) measures unexpected layout shifts. These directly affect Google's search rankings and user experience."
+  },
+  {
+    topic: "Performance",
+    q: "What is tree shaking?",
+    opts: ["Removing unused CSS","Dead code elimination by bundlers (webpack, Rollup) that removes unused ES module exports from the final bundle based on static import/export analysis","Optimizing DOM trees","Removing empty branches in ASTs"],
+    ans: 1,
+    exp: "Tree shaking analyzes ES module static imports/exports to determine which code is actually used and eliminates the rest from the bundle. Requires ES modules (not CommonJS), sideEffects: false in package.json, and is performed by webpack/Rollup during production builds."
+  },
+  {
+    topic: "Performance",
+    q: "What is lazy loading and how is it implemented in React?",
+    opts: ["Loading data from a lazy server","Deferring loading of non-critical resources until they're needed; in React, implemented via React.lazy() + Suspense for components and native loading='lazy' for images/iframes","A caching technique","Loading data after user scroll"],
+    ans: 1,
+    exp: "Lazy loading defers non-critical resources until needed. React.lazy(() => import('./Component')) creates a lazily-loaded component that only downloads its code when rendered. Combined with Suspense fallback, it shows a placeholder while loading. Images/iframes use the loading='lazy' HTML attribute."
+  },
+  {
+    topic: "Performance",
+    q: "What is memoization in the context of React performance?",
+    opts: ["Storing server responses","Caching the result of function calls or component renders so they're not recomputed/re-rendered if inputs haven't changed — React.memo, useMemo, and useCallback are React's memoization tools","A CSS optimization technique","Database query caching"],
+    ans: 1,
+    exp: "Memoization caches computed results. React.memo skips re-rendering a component if its props haven't changed. useMemo caches expensive computed values. useCallback caches function references. These prevent unnecessary work but add complexity — profile before memoizing."
+  },
+  {
+    topic: "Performance",
+    q: "What is virtualization (windowing) in lists?",
+    opts: ["Creating virtual DOM lists","Only rendering visible items in a long list (the 'window' into the data), drastically reducing DOM nodes — libraries: react-window, react-virtual, @tanstack/virtual","A memory management technique","Pagination of API results"],
+    ans: 1,
+    exp: "Virtualization renders only the visible portion of a large list, recycling DOM nodes as the user scrolls. Instead of rendering 10,000 items (massive DOM, slow scroll), it renders ~20 visible items. Libraries: react-window (lightweight), TanStack Virtual (flexible), react-virtuoso."
+  },
+  {
+    topic: "Performance",
+    q: "What is the purpose of <code>webpack</code>'s <code>splitChunks</code> optimization?",
+    opts: ["Splitting CSS from JavaScript","Automatically splitting shared dependencies (like React) into separate chunk files that can be cached independently — preventing users from downloading React again when app code changes","A development tool","Splitting files into ESM and CJS"],
+    ans: 1,
+    exp: "splitChunks (SplitChunksPlugin) extracts common/vendor code into separate chunks. This enables long-term browser caching — the vendor chunk (React, lodash) changes rarely, so returning users load it from cache even when your app code updates."
+  },
+  {
+    topic: "Performance",
+    q: "What is the difference between <code>defer</code> and <code>async</code> script loading?",
+    opts: ["They are identical","async: downloads in parallel, executes immediately when done (may block HTML parsing); defer: downloads in parallel, executes after HTML parsing in order — defer is preferred for most scripts","defer is for modules only","async prevents execution"],
+    ans: 1,
+    exp: "Both attributes download scripts in parallel without blocking HTML parsing. async executes the script as soon as it downloads (unpredictable order, may pause parser). defer executes after the document is parsed, in order of appearance. defer is generally better for scripts that depend on the DOM or each other."
+  },
+  {
+    topic: "Performance",
+    q: "What is Critical Rendering Path optimization?",
+    opts: ["Optimizing server response time","Minimizing steps to display initial page: reducing render-blocking resources (CSS/JS), minimizing HTML/CSS/JS, inlining critical CSS above-the-fold, and deferring non-critical scripts","Optimizing database queries","Compressing images"],
+    ans: 1,
+    exp: "The Critical Rendering Path includes: HTML parsing → DOM construction, CSS parsing → CSSOM construction, render tree construction, layout, paint, and composite. Optimizations: inline critical CSS (avoid FOUC), defer non-critical JS, minimize render-blocking resources, use resource hints (preload, prefetch)."
+  },
+  {
+    topic: "Performance",
+    q: "What are resource hints and how are they used?",
+    opts: ["Hints to the JavaScript engine","HTML tags that hint to the browser about future resource needs: preload (current page critical resources), prefetch (future navigation resources), preconnect (establish early connections), dns-prefetch (DNS resolution only)","CSS performance hints","Cache control hints"],
+    ans: 1,
+    exp: "Resource hints optimize loading: <link rel='preload'> for critical resources needed soon (fonts, LCP image), <link rel='prefetch'> for next-page resources, <link rel='preconnect'> to establish connections early (CDNs, API hosts), <link rel='dns-prefetch'> for DNS resolution only (lower priority)."
+  },
+  {
+    topic: "Performance",
+    q: "What is Cumulative Layout Shift (CLS) and how do you fix it?",
+    opts: ["A JavaScript error metric","A Core Web Vital measuring unexpected layout shifts; caused by images/iframes without dimensions, dynamically injected content, and web fonts; fixed by specifying dimensions, reserving space, and using font-display: optional","A network performance metric","A CSS animation metric"],
+    ans: 1,
+    exp: "CLS measures how much visible content unexpectedly shifts position during loading. Common causes: images without width/height attributes (browser can't reserve space), ads/embeds, web fonts causing FOUT. Fixes: always set image dimensions, use aspect-ratio boxes, specify font-display, avoid inserting content above existing content."
+  },
+  {
+    topic: "Performance",
+    q: "What is HTTP/2 and how does it improve web performance?",
+    opts: ["A security protocol replacing HTTPS","HTTP/2 introduces multiplexing (multiple requests over one connection), header compression (HPACK), binary framing, and server push — eliminating HTTP/1.1's head-of-line blocking and reducing TCP connection overhead","A CDN protocol","An alternative to WebSockets"],
+    ans: 1,
+    exp: "HTTP/2 addresses HTTP/1.1 limitations: multiplexing allows multiple requests/responses simultaneously over one TCP connection (no more 6 parallel connection limit). HPACK compresses headers. Binary framing is more efficient. This changes bundling strategy — HTTP/2 makes many small files less penalizing."
+  },
+  {
+    topic: "Performance",
+    q: "What is the purpose of <code>React.Profiler</code>?",
+    opts: ["Profiling server performance","Measures how often a React component renders and the 'cost' of each render — provides timing data to identify performance bottlenecks","Profiling network requests","Measuring bundle size"],
+    ans: 1,
+    exp: "React.Profiler wraps a component subtree and calls an onRender callback with timing info: which component, render phase (mount/update), actual and base duration. Use it to identify components that render too often or take too long to render."
+  },
+  {
+    topic: "Performance",
+    q: "What is the difference between <code>React.Profiler</code>, React DevTools Profiler, and the browser Performance tab?",
+    opts: ["They are identical tools","React.Profiler: programmatic API in code; DevTools Profiler: visual interactive flame graph for React renders; Browser Performance tab: full JS/paint/network timeline — each has different granularity and use cases","Only React.Profiler is official","Browser Performance only works in Chrome"],
+    ans: 1,
+    exp: "React.Profiler is a JSX component for programmatic measurements. React DevTools Profiler records and visualizes component render timing as flame graphs. Browser Performance tab records everything including paint, layout, network, and JS execution for full page analysis."
+  },
+  {
+    topic: "Performance",
+    q: "What is debouncing vs throttling?",
+    opts: ["They are identical","Debouncing: delays function execution until after a period of inactivity (fires once after events stop — for search input); Throttling: limits execution rate to once per interval (fires at consistent rate — for scroll)","Debouncing is for clicks; throttling is for keys","Throttling is more aggressive"],
+    ans: 1,
+    exp: "Debouncing delays execution until a function hasn't been called for a set period — ideal for search inputs (wait until user stops typing). Throttling ensures a function executes at most once per interval — ideal for scroll handlers, resize, and mousemove where consistent rate matters."
+  },
+  {
+    topic: "Performance",
+    q: "What is the purpose of Service Worker caching strategies like Cache-First and Network-First?",
+    opts: ["HTTP cache directives","Cache-First: serve from cache, fallback to network (fast, works offline, risks stale data); Network-First: try network, fallback to cache (fresh data preferred, offline capable); different strategies suit different content types","Browser storage strategies","CDN routing strategies"],
+    ans: 1,
+    exp: "Service Worker caching strategies: Cache-First (fast, good for assets, may serve stale), Network-First (always fresh, degraded offline), Stale-While-Revalidate (return cached immediately, update in background — balance of speed and freshness), Cache-Only, Network-Only."
+  },
+  {
+    topic: "Performance",
+    q: "What is Content Delivery Network (CDN) and how does it improve performance?",
+    opts: ["A content moderation service","A distributed network of servers that cache and serve content from locations geographically close to users, reducing latency and origin server load","A load balancer","A reverse proxy only"],
+    ans: 1,
+    exp: "CDNs distribute content across edge nodes worldwide. When a user requests a resource, the CDN serves it from the nearest PoP (Point of Presence), reducing round-trip time. Benefits: lower latency, reduced origin load, DDoS mitigation, and edge computing capabilities."
+  },
+  {
+    topic: "Performance",
+    q: "What is the <code>will-change</code> CSS property's effect on rendering performance?",
+    opts: ["It has no performance impact","Hints to the browser that an element will change, allowing it to create a new compositor layer in advance — promoting the element to the GPU and enabling smooth animations, but at memory cost","It disables hardware acceleration","It forces software rendering"],
+    ans: 1,
+    exp: "will-change: transform hints to the browser to promote an element to its own compositor layer before an animation starts, preventing repaint. This enables GPU-accelerated compositing. However, overuse wastes memory. Apply only to elements that genuinely need it, and remove after animation."
+  },
+  {
+    topic: "Performance",
+    q: "What is the difference between paint and composite operations in the browser rendering pipeline?",
+    opts: ["They are the same operation","Paint: rasterizes elements into pixels (CPU-intensive, triggers for color/box-shadow changes); Composite: combines painted layers on GPU (cheapest, only triggered by transform/opacity changes)","Composite happens before paint","Paint only occurs on initial load"],
+    ans: 1,
+    exp: "Browser rendering pipeline: Style → Layout → Paint → Composite. Paint rasterizes visual elements into pixels (expensive). Composite combines layers on the GPU (very cheap). Animations using only transform and opacity skip Layout and Paint, compositing directly on GPU — this is why you should animate these instead of top/left or background-color."
+  },
+  {
+    topic: "Performance",
+    q: "What is the purpose of the <code>loading='lazy'</code> attribute on images?",
+    opts: ["Adds a CSS loading animation","Defers loading of off-screen images until the user scrolls near them, reducing initial page load and bandwidth by only loading above-the-fold images immediately","Enables progressive JPEG loading","Defers images until JavaScript loads"],
+    ans: 1,
+    exp: "The native loading='lazy' attribute tells the browser to defer loading images and iframes until they near the viewport. This reduces initial page load time, bandwidth, and resource contention. Always set width/height attributes alongside lazy loading to prevent CLS."
+  },
+
+  // ────────── TYPESCRIPT, TESTING & TOOLING (Q191–200) ──────────
+  {
+    topic: "TypeScript",
+    q: "What is the difference between <code>interface</code> and <code>type</code> in TypeScript?",
+    opts: ["They are identical","interface is extendable (declaration merging), only for objects; type is more versatile (unions, intersections, primitives, tuples) but can't be merged — interfaces for object shapes, types for complex compositions","type is faster","interface supports generics; type doesn't"],
+    ans: 1,
+    exp: "interfaces support declaration merging (multiple declarations of same name are merged) and are exclusively for object types. type aliases can represent any type (unions, intersections, primitives, tuples, template literals). For object shapes, both work — interfaces are often preferred for public APIs due to better error messages and declaration merging."
+  },
+  {
+    topic: "TypeScript",
+    q: "What is TypeScript's <code>as const</code> assertion?",
+    opts: ["Casts a value to a constant type","Makes all properties of an object/array deeply readonly and narrows literal types (e.g. 'red' instead of string) — useful for const enums and route definitions","Prevents runtime type errors","Forces compile-time evaluation"],
+    ans: 1,
+    exp: "as const tells TypeScript to infer the narrowest possible type for an expression. Strings become literal types ('hello' instead of string), numbers become literal types, arrays become readonly tuples. Essential for patterns like: const ROUTES = ['/home', '/about'] as const."
+  },
+  {
+    topic: "TypeScript",
+    q: "What are TypeScript generics and when would you use them?",
+    opts: ["A way to inherit from base classes","Type parameters that allow creating reusable components/functions that work with multiple types while maintaining type safety — like a typed container","A runtime type check","A way to bypass TypeScript's type system"],
+    ans: 1,
+    exp: "Generics add type parameters to functions, interfaces, and classes: function identity<T>(arg: T): T. They enable reusable, type-safe code that works across types without losing type information. Common examples: Array<T>, Promise<T>, useState<T>, custom hooks, and utility functions."
+  },
+  {
+    topic: "TypeScript",
+    q: "What is the purpose of utility types like <code>Partial</code>, <code>Required</code>, <code>Pick</code>, and <code>Omit</code>?",
+    opts: ["Runtime type utilities","Built-in generic types that transform existing types: Partial<T> makes all props optional; Required<T> makes all required; Pick<T,K> selects keys; Omit<T,K> excludes keys — avoiding type duplication","CSS utility classes","TypeScript testing helpers"],
+    ans: 1,
+    exp: "TypeScript utility types transform existing types: Partial<T> (all optional), Required<T> (all required), Readonly<T> (all readonly), Pick<T, 'a'|'b'> (extract keys), Omit<T, 'a'|'b'> (exclude keys), Record<K,V> (object with typed keys/values), ReturnType<F>, Parameters<F>."
+  },
+  {
+    topic: "Testing",
+    q: "What is the testing philosophy behind React Testing Library?",
+    opts: ["Test implementation details","Test behavior from the user's perspective — interact with components as users do (via accessible roles, labels, text) rather than testing internal state or implementation","Test component classes only","Test server-side rendering only"],
+    ans: 1,
+    exp: "RTL's philosophy is 'the more your tests resemble the way your software is used, the more confidence they give you.' This means querying by role, label, or text (like a user/screen reader), not by class names or implementation details. Tests are more resilient to refactoring."
+  },
+  {
+    topic: "Testing",
+    q: "What is the difference between <code>getBy</code>, <code>queryBy</code>, and <code>findBy</code> in React Testing Library?",
+    opts: ["They behave identically","getBy: throws if not found (sync); queryBy: returns null if not found, doesn't throw (sync, for asserting absence); findBy: returns Promise, waits for element to appear (for async rendering)","getBy is for async; findBy is for sync","queryBy is deprecated"],
+    ans: 1,
+    exp: "RTL query variants: getBy*/getAllBy* throw errors when not found — for elements that should always be there. queryBy*/queryAllBy* return null/empty array — for asserting elements are absent. findBy*/findAllBy* return Promises and retry until element appears — for async content."
+  },
+  {
+    topic: "Testing",
+    q: "What is the purpose of <code>vi.mock()</code> (Vitest) or <code>jest.mock()</code>?",
+    opts: ["Creates test data","Replaces a module's exports with mock implementations in tests, allowing isolated unit testing by removing real dependencies (API calls, database, third-party modules)","Runs tests in parallel","Generates test files"],
+    ans: 1,
+    exp: "jest.mock()/vi.mock() replaces a module's actual implementation with mocks in the test environment. This lets you test components in isolation without real API calls, side effects, or complex dependencies. Mock function implementations can be configured per test."
+  },
+  {
+    topic: "Testing",
+    q: "What is the difference between unit, integration, and E2E tests?",
+    opts: ["They are the same","Unit: tests a single function/component in isolation; Integration: tests multiple units working together (component + hooks + API layer); E2E: tests full user flows in a real browser (Cypress, Playwright)","E2E is the only reliable test type","Integration tests don't use real browsers"],
+    ans: 1,
+    exp: "Testing pyramid: Unit tests (fast, isolated, many), Integration tests (test unit interactions, moderate), E2E tests (test full flows in browser, slow, few). RTL sits between unit and integration. Playwright/Cypress are E2E. Each layer catches different categories of bugs."
+  },
+  {
+    topic: "Testing",
+    q: "What is MSW (Mock Service Worker) used for in testing?",
+    opts: ["Mocking Service Workers","Intercepting and mocking network requests at the network level in tests (and development) using actual Service Worker API, providing realistic API mocking without modifying application code","A test runner","A state management mock"],
+    ans: 1,
+    exp: "MSW intercepts HTTP requests in tests (and browser dev) using Service Workers or Node.js interceptors. Your app code makes real fetch/axios calls; MSW intercepts and returns mock responses. This is more robust than mocking fetch directly — it works regardless of how HTTP is called."
+  },
+  {
+    topic: "TypeScript",
+    q: "What is the TypeScript <code>satisfies</code> operator (TS 4.9+)?",
+    opts: ["An equality check","Validates that an expression matches a type while preserving the most specific inferred type — unlike type annotation which widens, satisfies keeps literal types for autocomplete","A type assertion like as","A runtime type guard"],
+    ans: 1,
+    exp: "The satisfies operator (expr satisfies Type) checks that an expression is compatible with a type without changing the inferred type. Unlike type annotation (const x: Type = ...) which widens types, satisfies preserves literal inference. Useful for config objects where you want both type checking and autocomplete on values."
+  },
+  {
+    topic: "DOM",
+    q: "What is the <code>PerformanceObserver</code> API?",
+    opts: ["A React profiling tool","Observes performance measurement events (paint, largest-contentful-paint, layout-shift, longtask, resource, navigation) in real-time, enabling programmatic access to Core Web Vitals","A memory profiler","A network observer"],
+    ans: 1,
+    exp: "PerformanceObserver observes and collects performance metrics in real-time using a callback. Observe types like 'largest-contentful-paint', 'layout-shift', 'first-input', 'longtask', and 'resource'. It's how analytics tools and the web-vitals library measure Core Web Vitals in production."
+  },
+  {
+    topic: "React",
+    q: "What is the difference between <code>React.createContext</code> default value and the Provider value?",
+    opts: ["They are always the same","The default value is only used when a component consumes context WITHOUT a matching Provider above it in the tree; the Provider value overrides it for all descendants","The default value is required","The Provider value can only be a function"],
+    ans: 1,
+    exp: "createContext(defaultValue) — the default value is only used by consumers that have no Provider ancestor in the tree. In practice, most apps always have a Provider, so the default is rarely hit. It's useful for testing components in isolation without wrapping in a Provider."
+  },
+  {
+    topic: "Next.js",
+    q: "What is <code>next build</code> output mode and what is the difference between <code>output: 'export'</code> and the default?",
+    opts: ["They produce identical output","Default output: hybrid (SSR + SSG + API routes), requires a Node.js server. output: 'export': generates fully static HTML/CSS/JS that can be hosted on any static host (no server needed), but disables SSR, API routes, and ISR","output: export is faster","Default output only generates static files"],
+    ans: 1,
+    exp: "By default, next build produces an optimized Node.js application for hybrid rendering. With output: 'export' (next export), Next.js generates purely static HTML files for every page — no Node.js server required, deployable to any static CDN. Trade-off: no SSR, no API routes, no ISR, no middleware."
+  },
+  {
+    topic: "Security",
+    q: "What is a Content Security Policy nonce?",
+    opts: ["A unique username for CSP reports","A cryptographically random value added to a script/style tag's nonce attribute and the CSP header, allowing specific inline scripts to run while blocking others — per-request unique value","A CSP hash alternative","A session token"],
+    ans: 1,
+    exp: "A CSP nonce (number used once) is a random value generated per request, included in the CSP header (script-src 'nonce-VALUE') and the nonce attribute of trusted inline scripts. Since attackers can't predict the nonce, their injected scripts won't have it and will be blocked — enabling inline scripts with CSP security."
+  },
+  {
+    topic: "Redux",
+    q: "What is the difference between <code>connect()</code> (react-redux) and <code>useSelector</code>/<code>useDispatch</code> hooks?",
+    opts: ["connect is the modern API","connect() is the legacy HOC pattern wrapping components; useSelector/useDispatch are modern hooks providing direct Redux integration in function components — hooks are simpler and preferred today","They produce identical bundle sizes","useSelector doesn't support memoization"],
+    ans: 1,
+    exp: "connect() is React-Redux's original HOC that maps state/dispatch to props. useSelector() reads from store (re-renders when selected value changes) and useDispatch() returns the dispatch function. Hooks eliminate the boilerplate of mapStateToProps/mapDispatchToProps and are the recommended approach."
+  },
+  {
+    topic: "Performance",
+    q: "What is the purpose of <code>&lt;link rel='preload'&gt;</code> and when should it be used?",
+    opts: ["Loads resources after page render","Tells the browser to fetch a critical resource (font, image, script) early in the page load — before the browser discovers it in HTML/CSS parsing — reducing render-blocking delays for above-the-fold resources","Pre-renders entire pages","Preloads all assets on hover"],
+    ans: 1,
+    exp: "preload hints the browser to fetch a resource with high priority, immediately, even before it would normally be discovered. Use for: render-blocking fonts (prevent FOUT), hero/LCP images, and critical scripts. Avoid over-using — every preloaded resource competes for bandwidth. Use with as='font/image/script/style'."
+  },
+  {
+    topic: "TypeScript",
+    q: "What are TypeScript discriminated unions and what problem do they solve?",
+    opts: ["Union types of strings only","A union of types sharing a common literal type discriminant field, enabling TypeScript to narrow types in switch/if blocks — solving the problem of safely working with values that can be one of several distinct shapes","A runtime type check pattern","A way to merge two interfaces"],
+    ans: 1,
+    exp: "Discriminated unions use a shared literal field (e.g. type: 'circle' | 'square') to distinguish union members. TypeScript narrows the type in switch/if statements based on this discriminant, giving full type safety for each case. Ideal for state machines, action types, API response shapes."
+  },
+  {
+    topic: "DOM",
+    q: "What is the difference between <code>window.location.href</code>, <code>history.pushState</code>, and <code>location.replace</code>?",
+    opts: ["They are identical","href: full page navigation (reloads); pushState: SPA URL change without reload, adds history entry; location.replace: full page navigation without adding history entry (can't go back)","pushState requires server config","replace only works for HTTPS"],
+    ans: 1,
+    exp: "window.location.href = url causes a full page reload and adds to history. history.pushState(state, '', url) changes URL and history without reload — used by SPAs. location.replace(url) navigates with full reload but replaces current history entry (back button skips it). history.replaceState() is the SPA equivalent of replace."
+  },
+  {
+    topic: "Testing",
+    q: "What is snapshot testing and what are its trade-offs?",
+    opts: ["Testing API responses","Serializing a component's rendered output to a file and comparing it on future runs to catch unintended changes; trade-offs: fast to write but brittle (break on any UI change), can become ignored 'rubber-stamp' commits","Performance benchmarking","Visual regression testing"],
+    ans: 1,
+    exp: "Snapshot tests capture a component's render output as a serialized string or image. They catch unexpected changes but have downsides: developers often update snapshots without reviewing them, they break on any change (even intentional), and large snapshots are hard to review. Best used for stable, simple components. Prefer RTL behavior tests for interactive components."
+  }
+];
+
+// ─── State ───
+let mode = 'all';
+let questions = [];
+let current = 0;
+let answered = false;
+let score = { correct: 0, wrong: 0, skipped: 0 };
+let userAnswers = [];
+let reviewVisible = false;
+
+function selectMode(el, m) {
+  document.querySelectorAll('.mode-card').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  mode = m;
+}
+
+function startQuiz() {
+  questions = [...QUESTIONS];
+  if (mode === 'random50') {
+    questions = questions.sort(() => Math.random() - 0.5).slice(0, 50);
+  }
+  current = 0;
+  score = { correct: 0, wrong: 0, skipped: 0 };
+  userAnswers = Array(questions.length).fill(null);
+  document.getElementById('qTotal').textContent = questions.length;
+  document.getElementById('splash').style.display = 'none';
+  document.getElementById('quiz').style.display = 'block';
+  renderQuestion();
+}
+
+function renderQuestion() {
+  const q = questions[current];
+  answered = false;
+  document.getElementById('topicTag').textContent = q.topic;
+  document.getElementById('qNumInline').textContent = `Q${current + 1} of ${questions.length}`;
+  document.getElementById('qNum').textContent = current + 1;
+  document.getElementById('questionText').innerHTML = q.q;
+  document.getElementById('progressBar').style.width = `${(current / questions.length) * 100}%`;
+  document.getElementById('sCorrect').textContent = score.correct;
+  document.getElementById('sWrong').textContent = score.wrong;
+  document.getElementById('explanationBox').classList.remove('show');
+  document.getElementById('nextBtn').classList.add('hidden');
+  document.getElementById('skipBtn').classList.remove('hidden');
+
+  const grid = document.getElementById('optionsGrid');
+  grid.innerHTML = '';
+  const labels = ['A', 'B', 'C', 'D'];
+  q.opts.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'opt-btn';
+    btn.innerHTML = `<span class="opt-label">${labels[i]}</span><span>${opt}</span>`;
+    btn.onclick = () => selectAnswer(i);
+    grid.appendChild(btn);
+  });
+}
+
+function selectAnswer(idx) {
+  if (answered) return;
+  answered = true;
+  document.getElementById('skipBtn').classList.add('hidden');
+  document.getElementById('nextBtn').classList.remove('hidden');
+
+  const q = questions[current];
+  userAnswers[current] = idx;
+  const btns = document.querySelectorAll('.opt-btn');
+  btns.forEach(b => b.disabled = true);
+
+  if (idx === q.ans) {
+    btns[idx].classList.add('correct');
+    score.correct++;
+  } else {
+    btns[idx].classList.add('selected-wrong');
+    btns[q.ans].classList.add('correct');
+    score.wrong++;
+  }
+
+  document.getElementById('explanationText').innerHTML = q.exp;
+  document.getElementById('explanationBox').classList.add('show');
+  document.getElementById('sCorrect').textContent = score.correct;
+  document.getElementById('sWrong').textContent = score.wrong;
+}
+
+function skipQuestion() {
+  if (answered) return;
+  userAnswers[current] = -1;
+  score.skipped++;
+  document.getElementById('skipBtn').classList.add('hidden');
+  document.getElementById('nextBtn').classList.remove('hidden');
+  const q = questions[current];
+  const btns = document.querySelectorAll('.opt-btn');
+  btns.forEach(b => b.disabled = true);
+  btns[q.ans].classList.add('correct');
+  document.getElementById('explanationText').innerHTML = q.exp;
+  document.getElementById('explanationBox').classList.add('show');
+  answered = true;
+}
+
+function nextQuestion() {
+  current++;
+  if (current >= questions.length) {
+    showResult();
+  } else {
+    renderQuestion();
+  }
+}
+
+function endQuiz() {
+  if (current < questions.length) {
+    score.skipped += questions.length - current - (answered ? 0 : 1);
+    if (!answered) userAnswers[current] = -1;
+    for (let i = current + 1; i < questions.length; i++) userAnswers[i] = -1;
+    current = questions.length;
+  }
+  showResult();
+}
+
+function showResult() {
+  document.getElementById('quiz').style.display = 'none';
+  document.getElementById('result').style.display = 'block';
+  const total = questions.length;
+  const pct = Math.round((score.correct / total) * 100);
+  let title = pct >= 85 ? '🏆 Outstanding!' : pct >= 70 ? '🎯 Great Work!' : pct >= 50 ? '📈 Keep Going!' : '📚 Keep Studying!';
+  document.getElementById('resultTitle').textContent = title;
+  document.getElementById('resultSub').textContent = `You scored ${score.correct} out of ${total} questions correctly.`;
+  document.getElementById('rCorrect').textContent = score.correct;
+  document.getElementById('rWrong').textContent = score.wrong;
+  document.getElementById('rSkipped').textContent = score.skipped;
+  document.getElementById('ringPct').textContent = pct + '%';
+  document.getElementById('ringTotal').textContent = `${score.correct}/${total}`;
+
+  const circumference = 2 * Math.PI * 70;
+  const offset = circumference - (pct / 100) * circumference;
+  setTimeout(() => {
+    document.getElementById('ringFill').style.strokeDashoffset = offset;
+  }, 100);
+}
+
+function restartQuiz() {
+  document.getElementById('result').style.display = 'none';
+  document.getElementById('splash').style.display = 'flex';
+  reviewVisible = false;
+  document.getElementById('reviewSection').classList.add('hidden');
+}
+
+function toggleReview() {
+  reviewVisible = !reviewVisible;
+  const sec = document.getElementById('reviewSection');
+  if (reviewVisible) {
+    sec.classList.remove('hidden');
+    buildReview();
+  } else {
+    sec.classList.add('hidden');
+  }
+}
+
+function buildReview() {
+  const list = document.getElementById('reviewList');
+  list.innerHTML = '';
+  const labels = ['A', 'B', 'C', 'D'];
+  questions.forEach((q, i) => {
+    const ua = userAnswers[i];
+    if (ua === q.ans) return;
+    const div = document.createElement('div');
+    div.className = 'review-item';
+    div.innerHTML = `<div class="rq">${i+1}. ${q.q}</div>
+      <div class="ra">
+        <span class="lbl">Correct: </span><span class="correct-ans">${labels[q.ans]}. ${q.opts[q.ans]}</span><br>
+        <span class="lbl">Yours: </span><span class="your-ans">${ua === -1 ? 'Skipped' : `${labels[ua]}. ${q.opts[ua]}`}</span>
+      </div>`;
+    list.appendChild(div);
+  });
+  if (!list.children.length) list.innerHTML = '<p style="color:var(--correct);padding:1rem;">🎉 No errors — perfect score on answered questions!</p>';
+}
+</script>
+</body>
+</html>
