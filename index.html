@@ -3,228 +3,576 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>DSA Markdown Library</title>
+  <title>Dev Notes — Algorithms, Systems & Interview Prep</title>
+  <meta name="description" content="A focused knowledge base for DSA, system design, backend engineering, and interview preparation. Browse notes, cheatsheets, and interactive quizzes.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300;0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;0,14..32,800;1,14..32,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
     :root {
-      color-scheme: dark;
-      --bg: #090b10;
-      --panel: rgba(19, 25, 34, 0.76);
-      --panel-strong: rgba(26, 34, 48, 0.92);
-      --text: #eef4ff;
-      --muted: #91a0b8;
-      --line: rgba(255, 255, 255, 0.12);
-      --blue: #64d2ff;
-      --green: #60e6a8;
-      --pink: #ff7ab6;
-      --shadow: 0 22px 70px rgba(0, 0, 0, 0.42);
+      --bg:        #0a0c10;
+      --surface:   #111318;
+      --surface2:  #181c23;
+      --border:    rgba(255,255,255,0.08);
+      --border-hover: rgba(255,255,255,0.18);
+      --text:      #e8edf5;
+      --text-2:    #8b95a8;
+      --text-3:    #565f70;
+      --accent:    #6c8cff;
+      --accent-glow: rgba(108,140,255,0.18);
+      --quiz-accent: #f97316;
+      --quiz-glow:  rgba(249,115,22,0.15);
+      --note-accent: #22d3a6;
+      --note-glow:  rgba(34,211,166,0.12);
+      --radius:    12px;
+      --radius-lg: 18px;
     }
 
-    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
 
     body {
-      margin: 0;
-      min-height: 100vh;
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg);
       color: var(--text);
-      background:
-        radial-gradient(circle at 15% 12%, rgba(100, 210, 255, 0.22), transparent 30rem),
-        radial-gradient(circle at 82% 8%, rgba(255, 122, 182, 0.16), transparent 28rem),
-        linear-gradient(135deg, #090b10 0%, #111827 48%, #08131b 100%);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
     }
 
+    /* ── Noise texture overlay ── */
     body::before {
-      content: "";
+      content: '';
       position: fixed;
       inset: 0;
       pointer-events: none;
-      background-image:
-        linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
-      background-size: 42px 42px;
-      mask-image: linear-gradient(to bottom, black, transparent 78%);
+      z-index: 0;
+      opacity: 0.025;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+      background-size: 200px;
     }
 
-    main {
-      width: min(1180px, calc(100% - 32px));
-      margin: 0 auto;
-      padding: 48px 0 64px;
+    /* ── Ambient blobs ── */
+    .blob {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(100px);
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.35;
+    }
+    .blob-1 {
+      width: 600px; height: 500px;
+      top: -180px; left: -200px;
+      background: radial-gradient(circle, rgba(108,140,255,0.25) 0%, transparent 70%);
+    }
+    .blob-2 {
+      width: 500px; height: 400px;
+      top: 0; right: -180px;
+      background: radial-gradient(circle, rgba(249,115,22,0.18) 0%, transparent 70%);
+    }
+    .blob-3 {
+      width: 400px; height: 400px;
+      bottom: 10%; left: 35%;
+      background: radial-gradient(circle, rgba(34,211,166,0.12) 0%, transparent 70%);
     }
 
-    header {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 24px;
-      align-items: end;
-      margin-bottom: 28px;
-    }
-
-    h1 {
-      margin: 0;
-      max-width: 760px;
-      font-size: clamp(2.2rem, 7vw, 5.8rem);
-      line-height: 0.9;
-      letter-spacing: 0;
-    }
-
-    .subtitle {
-      margin: 18px 0 0;
-      max-width: 680px;
-      color: var(--muted);
-      font-size: 1.05rem;
-      line-height: 1.7;
-    }
-
-    .stat {
-      min-width: 168px;
-      padding: 20px;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      background: var(--panel);
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(18px);
-    }
-
-    .stat strong {
-      display: block;
-      font-size: 2.35rem;
-      line-height: 1;
-    }
-
-    .stat span {
-      color: var(--muted);
-      font-size: 0.88rem;
-    }
-
-    .toolbar {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 14px;
+    /* ── Navbar ── */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
       align-items: center;
-      margin: 30px 0 18px;
+      justify-content: space-between;
+      padding: 0 clamp(16px, 5vw, 48px);
+      height: 60px;
+      background: rgba(10,12,16,0.75);
+      backdrop-filter: blur(20px) saturate(1.4);
+      border-bottom: 1px solid var(--border);
     }
 
-    .search {
+    .nav-logo {
       display: flex;
       align-items: center;
       gap: 10px;
-      padding: 0 16px;
-      height: 48px;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      background: rgba(255, 255, 255, 0.07);
-      backdrop-filter: blur(16px);
-    }
-
-    .search svg {
-      width: 18px;
-      height: 18px;
-      color: var(--blue);
-      flex: 0 0 auto;
-    }
-
-    input {
-      width: 100%;
-      border: 0;
-      outline: 0;
-      background: transparent;
+      font-weight: 700;
+      font-size: 1rem;
       color: var(--text);
-      font: inherit;
+      text-decoration: none;
+      letter-spacing: -0.01em;
+    }
+    .nav-logo-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 10px var(--accent);
+      animation: pulse 2.5s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.85); }
     }
 
-    input::placeholder { color: #73819a; }
-
-    .hint {
-      color: var(--muted);
-      font-size: 0.92rem;
-      white-space: nowrap;
+    .nav-stats {
+      display: flex;
+      gap: 24px;
     }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(235px, 1fr));
-      gap: 14px;
-    }
-
-    .card {
-      min-height: 132px;
+    .nav-stat {
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
-      padding: 18px;
-      border: 1px solid var(--line);
-      border-radius: 8px;
+      align-items: flex-end;
+      font-size: 0.78rem;
+    }
+    .nav-stat strong {
+      font-size: 1.05rem;
+      font-weight: 700;
+      line-height: 1;
+      color: var(--text);
+    }
+    .nav-stat span {
+      color: var(--text-2);
+      font-size: 0.72rem;
+    }
+
+    /* ── Main wrapper ── */
+    main {
+      position: relative;
+      z-index: 1;
+      width: min(1100px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 72px 0 100px;
+    }
+
+    /* ── Hero ── */
+    .hero {
+      margin-bottom: 64px;
+    }
+    .hero-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 20px;
+      padding: 5px 12px;
+      border: 1px solid rgba(108,140,255,0.25);
+      border-radius: 999px;
+      background: rgba(108,140,255,0.07);
+    }
+    .hero-eyebrow::before {
+      content: '';
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 6px var(--accent);
+    }
+    .hero h1 {
+      font-size: clamp(2.4rem, 6vw, 4.8rem);
+      font-weight: 800;
+      line-height: 1.05;
+      letter-spacing: -0.03em;
+      color: var(--text);
+      max-width: 750px;
+      margin-bottom: 20px;
+    }
+    .hero h1 em {
+      font-style: normal;
+      background: linear-gradient(135deg, #6c8cff 0%, #a78bfa 50%, #22d3a6 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero-desc {
+      font-size: 1.05rem;
+      line-height: 1.75;
+      color: var(--text-2);
+      max-width: 560px;
+    }
+
+    /* ── Search bar ── */
+    .search-bar {
+      margin: 40px 0 56px;
+      position: relative;
+      max-width: 520px;
+    }
+    .search-bar svg {
+      position: absolute;
+      left: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 17px; height: 17px;
+      color: var(--text-3);
+      pointer-events: none;
+    }
+    #filter {
+      width: 100%;
+      height: 50px;
+      padding: 0 16px 0 46px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      font: 0.95rem/1 'Inter', sans-serif;
+      outline: none;
+      transition: border-color 180ms, box-shadow 180ms;
+    }
+    #filter::placeholder { color: var(--text-3); }
+    #filter:focus {
+      border-color: rgba(108,140,255,0.5);
+      box-shadow: 0 0 0 3px rgba(108,140,255,0.1);
+    }
+    .search-count {
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 0.78rem;
+      color: var(--text-3);
+      font-variant-numeric: tabular-nums;
+      pointer-events: none;
+    }
+
+    /* ── Section headers ── */
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+    .section-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 5px 13px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+    }
+    .section-badge.quiz {
+      background: rgba(249,115,22,0.1);
+      border: 1px solid rgba(249,115,22,0.25);
+      color: var(--quiz-accent);
+    }
+    .section-badge.note {
+      background: rgba(34,211,166,0.08);
+      border: 1px solid rgba(34,211,166,0.2);
+      color: var(--note-accent);
+    }
+    .section-badge::before {
+      content: '';
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+    .section-title {
+      font-size: 1.35rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--text);
+    }
+    .section-count {
+      margin-left: auto;
+      font-size: 0.8rem;
+      color: var(--text-3);
+      font-variant-numeric: tabular-nums;
+    }
+    .section-divider {
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* ── Quiz grid ── */
+    .quiz-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 14px;
+      margin-bottom: 64px;
+    }
+
+    .quiz-card {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      padding: 22px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
       color: inherit;
       text-decoration: none;
-      background: linear-gradient(145deg, rgba(255, 255, 255, 0.11), rgba(255, 255, 255, 0.045));
-      box-shadow: 0 16px 44px rgba(0, 0, 0, 0.22);
-      backdrop-filter: blur(18px);
-      transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
+      overflow: hidden;
+      transition: border-color 200ms, transform 200ms, box-shadow 200ms;
     }
-
-    .card:hover,
-    .card:focus-visible {
-      transform: translateY(-4px);
-      border-color: rgba(100, 210, 255, 0.7);
-      background: var(--panel-strong);
-      outline: none;
+    .quiz-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      background: radial-gradient(circle at top left, var(--quiz-glow) 0%, transparent 65%);
+      transition: opacity 250ms;
     }
-
-    .card-title {
-      font-size: 1.12rem;
-      font-weight: 800;
-      line-height: 1.25;
+    .quiz-card:hover {
+      border-color: rgba(249,115,22,0.4);
+      transform: translateY(-3px);
+      box-shadow: 0 18px 48px rgba(0,0,0,0.3), 0 0 0 1px rgba(249,115,22,0.1);
     }
+    .quiz-card:hover::before { opacity: 1; }
 
-    .card-meta {
+    .quiz-card-icon {
+      width: 40px; height: 40px;
+      border-radius: 10px;
+      background: rgba(249,115,22,0.1);
+      border: 1px solid rgba(249,115,22,0.2);
       display: flex;
-      justify-content: space-between;
-      gap: 10px;
-      color: var(--muted);
-      font-size: 0.85rem;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      flex-shrink: 0;
     }
-
-    .tag {
-      color: var(--green);
+    .quiz-card-body {
+      flex: 1;
+    }
+    .quiz-card-title {
+      font-size: 1rem;
       font-weight: 700;
+      line-height: 1.3;
+      color: var(--text);
+      margin-bottom: 5px;
+      letter-spacing: -0.01em;
+    }
+    .quiz-card-file {
+      font-size: 0.75rem;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text-3);
+    }
+    .quiz-card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .quiz-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 999px;
+      background: rgba(249,115,22,0.1);
+      color: var(--quiz-accent);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+    .card-arrow {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-3);
+      transition: color 200ms, background 200ms, border-color 200ms;
+    }
+    .quiz-card:hover .card-arrow {
+      background: var(--quiz-accent);
+      border-color: var(--quiz-accent);
+      color: #fff;
     }
 
-    @media (max-width: 720px) {
-      main { width: min(100% - 24px, 1180px); padding-top: 30px; }
-      header, .toolbar { grid-template-columns: 1fr; }
-      .stat { width: 100%; }
-      .hint { white-space: normal; }
-      .grid { grid-template-columns: 1fr; }
+    /* ── Notes list ── */
+    .notes-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 10px;
+      margin-bottom: 64px;
+    }
+
+    .note-card {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 16px 18px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: inherit;
+      text-decoration: none;
+      transition: border-color 180ms, background 180ms, transform 180ms;
+    }
+    .note-card:hover {
+      border-color: rgba(34,211,166,0.35);
+      background: var(--surface2);
+      transform: translateX(3px);
+    }
+    .note-card-icon {
+      width: 36px; height: 36px;
+      flex-shrink: 0;
+      border-radius: 8px;
+      background: rgba(34,211,166,0.08);
+      border: 1px solid rgba(34,211,166,0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+    }
+    .note-card-body {
+      flex: 1;
+      min-width: 0;
+    }
+    .note-card-title {
+      font-size: 0.92rem;
+      font-weight: 600;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      letter-spacing: -0.01em;
+    }
+    .note-card-file {
+      font-size: 0.7rem;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text-3);
+      margin-top: 2px;
+    }
+    .note-card-arrow {
+      color: var(--text-3);
+      flex-shrink: 0;
+      transition: color 180ms, transform 180ms;
+    }
+    .note-card:hover .note-card-arrow {
+      color: var(--note-accent);
+      transform: translateX(2px);
+    }
+
+    /* ── Empty state ── */
+    .empty {
+      grid-column: 1/-1;
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-3);
+      font-size: 0.9rem;
+      display: none;
+    }
+
+    /* ── Footer ── */
+    footer {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      padding: 32px 0 48px;
+      color: var(--text-3);
+      font-size: 0.8rem;
+      border-top: 1px solid var(--border);
+    }
+
+    /* ── Animations ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .animate-in {
+      animation: fadeUp 0.45s ease both;
+    }
+    .animate-delay-1 { animation-delay: 0.05s; }
+    .animate-delay-2 { animation-delay: 0.10s; }
+    .animate-delay-3 { animation-delay: 0.15s; }
+
+    /* ── Responsive ── */
+    @media (max-width: 680px) {
+      main { padding: 40px 0 80px; }
+      .hero h1 { font-size: 2.2rem; }
+      .quiz-grid { grid-template-columns: 1fr; }
+      .notes-list { grid-template-columns: 1fr; }
+      .nav-stats { gap: 16px; }
     }
   </style>
 </head>
 <body>
-  <main>
-    <header>
-      <section>
-        <h1>DSA Markdown Library</h1>
-        <p class="subtitle">A focused shelf for algorithms, systems, backend, AI, and interview notes. Open any file in the full reader with syntax highlighting and Mermaid diagrams.</p>
-      </section>
-      <aside class="stat" aria-label="Library size">
-        <strong id="count">0</strong>
-        <span>Notes & Quizzes</span>
-      </aside>
-    </header>
 
-    <section class="toolbar" aria-label="Filters">
-      <label class="search">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-          <circle cx="11" cy="11" r="7"></circle>
-          <path d="m21 21-4.35-4.35"></path>
-        </svg>
-        <input id="filter" type="search" placeholder="Search notes..." autocomplete="off">
-      </label>
-      <div class="hint" id="visibleCount"></div>
+  <!-- Ambient blobs -->
+  <div class="blob blob-1" aria-hidden="true"></div>
+  <div class="blob blob-2" aria-hidden="true"></div>
+  <div class="blob blob-3" aria-hidden="true"></div>
+
+  <!-- Navbar -->
+  <nav>
+    <a href="#" class="nav-logo">
+      <div class="nav-logo-dot"></div>
+      Dev Notes
+    </a>
+    <div class="nav-stats">
+      <div class="nav-stat">
+        <strong id="quiz-count">—</strong>
+        <span>Quizzes</span>
+      </div>
+      <div class="nav-stat">
+        <strong id="note-count">—</strong>
+        <span>Notes</span>
+      </div>
+    </div>
+  </nav>
+
+  <main>
+
+    <!-- Hero -->
+    <section class="hero animate-in">
+      <div class="hero-eyebrow">Interview Prep &amp; Study Notes</div>
+      <h1>Everything you need to <em>ace</em> the interview.</h1>
+      <p class="hero-desc">A curated shelf of algorithms, systems design, backend engineering, and AI notes — plus interactive quizzes to test your knowledge.</p>
     </section>
 
-    <section class="grid" id="fileGrid" aria-label="Markdown files"></section>
+    <!-- Search -->
+    <div class="search-bar animate-in animate-delay-1">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <circle cx="11" cy="11" r="7"></circle>
+        <path d="m21 21-4.35-4.35"></path>
+      </svg>
+      <input id="filter" type="search" placeholder="Search quizzes and notes…" autocomplete="off" aria-label="Search notes and quizzes">
+      <span class="search-count" id="visibleCount"></span>
+    </div>
+
+    <!-- Quizzes section -->
+    <div id="quizSection" class="animate-in animate-delay-2">
+      <div class="section-header">
+        <span class="section-badge quiz">Quizzes</span>
+        <h2 class="section-title">Interactive MCQ Quizzes</h2>
+        <div class="section-divider"></div>
+        <span class="section-count" id="quiz-shown"></span>
+      </div>
+      <div class="quiz-grid" id="quizGrid">
+        <div class="empty" id="quizEmpty">No quizzes match your search.</div>
+      </div>
+    </div>
+
+    <!-- Notes section -->
+    <div id="notesSection" class="animate-in animate-delay-3">
+      <div class="section-header">
+        <span class="section-badge note">Notes</span>
+        <h2 class="section-title">Markdown Notes</h2>
+        <div class="section-divider"></div>
+        <span class="section-count" id="notes-shown"></span>
+      </div>
+      <div class="notes-list" id="notesGrid">
+        <div class="empty" id="notesEmpty">No notes match your search.</div>
+      </div>
+    </div>
+
   </main>
 
+  <footer>
+    <span id="count">0</span> resources total &nbsp;·&nbsp; DSA &amp; Interview Prep Library
+  </footer>
+
   <script>
+    /* ── Data (unchanged from original logic) ── */
     const fallbackFiles = [
       "a2arag.md",
       "agenticai.md",
@@ -321,12 +669,73 @@
       "websocket.md": "WebSocket"
     };
 
+    /* Quiz icon map */
+    const quizIconMap = {
+      "agenticaimcq.html":          "🤖",
+      "awssolutionarchitectmcq.html":"☁️",
+      "databases.html":              "🗄️",
+      "kafkaquiz.html":              "⚡",
+      "nodejsmcq.html":              "🟢",
+      "postgresqlmcq.html":          "🐘",
+      "systemdesignmcq.html":        "🏗️",
+    };
+
+    /* Note icon map — category-based */
+    const noteIconMap = {
+      "a2arag.md":           "🔗",
+      "agenticai.md":        "🤖",
+      "backtracking.md":     "↩️",
+      "binarysearch.md":     "🔍",
+      "bitmanipulation.md":  "⚙️",
+      "databases.md":        "🗄️",
+      "disjoinset.md":       "🔀",
+      "distributedsystems.md":"🌐",
+      "dotnet.md":           "💜",
+      "dp.md":               "🧠",
+      "dsaeasytomedium.md":  "📊",
+      "dsaeasytomedium_pseudocode.md": "📋",
+      "golang.md":           "🔵",
+      "golangcodequestions.md": "💻",
+      "graph.md":            "🕸️",
+      "greedy.md":           "💰",
+      "heap.md":             "🏔️",
+      "intervals.md":        "📏",
+      "kafka.md":            "⚡",
+      "kubernetes.md":       "☸️",
+      "linkedlist.md":       "🔗",
+      "monotonicstack.md":   "📈",
+      "nodejs.md":           "🟢",
+      "observability.md":    "🔭",
+      "prefixsum.md":        "➕",
+      "puzzles.md":          "🧩",
+      "queue.md":            "📥",
+      "react.md":            "⚛️",
+      "recursion.md":        "🔄",
+      "slidingwindow.md":    "🪟",
+      "strings.md":          "🔤",
+      "systemdesigneventdrivenetc.md": "🏛️",
+      "systemdesigninterviewdesigncheatsheet.md": "📐",
+      "systemdesignterminology.md": "📖",
+      "trees.md":            "🌲",
+      "trie.md":             "🌳",
+      "twopointer.md":       "👆",
+      "websocket.md":        "🔌",
+    };
+
     let libraryFiles = [...fallbackFiles];
 
-    const grid = document.querySelector("#fileGrid");
-    const filter = document.querySelector("#filter");
-    const count = document.querySelector("#count");
+    /* ── DOM refs ── */
+    const quizGrid    = document.querySelector("#quizGrid");
+    const notesGrid   = document.querySelector("#notesGrid");
+    const filter      = document.querySelector("#filter");
+    const count       = document.querySelector("#count");
     const visibleCount = document.querySelector("#visibleCount");
+    const quizCount   = document.querySelector("#quiz-count");
+    const noteCount   = document.querySelector("#note-count");
+    const quizShown   = document.querySelector("#quiz-shown");
+    const notesShown  = document.querySelector("#notes-shown");
+    const quizEmpty   = document.querySelector("#quizEmpty");
+    const notesEmpty  = document.querySelector("#notesEmpty");
 
     function titleFromFile(file) {
       if (titleMap[file]) return titleMap[file];
@@ -341,29 +750,70 @@
         .replace(/\b\w/g, char => char.toUpperCase());
     }
 
+    const arrowSvg = `<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M2.5 6h7m-3-3 3 3-3 3"/>
+    </svg>`;
+
     function renderList() {
       const term = filter.value.trim().toLowerCase();
-      const files = libraryFiles.filter(file => {
-        return file.toLowerCase().includes(term) || titleFromFile(file).toLowerCase().includes(term);
+      const allFiles = libraryFiles.filter(file =>
+        file.toLowerCase().includes(term) || titleFromFile(file).toLowerCase().includes(term)
+      );
+
+      const quizFiles = allFiles.filter(f => f.endsWith(".html"));
+      const noteFiles = allFiles.filter(f => f.endsWith(".md"));
+
+      /* Render quizzes */
+      const quizCards = quizFiles.map(file => {
+        const href  = file;
+        const title = titleFromFile(file);
+        const icon  = quizIconMap[file] || "📝";
+        return `
+          <a class="quiz-card" href="${href}">
+            <div class="quiz-card-icon">${icon}</div>
+            <div class="quiz-card-body">
+              <div class="quiz-card-title">${title}</div>
+              <div class="quiz-card-file">${file}</div>
+            </div>
+            <div class="quiz-card-footer">
+              <span class="quiz-pill">MCQ Quiz</span>
+              <span class="card-arrow">${arrowSvg}</span>
+            </div>
+          </a>`;
       });
 
-      grid.innerHTML = files.map((file, index) => {
-        const isHtml = file.endsWith('.html');
-        const href = isHtml ? file : `markdownreader.html?file=${encodeURIComponent(file)}`;
-        return `
-        <a class="card" href="${href}">
-          <span class="card-title">${titleFromFile(file)}</span>
-          <span class="card-meta">
-            <span>${file}</span>
-            <span class="tag">#${String(index + 1).padStart(2, "0")}</span>
-          </span>
-        </a>
-      `}).join("");
+      quizGrid.innerHTML = quizCards.join("") + `<div class="empty" id="quizEmpty" style="display:${quizCards.length ? 'none' : 'block'}">No quizzes match your search.</div>`;
+      quizShown.textContent = `${quizFiles.length} shown`;
 
-      visibleCount.textContent = `${files.length} of ${libraryFiles.length} shown`;
-      count.textContent = libraryFiles.length;
+      /* Render notes */
+      const noteCards = noteFiles.map(file => {
+        const href  = `markdownreader.html?file=${encodeURIComponent(file)}`;
+        const title = titleFromFile(file);
+        const icon  = noteIconMap[file] || "📄";
+        return `
+          <a class="note-card" href="${href}">
+            <div class="note-card-icon">${icon}</div>
+            <div class="note-card-body">
+              <div class="note-card-title">${title}</div>
+              <div class="note-card-file">${file}</div>
+            </div>
+            <span class="note-card-arrow">${arrowSvg}</span>
+          </a>`;
+      });
+
+      notesGrid.innerHTML = noteCards.join("") + `<div class="empty" id="notesEmpty" style="display:${noteCards.length ? 'none' : 'block'}">No notes match your search.</div>`;
+      notesShown.textContent = `${noteFiles.length} shown`;
+
+      /* Update counters */
+      const totalQuizzes = libraryFiles.filter(f => f.endsWith(".html")).length;
+      const totalNotes   = libraryFiles.filter(f => f.endsWith(".md")).length;
+      quizCount.textContent = totalQuizzes;
+      noteCount.textContent = totalNotes;
+      count.textContent     = libraryFiles.length;
+      visibleCount.textContent = term ? `${allFiles.length} of ${libraryFiles.length} results` : `${libraryFiles.length} resources`;
     }
 
+    /* ── Manifest loader (logic unchanged) ── */
     async function loadManifest() {
       try {
         const response = await fetch("md-files.json", { cache: "no-store" });
