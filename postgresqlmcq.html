@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PostgreSQL Interview Prep — 150 MCQs</title>
+<meta name="description" content="150 PostgreSQL interview prep multiple-choice questions covering ACID, indexes, MVCC, partitioning, replication, window functions, JSONB, and more.">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --surface2: #1c2333;
+    --border: #30363d;
+    --accent: #3b82f6;
+    --accent2: #38bdf8;
+    --green: #3fb950;
+    --red: #f85149;
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'Inter', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    line-height: 1.6;
+  }
+
+  /* Header */
+  .header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 60px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .logo {
+    font-family: var(--mono);
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: var(--accent2);
+    letter-spacing: -0.02em;
+  }
+  .logo span { color: var(--muted); font-weight: 400; }
+  .header-stats {
+    display: flex;
+    gap: 1.5rem;
+    font-size: 0.8rem;
+    color: var(--muted);
+    font-family: var(--mono);
+  }
+  .header-stats strong { color: var(--text); }
+
+  /* Layout */
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+  }
+
+  /* Progress Bar */
+  .progress-bar-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .progress-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.78rem;
+    color: var(--muted);
+    font-family: var(--mono);
+    margin-bottom: 0.6rem;
+  }
+  .progress-track {
+    height: 6px;
+    background: var(--border);
+    border-radius: 99px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 99px;
+    transition: width 0.4s ease;
+  }
+
+  /* Topic Filter */
+  .topic-bar {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+  }
+  .topic-btn {
+    padding: 0.3rem 0.8rem;
+    border-radius: 99px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    font-size: 0.75rem;
+    font-family: var(--mono);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .topic-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+  .topic-btn.active { background: var(--accent2); border-color: var(--accent2); color: #000; font-weight: 600; }
+
+  /* Question Card */
+  .q-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.8rem;
+    margin-bottom: 1rem;
+    transition: border-color 0.2s;
+  }
+  .q-card.answered { border-color: var(--border); }
+
+  .q-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1.2rem;
+  }
+  .q-num {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--accent2);
+    background: rgba(56,189,248,0.1);
+    border: 1px solid rgba(56,189,248,0.3);
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    white-space: nowrap;
+    margin-top: 2px;
+  }
+  .q-topic-tag {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    color: var(--accent);
+    background: rgba(59,130,246,0.08);
+    border: 1px solid rgba(59,130,246,0.2);
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    white-space: nowrap;
+    margin-top: 2px;
+  }
+  .q-text {
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--text);
+    flex: 1;
+  }
+  code {
+    font-family: var(--mono);
+    background: rgba(56,189,248,0.1);
+    color: var(--accent2);
+    padding: 0.1em 0.35em;
+    border-radius: 3px;
+    font-size: 0.88em;
+  }
+
+  /* Options */
+  .options { display: grid; gap: 0.6rem; margin-bottom: 1rem; }
+  .option {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    cursor: pointer;
+    font-size: 0.88rem;
+    transition: all 0.15s;
+    user-select: none;
+  }
+  .option:hover:not(.disabled) { border-color: var(--accent2); background: rgba(56,189,248,0.06); }
+  .option .opt-label {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--muted);
+    min-width: 1.2rem;
+  }
+  .option.correct { border-color: var(--green); background: rgba(63,185,80,0.08); }
+  .option.correct .opt-label { color: var(--green); }
+  .option.wrong { border-color: var(--red); background: rgba(248,81,73,0.08); }
+  .option.wrong .opt-label { color: var(--red); }
+  .option.disabled { cursor: default; }
+  .option .check { margin-left: auto; font-size: 1rem; }
+
+  /* Solution */
+  .solution {
+    display: none;
+    background: rgba(63,185,80,0.06);
+    border: 1px solid rgba(63,185,80,0.2);
+    border-radius: 8px;
+    padding: 0.9rem 1.1rem;
+    font-size: 0.84rem;
+    color: #add5b4;
+    line-height: 1.6;
+  }
+  .solution.show { display: block; }
+  .solution strong { color: var(--green); font-family: var(--mono); font-size: 0.78rem; display: block; margin-bottom: 0.3rem; }
+
+  /* Action Buttons */
+  .q-actions {
+    display: flex;
+    gap: 0.6rem;
+    margin-top: 1rem;
+  }
+  .btn {
+    padding: 0.45rem 1.1rem;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    font-size: 0.8rem;
+    font-family: var(--mono);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 700; }
+  .btn-primary:hover { background: #2563eb; }
+  .btn-ghost { background: transparent; color: var(--muted); }
+  .btn-ghost:hover { border-color: var(--accent2); color: var(--accent2); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* Score Panel */
+  .score-panel {
+    position: fixed;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1rem 1.3rem;
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    z-index: 50;
+  }
+  .score-panel .label { color: var(--muted); font-size: 0.7rem; margin-bottom: 0.2rem; }
+  .score-panel .val { font-size: 1.4rem; font-weight: 700; color: var(--accent2); }
+  .score-panel .frac { color: var(--muted); font-size: 0.9rem; }
+
+  /* Controls */
+  .controls {
+    display: flex;
+    gap: 0.8rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .search-box {
+    flex: 1;
+    min-width: 200px;
+    padding: 0.5rem 0.9rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 0.85rem;
+  }
+  .search-box::placeholder { color: var(--muted); }
+  .search-box:focus { outline: none; border-color: var(--accent2); }
+
+  /* Navigation */
+  .nav-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 0;
+    border-top: 1px solid var(--border);
+    margin-top: 1rem;
+  }
+  .page-info { font-family: var(--mono); font-size: 0.78rem; color: var(--muted); }
+
+  .q-card.hidden { display: none; }
+
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  @media (max-width: 600px) {
+    .header { padding: 0 1rem; }
+    .header-stats { display: none; }
+    .container { padding: 1rem; }
+    .q-card { padding: 1.2rem; }
+    .score-panel { bottom: 0.8rem; right: 0.8rem; padding: 0.7rem 1rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">postgresql<span>.quiz</span></div>
+  <div class="header-stats">
+    <span>Answered: <strong id="hdr-answered">0</strong></span>
+    <span>Correct: <strong id="hdr-correct">0</strong></span>
+    <span>Score: <strong id="hdr-score">0%</strong></span>
+  </div>
+</div>
+
+<div class="container">
+  <div class="progress-bar-wrap">
+    <div class="progress-meta">
+      <span>Progress</span>
+      <span id="prog-text">0 / 205 answered</span>
+    </div>
+    <div class="progress-track"><div class="progress-fill" id="prog-fill" style="width:0%"></div></div>
+  </div>
+
+  <div class="controls">
+    <input class="search-box" type="text" placeholder="Search questions..." id="search-input" oninput="filterQuestions()">
+    <button class="btn btn-ghost" onclick="resetAll()">Reset All</button>
+    <button class="btn btn-ghost" onclick="showAllSolutions()">Reveal All Answers</button>
+  </div>
+
+  <div class="topic-bar" id="topic-bar"></div>
+
+  <div id="quiz-container"></div>
+
+  <div class="nav-bar">
+    <span class="page-info">PostgreSQL Interview Prep · 205 Questions</span>
+    <span class="page-info" id="visible-count">Showing 150 questions</span>
+  </div>
+</div>
+
+<div class="score-panel">
+  <div class="label">SCORE</div>
+  <div class="val" id="score-val">0</div>
+  <div class="frac" id="score-frac">/ 0 answered</div>
+</div>
+
+<script>
+const QUESTIONS = [
+  // ─── FUNDAMENTALS ─────────────────────────────────────────────────────────
+  {id:1,topic:"Fundamentals",q:"What does ACID stand for in PostgreSQL transactions?",o:["Atomicity, Consistency, Isolation, Durability","Atomicity, Concurrency, Isolation, Durability","Atomicity, Consistency, Integrity, Durability","Availability, Consistency, Isolation, Durability"],a:0,e:"ACID = Atomicity, Consistency, Isolation, Durability — core properties guaranteeing reliable transactions."},
+  {id:2,topic:"Fundamentals",q:"Which command is used to create a new database in PostgreSQL?",o:["NEW DATABASE","CREATE DATABASE","MAKE DATABASE","ADD DATABASE"],a:1,e:"CREATE DATABASE dbname; is the correct SQL command."},
+  {id:3,topic:"Fundamentals",q:"What is the default port for PostgreSQL?",o:["3306","1433","5432","27017"],a:2,e:"PostgreSQL listens on port 5432 by default (MySQL uses 3306, SQL Server 1433, MongoDB 27017)."},
+  {id:4,topic:"Fundamentals",q:"Which data type is used to store variable-length character strings?",o:["CHAR","VARCHAR","TEXT","Both VARCHAR and TEXT"],a:3,e:"Both VARCHAR(n) and TEXT store variable-length strings; VARCHAR can have a length limit while TEXT is unlimited."},
+  {id:5,topic:"Fundamentals",q:"What is a primary key?",o:["A key that allows duplicates","A unique identifier for each row that cannot be NULL","An index on multiple columns","A foreign key reference"],a:1,e:"A primary key uniquely identifies each row and enforces NOT NULL and uniqueness constraints."},
+  {id:6,topic:"Fundamentals",q:"Which command removes a table and all its data permanently?",o:["DELETE TABLE","REMOVE TABLE","TRUNCATE TABLE","DROP TABLE"],a:3,e:"DROP TABLE removes the table structure and data entirely. TRUNCATE removes data but keeps structure."},
+  {id:7,topic:"Fundamentals",q:"What is the difference between DELETE and TRUNCATE?",o:["No difference","DELETE can use WHERE clause and is slower; TRUNCATE removes all rows quickly without WHERE","TRUNCATE can use WHERE clause","DELETE removes table structure"],a:1,e:"DELETE is row-by-row (can filter with WHERE, logged, slower), TRUNCATE deallocates pages quickly and resets identity but cannot filter."},
+  {id:8,topic:"Fundamentals",q:"Which clause is used to filter groups after GROUP BY?",o:["WHERE","HAVING","FILTER","GROUP FILTER"],a:1,e:"HAVING filters grouped results, whereas WHERE filters rows before grouping."},
+  {id:9,topic:"Fundamentals",q:"What does the SERIAL data type do?",o:["Creates a foreign key","Auto-increments an integer value using a sequence","Stores serialized JSON","Creates a unique constraint only"],a:1,e:"SERIAL creates an integer column with an associated sequence for auto-incrementing values."},
+  {id:10,topic:"Fundamentals",q:"Which join returns all rows from both tables, with NULLs where there's no match?",o:["INNER JOIN","LEFT JOIN","RIGHT JOIN","FULL OUTER JOIN"],a:3,e:"FULL OUTER JOIN returns matched rows plus unmatched rows from both sides with NULLs filling gaps."},
+
+  // ─── CONSTRAINTS & KEYS ───────────────────────────────────────────────────
+  {id:11,topic:"Constraints",q:"What is a foreign key?",o:["A primary key in another table","A column that references the primary key of another table to maintain referential integrity","An encrypted key","A key stored externally"],a:1,e:"A foreign key enforces referential integrity by linking a column to a primary/unique key in another table."},
+  {id:12,topic:"Constraints",q:"What is the purpose of a UNIQUE constraint?",o:["Ensures all values in a column are different (NULLs allowed multiple times)","Ensures NOT NULL","Creates a primary key automatically","Ensures values are positive"],a:0,e:"UNIQUE prevents duplicate values, though PostgreSQL allows multiple NULLs since NULL != NULL."},
+  {id:13,topic:"Constraints",q:"What is a CHECK constraint?",o:["Validates foreign keys","Enforces a condition that values in a column must satisfy","Checks for duplicate rows","Verifies table existence"],a:1,e:"CHECK constraints enforce a boolean condition (e.g., CHECK (age >= 0)) on column values."},
+  {id:14,topic:"Constraints",q:"Which statement correctly creates a foreign key?",o:["FOREIGN KEY (col) REFERENCES other_table(col)","LINK KEY (col) TO other_table(col)","KEY (col) -> other_table(col)","REFERENCE KEY (col) = other_table(col)"],a:0,e:"Syntax: FOREIGN KEY (column) REFERENCES other_table(column)."},
+  {id:15,topic:"Constraints",q:"What does ON DELETE CASCADE do?",o:["Prevents deletion","Automatically deletes related rows in the child table when the parent row is deleted","Deletes the entire database","Cascades only on UPDATE"],a:1,e:"ON DELETE CASCADE propagates deletions to dependent rows referencing the deleted row via foreign key."},
+  {id:16,topic:"Constraints",q:"What is the difference between a primary key and a unique constraint?",o:["No difference","Primary key disallows NULLs and only one per table; unique allows NULLs and multiple per table","Unique key is faster","Primary key allows duplicates"],a:1,e:"A table can have only one primary key (NOT NULL + unique), but multiple unique constraints, which permit NULLs."},
+  {id:17,topic:"Constraints",q:"What does NOT NULL constraint enforce?",o:["Column must contain unique values","Column cannot contain NULL values","Column must be numeric","Column must reference another table"],a:1,e:"NOT NULL requires that every row must have a value (not NULL) for that column."},
+  {id:18,topic:"Constraints",q:"What is the purpose of the DEFAULT keyword in column definitions?",o:["Sets a maximum value","Specifies a value to use when no value is provided during INSERT","Defines the data type","Creates an index"],a:1,e:"DEFAULT specifies a fallback value applied if INSERT doesn't explicitly provide one for that column."},
+  {id:19,topic:"Constraints",q:"What is the purpose of the EXCLUDE constraint?",o:["Excludes columns from SELECT *","Ensures that if any two rows are compared on specified columns/operators, at least one comparison returns false","Excludes rows from backups","Excludes NULL values"],a:1,e:"EXCLUDE constraints (often with GiST) prevent overlapping ranges or other complex uniqueness conditions, e.g., no overlapping date ranges."},
+  {id:20,topic:"Constraints",q:"What is the purpose of GENERATED ALWAYS AS IDENTITY?",o:["Creates a foreign key","SQL-standard way to define auto-incrementing columns, replacing SERIAL","Generates random data","Generates JSON"],a:1,e:"GENERATED AS IDENTITY is the SQL-standard equivalent of SERIAL for auto-generated values, introduced in PG10."},
+
+  // ─── INDEXES ──────────────────────────────────────────────────────────────
+  {id:21,topic:"Indexes",q:"Which index type is the default in PostgreSQL?",o:["HASH","GIN","GiST","B-tree"],a:3,e:"B-tree is the default and most commonly used index type, suitable for equality and range queries."},
+  {id:22,topic:"Indexes",q:"What is a GIN index best suited for?",o:["Range queries on numbers","Full-text search and array/JSONB containment queries","Primary keys","Sorting"],a:1,e:"GIN (Generalized Inverted Index) is optimized for composite values like arrays, JSONB, and full-text search."},
+  {id:23,topic:"Indexes",q:"What command creates an index?",o:["MAKE INDEX","CREATE INDEX","ADD INDEX","NEW INDEX"],a:1,e:"CREATE INDEX index_name ON table(column); creates an index."},
+  {id:24,topic:"Indexes",q:"What is a composite index?",o:["An index on a computed column","An index built on multiple columns","An index that is corrupted","A unique index"],a:1,e:"A composite (multi-column) index is built on more than one column to speed up queries filtering on those columns together."},
+  {id:25,topic:"Indexes",q:"What is a partial index?",o:["An index that's only half built","An index built on a subset of rows using a WHERE clause","An index on part of a column","A temporary index"],a:1,e:"A partial index includes only rows matching a condition, reducing size and improving performance for targeted queries."},
+  {id:26,topic:"Indexes",q:"What is the purpose of an INDEX?",o:["To enforce constraints only","To speed up data retrieval at the cost of additional storage and write overhead","To compress table data","To encrypt columns"],a:1,e:"Indexes allow the database to find rows faster without scanning the whole table, but add overhead on writes."},
+  {id:27,topic:"Indexes",q:"What happens to indexes when data is inserted/updated/deleted?",o:["Nothing, indexes are static","Indexes must also be updated, adding overhead to write operations","Indexes are deleted automatically","Indexes rebuild the whole table"],a:1,e:"Every DML operation on indexed columns requires corresponding index updates, which adds write overhead."},
+  {id:28,topic:"Indexes",q:"What is the purpose of a hash index?",o:["Stores password hashes","An index type optimized for simple equality comparisons using hash values","An index for sorting","An index for full text search"],a:1,e:"Hash indexes support equality lookups (=) efficiently but not range queries; since PG10 they're WAL-logged and crash-safe."},
+  {id:29,topic:"Indexes",q:"What is a GiST index commonly used for?",o:["Simple integer equality","Geometric data types, full-text search, and range types (e.g., PostGIS)","Primary keys only","Boolean columns"],a:1,e:"GiST (Generalized Search Tree) supports complex data types like geometric shapes, ranges, and is the basis for PostGIS spatial indexes."},
+  {id:30,topic:"Indexes",q:"What is a BRIN index optimized for?",o:["Random data","Very large tables with naturally ordered data (e.g., timestamps), using small summary blocks","Text search","JSON data"],a:1,e:"BRIN (Block Range Index) stores summary info per block range, ideal for large, sequentially-ordered data with minimal storage overhead."},
+
+  // ─── QUERY PLANNING & PERFORMANCE ─────────────────────────────────────────
+  {id:31,topic:"Query Planning",q:"What is the purpose of the EXPLAIN command?",o:["To execute a query faster","To show the execution plan of a query without running it","To delete data and explain why","To create documentation"],a:1,e:"EXPLAIN shows the planner's execution plan, useful for performance tuning."},
+  {id:32,topic:"Query Planning",q:"What does EXPLAIN ANALYZE do differently from EXPLAIN?",o:["Nothing different","It actually executes the query and shows real timing/row counts alongside the plan","It only analyzes syntax","It analyzes table size"],a:1,e:"EXPLAIN ANALYZE runs the query and reports actual execution statistics, not just estimates."},
+  {id:33,topic:"Query Planning",q:"What is ANALYZE used for?",o:["Encrypting tables","Updating statistics used by the query planner","Creating backups","Dropping indexes"],a:1,e:"ANALYZE collects statistics about table contents to help the query planner choose efficient plans."},
+  {id:34,topic:"Query Planning",q:"What is a 'seq scan' in an EXPLAIN output?",o:["A scan using an index","A sequential scan reading the entire table row by row","A scan of system catalogs only","A scan using sequences"],a:1,e:"Sequential Scan reads every row in the table, used when no suitable index exists or the planner deems it cheaper."},
+  {id:35,topic:"Query Planning",q:"When might the planner prefer a sequential scan over an index scan?",o:["Never, index scans are always faster","When the table is small or a large percentage of rows will be returned, making random I/O of index scans less efficient","Only on system tables","When indexes are corrupted"],a:1,e:"For small tables or queries returning a large fraction of rows, sequential scans can outperform index scans due to lower overhead."},
+  {id:36,topic:"Query Planning",q:"What is a 'nested loop' join in query plans?",o:["A loop in PL/pgSQL","A join algorithm that, for each row in the outer table, scans the inner table for matches","A type of recursive CTE","A circular reference error"],a:1,e:"Nested Loop joins iterate over the outer table and, for each row, search the inner table—efficient for small datasets or indexed lookups."},
+  {id:37,topic:"Query Planning",q:"What is a 'hash join' in query plans?",o:["A join using hashed passwords","Builds a hash table from one input and probes it with rows from the other, efficient for large unsorted datasets","A join that hashes the entire database","Deprecated join type"],a:1,e:"Hash Join builds an in-memory hash table on the smaller relation and probes it with rows from the larger one, typically used for equi-joins."},
+  {id:38,topic:"Query Planning",q:"What is a 'merge join' in query plans?",o:["Combines two databases","Joins two sorted inputs by merging them together, efficient when both sides are already sorted","A type of full outer join only","Joins via hashing"],a:1,e:"Merge Join requires both inputs sorted on the join key and merges them in a single pass, efficient for pre-sorted/indexed data."},
+  {id:39,topic:"Query Planning",q:"What is the purpose of the pg_stat_statements extension?",o:["Tracks user logins","Tracks execution statistics (calls, total time, rows) for all SQL statements executed","Tracks table sizes","Tracks backup history"],a:1,e:"pg_stat_statements aggregates statistics on query execution, helping identify slow or frequently run queries."},
+  {id:40,topic:"Query Planning",q:"What does the term 'query planner/optimizer' refer to?",o:["A tool for writing queries","The PostgreSQL component that determines the most efficient way to execute a given query","A GUI tool only","A backup scheduler"],a:1,e:"The planner evaluates possible execution strategies (scan types, join orders/methods) and chooses the lowest estimated cost plan."},
+
+  // ─── MVCC & TRANSACTIONS ──────────────────────────────────────────────────
+  {id:41,topic:"MVCC & Transactions",q:"What is MVCC in PostgreSQL?",o:["Multi-Version Concurrency Control - allows concurrent reads/writes without locking","Multiple Virtual Connection Control","Memory Variable Cache Control","Master-View Cluster Configuration"],a:0,e:"MVCC allows readers and writers to operate without blocking each other by maintaining multiple versions of rows."},
+  {id:42,topic:"MVCC & Transactions",q:"Which isolation level is the default in PostgreSQL?",o:["Serializable","Read Uncommitted","Repeatable Read","Read Committed"],a:3,e:"Read Committed is PostgreSQL's default isolation level."},
+  {id:43,topic:"MVCC & Transactions",q:"How many transaction isolation levels does PostgreSQL support?",o:["2","3","4","5"],a:2,e:"PostgreSQL supports Read Committed, Repeatable Read, and Serializable (Read Uncommitted behaves like Read Committed)."},
+  {id:44,topic:"MVCC & Transactions",q:"What is a deadlock?",o:["A locked table that can never be unlocked","A situation where two or more transactions wait for each other's locks indefinitely","A corrupted index","A failed backup"],a:1,e:"A deadlock occurs when transactions hold locks the others need, and PostgreSQL detects and aborts one."},
+  {id:45,topic:"MVCC & Transactions",q:"What does the SAVEPOINT command do?",o:["Saves the entire database","Creates a point within a transaction to which you can later rollback without aborting the whole transaction","Backs up a table","Commits a transaction"],a:1,e:"SAVEPOINT allows partial rollback (ROLLBACK TO SAVEPOINT) within a larger transaction."},
+  {id:46,topic:"MVCC & Transactions",q:"What does ROLLBACK do?",o:["Permanently saves changes","Undoes all changes made in the current transaction","Deletes the database","Creates a backup"],a:1,e:"ROLLBACK reverts all changes made since the transaction began (or since a savepoint)."},
+  {id:47,topic:"MVCC & Transactions",q:"What is the purpose of the COMMIT command?",o:["Cancels a transaction","Permanently saves all changes made in the current transaction","Creates a new transaction","Locks a table"],a:1,e:"COMMIT makes all changes in the current transaction permanent and visible to other transactions."},
+  {id:48,topic:"MVCC & Transactions",q:"What does SELECT ... FOR UPDATE do?",o:["Updates the selected rows","Locks the selected rows to prevent other transactions from modifying them until the current transaction completes","Creates a view","Deletes locked rows"],a:1,e:"FOR UPDATE locks selected rows against concurrent updates/deletes, commonly used for read-then-update patterns."},
+  {id:49,topic:"MVCC & Transactions",q:"What is the purpose of SKIP LOCKED in SELECT statements?",o:["Skips encrypted rows","Skips rows that are already locked by another transaction instead of waiting","Skips deleted rows","Disables locking entirely"],a:1,e:"SKIP LOCKED allows a query to bypass rows currently locked by other transactions, useful for job queue implementations."},
+  {id:50,topic:"MVCC & Transactions",q:"What does 'idle in transaction' mean in pg_stat_activity?",o:["The connection is closed","A transaction is open but the client isn't currently executing a query, potentially holding locks","The database is idle","A backup is running"],a:1,e:"'idle in transaction' sessions have an open transaction without active queries, which can hold locks and block VACUUM if long-running."},
+
+  // ─── VACUUM & MAINTENANCE ─────────────────────────────────────────────────
+  {id:51,topic:"Vacuum & Maintenance",q:"What is the purpose of VACUUM in PostgreSQL?",o:["To create backups","To reclaim storage from dead tuples and update statistics","To encrypt data","To create indexes"],a:1,e:"VACUUM removes dead row versions left by UPDATE/DELETE (MVCC) and helps prevent table bloat."},
+  {id:52,topic:"Vacuum & Maintenance",q:"What does VACUUM FULL do differently from regular VACUUM?",o:["It's faster","It rewrites the entire table to reclaim disk space, but locks the table","It only updates statistics","It deletes all data"],a:1,e:"VACUUM FULL compacts the table by rewriting it, reclaiming disk space but requiring an exclusive lock."},
+  {id:53,topic:"Vacuum & Maintenance",q:"What is autovacuum?",o:["A manual backup tool","A background process that automatically runs VACUUM and ANALYZE to maintain table health","A replication tool","An indexing strategy"],a:1,e:"Autovacuum automatically performs VACUUM and ANALYZE based on table activity thresholds to prevent bloat and outdated stats."},
+  {id:54,topic:"Vacuum & Maintenance",q:"What does the term 'bloat' refer to in PostgreSQL?",o:["Excessive RAM usage","Wasted disk space from dead tuples not yet reclaimed by VACUUM","Network congestion","Slow CPU"],a:1,e:"Bloat occurs when dead tuples accumulate (from UPDATEs/DELETEs) faster than VACUUM cleans them, wasting disk space."},
+  {id:55,topic:"Vacuum & Maintenance",q:"What is a common scenario causing index bloat?",o:["Too many SELECT statements","Frequent UPDATEs and DELETEs leaving dead index entries that aren't immediately reclaimed","Creating too few indexes","Using VARCHAR instead of TEXT"],a:1,e:"High update/delete activity leaves dead entries in indexes; REINDEX or VACUUM helps reclaim this space."},
+  {id:56,topic:"Vacuum & Maintenance",q:"What does REINDEX do?",o:["Creates a new database","Rebuilds an index from scratch, useful for corrupted or bloated indexes","Deletes all indexes","Renames an index"],a:1,e:"REINDEX rebuilds one or more indexes, fixing corruption or bloat by recreating them."},
+
+  // ─── VIEWS & CTEs ─────────────────────────────────────────────────────────
+  {id:57,topic:"Views & CTEs",q:"What is a view in PostgreSQL?",o:["A physical copy of table data","A stored query that acts as a virtual table","A type of index","A backup mechanism"],a:1,e:"A view is a stored SQL query presented as a virtual table; it doesn't store data itself (unless materialized)."},
+  {id:58,topic:"Views & CTEs",q:"What is a materialized view?",o:["Same as a regular view","A view whose result set is physically stored and must be refreshed manually","A view with no columns","A temporary table"],a:1,e:"A materialized view stores the query result physically on disk and is refreshed using REFRESH MATERIALIZED VIEW."},
+  {id:59,topic:"Views & CTEs",q:"How do you refresh a materialized view?",o:["UPDATE MATERIALIZED VIEW","REFRESH MATERIALIZED VIEW view_name","RELOAD VIEW view_name","SYNC VIEW view_name"],a:1,e:"REFRESH MATERIALIZED VIEW view_name; re-executes the query and updates stored data."},
+  {id:60,topic:"Views & CTEs",q:"What is a CTE (Common Table Expression)?",o:["A type of constraint","A temporary named result set defined using WITH clause","A column type extension","A clustering technique"],a:1,e:"CTEs use the WITH clause to define a temporary result set referenced within the main query, improving readability."},
+  {id:61,topic:"Views & CTEs",q:"What is a recursive CTE used for?",o:["Encrypting recursive data","Querying hierarchical or tree-structured data, like organizational charts","Creating recursive indexes","Looping infinitely"],a:1,e:"Recursive CTEs (WITH RECURSIVE) are used to traverse hierarchical data such as trees and graphs."},
+
+  // ─── WINDOW FUNCTIONS ────────────────────────────────────────────────────
+  {id:62,topic:"Window Functions",q:"What is a window function?",o:["A function for GUI windows","A function that performs calculations across a set of rows related to the current row without grouping them","A function that opens files","A type of trigger"],a:1,e:"Window functions (e.g., ROW_NUMBER, RANK, SUM() OVER()) compute values across a row set while retaining individual rows."},
+  {id:63,topic:"Window Functions",q:"Which window function assigns a unique sequential integer to rows?",o:["RANK()","DENSE_RANK()","ROW_NUMBER()","NTILE()"],a:2,e:"ROW_NUMBER() assigns a unique, sequential number to each row within its partition, regardless of ties."},
+  {id:64,topic:"Window Functions",q:"What is the difference between RANK() and DENSE_RANK()?",o:["No difference","RANK() leaves gaps in ranking after ties, DENSE_RANK() does not","DENSE_RANK is for dates only","RANK is faster"],a:1,e:"RANK() skips numbers after ties (1,1,3), while DENSE_RANK() does not skip (1,1,2)."},
+  {id:65,topic:"Window Functions",q:"What does the PARTITION BY clause do in window functions?",o:["Partitions the table physically","Divides result set into groups for the window function calculation, similar to GROUP BY but without collapsing rows","Splits the database","Partitions indexes"],a:1,e:"PARTITION BY divides rows into partitions for window function computation while keeping all rows in the output."},
+
+  // ─── JSONB & ARRAYS ───────────────────────────────────────────────────────
+  {id:66,topic:"JSONB & Arrays",q:"What is the JSONB data type?",o:["Binary JSON storage that's indexed and faster to query than JSON","A JSON type with no functions","A deprecated type","Same as TEXT"],a:0,e:"JSONB stores JSON in a decomposed binary format, supports indexing (GIN), and is generally faster than JSON for querying."},
+  {id:67,topic:"JSONB & Arrays",q:"What is the difference between JSON and JSONB?",o:["JSON preserves whitespace/key order and is stored as text; JSONB is binary, faster, supports indexing","JSONB is deprecated","JSON is faster","No difference"],a:0,e:"JSON retains exact text representation (including duplicate keys, whitespace); JSONB is a binary format that's more efficient to query."},
+  {id:68,topic:"JSONB & Arrays",q:"Which operator is used to extract a JSON object field as JSON?",o:["->","->>","#>","@>"],a:0,e:"-> extracts a field as JSON/JSONB; ->> extracts it as text."},
+  {id:69,topic:"JSONB & Arrays",q:"Which operator extracts a JSON field as TEXT?",o:["->","->>","#>>","Both ->> and #>>"],a:3,e:"->> extracts a top-level field as text, and #>> extracts a nested path as text."},
+  {id:70,topic:"JSONB & Arrays",q:"What does the @> operator do with JSONB?",o:["Appends data","Checks if left JSON contains the right JSON","Checks equality","Converts to array"],a:1,e:"@> is the 'contains' operator, checking if the left JSONB value contains the right one."},
+  {id:71,topic:"JSONB & Arrays",q:"What is an array data type used for in PostgreSQL?",o:["Storing only numbers","Storing multiple values of the same type in a single column","Creating indexes only","Storing binary data"],a:1,e:"PostgreSQL allows columns to be defined as arrays (e.g., INTEGER[]) to store multiple values of the same type."},
+  {id:72,topic:"JSONB & Arrays",q:"How do you access the first element of a 1-indexed array column 'tags'?",o:["tags[0]","tags[1]","tags.first()","FIRST(tags)"],a:1,e:"PostgreSQL arrays are 1-indexed by default, so tags[1] gets the first element."},
+
+  // ─── SEQUENCES & UPSERT ───────────────────────────────────────────────────
+  {id:73,topic:"Sequences & DML",q:"What is a sequence in PostgreSQL?",o:["A series of tables","A database object that generates a sequence of unique numbers, often used for auto-increment","An ordered list of columns","A type of join"],a:1,e:"A sequence generates sequential numeric values, commonly used to implement SERIAL/auto-increment columns."},
+  {id:74,topic:"Sequences & DML",q:"What function returns the next value of a sequence?",o:["next_val()","nextval()","sequence_next()","get_next()"],a:1,e:"nextval('sequence_name') returns and advances the sequence to its next value."},
+  {id:75,topic:"Sequences & DML",q:"What is the purpose of the RETURNING clause?",o:["Returns documentation","Returns values from rows affected by INSERT, UPDATE, or DELETE","Returns the query plan","Returns table schema"],a:1,e:"RETURNING outputs column values from affected rows, useful for getting generated IDs after INSERT."},
+  {id:76,topic:"Sequences & DML",q:"What is UPSERT in PostgreSQL?",o:["A type of join","INSERT with ON CONFLICT clause to update if a conflict occurs","A backup strategy","A vacuum operation"],a:1,e:"UPSERT uses INSERT ... ON CONFLICT (column) DO UPDATE/NOTHING to insert or update based on conflicts."},
+  {id:77,topic:"Sequences & DML",q:"Which clause handles conflicts during INSERT?",o:["ON DUPLICATE KEY","ON CONFLICT","ON ERROR","ON CLASH"],a:1,e:"PostgreSQL uses ON CONFLICT (target) DO UPDATE/NOTHING (MySQL uses ON DUPLICATE KEY UPDATE)."},
+  {id:78,topic:"Sequences & DML",q:"What does the LIMIT clause do?",o:["Limits the number of columns returned","Limits the number of rows returned by a query","Limits table size","Limits database connections"],a:1,e:"LIMIT n restricts the result set to at most n rows."},
+  {id:79,topic:"Sequences & DML",q:"What is the purpose of OFFSET in a query?",o:["Sets column offset in storage","Skips a specified number of rows before returning results","Offsets the timezone","Sets index offset"],a:1,e:"OFFSET n skips the first n rows, often used with LIMIT for pagination."},
+  {id:80,topic:"Sequences & DML",q:"What does the COPY command do?",o:["Copies a database","Efficiently imports/exports data between a table and a file","Copies indexes","Duplicates a schema"],a:1,e:"COPY provides fast bulk data transfer between tables and files (CSV, text, binary)."},
+
+  // ─── NULL HANDLING & OPERATORS ────────────────────────────────────────────
+  {id:81,topic:"NULL & Operators",q:"What is the result of NULL = NULL in PostgreSQL?",o:["TRUE","FALSE","NULL","Error"],a:2,e:"Comparisons with NULL return NULL (unknown), not TRUE or FALSE. Use IS NULL to check for NULL."},
+  {id:82,topic:"NULL & Operators",q:"Which operator checks for NULL values?",o:["= NULL","== NULL","IS NULL","EQUALS NULL"],a:2,e:"IS NULL and IS NOT NULL are the correct operators to test for NULL."},
+  {id:83,topic:"NULL & Operators",q:"What does COALESCE do?",o:["Combines two tables","Returns the first non-NULL value from a list of expressions","Counts NULL values","Converts NULL to zero only"],a:1,e:"COALESCE(a, b, c) returns the first non-NULL argument, useful for default values."},
+  {id:84,topic:"NULL & Operators",q:"What is the difference between UNION and UNION ALL?",o:["No difference","UNION removes duplicate rows; UNION ALL keeps all rows including duplicates","UNION ALL is for joins only","UNION is faster than UNION ALL"],a:1,e:"UNION performs a distinct merge (slower), while UNION ALL simply concatenates results including duplicates (faster)."},
+  {id:85,topic:"NULL & Operators",q:"What is the purpose of the LIKE operator?",o:["Exact match only","Pattern matching using wildcards % and _","Numeric comparison","Date comparison"],a:1,e:"LIKE allows pattern matching: % matches any sequence of characters, _ matches a single character."},
+  {id:86,topic:"NULL & Operators",q:"What is the difference between LIKE and ILIKE?",o:["No difference","ILIKE is case-insensitive pattern matching, LIKE is case-sensitive","ILIKE is faster","LIKE works only on numbers"],a:1,e:"ILIKE performs case-insensitive matching, while LIKE is case-sensitive (PostgreSQL specific)."},
+  {id:87,topic:"NULL & Operators",q:"What does the EXISTS operator do?",o:["Checks if a table exists","Returns TRUE if a subquery returns at least one row","Checks column existence","Validates schema"],a:1,e:"EXISTS returns true if the subquery produces any rows, often used for efficient existence checks."},
+  {id:88,topic:"NULL & Operators",q:"What is the difference between IN and EXISTS for subqueries?",o:["No difference","EXISTS often performs better for large subqueries since it stops at first match; IN evaluates the full list","IN is always faster","EXISTS only works with numbers"],a:1,e:"EXISTS can short-circuit on the first matching row, often more efficient for correlated subqueries with large result sets."},
+  {id:89,topic:"NULL & Operators",q:"What does the DISTINCT keyword do?",o:["Sorts data","Removes duplicate rows from the result set","Indexes a column","Validates uniqueness constraint"],a:1,e:"SELECT DISTINCT removes duplicate rows from the query result."},
+  {id:90,topic:"NULL & Operators",q:"What does CAST or :: operator do?",o:["Casts a vote","Converts a value from one data type to another","Removes a value","Encrypts a value"],a:1,e:"CAST(value AS type) or value::type converts data between types, e.g., '123'::integer."},
+
+  // ─── PARTITIONING ─────────────────────────────────────────────────────────
+  {id:91,topic:"Partitioning",q:"What is table partitioning?",o:["Splitting a table into multiple physical pieces based on a partition key, while behaving as one logical table","Creating multiple databases","Splitting columns into separate tables","Creating views of a table"],a:0,e:"Partitioning divides large tables into smaller physical pieces (by range, list, or hash) for performance and management."},
+  {id:92,topic:"Partitioning",q:"Which partitioning types does PostgreSQL support?",o:["Range only","List only","Range, List, and Hash","Range and Hash only"],a:2,e:"PostgreSQL supports Range, List, and Hash partitioning (declarative partitioning since v10)."},
+
+  // ─── TRIGGERS & FUNCTIONS ─────────────────────────────────────────────────
+  {id:93,topic:"Triggers & Functions",q:"What is a trigger in PostgreSQL?",o:["A type of index","A function automatically executed in response to certain events on a table (INSERT/UPDATE/DELETE)","A backup schedule","A constraint type"],a:1,e:"Triggers fire automatically before/after DML events, executing a specified function."},
+  {id:94,topic:"Triggers & Functions",q:"What is the difference between BEFORE and AFTER triggers?",o:["No difference","BEFORE triggers run before the operation and can modify/cancel it; AFTER triggers run after and cannot change the row","AFTER triggers run first","BEFORE triggers cannot access NEW/OLD"],a:1,e:"BEFORE triggers can modify NEW row values or prevent the operation (by returning NULL); AFTER triggers run post-operation for logging etc."},
+  {id:95,topic:"Triggers & Functions",q:"What is the purpose of a stored procedure/function in PostgreSQL?",o:["To store data only","To encapsulate reusable logic that can be executed on the database server","To create backups","To define table schemas"],a:1,e:"Functions/procedures encapsulate SQL/procedural logic (PL/pgSQL etc.) for reuse, often improving performance by reducing round trips."},
+  {id:96,topic:"Triggers & Functions",q:"What language is most commonly used for PostgreSQL stored procedures?",o:["Java","PL/pgSQL","C++","Python only"],a:1,e:"PL/pgSQL is PostgreSQL's native procedural language, though PL/Python, PL/Perl etc. are also supported."},
+  {id:97,topic:"Triggers & Functions",q:"What is the difference between a function and a procedure in PostgreSQL?",o:["No difference","Functions return a value and can't run transactions internally; procedures (CALL) can manage transactions and may not return a value","Procedures are deprecated","Functions can't have parameters"],a:1,e:"Procedures (introduced in PG11, invoked via CALL) can include COMMIT/ROLLBACK; functions return a value and run within the calling transaction."},
+  {id:98,topic:"Triggers & Functions",q:"What does the RETURN NEXT statement do in PL/pgSQL?",o:["Ends a loop","Returns a value as part of a set-returning function (SETOF)","Returns to the next row only","Skips a row"],a:1,e:"RETURN NEXT adds a row to the result set of a function returning SETOF, used inside loops."},
+
+  // ─── SCHEMAS, ROLES & PERMISSIONS ────────────────────────────────────────
+  {id:99,topic:"Schemas & Roles",q:"What is a schema in PostgreSQL?",o:["A backup file","A namespace that contains database objects like tables, views, functions","A type of index","The database engine itself"],a:1,e:"A schema is a logical container/namespace within a database, used to organize objects and manage permissions."},
+  {id:100,topic:"Schemas & Roles",q:"What is the default schema name in PostgreSQL?",o:["default","main","public","root"],a:2,e:"The 'public' schema is created by default in every new database."},
+  {id:101,topic:"Schemas & Roles",q:"What is the purpose of the SET search_path command?",o:["Sets file system path","Defines the order in which schemas are searched for unqualified object names","Sets backup path","Sets the index path"],a:1,e:"search_path determines which schemas are checked, in order, when resolving unqualified table/object names."},
+  {id:102,topic:"Schemas & Roles",q:"What is a role in PostgreSQL?",o:["A type of trigger","An entity that can own database objects and have permissions; can represent users or groups","A backup schedule","A schema type"],a:1,e:"Roles are used for both user accounts and group permissions; a role can have the LOGIN attribute to act as a user."},
+  {id:103,topic:"Schemas & Roles",q:"What command grants privileges to a role?",o:["ALLOW","PERMIT","GRANT","GIVE"],a:2,e:"GRANT privilege ON object TO role; assigns permissions."},
+  {id:104,topic:"Schemas & Roles",q:"What command revokes privileges from a role?",o:["DENY","REMOVE","REVOKE","CANCEL"],a:2,e:"REVOKE privilege ON object FROM role; removes previously granted permissions."},
+  {id:105,topic:"Schemas & Roles",q:"What is the purpose of the SUPERUSER role attribute?",o:["Allows creating views only","Bypasses all permission checks, has full control over the database cluster","Allows read-only access","Restricts to one database"],a:1,e:"Superuser roles bypass all permission checks and have unrestricted access to the entire cluster."},
+  {id:106,topic:"Schemas & Roles",q:"What is the difference between GRANT and ALTER DEFAULT PRIVILEGES?",o:["No difference","GRANT applies to existing objects; ALTER DEFAULT PRIVILEGES sets privileges automatically applied to future objects","ALTER DEFAULT applies only to roles","GRANT is deprecated"],a:1,e:"ALTER DEFAULT PRIVILEGES configures privileges that will be automatically granted on objects created in the future."},
+
+  // ─── BACKUP & REPLICATION ─────────────────────────────────────────────────
+  {id:107,topic:"Backup & Replication",q:"What is the purpose of pg_dump?",o:["To monitor performance","To create a backup of a PostgreSQL database","To delete a database","To create indexes"],a:1,e:"pg_dump exports a database (or objects) into a backup file in various formats (plain SQL, custom, tar)."},
+  {id:108,topic:"Backup & Replication",q:"What does pg_restore do?",o:["Restores configuration files","Restores a database from a pg_dump archive (custom/tar format)","Restores deleted rows","Restores indexes only"],a:1,e:"pg_restore reconstructs a database from archives created by pg_dump in custom, directory, or tar formats."},
+  {id:109,topic:"Backup & Replication",q:"What is the purpose of the WAL (Write-Ahead Log)?",o:["Stores web logs","Ensures data durability and crash recovery by logging changes before they're applied","Logs user logins only","Stores deleted rows"],a:1,e:"WAL records all changes before they're written to data files, enabling crash recovery and replication."},
+  {id:110,topic:"Backup & Replication",q:"What is streaming replication in PostgreSQL?",o:["Copying files manually","A replica continuously receives WAL records from the primary in near real-time","A type of backup compression","A query optimization technique"],a:1,e:"Streaming replication sends WAL data continuously to standby servers to keep them in sync with the primary."},
+  {id:111,topic:"Backup & Replication",q:"What is the purpose of pg_basebackup?",o:["Creates logical backups only","Takes a binary copy of the entire database cluster, often used for setting up replicas","Backs up only schema","Compresses tables"],a:1,e:"pg_basebackup creates a physical base backup of a running PostgreSQL cluster, useful for replication setup and point-in-time recovery."},
+  {id:112,topic:"Backup & Replication",q:"What is Point-In-Time Recovery (PITR)?",o:["Restoring to the latest backup only","Restoring a database to a specific point in time using base backups plus WAL logs","A type of replication","A monitoring tool"],a:1,e:"PITR allows recovery to any moment by replaying WAL records from a base backup up to the desired time."},
+  {id:113,topic:"Backup & Replication",q:"What does the term 'logical replication' mean in PostgreSQL?",o:["Replicating physical disk blocks","Replicating data changes at the logical level (row-based) using publish/subscribe model","A type of index replication","Backup compression"],a:1,e:"Logical replication uses PUBLICATION and SUBSCRIPTION to replicate specific tables/databases at the row level, allowing selective and cross-version replication."},
+  {id:114,topic:"Backup & Replication",q:"What is the difference between physical and logical replication?",o:["No difference","Physical replication copies the entire cluster byte-for-byte (streaming WAL); logical replication replicates specific tables/changes at a row level","Logical replication is always faster","Physical replication is deprecated"],a:1,e:"Physical replication mirrors the entire data directory; logical replication is more flexible, allowing selective table replication and different schema versions."},
+  {id:115,topic:"Backup & Replication",q:"What is a publication in logical replication?",o:["A backup file","A set of tables/changes defined on the source database to be replicated","A user role","A type of view"],a:1,e:"CREATE PUBLICATION defines which tables and operations (INSERT/UPDATE/DELETE) are sent to subscribers."},
+
+  // ─── CONFIGURATION ────────────────────────────────────────────────────────
+  {id:116,topic:"Configuration",q:"What is the role of the pg_hba.conf file?",o:["Stores table data","Controls client authentication (host-based access control)","Stores backup configuration","Defines table schemas"],a:1,e:"pg_hba.conf specifies which hosts/users can connect and what authentication method to use."},
+  {id:117,topic:"Configuration",q:"What is the purpose of the postgresql.conf file?",o:["Stores user passwords only","Main configuration file for server settings (memory, logging, connections, etc.)","Stores table data","Stores backup files"],a:1,e:"postgresql.conf contains the server's runtime configuration parameters."},
+  {id:118,topic:"Configuration",q:"What is shared_buffers in PostgreSQL configuration?",o:["Network buffer size","Amount of memory dedicated to caching data pages in shared memory","Disk space for backups","CPU buffer size"],a:1,e:"shared_buffers determines how much memory PostgreSQL uses to cache table/index data."},
+  {id:119,topic:"Configuration",q:"What is the purpose of work_mem setting?",o:["Sets disk space for the database","Memory allocated for sort operations and hash tables before spilling to disk","Sets number of workers","Configures WAL size"],a:1,e:"work_mem controls memory used for sorts, joins, and other operations before falling back to temp files on disk."},
+  {id:120,topic:"Configuration",q:"What is the purpose of max_connections setting?",o:["Maximum table size","The maximum number of concurrent client connections allowed to the server","Maximum index size","Maximum query length"],a:1,e:"max_connections limits the total number of simultaneous connections, affecting memory allocation for connection-related resources."},
+  {id:121,topic:"Configuration",q:"How can you change a configuration parameter without restarting PostgreSQL?",o:["Edit and restart only","SELECT pg_reload_conf() after editing postgresql.conf, or use ALTER SYSTEM","Delete and recreate the database","Not possible"],a:1,e:"Reloadable parameters take effect via pg_reload_conf() or 'pg_ctl reload' without a full restart; ALTER SYSTEM can also modify settings."},
+  {id:122,topic:"Configuration",q:"What does ALTER SYSTEM SET do?",o:["Alters table structure","Changes a server configuration parameter, writing to postgresql.auto.conf","Alters user passwords","Alters database name"],a:1,e:"ALTER SYSTEM SET parameter = value modifies configuration persistently via postgresql.auto.conf."},
+
+  // ─── MONITORING ───────────────────────────────────────────────────────────
+  {id:123,topic:"Monitoring",q:"What is the purpose of the pg_stat_activity view?",o:["Shows table statistics only","Shows information about current connections/queries being executed","Shows index usage only","Shows backup history"],a:1,e:"pg_stat_activity provides real-time info on active sessions, queries, and their states."},
+  {id:124,topic:"Monitoring",q:"How do you terminate a running query/session in PostgreSQL?",o:["KILL QUERY","STOP SESSION","pg_terminate_backend(pid) or pg_cancel_backend(pid)","DROP SESSION"],a:2,e:"pg_cancel_backend cancels a query; pg_terminate_backend terminates the entire session, both using the process ID."},
+  {id:125,topic:"Monitoring",q:"What is connection pooling and why is it used with PostgreSQL?",o:["A type of index","Reusing database connections to reduce overhead of establishing new connections repeatedly, often via tools like PgBouncer","A backup method","A replication strategy"],a:1,e:"Connection pooling (e.g., PgBouncer, pgPool) reduces the cost of frequent connection setup/teardown, improving scalability."},
+  {id:126,topic:"Monitoring",q:"What is the purpose of the pg_stat_user_tables view?",o:["Shows user passwords","Provides statistics on table access patterns like seq scans, index scans, tuples inserted/updated/deleted","Shows table schema","Shows backup status"],a:1,e:"pg_stat_user_tables provides detailed activity statistics for each table, useful for performance analysis."},
+  {id:127,topic:"Monitoring",q:"What does the pg_settings view show?",o:["Table settings","All current configuration parameters and their values","User settings only","Backup settings"],a:1,e:"pg_settings provides a queryable view of all GUC (Grand Unified Configuration) parameters and their current values."},
+
+  // ─── PSQL COMMANDS ────────────────────────────────────────────────────────
+  {id:128,topic:"psql Commands",q:"Which command lists all tables in the current database (psql)?",o:["\\d","\\l","\\dt","\\db"],a:2,e:"\\dt lists tables; \\d describes a specific object; \\l lists databases."},
+  {id:129,topic:"psql Commands",q:"Which psql command lists all databases?",o:["\\dt","\\l","\\du","\\dn"],a:1,e:"\\l (or \\list) lists all databases in the PostgreSQL cluster."},
+  {id:130,topic:"psql Commands",q:"Which psql command describes a table's structure?",o:["\\dt tablename","\\d tablename","\\table tablename","\\desc tablename"],a:1,e:"\\d tablename shows columns, types, indexes, and constraints for the table."},
+  {id:131,topic:"psql Commands",q:"What does the \\du command show in psql?",o:["Database usage stats","List of roles/users and their attributes","Disk usage","Update history"],a:1,e:"\\du displays a list of database roles (users) and their privileges."},
+
+  // ─── ADVANCED SQL ─────────────────────────────────────────────────────────
+  {id:132,topic:"Advanced SQL",q:"What is a CROSS JOIN?",o:["Joins on a common key","Produces the Cartesian product of two tables (every row combined with every row)","Joins only matching rows","An invalid join type"],a:1,e:"CROSS JOIN returns all combinations of rows from both tables (rows_A × rows_B), with no join condition."},
+  {id:133,topic:"Advanced SQL",q:"What is a self join?",o:["Joining a table to itself, often using aliases","Joining without conditions","An invalid SQL operation","Joining two different databases"],a:0,e:"A self join treats a table as two separate tables (via aliases) to compare rows within the same table."},
+  {id:134,topic:"Advanced SQL",q:"What does NOT NULL constraint enforce?",o:["Column must contain unique values","Column cannot contain NULL values","Column must be numeric","Column must reference another table"],a:1,e:"NOT NULL requires that every row must have a value (not NULL) for that column."},
+  {id:135,topic:"Advanced SQL",q:"What is the purpose of the CASE expression?",o:["Defines a stored procedure","Provides conditional logic (if-then-else) within SQL queries","Creates a case-sensitive column","Casts data types"],a:1,e:"CASE WHEN ... THEN ... ELSE ... END allows conditional value selection within queries."},
+  {id:136,topic:"Advanced SQL",q:"Which of these is NOT an aggregate function?",o:["COUNT","SUM","AVG","SUBSTRING"],a:3,e:"SUBSTRING is a string function, not an aggregate. COUNT, SUM, AVG, MIN, MAX are aggregates."},
+  {id:137,topic:"Advanced SQL",q:"What is the purpose of the GROUP BY clause?",o:["Sorts results","Groups rows sharing the same values into summary rows, often with aggregate functions","Filters rows","Joins tables"],a:1,e:"GROUP BY aggregates rows with matching values in specified columns, typically used with COUNT, SUM, AVG, etc."},
+  {id:138,topic:"Advanced SQL",q:"What is the LATERAL keyword used for in joins?",o:["A type of outer join","Allows a subquery in FROM/JOIN to reference columns from preceding tables in the same FROM clause","Sorts results laterally","Creates lateral indexes"],a:1,e:"LATERAL allows a subquery to reference columns of tables that appear before it in the FROM clause, enabling row-by-row correlated computations."},
+  {id:139,topic:"Advanced SQL",q:"What is the difference between INNER JOIN and LEFT JOIN?",o:["No difference","INNER JOIN returns only matching rows from both tables; LEFT JOIN returns all rows from the left table plus matches (or NULLs) from the right","LEFT JOIN is faster always","INNER JOIN includes unmatched rows"],a:1,e:"INNER JOIN excludes non-matching rows entirely, while LEFT JOIN preserves all left-table rows even without a match."},
+
+  // ─── DATE & TIME ──────────────────────────────────────────────────────────
+  {id:140,topic:"Date & Time",q:"What does the now() function return?",o:["Returns the database name","Returns the current date and time","Returns the current user","Returns row count"],a:1,e:"now() returns the current transaction's timestamp with time zone."},
+  {id:141,topic:"Date & Time",q:"What is the difference between TIMESTAMP and TIMESTAMPTZ?",o:["No difference","TIMESTAMPTZ stores/converts based on time zone, TIMESTAMP does not account for time zones","TIMESTAMP is deprecated","TIMESTAMPTZ stores dates only"],a:1,e:"TIMESTAMPTZ (timestamp with time zone) stores UTC internally and converts on display, while TIMESTAMP stores values as-is without timezone awareness."},
+  {id:142,topic:"Date & Time",q:"What is the purpose of an EXTRACT function?",o:["Extracts rows from a table","Retrieves a specific subfield (year, month, day, etc.) from a date/time value","Extracts data to a file","Removes NULLs"],a:1,e:"EXTRACT(field FROM source) pulls components like EXTRACT(YEAR FROM date_column)."},
+
+  // ─── EXTENSIONS ───────────────────────────────────────────────────────────
+  {id:143,topic:"Extensions",q:"What is the purpose of the EXTENSION mechanism in PostgreSQL?",o:["Extends file size limits","Packages additional functionality (functions, types, operators) that can be installed/removed as a unit","Extends table columns","Extends backup duration"],a:1,e:"Extensions like pg_trgm, postgis, hstore add functionality and are managed via CREATE EXTENSION / DROP EXTENSION."},
+  {id:144,topic:"Extensions",q:"What is the purpose of pg_trgm extension?",o:["Encrypts data","Provides trigram-based text similarity matching, useful for fuzzy search and LIKE/ILIKE optimization with GIN/GiST","Manages transactions","Handles JSON"],a:1,e:"pg_trgm enables similarity searches and supports indexing for pattern matching queries (e.g., LIKE '%term%')."},
+  {id:145,topic:"Extensions",q:"What is hstore used for?",o:["Storing binary files","Storing key-value pairs within a single column","Hashing passwords","Storing hierarchical data only"],a:1,e:"hstore is an extension type for storing sets of key-value pairs in a single PostgreSQL value."},
+  {id:146,topic:"Extensions",q:"What is the purpose of FOREIGN DATA WRAPPER (FDW)?",o:["Wraps foreign keys","Allows PostgreSQL to query data stored in external sources (other databases, files) as if they were local tables","Encrypts foreign keys","Creates foreign schemas"],a:1,e:"FDWs (e.g., postgres_fdw) enable querying remote data sources through foreign tables."},
+
+  // ─── INTERNALS ────────────────────────────────────────────────────────────
+  {id:147,topic:"Internals",q:"What is the purpose of the ctid system column?",o:["Stores creation timestamp","Physical location (block and offset) of a row version within its table, used internally","Stores a checksum","Customer ID column"],a:1,e:"ctid identifies the physical location of a row version on disk; it can change after VACUUM or UPDATE."},
+  {id:148,topic:"Internals",q:"What does the term 'fork' mean regarding PostgreSQL connections?",o:["Splitting a table","PostgreSQL uses a process-per-connection model, forking a new backend process for each client connection","Replicating a database","Branching a schema"],a:1,e:"Each client connection spawns a separate backend process (unlike thread-based models), which is why connection pooling is important."},
+  {id:149,topic:"Internals",q:"What is normalization in database design?",o:["Compressing data","Organizing data to reduce redundancy and improve integrity by dividing into related tables","Encrypting tables","Sorting rows alphabetically"],a:1,e:"Normalization structures tables to minimize duplicate data and dependency issues, typically via normal forms (1NF, 2NF, 3NF)."},
+  {id:150,topic:"Internals",q:"What is denormalization?",o:["Removing all keys","Intentionally introducing redundancy to improve read performance","Deleting normalized tables","Encrypting normalized data"],a:1,e:"Denormalization trades some redundancy for query performance, often used in reporting/analytics systems."},
+  // ─── INDEX USAGE SCENARIOS ─────────────────────────────────────────────────
+  {id:151,topic:"Index Usage",q:"A table has a B-tree index on column `email`. Will the index be used for: SELECT * FROM users WHERE email = 'a@b.com'?",o:["No, equality checks never use B-tree","Yes, B-tree supports equality lookups efficiently","Only if the table has > 10,000 rows","Only with FORCE INDEX hint"],a:1,e:"B-tree indexes are ideal for equality (=) and range (<, >, BETWEEN) queries. An exact match on an indexed column will use the index as long as the planner estimates it's cheaper than a seq scan."},
+  {id:152,topic:"Index Usage",q:"A table has a B-tree index on `(first_name, last_name)`. Will this query use the index? SELECT * FROM users WHERE last_name = 'Smith'?",o:["Yes, multi-column indexes always work for any column","No, the leading column (first_name) is not in the WHERE clause — the index is not useful","Yes, but only a partial scan","Yes, PostgreSQL reverses the index automatically"],a:1,e:"For a composite B-tree index (a, b), queries filtering only on column b (the non-leading column) cannot use the index effectively. The planner will do a sequential scan instead."},
+  {id:153,topic:"Index Usage",q:"A B-tree index exists on `age`. Will this query use it? SELECT * FROM users WHERE age + 1 = 30?",o:["Yes, B-tree handles arithmetic","No, wrapping an indexed column in a function or expression prevents index use","Yes, if the table has less than 1000 rows","Only with a functional index"],a:1,e:"Applying an expression to an indexed column (age + 1) prevents the index from being used. To fix this, rewrite as WHERE age = 29 or create a functional index on (age + 1)."},
+  {id:154,topic:"Index Usage",q:"You have an index on `status VARCHAR`. Will this query use the index? SELECT * FROM orders WHERE status = 200?",o:["Yes, PostgreSQL casts automatically","No, implicit type cast on the indexed column can prevent index use","Yes, always","Only with CAST hint"],a:1,e:"Comparing a VARCHAR column to an integer literal (200 instead of '200') causes an implicit type cast on the column, defeating the index. Always match data types to enable index scans."},
+  {id:155,topic:"Index Usage",q:"Table has a B-tree index on `name`. Will this use it? SELECT * FROM users WHERE name LIKE '%john%'?",o:["Yes, B-tree handles all LIKE patterns","No, a leading wildcard (%) prevents B-tree index use","Yes, with the pg_trgm extension only","Only on columns longer than 10 chars"],a:1,e:"B-tree indexes can only handle LIKE 'prefix%' patterns. A leading wildcard ('%john%') requires a sequential scan or a GIN index with pg_trgm extension enabled."},
+  {id:156,topic:"Index Usage",q:"You run: SELECT * FROM orders WHERE created_at BETWEEN '2024-01-01' AND '2024-12-31'. An index on `created_at` exists. What does the planner likely do?",o:["Always does a seq scan for date ranges","Uses the B-tree index if the date range is selective enough (returns a small fraction of rows)","Uses GIN index for date ranges","Range queries never use indexes"],a:1,e:"B-tree indexes support range queries (BETWEEN, <, >, >=, <=). If the date range is selective (small % of rows), the planner uses the index. If it covers most of the table, a seq scan may be chosen."},
+  {id:157,topic:"Index Usage",q:"A partial index is defined as: CREATE INDEX idx_active ON users(email) WHERE is_active = true. Will it be used for: SELECT email FROM users WHERE is_active = false?",o:["Yes, partial indexes cover all rows","No, the query predicate doesn't match the index's WHERE condition","Yes, PostgreSQL inverts partial indexes automatically","Only if email is also filtered"],a:1,e:"Partial indexes only include rows matching their WHERE clause. A query filtering WHERE is_active = false is outside the index's scope, so PostgreSQL will use a seq scan or another index."},
+  {id:158,topic:"Index Usage",q:"When does a Hash index outperform a B-tree index?",o:["Range queries like BETWEEN","ORDER BY queries","Simple equality checks (=) only, especially with very long keys","LIKE prefix searches"],a:2,e:"Hash indexes are O(1) for equality lookups — faster than B-tree's O(log n) for pure equality. However, they can't support range queries, sorting, or multi-column indexes."},
+  {id:159,topic:"Index Usage",q:"You do: SELECT * FROM products WHERE category_id = 5 ORDER BY price. A composite index exists on (category_id, price). Will it be used efficiently?",o:["No, composite indexes don't help ORDER BY","Yes — the index covers both the filter and the sort, potentially enabling an index scan without a sort step","Only for the WHERE part, not ORDER BY","Yes, but only if price is the leading column"],a:1,e:"A composite index (category_id, price) perfectly serves this query: the first column satisfies the WHERE filter and the second column provides the sort order, eliminating a separate sort operation."},
+  {id:160,topic:"Index Usage",q:"You have a GIN index on a JSONB column `data`. Which query will use it?",o:["SELECT * FROM t WHERE data->>'name' = 'Alice'","SELECT * FROM t WHERE data @> '{\"role\": \"admin\"}'","SELECT * FROM t WHERE data::text LIKE '%admin%'","SELECT * FROM t WHERE jsonb_array_length(data) > 2"],a:1,e:"GIN indexes on JSONB support containment operators like @> (contains) and ? (key exists). Extracting a field with ->> does equality on text, which requires a B-tree index on the expression."},
+
+  // ─── B-TREE vs HASH vs GIN vs GIST ───────────────────────────────────────
+  {id:161,topic:"Index Internals",q:"Which index type stores keys in a sorted tree structure allowing range queries?",o:["Hash Index","GIN Index","B-tree Index","BRIN Index"],a:2,e:"B-tree (Balanced Tree) maintains keys in sorted order across pages, enabling range scans, ORDER BY, and equality checks. Hash indexes store unsorted hash buckets, supporting only equality."},
+  {id:162,topic:"Index Internals",q:"You have a column `tags TEXT[]` and need to find rows where the array contains the value 'postgresql'. Which index type is appropriate?",o:["B-tree on tags","Hash on tags","GIN on tags","BRIN on tags"],a:2,e:"GIN (Generalized Inverted Index) is designed for multi-valued columns like arrays and JSONB. It creates an entry per array element, enabling the @> (contains) and = ANY() operators efficiently."},
+  {id:163,topic:"Index Internals",q:"What is the internal structure difference between a B-tree and a Hash index?",o:["Both use the same structure internally","B-tree uses a balanced tree of sorted key pages; Hash uses a hash table mapping key hashes to heap locations","Hash uses a tree, B-tree uses a hash table","Both are stored in the OS page cache only"],a:1,e:"B-tree: sorted tree with internal and leaf nodes, supports ordering. Hash: splits data into buckets by hash of key, only supports exact equality comparisons."},
+  {id:164,topic:"Index Internals",q:"A table has 1 billion rows with a `log_time TIMESTAMPTZ` column inserted in chronological order. Which index has the smallest size for this use case?",o:["B-tree — it's always the smallest","Hash — single pass hashing","GIN — inverted index","BRIN — stores only min/max per block range, tiny overhead for correlated ordered data"],a:3,e:"BRIN (Block Range Index) stores only summary statistics (min, max) per range of physical blocks. For naturally ordered data like timestamps, it's extremely compact — orders of magnitude smaller than B-tree."},
+  {id:165,topic:"Index Internals",q:"A GiST index is used instead of B-tree for a RANGE type column (e.g., tsrange). Why?",o:["GiST is always faster than B-tree","GiST supports overlap (&&), containment (@>), and adjacency operators that B-tree cannot handle for complex types","GiST uses less disk space","B-tree doesn't support timestamp types"],a:1,e:"GiST is extensible and supports operators like && (overlap), @> (contains), and << (strictly left of) for geometric, range, and custom types — operations B-tree doesn't support."},
+  {id:166,topic:"Index Internals",q:"After heavy DELETE operations on a table, you notice the B-tree index is much larger than expected. What is this called and how do you fix it?",o:["Index corruption — run REINDEX","Index bloat from dead tuple entries — fix with REINDEX or VACUUM","Normal behavior — indexes don't shrink","Page fragmentation — fix with CLUSTER"],a:1,e:"DELETE operations leave dead index entries that VACUUM cleans from the heap but may only mark as reusable in the index. REINDEX rebuilds the index from scratch to reclaim space. VACUUM also helps maintain index free space."},
+  {id:167,topic:"Index Internals",q:"What happens when you create an index CONCURRENTLY on a large table?",o:["It immediately locks the table for writes","It builds in two passes without holding a strong lock, allowing reads and writes to continue but taking longer","It is identical to CREATE INDEX but runs in parallel","It creates the index in memory only"],a:1,e:"CREATE INDEX CONCURRENTLY avoids an exclusive table lock by doing two passes: first to build a snapshot, second to catch up on changes. Writes and reads continue, but the build takes longer and cannot run inside a transaction."},
+
+  // ─── CONNECTION POOLING ───────────────────────────────────────────────────
+  {id:168,topic:"Connection Pooling",q:"What is the difference between Session mode and Transaction mode in PgBouncer?",o:["No difference","Session mode: client gets a server connection for the whole session; Transaction mode: server connection released back to pool after each transaction ends","Transaction mode is slower","Session mode supports only read-only queries"],a:1,e:"Session pooling: one server connection per client session (less efficient). Transaction pooling: server connections are recycled per transaction, allowing far more clients than server max_connections. Most features work in transaction mode except session-level state (SET, LISTEN, etc.)."},
+  {id:169,topic:"Connection Pooling",q:"You use PgBouncer in transaction mode. A client runs SET search_path = myschema. What is the risk?",o:["No risk, SET is always persistent","SET modifies session state — in transaction mode the server connection is reassigned, so next transaction may get a different connection with the old search_path","The query is rejected","search_path is a connection-level setting, unaffected by pooling"],a:1,e:"Session-level state (SET, PREPARE, advisory locks, LISTEN) is tied to the server connection, not the client. In transaction pooling mode, the server connection may change between transactions, losing the SET value."},
+  {id:170,topic:"Connection Pooling",q:"Why does PostgreSQL's process-per-connection model make connection pooling critical at high concurrency?",o:["Because threads are more efficient","Each connection forks a backend process consuming ~5-10MB RAM; thousands of connections exhaust memory and OS resources","PostgreSQL uses threads internally so forking is cheap","Connection pooling is optional for PostgreSQL"],a:1,e:"Each PostgreSQL connection spawns a new OS process (~5-10MB overhead). At 1000+ connections, RAM and context-switching costs become significant. Poolers like PgBouncer multiplex many client connections onto fewer server connections."},
+  {id:171,topic:"Connection Pooling",q:"What is a 'superfluous connection' problem in PostgreSQL without pooling?",o:["Too many indexes","Application opens a connection, runs one query, then keeps the connection idle — wasting a backend process and potentially hitting max_connections","Connections that bypass authentication","Connections with no SSL"],a:1,e:"Without pooling, short-lived application connections (e.g., per-request connections in web apps) keep backend processes alive and idle, consuming memory and hitting the max_connections limit quickly."},
+  {id:172,topic:"Connection Pooling",q:"Which statement is TRUE about prepared statements and PgBouncer transaction mode?",o:["Prepared statements work perfectly in transaction mode","Named prepared statements (PREPARE/EXECUTE) don't work in transaction mode because the server connection changes between transactions","PgBouncer caches prepared statements globally","Prepared statements are not supported in PostgreSQL"],a:1,e:"Named prepared statements are server-connection-scoped. In PgBouncer transaction mode, a PREPARE on one transaction might land on a different server than the EXECUTE, causing 'prepared statement does not exist' errors. Use protocol-level prepared statements (parse/bind) instead."},
+
+  // ─── PARTITIONING SCENARIOS ───────────────────────────────────────────────
+  {id:173,topic:"Partitioning Scenarios",q:"You partition a table by RANGE on `created_at` with monthly partitions. A query filters WHERE created_at BETWEEN '2024-03-01' AND '2024-03-31'. What happens?",o:["All partitions are scanned","PostgreSQL uses partition pruning to scan only the March 2024 partition","Partitions are never pruned automatically","Only works with LIST partitioning"],a:1,e:"PostgreSQL's partition pruning skips partitions whose bounds cannot match the WHERE predicate. A range filter on the partition key prunes all non-matching month partitions at plan time or runtime."},
+  {id:174,topic:"Partitioning Scenarios",q:"You use HASH partitioning with 8 partitions on `user_id`. What is the main benefit?",o:["Exact range queries run faster","Even distribution of rows across partitions regardless of value order, avoiding hot spots","It supports partial indexes natively","HASH partitioning always prunes partitions"],a:1,e:"HASH partitioning distributes rows by hash(key) % N, providing even distribution. It prevents hot-spot partitions that can occur with RANGE or LIST when data arrives sequentially."},
+  {id:175,topic:"Partitioning Scenarios",q:"Can a global index (spanning all partitions) be created in PostgreSQL declarative partitioning?",o:["Yes, with GLOBAL INDEX keyword","No, PostgreSQL only supports local (per-partition) indexes — each partition has its own index","Yes, by default all indexes are global","Yes, but only for primary keys"],a:1,e:"PostgreSQL's declarative partitioning supports only local indexes — each partition has its own index built on that partition's data. There are no global indexes spanning all partitions (unlike Oracle). Primary keys and unique constraints must include the partition key."},
+  {id:176,topic:"Partitioning Scenarios",q:"A partitioned table has no DEFAULT partition and you insert a row whose partition key doesn't match any partition. What happens?",o:["It goes into the smallest partition","PostgreSQL raises an error: 'no partition of relation found for row'","PostgreSQL creates a new partition automatically","The row is silently dropped"],a:1,e:"Without a DEFAULT partition, PostgreSQL raises an error when a row's key doesn't map to any existing partition. Adding a DEFAULT partition captures all unmatched rows."},
+  {id:177,topic:"Partitioning Scenarios",q:"You have LIST partitioning on `region` with partitions for 'US', 'EU', 'APAC'. A query WHERE region = 'EU' OR region = 'US' — how many partitions are scanned?",o:["All 3 partitions","Only 2 partitions: EU and US are pruned to exactly","1 partition — the smallest","LIST partitioning never prunes"],a:1,e:"PostgreSQL's partition pruning handles OR conditions on the partition key — it scans only the EU and US partitions, skipping APAC entirely."},
+  {id:178,topic:"Partitioning Scenarios",q:"What is sub-partitioning in PostgreSQL?",o:["Creating indexes on partitions","Partitioning a partition itself (e.g., RANGE by year, then LIST by region within each year partition)","Splitting columns across partitions","Creating views over partitions"],a:1,e:"Sub-partitioning (composite partitioning) lets each partition be further partitioned using a different strategy. E.g., top-level RANGE on date, then HASH on user_id within each date range partition."},
+
+  // ─── QUERY OUTPUT PREDICTIONS ─────────────────────────────────────────────
+  {id:179,topic:"Query Behavior",q:"What does this query return? SELECT 1 / 0;",o:["0","NULL","ERROR: division by zero","Infinity"],a:2,e:"PostgreSQL raises a runtime error 'ERROR: division by zero' for integer division by zero. Unlike some databases, it does not return NULL or infinity for integer types."},
+  {id:180,topic:"Query Behavior",q:"What is the output? SELECT NULL + 5;",o:["5","NULL","0","Error"],a:1,e:"Any arithmetic operation involving NULL returns NULL in SQL (NULL propagation). NULL + 5 = NULL, not 5."},
+  {id:181,topic:"Query Behavior",q:"What does this return? SELECT '' = NULL;",o:["TRUE","FALSE","NULL","Error"],a:2,e:"Comparing anything to NULL using = always yields NULL, not TRUE or FALSE. Use IS NULL or IS NOT NULL to check for nullness."},
+  {id:182,topic:"Query Behavior",q:"What is the result of this query? SELECT COALESCE(NULL, NULL, 'default', 'fallback');",o:["NULL","default","fallback","Error"],a:1,e:"COALESCE returns the first non-NULL argument. The first two are NULL, so it returns 'default', the third argument."},
+  {id:183,topic:"Query Behavior",q:"Table: orders(id, amount). You run: SELECT SUM(amount) FROM orders WHERE 1=0; What is returned?",o:["0","NULL","Error","Empty result set"],a:1,e:"SUM() on an empty set (WHERE 1=0 matches no rows) returns NULL, not 0. COUNT() returns 0 but SUM/AVG/MAX/MIN return NULL on empty input."},
+  {id:184,topic:"Query Behavior",q:"You run UPDATE users SET score = score + 1 WHERE id = 5 twice in separate transactions. Initial score = 10. What is the final score?",o:["10","11","12","Depends on isolation level"],a:2,e:"Each UPDATE reads the current committed value and increments it. First update: 10→11 (commits). Second update reads 11→12 (commits). Final value = 12. This is the expected behavior under Read Committed."},
+  {id:185,topic:"Query Behavior",q:"Transaction A reads row (id=1, balance=100). Before A commits, Transaction B updates balance to 200 and commits. Transaction A then reads row id=1 again. Under READ COMMITTED, what does A see?",o:["100 (the original value it first saw)","200 (the newly committed value)","NULL","Blocked until A commits"],a:1,e:"Under READ COMMITTED (PostgreSQL default), each statement in a transaction sees data committed before that statement began — not when the transaction began. So A's second read sees B's committed 200."},
+  {id:186,topic:"Query Behavior",q:"What does TRUNCATE do to sequences (SERIAL columns) by default?",o:["Sequences are reset to 1","Sequences continue from where they left off — TRUNCATE does not reset sequences by default","Sequences are dropped","TRUNCATE resets sequences only with CASCADE"],a:1,e:"TRUNCATE removes all rows but does NOT reset associated sequences. Use TRUNCATE ... RESTART IDENTITY to also reset sequences back to their starting value."},
+  {id:187,topic:"Query Behavior",q:"You delete a row from a parent table. A child table has a FK with ON DELETE SET NULL. What happens to child rows referencing the deleted parent?",o:["Child rows are also deleted","Error is raised, deletion blocked","The FK column in child rows is set to NULL","Child rows are moved to an archive table"],a:2,e:"ON DELETE SET NULL sets the foreign key column in referencing child rows to NULL when the referenced parent row is deleted, maintaining referential integrity without cascading deletes."},
+  {id:188,topic:"Query Behavior",q:"A transaction runs: BEGIN; INSERT INTO t VALUES (1); SAVEPOINT sp; INSERT INTO t VALUES (2); ROLLBACK TO SAVEPOINT sp; COMMIT; Which values end up in the table?",o:["Neither 1 nor 2","Only 1","Only 2","Both 1 and 2"],a:1,e:"ROLLBACK TO SAVEPOINT sp undoes work done after sp was created (the INSERT of 2). The INSERT of 1 (before the savepoint) is preserved. COMMIT then makes INSERT 1 permanent."},
+  {id:189,topic:"Query Behavior",q:"What does SELECT pg_sleep(5) do inside a transaction that is then rolled back?",o:["The sleep is permanent regardless","The sleep happens (blocks 5 seconds) but any data changes in that transaction are rolled back — pg_sleep itself has no data side effects","pg_sleep commits automatically","ROLLBACK cancels the sleep mid-execution"],a:1,e:"pg_sleep(5) pauses execution for 5 seconds. If the surrounding transaction is rolled back, any DML changes are undone, but the 5 seconds of wall-clock time is not recoverable."},
+  {id:190,topic:"Query Behavior",q:"You run: SELECT * FROM generate_series(1, 5) AS s(n) WHERE n % 2 = 0; What is returned?",o:["1, 3, 5","2, 4","1, 2, 3, 4, 5","Nothing — generate_series doesn't support WHERE"],a:1,e:"generate_series(1,5) produces rows 1 through 5. WHERE n % 2 = 0 filters even numbers, returning 2 and 4."},
+
+  // ─── LOCKING SCENARIOS ────────────────────────────────────────────────────
+  {id:191,topic:"Locking Scenarios",q:"Transaction A holds a ROW EXCLUSIVE lock on row 5. Transaction B tries to acquire a SHARE lock on the same row. What happens?",o:["B proceeds immediately","B waits until A commits or rolls back","B acquires the lock and A is rolled back","A is automatically promoted to EXCLUSIVE"],a:1,e:"ROW EXCLUSIVE (acquired by UPDATE/DELETE) and SHARE locks are conflicting lock modes. B must wait until A's transaction ends and releases the ROW EXCLUSIVE lock."},
+  {id:192,topic:"Locking Scenarios",q:"You run ALTER TABLE users ADD COLUMN bio TEXT on a busy table. Why might this block for a long time?",o:["ALTER TABLE always requires zero connections","ALTER TABLE acquires an ACCESS EXCLUSIVE lock, which waits for all other transactions (even readers) to finish","Adding a column requires rebuilding the table","It only blocks writers, not readers"],a:1,e:"ALTER TABLE takes an ACCESS EXCLUSIVE lock — the strongest lock, conflicting with every other lock type including ACCESS SHARE (simple SELECTs). On a busy table, it must wait for all existing transactions to complete before it can proceed."},
+  {id:193,topic:"Locking Scenarios",q:"How does SELECT ... FOR UPDATE NOWAIT differ from SELECT ... FOR UPDATE?",o:["NOWAIT is faster","NOWAIT immediately raises an error if the rows are locked by another transaction, instead of waiting","NOWAIT skips locked rows silently","They are identical"],a:1,e:"FOR UPDATE blocks until locks are available. FOR UPDATE NOWAIT raises 'ERROR: could not obtain lock on row in relation ...' immediately if any of the target rows are already locked."},
+  {id:194,topic:"Locking Scenarios",q:"Two transactions both start with: SELECT * FROM accounts WHERE id IN (1,2) FOR UPDATE. Transaction A locks id=1 first, then tries id=2. Transaction B locks id=2 first, then tries id=1. What occurs?",o:["Both succeed","A deadlock — PostgreSQL detects it and aborts one transaction","Both wait indefinitely","PostgreSQL reorders the locks automatically"],a:1,e:"This is a classic deadlock scenario: A holds lock on 1 and waits for 2; B holds lock on 2 and waits for 1. PostgreSQL's deadlock detector identifies the cycle and rolls back one of the transactions with ERROR: deadlock detected."},
+  {id:195,topic:"Locking Scenarios",q:"What lock mode does a plain SELECT (no FOR UPDATE) acquire?",o:["ROW EXCLUSIVE","ACCESS EXCLUSIVE","SHARE","ACCESS SHARE"],a:3,e:"A plain SELECT acquires ACCESS SHARE lock — the weakest lock mode. It only conflicts with ACCESS EXCLUSIVE (used by DROP TABLE, ALTER TABLE, etc.), allowing concurrent reads and writes by other transactions."},
+
+  // ─── VACUUM & BLOAT SCENARIOS ─────────────────────────────────────────────
+  {id:196,topic:"Vacuum & Maintenance",q:"You run UPDATE on 1 million rows. Immediately after, pg_stat_user_tables shows n_dead_tup = 1,000,000. Why?",o:["UPDATE deletes the table data","MVCC keeps old row versions (dead tuples) until VACUUM removes them — each UPDATE creates a new version and marks the old one dead","Statistics are wrong","Indexes were invalidated"],a:1,e:"PostgreSQL's MVCC mechanism doesn't overwrite rows in place. UPDATE writes a new row version and marks the old one as dead. Dead tuples accumulate until VACUUM reclaims them, causing the n_dead_tup count."},
+  {id:197,topic:"Vacuum & Maintenance",q:"VACUUM runs on a table but disk space is NOT freed on the OS. Why?",o:["VACUUM is broken","Regular VACUUM marks dead tuple space as reusable within PostgreSQL but does NOT return disk pages to the OS — only VACUUM FULL or pg_repack does that","You must restart PostgreSQL to reclaim disk space","Only TRUNCATE frees disk space"],a:1,e:"Regular VACUUM marks dead tuple space as available for future insertions within the same table file, but the file size on disk doesn't shrink. VACUUM FULL rewrites the table to a new file, actually returning space to the OS."},
+  {id:198,topic:"Vacuum & Maintenance",q:"A long-running transaction has been open for 2 hours. You notice autovacuum is not cleaning dead tuples from heavily updated tables. Why?",o:["Autovacuum has a bug","MVCC requires vacuum to keep dead tuples visible to any open transaction — the long transaction prevents cleanup of anything older than its snapshot","Autovacuum only runs at midnight","Dead tuples can never be removed"],a:1,e:"Autovacuum cannot remove dead tuples that might still be visible to open transactions. A long-running transaction holds a snapshot, preventing VACUUM from cleaning tuples older than that transaction's xmin."},
+  {id:199,topic:"Vacuum & Maintenance",q:"What is transaction ID wraparound and why is it critical in PostgreSQL?",o:["A replication issue","PostgreSQL uses 32-bit transaction IDs; after ~2 billion transactions, IDs wrap around, potentially making all tuples appear to be in the future (data loss risk) if not managed","A bug in older PostgreSQL versions only","A configuration setting that limits transaction size"],a:1,e:"PostgreSQL's 32-bit XID space can wrap around after ~2 billion transactions. VACUUM's anti-wraparound process (aggressive vacuum) freezes old tuple XIDs to prevent them from becoming 'future' transactions, which would make them invisible — a catastrophic data loss scenario."},
+
+  // ─── EXPLAIN OUTPUT READING ───────────────────────────────────────────────
+  {id:200,topic:"Query Planning",q:"EXPLAIN output shows: Seq Scan on orders (cost=0.00..55000.00 rows=2000000 width=128). What does 'cost=0.00..55000.00' mean?",o:["Execution time in milliseconds","Startup cost..total cost in arbitrary planner units (not milliseconds)","Disk I/O cost in MB","CPU usage percentage"],a:1,e:"EXPLAIN costs are in planner 'cost units' (not ms). The first number is startup cost (before first row is returned) and the second is total estimated cost. Use EXPLAIN ANALYZE for actual milliseconds."},
+  {id:201,topic:"Query Planning",q:"EXPLAIN ANALYZE shows: actual rows=1 but estimated rows=50000. What is the likely consequence?",o:["No impact on performance","The planner over-estimated row count, possibly choosing an inefficient join or scan method — run ANALYZE to refresh statistics","The query will fail","Indexes will be rebuilt automatically"],a:1,e:"A large discrepancy between estimated and actual rows indicates stale or insufficient statistics. The planner chose a plan based on wrong estimates. Running ANALYZE updates column statistics. Increasing default_statistics_target helps for skewed data."},
+  {id:202,topic:"Query Planning",q:"In an EXPLAIN output you see 'Buffers: shared hit=1000 read=50'. What does this tell you?",o:["1000 rows were returned from cache","1000 pages were served from PostgreSQL's shared_buffers (cache hits) and 50 pages required disk I/O","1000 transactions were processed","50 indexes were used"],a:1,e:"With EXPLAIN (ANALYZE, BUFFERS), 'shared hit' = pages found in shared_buffers (RAM), 'read' = pages fetched from disk (slower). A high hit ratio means the working set fits in cache."},
+  {id:203,topic:"Query Planning",q:"What does 'Filter' vs 'Index Cond' mean in EXPLAIN output?",o:["They are synonyms","Index Cond: condition evaluated by the index (efficient). Filter: condition applied row-by-row after pages are fetched (less efficient).","Filter uses indexes, Index Cond does not","Both indicate full table scans"],a:1,e:"'Index Cond' shows predicates the index itself can evaluate during traversal (fast). 'Filter' shows predicates applied to rows retrieved by the index or scan but not handled by the index — these still require fetching and checking each row."},
+
+  // ─── ADVANCED SCENARIOS ───────────────────────────────────────────────────
+  {id:204,topic:"Advanced SQL",q:"You need the top 3 salaries per department without grouping rows. Which SQL feature handles this?",o:["GROUP BY with LIMIT 3","A subquery with MAX()","Window function: RANK() OVER (PARTITION BY dept ORDER BY salary DESC) and filter WHERE rank <= 3","DISTINCT ON (dept)"],a:2,e:"Window functions with RANK() or DENSE_RANK() OVER (PARTITION BY dept ORDER BY salary DESC) assign ranks per department. Wrapping in a CTE or subquery and filtering WHERE rank <= 3 gives top 3 per department without collapsing rows."},
+  {id:205,topic:"Advanced SQL",q:"You want to delete duplicate rows keeping only the row with the lowest ctid. Which approach works?",o:["DELETE FROM t WHERE id IN (SELECT MAX(id) FROM t GROUP BY col)","DELETE FROM t USING (SELECT MIN(ctid) AS keep, col FROM t GROUP BY col) dup WHERE t.col = dup.col AND t.ctid != dup.keep","TRUNCATE t and re-insert DISTINCT rows","You cannot delete duplicates without a primary key"],a:1,e:"Using ctid (physical row pointer) as a tiebreaker in a DELETE ... USING subquery is a classic deduplication technique. MIN(ctid) per group of duplicate values identifies the 'keeper' row, and rows with a different ctid are deleted."},
+];
+
+// ── State ──────────────────────────────────────────────────────────────────
+const state = { answered: {}, correct: 0 };
+
+// ── Topics ─────────────────────────────────────────────────────────────────
+const topics = ["All", ...new Set(QUESTIONS.map(q => q.topic))];
+let activeTopic = "All";
+
+function buildTopicBar() {
+  const bar = document.getElementById("topic-bar");
+  topics.forEach(t => {
+    const btn = document.createElement("button");
+    btn.className = "topic-btn" + (t === activeTopic ? " active" : "");
+    btn.textContent = t;
+    btn.id = "topic-" + t.replace(/\s+/g,"_");
+    btn.onclick = () => {
+      activeTopic = t;
+      document.querySelectorAll(".topic-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      filterQuestions();
+    };
+    bar.appendChild(btn);
+  });
+}
+
+// ── Render ─────────────────────────────────────────────────────────────────
+function buildQuiz() {
+  const container = document.getElementById("quiz-container");
+  container.innerHTML = "";
+  const labels = ["A","B","C","D"];
+
+  QUESTIONS.forEach((q, qi) => {
+    const card = document.createElement("div");
+    card.className = "q-card";
+    card.id = "card-" + q.id;
+
+    const answered = state.answered[q.id] !== undefined;
+    if (answered) card.classList.add("answered");
+
+    const header = document.createElement("div");
+    header.className = "q-header";
+
+    const num = document.createElement("span");
+    num.className = "q-num";
+    num.textContent = "Q" + q.id;
+
+    const tag = document.createElement("span");
+    tag.className = "q-topic-tag";
+    tag.textContent = q.topic;
+
+    const qText = document.createElement("span");
+    qText.className = "q-text";
+    qText.textContent = q.q;
+
+    header.appendChild(num);
+    header.appendChild(tag);
+    header.appendChild(qText);
+    card.appendChild(header);
+
+    const opts = document.createElement("div");
+    opts.className = "options";
+    opts.id = "opts-" + q.id;
+
+    q.o.forEach((opt, oi) => {
+      const div = document.createElement("div");
+      div.className = "option" + (answered ? " disabled" : "");
+      div.id = "opt-" + q.id + "-" + oi;
+
+      if (answered) {
+        if (oi === q.a) div.classList.add("correct");
+        else if (oi === state.answered[q.id]) div.classList.add("wrong");
+      }
+
+      div.innerHTML = `<span class="opt-label">${labels[oi]}</span><span>${opt}</span>`;
+      if (answered) {
+        if (oi === q.a) div.innerHTML += `<span class="check">✓</span>`;
+        else if (oi === state.answered[q.id]) div.innerHTML += `<span class="check">✗</span>`;
+      }
+
+      if (!answered) {
+        div.onclick = () => selectAnswer(q.id, oi, q.a);
+      }
+      opts.appendChild(div);
+    });
+    card.appendChild(opts);
+
+    const sol = document.createElement("div");
+    sol.className = "solution" + (answered ? " show" : "");
+    sol.id = "sol-" + q.id;
+    sol.innerHTML = `<strong>✓ EXPLANATION</strong>${q.e}`;
+    card.appendChild(sol);
+
+    const actions = document.createElement("div");
+    actions.className = "q-actions";
+
+    const revBtn = document.createElement("button");
+    revBtn.className = "btn btn-ghost";
+    revBtn.id = "reveal-btn-" + q.id;
+    revBtn.textContent = answered ? "Explained" : "Reveal Answer";
+    revBtn.disabled = answered;
+    revBtn.onclick = () => revealSolution(q.id);
+    actions.appendChild(revBtn);
+
+    card.appendChild(actions);
+    container.appendChild(card);
+  });
+
+  filterQuestions();
+}
+
+function selectAnswer(qid, chosen, correct) {
+  const opts = document.querySelectorAll(`[id^="opt-${qid}-"]`);
+  const labels = ["A","B","C","D"];
+  const isCorrect = chosen === correct;
+
+  opts.forEach((div, oi) => {
+    div.classList.add("disabled");
+    div.onclick = null;
+    if (oi === correct) {
+      div.classList.add("correct");
+      div.innerHTML += `<span class="check">✓</span>`;
+    } else if (oi === chosen) {
+      div.classList.add("wrong");
+      div.innerHTML += `<span class="check">✗</span>`;
+    }
+  });
+
+  if (isCorrect) state.correct++;
+  state.answered[qid] = chosen;
+  revealSolution(qid);
+
+  const revBtn = document.getElementById("reveal-btn-" + qid);
+  if (revBtn) { revBtn.textContent = "Explained"; revBtn.disabled = true; }
+
+  document.getElementById("card-" + qid).classList.add("answered");
+  updateStats();
+}
+
+function revealSolution(qid) {
+  const sol = document.getElementById("sol-" + qid);
+  if (sol) sol.classList.add("show");
+}
+
+function updateStats() {
+  const ans = Object.keys(state.answered).length;
+  const pct = ans ? Math.round((state.correct / ans) * 100) : 0;
+  document.getElementById("hdr-answered").textContent = ans;
+  document.getElementById("hdr-correct").textContent = state.correct;
+  document.getElementById("hdr-score").textContent = pct + "%";
+  document.getElementById("score-val").textContent = state.correct;
+  document.getElementById("score-frac").textContent = `/ ${ans} answered`;
+  document.getElementById("prog-text").textContent = `${ans} / ${QUESTIONS.length} answered`;
+  document.getElementById("prog-fill").style.width = (ans / QUESTIONS.length * 100) + "%";
+}
+
+function filterQuestions() {
+  const search = document.getElementById("search-input").value.toLowerCase();
+  let visible = 0;
+  QUESTIONS.forEach(q => {
+    const card = document.getElementById("card-" + q.id);
+    const topicMatch = activeTopic === "All" || q.topic === activeTopic;
+    const textMatch = !search || q.q.toLowerCase().includes(search) || q.o.some(o => o.toLowerCase().includes(search));
+    if (topicMatch && textMatch) {
+      card.classList.remove("hidden");
+      visible++;
+    } else {
+      card.classList.add("hidden");
+    }
+  });
+  document.getElementById("visible-count").textContent = `Showing ${visible} question${visible !== 1 ? "s" : ""}`;
+}
+
+function showAllSolutions() {
+  QUESTIONS.forEach(q => {
+    const sol = document.getElementById("sol-" + q.id);
+    if (sol) sol.classList.add("show");
+    const opts = document.querySelectorAll(`[id^="opt-${q.id}-"]`);
+    opts.forEach((div, oi) => {
+      div.classList.add("disabled");
+      div.onclick = null;
+      if (oi === q.a) {
+        div.classList.add("correct");
+        if (!div.querySelector(".check")) div.innerHTML += `<span class="check">✓</span>`;
+      }
+    });
+    const revBtn = document.getElementById("reveal-btn-" + q.id);
+    if (revBtn) { revBtn.textContent = "Explained"; revBtn.disabled = true; }
+  });
+}
+
+function resetAll() {
+  state.answered = {};
+  state.correct = 0;
+  updateStats();
+  buildQuiz();
+}
+
+// ── Init ───────────────────────────────────────────────────────────────────
+buildTopicBar();
+buildQuiz();
+</script>
+</body>
+</html>

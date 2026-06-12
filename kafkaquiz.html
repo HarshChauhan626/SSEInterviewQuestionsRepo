@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kafka Interview Prep — 200 MCQs</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --surface2: #1c2333;
+    --border: #30363d;
+    --accent: #f0883e;
+    --accent2: #58a6ff;
+    --green: #3fb950;
+    --red: #f85149;
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'Inter', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    line-height: 1.6;
+  }
+
+  /* Header */
+  .header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 60px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .logo {
+    font-family: var(--mono);
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: var(--accent);
+    letter-spacing: -0.02em;
+  }
+  .logo span { color: var(--muted); font-weight: 400; }
+  .header-stats {
+    display: flex;
+    gap: 1.5rem;
+    font-size: 0.8rem;
+    color: var(--muted);
+    font-family: var(--mono);
+  }
+  .header-stats strong { color: var(--text); }
+
+  /* Layout */
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+  }
+
+  /* Progress Bar */
+  .progress-bar-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .progress-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.78rem;
+    color: var(--muted);
+    font-family: var(--mono);
+    margin-bottom: 0.6rem;
+  }
+  .progress-track {
+    height: 6px;
+    background: var(--border);
+    border-radius: 99px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent2), var(--accent));
+    border-radius: 99px;
+    transition: width 0.4s ease;
+  }
+
+  /* Topic Filter */
+  .topic-bar {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+  }
+  .topic-btn {
+    padding: 0.3rem 0.8rem;
+    border-radius: 99px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    font-size: 0.75rem;
+    font-family: var(--mono);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .topic-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+  .topic-btn.active { background: var(--accent2); border-color: var(--accent2); color: #000; font-weight: 600; }
+
+  /* Question Card */
+  .q-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.8rem;
+    margin-bottom: 1rem;
+    transition: border-color 0.2s;
+  }
+  .q-card.answered { border-color: var(--border); }
+
+  .q-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1.2rem;
+  }
+  .q-num {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--accent);
+    background: rgba(240,136,62,0.1);
+    border: 1px solid rgba(240,136,62,0.3);
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    white-space: nowrap;
+    margin-top: 2px;
+  }
+  .q-topic-tag {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    color: var(--accent2);
+    background: rgba(88,166,255,0.08);
+    border: 1px solid rgba(88,166,255,0.2);
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    white-space: nowrap;
+    margin-top: 2px;
+  }
+  .q-text {
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--text);
+    flex: 1;
+  }
+  code {
+    font-family: var(--mono);
+    background: rgba(88,166,255,0.1);
+    color: var(--accent2);
+    padding: 0.1em 0.35em;
+    border-radius: 3px;
+    font-size: 0.88em;
+  }
+
+  /* Options */
+  .options { display: grid; gap: 0.6rem; margin-bottom: 1rem; }
+  .option {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    cursor: pointer;
+    font-size: 0.88rem;
+    transition: all 0.15s;
+    user-select: none;
+  }
+  .option:hover:not(.disabled) { border-color: var(--accent2); background: rgba(88,166,255,0.06); }
+  .option .opt-label {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--muted);
+    min-width: 1.2rem;
+  }
+  .option.correct { border-color: var(--green); background: rgba(63,185,80,0.08); }
+  .option.correct .opt-label { color: var(--green); }
+  .option.wrong { border-color: var(--red); background: rgba(248,81,73,0.08); }
+  .option.wrong .opt-label { color: var(--red); }
+  .option.disabled { cursor: default; }
+  .option .check { margin-left: auto; font-size: 1rem; }
+
+  /* Solution */
+  .solution {
+    display: none;
+    background: rgba(63,185,80,0.06);
+    border: 1px solid rgba(63,185,80,0.2);
+    border-radius: 8px;
+    padding: 0.9rem 1.1rem;
+    font-size: 0.84rem;
+    color: #add5b4;
+    line-height: 1.6;
+  }
+  .solution.show { display: block; }
+  .solution strong { color: var(--green); font-family: var(--mono); font-size: 0.78rem; display: block; margin-bottom: 0.3rem; }
+
+  /* Action Buttons */
+  .q-actions {
+    display: flex;
+    gap: 0.6rem;
+    margin-top: 1rem;
+  }
+  .btn {
+    padding: 0.45rem 1.1rem;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    font-size: 0.8rem;
+    font-family: var(--mono);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-primary { background: var(--accent); border-color: var(--accent); color: #000; font-weight: 700; }
+  .btn-primary:hover { background: #e0773a; }
+  .btn-ghost { background: transparent; color: var(--muted); }
+  .btn-ghost:hover { border-color: var(--accent2); color: var(--accent2); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* Score Panel */
+  .score-panel {
+    position: fixed;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1rem 1.3rem;
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    z-index: 50;
+  }
+  .score-panel .label { color: var(--muted); font-size: 0.7rem; margin-bottom: 0.2rem; }
+  .score-panel .val { font-size: 1.4rem; font-weight: 700; color: var(--accent); }
+  .score-panel .frac { color: var(--muted); font-size: 0.9rem; }
+
+  /* Controls */
+  .controls {
+    display: flex;
+    gap: 0.8rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .search-box {
+    flex: 1;
+    min-width: 200px;
+    padding: 0.5rem 0.9rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 0.85rem;
+  }
+  .search-box::placeholder { color: var(--muted); }
+  .search-box:focus { outline: none; border-color: var(--accent2); }
+
+  /* Navigation */
+  .nav-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 0;
+    border-top: 1px solid var(--border);
+    margin-top: 1rem;
+  }
+  .page-info { font-family: var(--mono); font-size: 0.78rem; color: var(--muted); }
+
+  /* Hidden questions */
+  .q-card.hidden { display: none; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  @media (max-width: 600px) {
+    .header { padding: 0 1rem; }
+    .header-stats { display: none; }
+    .container { padding: 1rem; }
+    .q-card { padding: 1.2rem; }
+    .score-panel { bottom: 0.8rem; right: 0.8rem; padding: 0.7rem 1rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">kafka<span>.quiz</span></div>
+  <div class="header-stats">
+    <span>Answered: <strong id="hdr-answered">0</strong></span>
+    <span>Correct: <strong id="hdr-correct">0</strong></span>
+    <span>Score: <strong id="hdr-score">0%</strong></span>
+  </div>
+</div>
+
+<div class="container">
+  <div class="progress-bar-wrap">
+    <div class="progress-meta">
+      <span>Progress</span>
+      <span id="prog-text">0 / 200 answered</span>
+    </div>
+    <div class="progress-track"><div class="progress-fill" id="prog-fill" style="width:0%"></div></div>
+  </div>
+
+  <div class="controls">
+    <input class="search-box" type="text" placeholder="Search questions..." id="search-input" oninput="filterQuestions()">
+    <button class="btn btn-ghost" onclick="resetAll()">Reset All</button>
+    <button class="btn btn-ghost" onclick="showAllSolutions()">Reveal All Answers</button>
+  </div>
+
+  <div class="topic-bar" id="topic-bar"></div>
+
+  <div id="quiz-container"></div>
+
+  <div class="nav-bar">
+    <span class="page-info">Apache Kafka Interview Prep · 200 Questions</span>
+    <span class="page-info" id="visible-count">Showing 200 questions</span>
+  </div>
+</div>
+
+<div class="score-panel">
+  <div class="label">SCORE</div>
+  <div class="val" id="score-val">0</div>
+  <div class="frac" id="score-frac">/ 0 answered</div>
+</div>
+
+<script>
+const questions = [
+  // ─── FUNDAMENTALS ──────────────────────────────────────────────────────────
+  {id:1,topic:"Fundamentals",q:"What is Apache Kafka primarily designed for?",opts:["Relational database management","Distributed event streaming platform","Object-relational mapping","In-memory caching"],ans:1,sol:"Kafka is a distributed event streaming platform originally developed at LinkedIn, designed for high-throughput, fault-tolerant, publish-subscribe messaging and stream processing."},
+  {id:2,topic:"Fundamentals",q:"Which company originally developed Apache Kafka?",opts:["Apache Software Foundation","Facebook","LinkedIn","Twitter"],ans:2,sol:"Kafka was originally developed by engineers at LinkedIn and later open-sourced as an Apache project in 2011."},
+  {id:3,topic:"Fundamentals",q:"What is a Kafka 'Topic'?",opts:["A consumer group identifier","A category or feed to which records are published","A broker node identifier","A partition replica"],ans:1,sol:"A topic is a category or stream name to which records are published. Topics in Kafka are multi-subscriber — a topic can have zero, one, or many consumers that subscribe to the data written to it."},
+  {id:4,topic:"Fundamentals",q:"What is a Kafka 'Broker'?",opts:["A consumer that reads messages","A producer that writes messages","A server that stores and serves Kafka messages","A schema registry node"],ans:2,sol:"A broker is a Kafka server that stores messages in topics. A Kafka cluster typically consists of multiple brokers. Each broker handles a set of topic partitions."},
+  {id:5,topic:"Fundamentals",q:"What is a Kafka 'Partition'?",opts:["A subset of a topic for scalability and parallelism","An in-memory buffer","A type of consumer group","A type of producer acknowledgment"],ans:0,sol:"Partitions allow a topic to be distributed across multiple brokers, enabling parallelism. Each partition is an ordered, immutable sequence of records."},
+  {id:6,topic:"Fundamentals",q:"What does the term 'offset' mean in Kafka?",opts:["Lag between producer and consumer","Sequential ID of a message within a partition","Number of partitions in a topic","Number of replicas"],ans:1,sol:"An offset is a unique sequential integer that identifies each record within a partition. Consumers use offsets to track their position and resume consumption."},
+  {id:7,topic:"Fundamentals",q:"What is a Kafka 'Producer'?",opts:["An application that reads messages from Kafka","An application that writes messages to Kafka","A broker that replicates data","A tool that monitors Kafka"],ans:1,sol:"A producer is a client application that publishes (writes) records to Kafka topics. Producers push data to topic partitions of their choice."},
+  {id:8,topic:"Fundamentals",q:"What is a Kafka 'Consumer'?",opts:["An application that writes messages","An application that reads messages from Kafka topics","A server that stores data","A schema registry"],ans:1,sol:"A consumer reads records from Kafka topics. Consumers can be organized into consumer groups for load balancing and fault tolerance."},
+  {id:9,topic:"Fundamentals",q:"What is Kafka's default message retention period?",opts:["1 hour","7 days","24 hours","30 days"],ans:1,sol:"By default, Kafka retains messages for 7 days (log.retention.hours=168). This is configurable both globally and per topic."},
+  {id:10,topic:"Fundamentals",q:"How does Kafka guarantee message ordering?",opts:["Across all partitions globally","Within a single partition only","Across partitions within a topic","Via consumer group coordination"],ans:1,sol:"Kafka guarantees message ordering only within a single partition. Messages with the same key are always routed to the same partition, ensuring order for related events."},
+
+  // ─── ARCHITECTURE ──────────────────────────────────────────────────────────
+  {id:11,topic:"Architecture",q:"What is ZooKeeper's role in older Kafka deployments?",opts:["Stores message data","Manages consumer group offsets only","Handles cluster coordination, leader election, and metadata","Handles schema evolution"],ans:2,sol:"ZooKeeper was used for cluster coordination, broker metadata, topic configuration, and leader elections. Starting from Kafka 2.8, ZooKeeper can be replaced by KRaft (Kafka Raft)."},
+  {id:12,topic:"Architecture",q:"What is KRaft mode in Kafka?",opts:["A compression algorithm","Kafka's built-in Raft consensus protocol to replace ZooKeeper","A replication factor setting","A consumer group protocol"],ans:1,sol:"KRaft (Kafka Raft) is a consensus protocol built into Kafka, introduced to eventually replace the ZooKeeper dependency. It became production-ready in Kafka 3.3."},
+  {id:13,topic:"Architecture",q:"What is the 'Leader' partition replica responsible for?",opts:["Only storing old messages","Handling all reads and writes for that partition","Replicating data to followers","Managing consumer offsets"],ans:1,sol:"The leader replica handles all produce and consume requests for a partition. Follower replicas only replicate data from the leader passively."},
+  {id:14,topic:"Architecture",q:"What is an ISR (In-Sync Replica)?",opts:["A replica that is ahead of the leader","A replica that is fully caught up with the leader","A replica waiting for promotion","A replica that has failed"],ans:1,sol:"The ISR (In-Sync Replica) set contains all replicas that are fully synchronized with the leader within a configurable lag threshold (replica.lag.time.max.ms)."},
+  {id:15,topic:"Architecture",q:"What happens when the leader of a partition fails?",opts:["Data in that partition is lost","Kafka pauses until the leader recovers","One of the ISR replicas is elected as the new leader","The topic is deleted"],ans:2,sol:"Kafka performs automatic leader election. One of the in-sync replicas (ISR) is chosen as the new leader, ensuring availability without data loss."},
+  {id:16,topic:"Architecture",q:"What is the role of the Controller in a Kafka cluster?",opts:["Stores consumer offsets","Handles schema validation","Manages partition leadership and broker metadata changes","Compresses log segments"],ans:2,sol:"The Controller is a special broker responsible for managing partition leaders, reassignments, topic creation/deletion, and broker membership changes."},
+  {id:17,topic:"Architecture",q:"What is a Kafka 'Log Segment'?",opts:["A consumer group member","A physical file on disk where Kafka stores partition data","A replica configuration","A producer retry mechanism"],ans:1,sol:"Kafka stores partition data as a series of log segment files. Each segment has a base offset as its filename and contains messages up to a configurable size."},
+  {id:18,topic:"Architecture",q:"What is the default port Kafka brokers listen on?",opts:["2181","8080","9092","3306"],ans:2,sol:"The default Kafka broker port is 9092. ZooKeeper by default uses port 2181."},
+  {id:19,topic:"Architecture",q:"What does 'replication factor' mean in Kafka?",opts:["Number of consumers per partition","Number of copies of partition data across brokers","Compression ratio of messages","Batch size for producers"],ans:1,sol:"The replication factor determines how many copies of a partition exist across brokers. A replication factor of 3 means the data is stored on 3 different brokers for fault tolerance."},
+  {id:20,topic:"Architecture",q:"What is the minimum recommended replication factor for production Kafka?",opts:["1","2","3","5"],ans:2,sol:"A replication factor of 3 is the industry standard for production, providing fault tolerance (survives 2 broker failures) while balancing storage overhead."},
+
+  // ─── PRODUCERS ─────────────────────────────────────────────────────────────
+  {id:21,topic:"Producers",q:"What does producer setting `acks=all` (or `acks=-1`) mean?",opts:["No acknowledgment needed","Leader acknowledges only","All in-sync replicas must acknowledge","All brokers must acknowledge"],ans:2,sol:"`acks=all` (equivalent to `acks=-1`) requires acknowledgment from all in-sync replicas, providing the strongest durability guarantee. Combined with min.insync.replicas, it prevents data loss."},
+  {id:22,topic:"Producers",q:"What is `acks=0` in Kafka producer?",opts:["Wait for all replicas","Wait for leader only","Fire and forget — no acknowledgment","Wait for ZooKeeper"],ans:2,sol:"`acks=0` means the producer doesn't wait for any acknowledgment. This gives the highest throughput but offers no durability guarantee — messages can be lost."},
+  {id:23,topic:"Producers",q:"What is `acks=1` in Kafka producer?",opts:["No acknowledgment","Only the leader needs to write and acknowledge","All ISR replicas acknowledge","ZooKeeper acknowledges"],ans:1,sol:"`acks=1` means the leader writes the message and acknowledges. Messages can still be lost if the leader fails before followers replicate."},
+  {id:24,topic:"Producers",q:"What is the purpose of producer `retries` config?",opts:["Set batch size","Set number of retry attempts on transient failures","Set acknowledgment level","Set partition assignment strategy"],ans:1,sol:"The `retries` setting controls how many times the producer will retry sending a message on transient failures (e.g., leader election). With idempotent producers, retries won't create duplicates."},
+  {id:25,topic:"Producers",q:"What is an idempotent producer in Kafka?",opts:["A producer that sends messages only once with no retries","A producer that ensures exactly-once delivery to a partition","A producer without batching","A producer using round-robin partitioning"],ans:1,sol:"An idempotent producer (enable.idempotence=true) assigns a sequence number to each message. The broker deduplicates retries, ensuring exactly-once delivery per partition."},
+  {id:26,topic:"Producers",q:"What is `linger.ms` in Kafka producer?",opts:["Time to wait before considering a broker unreachable","Time the producer waits to batch more records before sending","Maximum message size","Retry backoff duration"],ans:1,sol:"`linger.ms` controls how long the producer waits to accumulate more records into a batch before sending. Higher values increase throughput by enabling larger batches."},
+  {id:27,topic:"Producers",q:"What does `batch.size` control in the producer?",opts:["Maximum size of a single message","Maximum memory for the producer buffer","Maximum amount of data sent in a single request per partition","Number of retries"],ans:2,sol:"`batch.size` defines the maximum amount (in bytes) of data that will be accumulated per partition before being sent to the broker."},
+  {id:28,topic:"Producers",q:"What is the `buffer.memory` producer config?",opts:["Memory allocated for message compression","Total memory the producer can use for buffering records","Memory per partition","Broker-side buffer size"],ans:1,sol:"`buffer.memory` is the total memory available to the producer for buffering records waiting to be sent. If the buffer is full, the producer will block or throw an exception based on `max.block.ms`."},
+  {id:29,topic:"Producers",q:"Which partitioner is used by default in Kafka producers?",opts:["RandomPartitioner","RoundRobinPartitioner","StickyPartitioner (or UniformStickyPartitioner)","HashPartitioner"],ans:2,sol:"Since Kafka 2.4, the default partitioner is the StickyPartitioner (or UniformStickyPartitioner). Previously it was the DefaultPartitioner which used round-robin for null keys. Sticky batches messages to the same partition until the batch is full."},
+  {id:30,topic:"Producers",q:"How does Kafka route messages when a key is provided?",opts:["Always to partition 0","Random partition","Round-robin across all partitions","Hash of key modulo number of partitions"],ans:3,sol:"When a key is specified, Kafka uses `murmur2(key) % numPartitions` to consistently route messages with the same key to the same partition."},
+
+  // ─── CONSUMERS ─────────────────────────────────────────────────────────────
+  {id:31,topic:"Consumers",q:"What is a Consumer Group?",opts:["A group of brokers","A collection of consumers sharing topic partitions for parallel processing","A group of producers","A group of ZooKeeper nodes"],ans:1,sol:"A consumer group is a set of consumers that cooperate to consume a topic. Each partition is consumed by exactly one consumer in the group, enabling horizontal scaling."},
+  {id:32,topic:"Consumers",q:"What happens if there are more consumers in a group than partitions?",opts:["Messages are duplicated","Extra consumers are idle","Kafka creates more partitions automatically","An error is thrown"],ans:1,sol:"If there are more consumers than partitions, some consumers will be idle (receive no messages), since each partition is assigned to at most one consumer per group."},
+  {id:33,topic:"Consumers",q:"Where are consumer group offsets stored in modern Kafka?",opts:["ZooKeeper","External database","__consumer_offsets internal topic","HDFS"],ans:2,sol:"Since Kafka 0.9, consumer offsets are stored in the `__consumer_offsets` internal topic on the Kafka brokers themselves, replacing ZooKeeper-based offset storage."},
+  {id:34,topic:"Consumers",q:"What is 'auto.offset.reset' consumer configuration?",opts:["Sets how often offsets are committed","Determines what to do when there's no initial offset (earliest, latest, none)","Resets offset on every restart","Deletes stored offsets"],ans:1,sol:"`auto.offset.reset` controls the behavior when a consumer group has no committed offset (new group) or when the offset is out of range: `earliest` starts from the beginning, `latest` from the end."},
+  {id:35,topic:"Consumers",q:"What is 'enable.auto.commit' in Kafka consumer?",opts:["Enables automatic message compression","Allows the consumer to commit offsets automatically at intervals","Enables auto topic creation","Allows the consumer to join groups automatically"],ans:1,sol:"When `enable.auto.commit=true`, the consumer automatically commits offsets at the interval defined by `auto.commit.interval.ms`. This can lead to duplicate processing if the consumer crashes before the commit."},
+  {id:36,topic:"Consumers",q:"What is Consumer Lag?",opts:["Delay in producing messages","Difference between the latest produced offset and the consumer's current offset","Network latency between brokers","Time to commit offsets"],ans:1,sol:"Consumer lag is the difference between the latest message offset (LEO) in a partition and the last committed offset by a consumer. It indicates how far behind a consumer is."},
+  {id:37,topic:"Consumers",q:"What is 'max.poll.records' in the consumer?",opts:["Maximum number of consumers in a group","Maximum records returned in a single poll() call","Maximum partitions per consumer","Maximum message size"],ans:1,sol:"`max.poll.records` limits the number of records returned in a single `poll()` invocation. Reducing this helps consumers that need more time to process each batch."},
+  {id:38,topic:"Consumers",q:"What triggers a consumer group rebalance?",opts:["Adding a new topic","Broker restart only","Consumer joining/leaving, topic partition change, or subscription change","Schema change"],ans:2,sol:"A rebalance is triggered when: a new consumer joins, an existing consumer leaves or crashes, a consumer is considered dead (missed heartbeats), or partition count changes."},
+  {id:39,topic:"Consumers",q:"What is the 'session.timeout.ms' consumer config?",opts:["Time to wait for a message","Time without heartbeat before consumer is considered dead","Offset commit interval","Time between polls"],ans:1,sol:"`session.timeout.ms` is the maximum time a consumer can be out of contact with the broker before being considered failed, triggering a rebalance."},
+  {id:40,topic:"Consumers",q:"What is 'max.poll.interval.ms'?",opts:["Maximum interval between heartbeats","Maximum time allowed between consecutive poll() calls before consumer is kicked out","Maximum duration of a rebalance","Maximum time to commit offsets"],ans:1,sol:"`max.poll.interval.ms` sets the max delay between poll() invocations. If exceeded, the consumer is considered failed and a rebalance is triggered. It's important for slow-processing consumers."},
+
+  // ─── REPLICATION & DURABILITY ───────────────────────────────────────────────
+  {id:41,topic:"Replication",q:"What is `min.insync.replicas`?",opts:["Minimum replicas needed to create a topic","Minimum ISR replicas that must acknowledge a write for it to succeed","Minimum number of consumers","Minimum number of brokers"],ans:1,sol:"`min.insync.replicas` (typically set to 2 for RF=3) ensures that at least N replicas are in-sync for a write to succeed, preventing data loss when combined with `acks=all`."},
+  {id:42,topic:"Replication",q:"What is 'unclean leader election'?",opts:["Election without ZooKeeper","Electing a non-ISR replica as leader (may cause data loss)","Leader election during broker restart","Automatic partition reassignment"],ans:1,sol:"Unclean leader election allows a non-ISR (out-of-sync) replica to become the leader. This can restore availability but risks data loss. Controlled by `unclean.leader.election.enable`."},
+  {id:43,topic:"Replication",q:"What is the HW (High Watermark) in Kafka?",opts:["The latest message offset written by the leader","The offset up to which all ISR replicas have replicated","The consumer's last committed offset","The start offset of the oldest available message"],ans:1,sol:"The High Watermark (HW) is the offset of the last message that has been successfully replicated to all ISR replicas. Consumers can only read messages up to the HW."},
+  {id:44,topic:"Replication",q:"What is LEO (Log End Offset)?",opts:["Last committed consumer offset","High watermark offset","Offset of the next message to be written to the partition log","Minimum ISR replica offset"],ans:2,sol:"LEO (Log End Offset) is the offset of the next message to be appended to a partition. Each replica tracks its own LEO. The leader's HW is the minimum LEO across all ISR replicas."},
+  {id:45,topic:"Replication",q:"What does `replica.lag.time.max.ms` control?",opts:["Max time a consumer can lag","Max time a follower can be behind before removed from ISR","Max replication bandwidth","Max time to elect a leader"],ans:1,sol:"`replica.lag.time.max.ms` is the maximum time a follower can be behind the leader (without fetching new messages) before being removed from the ISR set."},
+
+  // ─── KAFKA STREAMS ─────────────────────────────────────────────────────────
+  {id:46,topic:"Kafka Streams",q:"What is Kafka Streams?",opts:["A separate streaming engine like Apache Flink","A client library for stream processing built on top of Kafka","A ZooKeeper replacement","A monitoring tool"],ans:1,sol:"Kafka Streams is a Java/Scala client library for building real-time applications and microservices that process data stored in Kafka topics, with no additional cluster needed."},
+  {id:47,topic:"Kafka Streams",q:"What is a KStream in Kafka Streams?",opts:["An unbounded, continuous stream of key-value records","A stored table of latest values per key","A compacted topic","A dead letter queue"],ans:0,sol:"A KStream represents an unbounded, continuously updating data stream where each record is an independent event. It models an append-only log."},
+  {id:48,topic:"Kafka Streams",q:"What is a KTable in Kafka Streams?",opts:["An append-only log stream","A changelog stream representing the latest value per key (table abstraction)","A windowed aggregation result","A dead letter queue"],ans:1,sol:"A KTable is an abstraction of a changelog stream representing the latest value per key. It's updated when new messages with the same key arrive."},
+  {id:49,topic:"Kafka Streams",q:"What is a GlobalKTable?",opts:["A KTable replicated across all stream tasks","A cross-partition global join table replicated to all instances","A KStream with global ordering","A compacted topic view"],ans:1,sol:"A GlobalKTable is fully replicated to every Streams instance. Unlike KTable (partition-aware), GlobalKTable allows joining with non-co-partitioned streams."},
+  {id:50,topic:"Kafka Streams",q:"What is a 'state store' in Kafka Streams?",opts:["A Kafka topic","Local storage for stateful operations like aggregations and joins","A ZooKeeper node","A consumer offset store"],ans:1,sol:"State stores are local databases (backed by RocksDB by default) used by Kafka Streams to maintain state for operations like aggregations, joins, and windowing. They're backed by changelog topics for fault tolerance."},
+  {id:51,topic:"Kafka Streams",q:"What is windowing in Kafka Streams?",opts:["Grouping records by key","Aggregating records within a time boundary","Partitioning data across brokers","Compacting old records"],ans:1,sol:"Windowing allows grouping records that share the same key within a time boundary for stateful operations like counts or sums. Types include tumbling, hopping, sliding, and session windows."},
+  {id:52,topic:"Kafka Streams",q:"What is a Tumbling Window?",opts:["Overlapping fixed-size time windows","Non-overlapping, fixed-size, contiguous time windows","Variable-size windows based on activity","Unbounded stream aggregation"],ans:1,sol:"A tumbling window is a fixed-size, non-overlapping time window. Each record belongs to exactly one window. E.g., 5-minute tumbling windows: [0-5), [5-10), [10-15)."},
+  {id:53,topic:"Kafka Streams",q:"What is the processing topology in Kafka Streams?",opts:["Network topology of Kafka brokers","DAG (Directed Acyclic Graph) of stream processors","A replication topology","A consumer group assignment"],ans:1,sol:"A Kafka Streams topology is a DAG of stream processors (nodes) connected by streams (edges). It defines the computation graph for stream processing."},
+  {id:54,topic:"Kafka Streams",q:"What does `StreamsBuilder` do?",opts:["Creates Kafka topics","Defines the processing topology using a high-level DSL","Manages Kafka cluster configuration","Handles consumer group rebalances"],ans:1,sol:"`StreamsBuilder` is the entry point for the Kafka Streams DSL. It provides methods to create KStreams and KTables from topics and define transformations."},
+  {id:55,topic:"Kafka Streams",q:"What is 'interactive queries' in Kafka Streams?",opts:["REST API for Kafka","Ability to query local state stores directly without going through Kafka","A stream join operation","A windowed aggregation"],ans:1,sol:"Interactive queries allow applications to directly query the local state stores maintained by Kafka Streams, enabling real-time lookups against materialized views."},
+
+  // ─── KAFKA CONNECT ─────────────────────────────────────────────────────────
+  {id:56,topic:"Kafka Connect",q:"What is Kafka Connect?",opts:["A consumer group manager","A framework for connecting Kafka with external systems via connectors","A stream processing engine","A schema evolution tool"],ans:1,sol:"Kafka Connect is a scalable, reliable tool for streaming data between Kafka and other systems (databases, filesystems, key-value stores) using pre-built or custom connectors."},
+  {id:57,topic:"Kafka Connect",q:"What is a Source Connector?",opts:["Reads data from Kafka and writes to external systems","Reads data from external systems and writes to Kafka","Transforms data within Kafka","Monitors Kafka performance"],ans:1,sol:"A Source Connector pulls data from an external system (e.g., a database, file system) and publishes it to Kafka topics."},
+  {id:58,topic:"Kafka Connect",q:"What is a Sink Connector?",opts:["Writes data from an external system to Kafka","Reads from Kafka and writes to an external system","Stores schema definitions","Manages consumer offsets"],ans:1,sol:"A Sink Connector reads data from Kafka topics and writes it to external systems like databases, Elasticsearch, S3, or HDFS."},
+  {id:59,topic:"Kafka Connect",q:"What are 'Single Message Transforms' (SMTs) in Kafka Connect?",opts:["Schema transformation tools","Lightweight in-flight transformations applied to individual messages","Batch processing operations","Schema registry plugins"],ans:1,sol:"SMTs (Single Message Transforms) are lightweight transformations applied per-message in a Kafka Connect pipeline, e.g., adding fields, filtering, masking sensitive data, or routing."},
+  {id:60,topic:"Kafka Connect",q:"What is Distributed Mode in Kafka Connect?",opts:["Running connectors on a single worker","Running connectors across multiple workers for scalability and fault tolerance","Connecting to multiple Kafka clusters","Multi-datacenter replication"],ans:1,sol:"In distributed mode, multiple Connect workers share the workload and configuration. If a worker fails, tasks are redistributed to other workers automatically."},
+
+  // ─── SCHEMA REGISTRY ───────────────────────────────────────────────────────
+  {id:61,topic:"Schema Registry",q:"What is the Confluent Schema Registry?",opts:["A Kafka broker component","A centralized service for managing Avro/JSON/Protobuf schemas used in Kafka","A ZooKeeper replacement","A monitoring dashboard"],ans:1,sol:"Schema Registry is a serving layer for metadata, providing a RESTful API for storing and retrieving Avro, JSON Schema, and Protobuf schemas. It ensures producers and consumers agree on data format."},
+  {id:62,topic:"Schema Registry",q:"What serialization format is most commonly used with Schema Registry?",opts:["XML","JSON without schema","Avro","CSV"],ans:2,sol:"Apache Avro is the most common serialization format with Schema Registry. Avro provides compact binary encoding, rich schema evolution rules, and tight integration with the registry."},
+  {id:63,topic:"Schema Registry",q:"What is the 'magic byte' in Kafka Avro messages?",opts:["Encryption indicator","First byte (0x0) indicating the message uses Schema Registry encoding","CRC checksum","Compression indicator"],ans:1,sol:"The magic byte (0x0) is the first byte in a Confluent Schema Registry-encoded message, followed by the 4-byte schema ID, then the actual Avro payload."},
+  {id:64,topic:"Schema Registry",q:"What is BACKWARD schema compatibility?",opts:["New schema can read data written with old schema","Old schema can read data written with new schema","Both schemas can read each other's data","Schemas are incompatible"],ans:0,sol:"BACKWARD compatibility means the new schema can read data produced with the old schema. This requires that new fields have default values and removed fields existed in the old schema."},
+  {id:65,topic:"Schema Registry",q:"What is FORWARD schema compatibility?",opts:["New schema can read old data","Old schema can read data written with new schema","No compatibility enforced","Bidirectional compatibility"],ans:1,sol:"FORWARD compatibility means the old schema can read data produced with the new schema. This is important when consumers lag behind and haven't updated their schema yet."},
+
+  // ─── EXACTLY-ONCE SEMANTICS ─────────────────────────────────────────────────
+  {id:66,topic:"Exactly-Once",q:"What are the three delivery semantics in Kafka?",opts:["Push, pull, hybrid","At-most-once, at-least-once, exactly-once","Sync, async, batch","Fire-and-forget, retry, confirm"],ans:1,sol:"Kafka supports: at-most-once (messages may be lost), at-least-once (messages may be duplicated), and exactly-once (messages processed exactly once via transactions and idempotence)."},
+  {id:67,topic:"Exactly-Once",q:"What is required to achieve exactly-once semantics (EOS) in Kafka?",opts:["Only acks=all","Idempotent producer + transactional API (or Kafka Streams)","ZooKeeper HA mode","Only min.insync.replicas=2"],ans:1,sol:"EOS requires idempotent producers (prevent duplicates on retry) and transactions (atomic multi-partition writes). Kafka Streams provides EOS via `processing.guarantee=exactly_once_v2`."},
+  {id:68,topic:"Exactly-Once",q:"What config enables Kafka transactions?",opts:["enable.idempotence=true","transactional.id=<id>","acks=all","transaction.timeout.ms"],ans:1,sol:"Setting `transactional.id` on the producer enables transactions. Each unique transactional ID identifies a producer instance, allowing the broker to handle fencing of zombie producers."},
+  {id:69,topic:"Exactly-Once",q:"What is 'epoch fencing' in Kafka transactions?",opts:["Compacting old messages","Preventing zombie producers from writing after a new producer takes over","Setting a message TTL","Limiting consumer retries"],ans:1,sol:"Epoch fencing ensures that if a transactional producer fails and restarts, the old instance (zombie) cannot write more data. The new instance gets a higher epoch, and the broker rejects old epoch writes."},
+  {id:70,topic:"Exactly-Once",q:"What does `isolation.level=read_committed` do for consumers?",opts:["Reads only compacted messages","Only reads messages from committed transactions, ignoring in-flight transactional messages","Increases consumer throughput","Enables consumer group transactions"],ans:1,sol:"`isolation.level=read_committed` ensures the consumer only reads messages that are part of committed transactions, skipping aborted transactions and in-progress ones."},
+
+  // ─── LOG COMPACTION ─────────────────────────────────────────────────────────
+  {id:71,topic:"Log Compaction",q:"What is Log Compaction in Kafka?",opts:["Compressing log files for storage","Retaining only the latest value per key, removing older duplicates","Deleting all messages after retention period","Merging multiple partition logs"],ans:1,sol:"Log compaction ensures that Kafka retains at least the last known value for each message key. It's useful for changelog topics and event sourcing, allowing consumers to rebuild state."},
+  {id:72,topic:"Log Compaction",q:"How is log compaction enabled for a topic?",opts:["retention.ms=-1","cleanup.policy=compact","compression.type=compact","log.cleanup.policy=delete"],ans:1,sol:"Log compaction is enabled by setting `cleanup.policy=compact` on the topic. You can also use `cleanup.policy=compact,delete` to combine compaction with time-based retention."},
+  {id:73,topic:"Log Compaction",q:"What is a 'tombstone' message in Kafka?",opts:["A message with maximum size","A message with a null value used to delete a key during compaction","An encrypted message","A message marking end of a transaction"],ans:1,sol:"A tombstone is a message with a non-null key and a null value. During log compaction, it marks the key for deletion. Tombstones are retained for a period defined by `delete.retention.ms`."},
+  {id:74,topic:"Log Compaction",q:"What is the 'dirty ratio' in log compaction?",opts:["Ratio of corrupted messages","Ratio of uncompacted (dirty) log data to total partition log data","Compression efficiency","Replication lag percentage"],ans:1,sol:"The dirty ratio (`min.cleanable.dirty.ratio`) is the fraction of the partition log that is 'dirty' (not yet compacted). Compaction starts when this threshold is exceeded."},
+
+  // ─── PERFORMANCE & TUNING ───────────────────────────────────────────────────
+  {id:75,topic:"Performance",q:"What compression types does Kafka support?",opts:["gzip only","gzip, snappy, lz4, zstd, none","gzip and snappy only","deflate, gzip, brotli"],ans:1,sol:"Kafka supports: none, gzip, snappy, lz4, and zstd (since 2.1). Compression is configured on the producer and applies to batches of messages."},
+  {id:76,topic:"Performance",q:"Where does message compression/decompression happen in Kafka?",opts:["Brokers decompress and recompress","Producer compresses batches; consumer decompresses","Brokers compress everything","ZooKeeper handles compression"],ans:1,sol:"The producer compresses the message batch before sending. The broker stores the compressed batch. The consumer decompresses the batch when reading. This is end-to-end compression."},
+  {id:77,topic:"Performance",q:"What is Zero-Copy in Kafka?",opts:["Sending messages without copying data between kernel and user space","A replication without copying","Zero byte messages","In-memory processing"],ans:0,sol:"Kafka uses the `sendfile` system call (zero-copy) to transfer data directly from the OS page cache to the network socket without copying to user space, significantly improving throughput."},
+  {id:78,topic:"Performance",q:"What is the page cache's role in Kafka performance?",opts:["Nothing — Kafka bypasses the OS cache","Kafka heavily relies on the OS page cache for reads and writes, avoiding JVM heap overhead","Stores only consumer offsets","Caches schema definitions"],ans:1,sol:"Kafka deliberately relies on the OS page cache rather than in-JVM caches. Sequential disk writes populate the page cache, and reads are often served from memory, making Kafka very fast."},
+  {id:79,topic:"Performance",q:"Why are sequential writes important to Kafka's performance?",opts:["They reduce network latency","Sequential disk writes are much faster than random writes, enabling Kafka to achieve high throughput","They reduce replication overhead","They simplify consumer offset management"],ans:1,sol:"Kafka appends messages sequentially to partition log files. Sequential writes (even to spinning disks) can sustain very high throughput (hundreds of MB/s) versus random I/O."},
+  {id:80,topic:"Performance",q:"What does `num.io.threads` broker config control?",opts:["Number of network threads","Number of threads for handling disk I/O","Number of consumer threads","Number of replication threads"],ans:1,sol:"`num.io.threads` (default 8) controls the number of threads the broker uses for disk I/O. Increasing this can improve throughput on servers with multiple disks."},
+
+  // ─── SECURITY ──────────────────────────────────────────────────────────────
+  {id:81,topic:"Security",q:"What authentication mechanisms does Kafka support?",opts:["Only password-based","SSL/TLS, SASL/PLAIN, SASL/GSSAPI (Kerberos), SASL/SCRAM, SASL/OAUTHBEARER","Only Kerberos","Only SSL certificates"],ans:1,sol:"Kafka supports multiple authentication mechanisms: SSL/TLS client certificates, SASL/PLAIN, SASL/GSSAPI (Kerberos), SASL/SCRAM-SHA-256/512, and SASL/OAUTHBEARER."},
+  {id:82,topic:"Security",q:"What is ACL in Kafka?",opts:["Advanced Consumer Lag","Access Control List for authorizing operations on Kafka resources","Automatic Cluster Logging","Asynchronous Consumer Lifecycle"],ans:1,sol:"ACLs (Access Control Lists) define permissions for Kafka principals (users) on resources (topics, consumer groups). The default authorizer is `AclAuthorizer` (or `SimpleAclAuthorizer`)."},
+  {id:83,topic:"Security",q:"What does SSL/TLS provide in Kafka?",opts:["Message compression","Authentication and encryption of data in transit","Consumer group management","Topic creation authorization"],ans:1,sol:"SSL/TLS in Kafka provides: encryption of data in transit, and optionally mutual authentication via client certificates (mTLS), ensuring clients and brokers verify each other's identity."},
+  {id:84,topic:"Security",q:"What is SASL/SCRAM in Kafka?",opts:["A schema validation protocol","Salted Challenge Response Authentication Mechanism — stores credentials in ZooKeeper/KRaft","A stream compression algorithm","A replication protocol"],ans:1,sol:"SASL/SCRAM (Salted Challenge Response Authentication Mechanism) stores hashed credentials in ZooKeeper (or KRaft metadata). It's a more secure alternative to SASL/PLAIN."},
+  {id:85,topic:"Security",q:"What Kafka feature encrypts data at rest?",opts:["Kafka has built-in encryption at rest","Kafka does not natively encrypt data at rest — disk encryption must be handled at the OS/filesystem level","SSL encrypts stored messages","Log compaction encrypts data"],ans:1,sol:"Kafka does not natively encrypt data stored on disk. Encryption at rest requires OS-level disk encryption (e.g., LUKS, AWS EBS encryption) or a third-party solution."},
+
+  // ─── MONITORING ────────────────────────────────────────────────────────────
+  {id:86,topic:"Monitoring",q:"What is the primary interface for Kafka metrics?",opts:["REST API","JMX (Java Management Extensions)","SNMP","Prometheus scrape endpoint (native)"],ans:1,sol:"Kafka exposes metrics via JMX. Tools like Prometheus with JMX Exporter, Datadog, or Confluent Control Center are used to collect and visualize these metrics."},
+  {id:87,topic:"Monitoring",q:"What is the most important metric to monitor for consumer health?",opts:["Producer batch size","Consumer group lag","Broker CPU usage","Partition count"],ans:1,sol:"Consumer group lag (the difference between the latest offset and committed offset per partition) is the most critical metric — high lag indicates consumers are falling behind producers."},
+  {id:88,topic:"Monitoring",q:"What tool is commonly used to inspect Kafka consumer group offsets?",opts:["kafka-topics.sh","kafka-consumer-groups.sh","kafka-configs.sh","kafka-log-dirs.sh"],ans:1,sol:"`kafka-consumer-groups.sh --describe --group <name>` shows per-partition offset, log end offset, and lag for a consumer group."},
+  {id:89,topic:"Monitoring",q:"What is Confluent Control Center?",opts:["A CLI tool for Kafka","A web-based monitoring and management tool for Kafka (Confluent Platform)","An open-source Kafka UI","A ZooKeeper dashboard"],ans:1,sol:"Confluent Control Center is a web UI for monitoring Kafka clusters, viewing consumer lag, managing topics, and monitoring connectors and ksqlDB queries in the Confluent Platform."},
+  {id:90,topic:"Monitoring",q:"What does `kafka-consumer-groups.sh --reset-offsets` do?",opts:["Deletes consumer group","Resets the consumer group offsets to a specified position (earliest, latest, specific offset)","Restarts consumers","Clears the __consumer_offsets topic"],ans:1,sol:"This command resets consumer group offsets. You can reset to earliest, latest, a specific offset, a timestamp, or an offset relative to current. Use `--execute` flag to apply."},
+
+  // ─── KAFKA ADMINISTRATION ───────────────────────────────────────────────────
+  {id:91,topic:"Administration",q:"How do you create a Kafka topic via CLI?",opts:["kafka-broker-api-versions.sh","kafka-topics.sh --create --topic <name> --partitions N --replication-factor N","kafka-configs.sh --create","kafka-acls.sh --add"],ans:1,sol:"Use `kafka-topics.sh --create --bootstrap-server <host:port> --topic <name> --partitions N --replication-factor N` to create a topic."},
+  {id:92,topic:"Administration",q:"What does `auto.create.topics.enable` broker config control?",opts:["Auto-creating consumer groups","Whether brokers automatically create topics when a producer/consumer references them","Auto-creating partitions","Auto-creating ACLs"],ans:1,sol:"When `auto.create.topics.enable=true` (default), Kafka automatically creates topics when producers send or consumers subscribe to non-existent topics. Should be disabled in production."},
+  {id:93,topic:"Administration",q:"What is the purpose of `kafka-reassign-partitions.sh`?",opts:["Resets consumer offsets","Moves partition replicas to different brokers for rebalancing","Deletes partitions","Creates topic replicas"],ans:1,sol:"This tool moves partition replicas between brokers, useful for load balancing after adding new brokers or decommissioning old ones."},
+  {id:94,topic:"Administration",q:"Can you decrease the number of partitions in an existing Kafka topic?",opts:["Yes, using kafka-topics.sh --alter","Yes, but only with admin API","No — Kafka does not support partition reduction","Yes, by compacting the topic"],ans:2,sol:"Kafka does not support decreasing the number of partitions in an existing topic. Reducing partitions would break the key-to-partition mapping. The only option is to create a new topic."},
+  {id:95,topic:"Administration",q:"What is `kafka-log-dirs.sh` used for?",opts:["Listing consumer groups","Inspecting log directory sizes and replica placement per partition","Deleting log segments","Compacting logs"],ans:1,sol:"`kafka-log-dirs.sh` describes the log directories on brokers, showing size and replica details. Useful for monitoring disk usage and planning partition moves."},
+
+  // ─── KAFKA TRANSACTIONS ─────────────────────────────────────────────────────
+  {id:96,topic:"Transactions",q:"What is the transactional coordinator in Kafka?",opts:["A ZooKeeper node","A special partition group leader for __transaction_state topic, managing transaction lifecycle","A consumer group coordinator","A schema registry node"],ans:1,sol:"The transaction coordinator is the broker managing a specific partition of the `__transaction_state` internal topic. It tracks transaction states (begun, prepare commit/abort, committed/aborted)."},
+  {id:97,topic:"Transactions",q:"What happens to aborted transactions in Kafka?",opts:["Messages are deleted immediately","Messages remain in the log but are skipped by read_committed consumers","Messages are never written","Messages are moved to DLQ"],ans:1,sol:"Messages from aborted transactions are written to the log but marked with abort markers. Consumers with `isolation.level=read_committed` skip these records."},
+  {id:98,topic:"Transactions",q:"What is the `transaction.timeout.ms` config?",opts:["Max time to wait for consumer commit","Maximum time a transaction can remain open before being aborted by the broker","Max time to elect a leader","Producer request timeout"],ans:1,sol:"`transaction.timeout.ms` is the max time a transaction can remain open. If the producer doesn't commit or abort within this time, the broker aborts the transaction automatically."},
+
+  // ─── KAFKA REST & KSQLDB ───────────────────────────────────────────────────
+  {id:99,topic:"ksqlDB",q:"What is ksqlDB?",opts:["A SQL database on top of Kafka","A streaming SQL engine built on Kafka Streams for real-time stream processing using SQL","A JDBC driver for Kafka","A schema validation tool"],ans:1,sol:"ksqlDB is a database purpose-built for stream processing applications. It provides a SQL interface over Kafka Streams, allowing you to build streaming apps without writing Java/Scala code."},
+  {id:100,topic:"ksqlDB",q:"What is the difference between KSQL STREAM and TABLE?",opts:["Same thing, different syntax","STREAM is an append-only event log; TABLE is a changelog with latest value per key","STREAM stores only numbers; TABLE stores strings","STREAM is persistent; TABLE is temporary"],ans:1,sol:"A KSQL STREAM represents an unbounded sequence of events (insert-only). A TABLE represents the current state (latest value per key), similar to KStream vs KTable in Kafka Streams."},
+  {id:101,topic:"ksqlDB",q:"What does a PUSH query do in ksqlDB?",opts:["Returns a snapshot and exits","Continuously emits results as new events arrive (long-running subscription)","Modifies data in the stream","Creates a new topic"],ans:1,sol:"A PUSH query (`SELECT ... EMIT CHANGES`) subscribes to a stream and continuously emits results as new records arrive. It's a long-running subscription suitable for event-driven applications."},
+  {id:102,topic:"ksqlDB",q:"What does a PULL query do in ksqlDB?",opts:["Continuously emits results","Returns a point-in-time snapshot of materialized state (like a traditional SQL query)","Creates a persistent query","Deletes records from a table"],ans:1,sol:"A PULL query fetches the current state from a materialized view (table) at query time and returns immediately — similar to a traditional SELECT on a relational DB."},
+
+  // ─── KAFKA MULTI-CLUSTER ────────────────────────────────────────────────────
+  {id:103,topic:"Multi-Cluster",q:"What is MirrorMaker 2 (MM2)?",opts:["A ZooKeeper migration tool","Kafka's built-in multi-cluster replication tool built on Kafka Connect","A Kafka Streams app","A consumer group manager"],ans:1,sol:"MirrorMaker 2 (MM2) is Kafka's built-in cross-cluster replication tool, built on Kafka Connect. It supports bidirectional replication, offset translation, and automatic topic configuration sync."},
+  {id:104,topic:"Multi-Cluster",q:"What is the purpose of topic renaming in MirrorMaker 2?",opts:["Compression optimization","Preventing conflicts when replicating topics between clusters (e.g., source.topic-name)","Increasing partition count","Changing serialization format"],ans:1,sol:"MM2 prefixes replicated topic names with the source cluster alias (e.g., `us-east.orders`) to avoid naming conflicts and clearly identify data origin in the target cluster."},
+  {id:105,topic:"Multi-Cluster",q:"What is an 'active-active' Kafka multi-cluster setup?",opts:["Only one cluster serves traffic","Both clusters handle reads and writes, replicating to each other bidirectionally","One cluster replicates to another","Clusters are independent with no replication"],ans:1,sol:"In an active-active setup, both clusters accept writes and replicate to each other. This enables geo-local writes and disaster recovery but requires careful handling of deduplication."},
+
+  // ─── KAFKA INTERNALS ───────────────────────────────────────────────────────
+  {id:106,topic:"Internals",q:"What is the `__consumer_offsets` topic?",opts:["A user-created topic","An internal Kafka topic that stores consumer group offset commits","A topic for producer transactions","A schema registry topic"],ans:1,sol:"`__consumer_offsets` is an internal Kafka topic with 50 partitions by default. It stores consumer group offset commits and group metadata."},
+  {id:107,topic:"Internals",q:"What is a Kafka Fetch Request?",opts:["A producer request to send data","A consumer request to pull a batch of messages from a partition","A broker-to-broker replication request","A ZooKeeper coordination request"],ans:1,sol:"A Fetch Request is sent by consumers (and follower replicas) to pull messages from a broker. It includes topic, partition, offset, and max bytes parameters."},
+  {id:108,topic:"Internals",q:"What is the role of the `.index` file in Kafka partition storage?",opts:["Stores message content","An offset-to-physical-position index for fast lookups within a log segment","Stores consumer offsets","Contains topic configuration"],ans:1,sol:"Each log segment has a corresponding `.index` file mapping offsets to physical byte positions. This allows Kafka to quickly seek to any offset without scanning the entire segment."},
+  {id:109,topic:"Internals",q:"What is the `.timeindex` file in Kafka?",opts:["Tracks broker uptime","Maps timestamps to offsets for time-based seeks","Stores compressed message batches","Records consumer group join times"],ans:1,sol:"The `.timeindex` file maps timestamps to offsets. It enables efficient time-based offset lookups (`offsetsForTimes()`), which is useful for replaying data from a specific point in time."},
+  {id:110,topic:"Internals",q:"What is a Kafka RecordBatch?",opts:["A group of consumer groups","A batch of records written together as a single unit in the log","A set of brokers","A partition group"],ans:1,sol:"A RecordBatch is the unit of storage and transmission in Kafka (introduced in v0.11). It contains multiple records with shared headers (compression, timestamps, producer info), improving efficiency."},
+
+  // ─── KAFKA CONFIGURATION ───────────────────────────────────────────────────
+  {id:111,topic:"Configuration",q:"What does `log.retention.bytes` control?",opts:["Maximum size of a single message","Maximum total size of log data per partition before deletion","Replication bandwidth","Number of log segments"],ans:1,sol:"`log.retention.bytes` sets the maximum size (in bytes) a partition's log can grow to before old segments are deleted. Set to -1 for unlimited. Works with `log.retention.ms`."},
+  {id:112,topic:"Configuration",q:"What is `message.max.bytes` on the broker?",opts:["Maximum consumer batch size","Maximum size of a message the broker will accept","Maximum replication bandwidth","Maximum number of messages per topic"],ans:1,sol:"`message.max.bytes` (default ~1MB) is the maximum size of a single message the broker will accept. Must be coordinated with `max.request.size` on producers and `fetch.message.max.bytes` on consumers."},
+  {id:113,topic:"Configuration",q:"What does `num.partitions` broker config set?",opts:["Number of brokers","Default number of partitions for newly created topics","Number of consumer threads","Number of replicas"],ans:1,sol:"`num.partitions` sets the default number of partitions when a topic is auto-created. Explicit topic creation overrides this."},
+  {id:114,topic:"Configuration",q:"What is `default.replication.factor`?",opts:["Minimum ISR count","Default replication factor for auto-created topics","Number of bootstrap servers","Controller quorum size"],ans:1,sol:"`default.replication.factor` specifies the replication factor used when topics are created without an explicit factor. Should be set to at least 3 in production."},
+  {id:115,topic:"Configuration",q:"What does `log.segment.bytes` control?",opts:["Maximum message size","Maximum size of a single log segment file before rolling","Retention size","Compression block size"],ans:1,sol:"`log.segment.bytes` (default 1GB) controls the maximum size of a single log segment file. When reached, a new segment is created. Smaller values mean more frequent compaction opportunities."},
+
+  // ─── KAFKA STREAMS ADVANCED ─────────────────────────────────────────────────
+  {id:116,topic:"Kafka Streams",q:"What is a Hopping Window in Kafka Streams?",opts:["Non-overlapping fixed-size window","Fixed-size overlapping windows that advance by a hop interval","Variable-size inactivity-based window","Unbounded aggregation"],ans:1,sol:"Hopping windows are fixed-size but overlap. Defined by a window size and advance interval (hop). E.g., a 10-min window hopping every 5 mins: [0-10), [5-15), [10-20)."},
+  {id:117,topic:"Kafka Streams",q:"What is a Session Window in Kafka Streams?",opts:["Fixed 30-second windows","Variable-size windows based on periods of inactivity (gaps) for a key","Fixed-size non-overlapping windows","Tumbling windows with grace period"],ans:1,sol:"Session windows group events for a key within a period of activity, separated by inactivity gaps. They're useful for user session analytics where sessions end after a period of no activity."},
+  {id:118,topic:"Kafka Streams",q:"What is `processing.guarantee` in Kafka Streams?",opts:["Consumer ACK mode","Guarantees for stream processing: at_least_once or exactly_once_v2","Producer retry setting","Partition assignment strategy"],ans:1,sol:"`processing.guarantee` sets the processing semantics. `at_least_once` (default) may reprocess on failure. `exactly_once_v2` (EOS v2) uses transactions to guarantee exactly-once processing."},
+  {id:119,topic:"Kafka Streams",q:"What is a Processor API in Kafka Streams?",opts:["A high-level DSL","A low-level API for direct control over processing logic, state stores, and topology","A REST API","A metrics collection API"],ans:1,sol:"The Processor API provides low-level access to Kafka Streams internals. You can define custom processors, punctuators for scheduled operations, and direct state store access."},
+  {id:120,topic:"Kafka Streams",q:"What is a Punctuator in Kafka Streams?",opts:["A consumer group rebalance listener","A scheduled callback executed at regular intervals in stream processing","A schema change handler","A topology validator"],ans:1,sol:"A Punctuator is a scheduled callback in the Processor API, executed at a configurable interval (WALL_CLOCK_TIME or STREAM_TIME). Useful for periodic flushing or cleanup."},
+
+  // ─── TOPICS & PARTITIONS ───────────────────────────────────────────────────
+  {id:121,topic:"Topics & Partitions",q:"What is the recommended way to choose the number of partitions?",opts:["Always use 1 partition","Based on expected throughput: max(target_throughput / partition_throughput, consumer_count)","Use the number of brokers","Always use 100 partitions"],ans:1,sol:"Partitions should be chosen based on throughput requirements and consumer parallelism. A common formula: max(target producer throughput / single partition throughput, number of consumers needed)."},
+  {id:122,topic:"Topics & Partitions",q:"What is the downside of having too many partitions?",opts:["No downside","Increased file handles, ZooKeeper znodes, and end-to-end latency; slower leader elections","Cannot use compression","Requires more consumer memory"],ans:1,sol:"Too many partitions increase file handles per broker, ZooKeeper/KRaft metadata size, replication bandwidth, and leader election time. Each partition costs ~1MB of memory in controller."},
+  {id:123,topic:"Topics & Partitions",q:"What is a 'preferred leader' in Kafka?",opts:["The leader with most data","The first replica in the replica list (original leader when the topic was created)","The leader with least lag","The broker with highest ID"],ans:1,sol:"The preferred leader is the first replica listed in the partition's replica assignment. Kafka periodically elects the preferred leader to distribute leadership evenly across brokers."},
+  {id:124,topic:"Topics & Partitions",q:"What is `auto.leader.rebalance.enable`?",opts:["Enables consumer rebalancing","Periodically re-elects preferred leaders to balance leadership across brokers","Enables auto partition creation","Controls consumer group rebalance frequency"],ans:1,sol:"When true, Kafka periodically triggers preferred leader elections to ensure leadership is balanced. The check period is controlled by `leader.imbalance.check.interval.seconds`."},
+  {id:125,topic:"Topics & Partitions",q:"Can a Kafka consumer read from multiple partitions simultaneously?",opts:["No, only one partition per consumer","Yes, a single consumer can read from multiple partitions within the same topic/group","Only with manual partition assignment","Only with acks=0"],ans:1,sol:"A single consumer instance can read from multiple partitions. When a group has fewer consumers than partitions, each consumer is assigned multiple partitions."},
+
+  // ─── KAFKA TOOLS ───────────────────────────────────────────────────────────
+  {id:126,topic:"Tools",q:"What does `kafka-console-producer.sh` do?",opts:["Consumes messages from a topic","Produces messages to a topic from stdin","Creates topics","Lists consumer groups"],ans:1,sol:"`kafka-console-producer.sh` is a CLI tool that reads from stdin and publishes each line as a message to the specified Kafka topic. Useful for testing."},
+  {id:127,topic:"Tools",q:"What does `kafka-console-consumer.sh` do?",opts:["Produces test messages","Reads and prints messages from a topic to stdout","Creates consumer groups","Manages offsets"],ans:1,sol:"`kafka-console-consumer.sh` reads messages from a topic and prints them to stdout. Use `--from-beginning` to read from the start, or omit to read from the latest offset."},
+  {id:128,topic:"Tools",q:"What does `kafka-dump-log.sh` (or `kafka-dump-log`) do?",opts:["Exports topic data to HDFS","Parses and displays the contents of Kafka log segment files","Deletes old log segments","Compacts log files"],ans:1,sol:"`kafka-dump-log.sh` reads raw Kafka log segment files and displays their contents in a human-readable format. Useful for debugging storage issues."},
+  {id:129,topic:"Tools",q:"What is `kafka-producer-perf-test.sh` used for?",opts:["Monitoring broker performance","Benchmarking producer throughput and latency","Creating performance topics","Testing consumer lag"],ans:1,sol:"This tool measures producer performance by sending a configurable number of messages at specified throughput and reporting latency percentiles and throughput achieved."},
+  {id:130,topic:"Tools",q:"What does `kafka-broker-api-versions.sh` do?",opts:["Lists topic API versions","Shows the API versions supported by the connected broker","Displays broker configuration","Lists consumer API methods"],ans:1,sol:"This tool queries a broker and lists all API types and version ranges it supports. Useful for ensuring client-broker version compatibility."},
+
+  // ─── CONSUMER GROUPS ADVANCED ──────────────────────────────────────────────
+  {id:131,topic:"Consumers",q:"What partition assignment strategy does 'RangeAssignor' use?",opts:["Assigns partitions randomly","Sorts partitions numerically and divides them into consecutive ranges per consumer","Assigns based on consumer lag","Uses consistent hashing"],ans:1,sol:"RangeAssignor sorts partitions per topic numerically and assigns consecutive ranges to consumers. For uneven partitions, first consumers get one extra — this can cause imbalance with multiple topics."},
+  {id:132,topic:"Consumers",q:"What is the 'CooperativeStickyAssignor'?",opts:["Same as RangeAssignor","An incremental rebalance protocol that minimizes partition movement and avoids stop-the-world rebalances","A ZooKeeper-based assignor","A round-robin assignor"],ans:1,sol:"CooperativeStickyAssignor implements the cooperative rebalancing protocol (KAFKA-8221), allowing incremental rebalances where only reassigned partitions are revoked, avoiding full stop-the-world pauses."},
+  {id:133,topic:"Consumers",q:"What is the heartbeat thread in a Kafka consumer?",opts:["A thread that polls for new messages","A background thread that sends heartbeats to the group coordinator to stay in the group","A thread that commits offsets","A thread that handles schema evolution"],ans:1,sol:"The heartbeat thread (separate from the polling thread) sends periodic heartbeats to the group coordinator. If heartbeats stop (within session.timeout.ms), the consumer is considered dead."},
+  {id:134,topic:"Consumers",q:"What is a 'Dead Letter Queue' (DLQ) pattern in Kafka?",opts:["A compacted topic","A topic where messages that fail processing are routed for later inspection","A topic with zero retention","A consumer group error log"],ans:1,sol:"DLQ is a pattern where unprocessable messages (due to deserialization errors, processing failures) are routed to a separate topic for later inspection, retrying, or alerting."},
+  {id:135,topic:"Consumers",q:"What is `fetch.min.bytes` in a Kafka consumer?",opts:["Minimum message size required","Minimum data the broker must have before responding to a fetch request","Minimum batch size for consumption","Minimum offset value"],ans:1,sol:"`fetch.min.bytes` sets the minimum data the broker must return in a fetch response. If less is available, the broker waits up to `fetch.max.wait.ms`. Increases throughput by reducing fetch frequency."},
+
+  // ─── KAFKA CLUSTER OPERATIONS ──────────────────────────────────────────────
+  {id:136,topic:"Operations",q:"What is a 'rolling restart' in Kafka?",opts:["Restarting all brokers simultaneously","Restarting brokers one at a time to maintain availability","Restarting consumers in sequence","Restarting ZooKeeper nodes"],ans:1,sol:"A rolling restart involves restarting brokers one at a time, allowing the cluster to remain available. Partitions are served by remaining brokers during each restart."},
+  {id:137,topic:"Operations",q:"What is the Kafka broker `controlled.shutdown.enable` config?",opts:["Enables schema validation on shutdown","Allows brokers to migrate partition leadership before shutting down gracefully","Enables automatic backup on shutdown","Controls ZooKeeper timeout on shutdown"],ans:1,sol:"When true, a shutting-down broker first moves its partition leaders to other brokers before stopping, minimizing disruption. Recommended for production."},
+  {id:138,topic:"Operations",q:"How do you add a new broker to a Kafka cluster?",opts:["Kafka automatically detects new brokers and assigns partitions","Start the broker with a unique broker.id; existing partitions are not automatically redistributed — use reassign-partitions tool","Add the broker to ZooKeeper manually","Restart the entire cluster"],ans:1,sol:"New brokers join automatically once started with a unique broker ID. However, existing partitions are NOT automatically moved to the new broker — you must use partition reassignment tools to rebalance."},
+  {id:139,topic:"Operations",q:"What is 'throttling' in Kafka partition reassignment?",opts:["Rate limiting consumer consumption","Limiting the replication bandwidth during reassignment to avoid impacting production traffic","Limiting producer throughput","Limiting the number of partitions"],ans:1,sol:"During partition reassignment, you can throttle replication bandwidth using the `--throttle` flag to prevent impacting live traffic on the cluster."},
+  {id:140,topic:"Operations",q:"What does `kafka-configs.sh` allow you to do?",opts:["Only view topic configs","View and dynamically update configurations for topics, brokers, and clients without restarting","Only update broker configs","Manage consumer group configs only"],ans:1,sol:"`kafka-configs.sh` allows viewing and altering configurations for topics, brokers, users, and clients dynamically, many without requiring a broker restart."},
+
+  // ─── KAFKA ECOSYSTEM ───────────────────────────────────────────────────────
+  {id:141,topic:"Ecosystem",q:"What is Confluent Platform?",opts:["An open-source Kafka distribution","A commercial distribution of Kafka with additional enterprise features","A cloud-only Kafka service","A ZooKeeper replacement"],ans:1,sol:"Confluent Platform is a commercial distribution built on Kafka that adds enterprise features like Schema Registry, ksqlDB, Kafka Connect hub, Control Center, Role-Based Access Control, and multi-region clusters."},
+  {id:142,topic:"Ecosystem",q:"What is Confluent Cloud?",opts:["A local Kafka installation tool","A fully managed Kafka-as-a-service on AWS, Azure, and GCP","An open-source cloud Kafka tool","A monitoring-only cloud service"],ans:1,sol:"Confluent Cloud is a fully managed, cloud-native Kafka service (available on AWS, Azure, GCP) that eliminates the need to operate Kafka infrastructure."},
+  {id:143,topic:"Ecosystem",q:"What is Amazon MSK?",opts:["A Kafka client library","A fully managed Apache Kafka service on AWS","A Kafka monitoring tool","An AWS messaging queue (different from Kafka)"],ans:1,sol:"Amazon MSK (Managed Streaming for Apache Kafka) is AWS's fully managed Kafka service that makes it easy to build and run applications that use Apache Kafka."},
+  {id:144,topic:"Ecosystem",q:"What is Apache Flink in relation to Kafka?",opts:["A Kafka replacement","A distributed stream processing framework that integrates with Kafka as a source/sink","A Kafka monitoring tool","A schema registry"],ans:1,sol:"Apache Flink is a powerful distributed stream processing framework that commonly uses Kafka as both a source (reading events) and sink (writing results). Flink provides advanced windowing and stateful processing."},
+  {id:145,topic:"Ecosystem",q:"What is Apache Spark Structured Streaming's relationship with Kafka?",opts:["Spark replaces Kafka","Spark Structured Streaming can read from and write to Kafka topics as a streaming source/sink","Spark is used to administer Kafka","Spark runs inside Kafka brokers"],ans:1,sol:"Spark Structured Streaming has built-in Kafka integration, allowing it to read from Kafka as a streaming source and write results back to Kafka, enabling micro-batch and continuous processing."},
+
+  // ─── KAFKA VERSIONS & FEATURES ─────────────────────────────────────────────
+  {id:146,topic:"Versions & Features",q:"What major feature was introduced in Kafka 0.11?",opts:["KRaft mode","Exactly-once semantics (EOS) and idempotent producers","Log compaction","Kafka Streams"],ans:1,sol:"Kafka 0.11 introduced exactly-once semantics via idempotent producers and transactions, along with a redesigned message format (RecordBatch)."},
+  {id:147,topic:"Versions & Features",q:"When was KRaft mode declared production-ready?",opts:["Kafka 2.8","Kafka 3.0","Kafka 3.3","Kafka 3.5"],ans:2,sol:"KRaft mode was declared production-ready in Kafka 3.3 (released September 2022). Kafka 3.4 and beyond have further matured KRaft support."},
+  {id:148,topic:"Versions & Features",q:"What is the significance of Kafka 2.4?",opts:["Introduced Schema Registry","Introduced the ability for consumers to fetch from the nearest replica (not just leader), reducing cross-AZ costs","Introduced KRaft","Introduced ksqlDB"],ans:1,sol:"Kafka 2.4 introduced follower fetching, allowing consumers to read from the nearest replica (e.g., same AZ) rather than always going to the leader, reducing cross-AZ data transfer costs."},
+  {id:149,topic:"Versions & Features",q:"What is the `__transaction_state` internal topic used for?",opts:["Storing consumer offsets","Storing transaction metadata for Kafka's transactional producer","Storing schema versions","Storing broker configuration"],ans:1,sol:"`__transaction_state` is an internal topic that stores the state of ongoing and completed transactions. It's managed by the transaction coordinator brokers."},
+  {id:150,topic:"Versions & Features",q:"What is EOS v2 (exactly_once_v2) in Kafka Streams?",opts:["Same as exactly_once","An improved EOS implementation using one transactional producer per thread (not per task), reducing overhead","A new compression algorithm","An improved consumer protocol"],ans:1,sol:"EOS v2 (Kafka 2.6+) uses one transactional producer per Streams thread instead of one per task, significantly reducing the number of transactions and improving performance over EOS v1."},
+
+  // ─── ADVANCED PATTERNS ─────────────────────────────────────────────────────
+  {id:151,topic:"Patterns",q:"What is the 'Event Sourcing' pattern with Kafka?",opts:["Using Kafka as a database","Storing all state changes as an immutable sequence of events in Kafka topics, rebuilding state by replaying events","Using Kafka for batch processing","Deleting old events regularly"],ans:1,sol:"Event Sourcing uses Kafka as the system of record where all state changes are captured as events. Systems rebuild current state by replaying the event log, making it auditable and replayable."},
+  {id:152,topic:"Patterns",q:"What is the 'CQRS' pattern in Kafka context?",opts:["Consumer Queue Replay System","Command Query Responsibility Segregation — separating write (command) and read (query) models, using Kafka topics as the boundary","Consumer-Query-Result-Stream","Concurrent Queue Replication System"],ans:1,sol:"CQRS separates write and read responsibilities. Commands produce events to Kafka topics; consumers build read-optimized projections. Kafka Streams or ksqlDB can materialize query views."},
+  {id:153,topic:"Patterns",q:"What is the 'Outbox Pattern' with Kafka?",opts:["A dead letter queue strategy","Writing events to a database outbox table atomically with business data, then using CDC (Debezium) to publish to Kafka","A consumer retry strategy","A multi-cluster pattern"],ans:1,sol:"The Outbox Pattern atomically writes business data and events to the same DB transaction. A CDC tool (like Debezium) reads the outbox table and publishes events to Kafka, ensuring consistency."},
+  {id:154,topic:"Patterns",q:"What is a 'Saga' pattern in Kafka-based microservices?",opts:["A long story about Kafka","A distributed transaction pattern using a sequence of local transactions coordinated via Kafka events","A monitoring pattern","A schema evolution pattern"],ans:1,sol:"The Saga pattern breaks a distributed transaction into a sequence of local transactions, each publishing events to Kafka. Services react to events and perform their step, or compensate on failure."},
+  {id:155,topic:"Patterns",q:"What is 'Change Data Capture' (CDC) in Kafka?",opts:["Schema change tracking","Capturing database row-level changes (INSERT/UPDATE/DELETE) and streaming them to Kafka topics","Consumer configuration changes","Broker configuration drift detection"],ans:1,sol:"CDC captures real-time changes from a database's transaction log and publishes them to Kafka. Debezium is the most popular CDC tool, supporting MySQL, PostgreSQL, MongoDB, and others."},
+
+  // ─── DEBEZIUM ──────────────────────────────────────────────────────────────
+  {id:156,topic:"Patterns",q:"What is Debezium?",opts:["A Kafka broker plugin","An open-source CDC platform built on Kafka Connect for streaming database changes","A schema registry alternative","A ksqlDB extension"],ans:1,sol:"Debezium is an open-source distributed platform for CDC. It uses Kafka Connect source connectors to capture row-level changes from databases and publish them as Kafka events."},
+  {id:157,topic:"Patterns",q:"What is a 'snapshot' in Debezium?",opts:["A backup of Kafka logs","An initial full read of existing database records published to Kafka before incremental CDC begins","A topic compaction run","A schema registry snapshot"],ans:1,sol:"Debezium's snapshot reads all existing rows at startup and publishes them to Kafka before switching to incremental streaming from the database's transaction log."},
+
+  // ─── CONSUMER PATTERNS ─────────────────────────────────────────────────────
+  {id:158,topic:"Consumers",q:"What is 'at-least-once' delivery from a consumer perspective?",opts:["Process each message exactly once","Commit offsets before processing — messages may be lost on crash","Process before committing — messages may be reprocessed on crash","Never commit offsets"],ans:2,sol:"At-least-once: process the message, then commit the offset. If the consumer crashes after processing but before committing, the message is reprocessed. Processing must be idempotent."},
+  {id:159,topic:"Consumers",q:"What is 'at-most-once' delivery from a consumer perspective?",opts:["Process after committing — possible data loss","Process before committing — possible duplication","Process with exactly-once transactions","Never process messages"],ans:0,sol:"At-most-once: commit offsets before processing. If the consumer crashes after committing but before processing, the message is lost. Use when data loss is acceptable."},
+  {id:160,topic:"Consumers",q:"What is a 'ConsumerRebalanceListener'?",opts:["A listener for consumer lag events","A callback interface invoked before/after partition reassignment, useful for committing offsets or loading state","A listener for schema changes","A producer error handler"],ans:1,sol:"`ConsumerRebalanceListener` has `onPartitionsRevoked()` (called before reassignment — commit offsets here) and `onPartitionsAssigned()` (called after assignment — seek or load state here)."},
+
+  // ─── NETWORK & INTER-BROKER ─────────────────────────────────────────────────
+  {id:161,topic:"Internals",q:"What is `listeners` vs `advertised.listeners` in Kafka?",opts:["Same config, different names","listeners: sockets the broker binds to; advertised.listeners: addresses published to clients/ZooKeeper for connections","listeners is for producers; advertised is for consumers","listeners is for ZooKeeper; advertised is for Kafka clients"],ans:1,sol:"`listeners` is what the broker binds to. `advertised.listeners` is what's published to clients for them to connect to (important when broker is behind NAT or load balancer)."},
+  {id:162,topic:"Internals",q:"What is `num.network.threads` broker config?",opts:["Number of disk I/O threads","Number of threads to handle network requests","Number of replication threads","Number of consumer group coordinator threads"],ans:1,sol:"`num.network.threads` (default 3) controls the number of threads processing network requests. Increase for high-traffic clusters to reduce request queue buildup."},
+  {id:163,topic:"Internals",q:"What is a Kafka request queue?",opts:["A dead letter queue","A queue in broker memory where incoming network requests wait before being processed by I/O threads","A ZooKeeper request queue","A consumer lag queue"],ans:1,sol:"Incoming requests are queued in the request queue while waiting for I/O handler threads. Monitor `request-handler-avg-idle-percent` — if low, the broker is overloaded."},
+
+  // ─── STREAMS STATE MANAGEMENT ──────────────────────────────────────────────
+  {id:164,topic:"Kafka Streams",q:"What is a 'changelog topic' in Kafka Streams?",opts:["A user-created audit topic","A Kafka topic backing a state store, used for fault-tolerant state recovery","A topic with compaction disabled","A topic storing stream topology metadata"],ans:1,sol:"Each RocksDB state store in Kafka Streams is backed by a changelog topic. On failure or reassignment, the state is rebuilt by replaying the changelog topic."},
+  {id:165,topic:"Kafka Streams",q:"What is a 'standby replica' in Kafka Streams?",opts:["A replica in ISR","A partial copy of a state store maintained on another task instance for faster failover","A passive consumer instance","A replica in a different data center"],ans:1,sol:"Standby replicas (`num.standby.replicas`) are shadow copies of state stores on other instances. On failure, the standby instance can take over quickly with minimal catch-up from the changelog."},
+  {id:166,topic:"Kafka Streams",q:"What is `cache.max.bytes.buffering` in Kafka Streams?",opts:["Maximum message size","Memory used for in-memory caching of state store writes, reducing downstream writes and throughput","Consumer buffer size","Producer batch memory"],ans:1,sol:"`cache.max.bytes.buffering` (default 10MB) sets memory for in-memory record caches in Kafka Streams, coalescing multiple updates to the same key before writing to state stores and downstream topics."},
+
+  // ─── SCHEMA EVOLUTION ──────────────────────────────────────────────────────
+  {id:167,topic:"Schema Registry",q:"What is FULL schema compatibility?",opts:["Only new schemas are accepted","New schema is both BACKWARD and FORWARD compatible with the previous version","No compatibility checks","Schema is locked — no changes allowed"],ans:1,sol:"FULL compatibility combines BACKWARD and FORWARD: the new schema can read old data AND old consumers can read new data. Requires: add fields with defaults, remove optional fields only."},
+  {id:168,topic:"Schema Registry",q:"What is TRANSITIVE compatibility in Schema Registry?",opts:["Compatibility with only the previous version","Compatibility checked against all previous versions, not just the latest","Schema transition support","Compatibility with future versions"],ans:1,sol:"TRANSITIVE compatibility (BACKWARD_TRANSITIVE, FORWARD_TRANSITIVE, FULL_TRANSITIVE) requires compatibility with all registered versions, not just the latest. Prevents breaking changes from accumulating."},
+  {id:169,topic:"Schema Registry",q:"What Avro feature enables BACKWARD compatible schema evolution?",opts:["Required fields","Removing fields without defaults","Adding new fields with default values","Renaming fields"],ans:2,sol:"Adding new fields with default values enables backward compatibility: new schema can read old records (missing fields get defaults), and old schema ignores unknown fields."},
+
+  // ─── KAFKA IN THE CLOUD ────────────────────────────────────────────────────
+  {id:170,topic:"Cloud",q:"What is Tiered Storage in Kafka?",opts:["Multi-tier replication","Offloading older log data to cheap remote storage (S3, GCS) while keeping recent data on local disks","Multi-datacenter storage","A compression tier system"],ans:1,sol:"Tiered Storage (GA in Kafka 3.6) allows Kafka to offload older log segments to object storage (like S3) while keeping recent segments locally, reducing broker disk costs while maintaining full retention."},
+  {id:171,topic:"Cloud",q:"What is a 'dedicated cluster' vs 'shared cluster' in Confluent Cloud?",opts:["Same thing","Dedicated: single-tenant isolated resources; Shared (Basic/Standard): multi-tenant environment","Dedicated is for development; shared for production","Dedicated uses more partitions"],ans:1,sol:"Dedicated clusters provide single-tenant, isolated compute and storage, offering predictable performance and private networking. Shared clusters (Basic/Standard) share infrastructure with other tenants."},
+  {id:172,topic:"Cloud",q:"What is cross-AZ replication in cloud Kafka?",opts:["Replication between different cloud providers","Replicating partitions across availability zones within a region for fault tolerance","Replication between Kafka clusters","Replication to HDFS"],ans:1,sol:"In cloud deployments, Kafka brokers are spread across AZs. Partition replicas are placed in different AZs, so the cluster survives an AZ failure. This incurs cross-AZ data transfer costs."},
+
+  // ─── ERROR HANDLING ────────────────────────────────────────────────────────
+  {id:173,topic:"Error Handling",q:"What is a `NotLeaderOrFollowerException` in Kafka?",opts:["The consumer is not in a group","The broker handling the request is no longer the leader for that partition","Schema version mismatch","Consumer group rebalance in progress"],ans:1,sol:"This exception occurs when a producer or consumer sends a request to a broker that is no longer the leader for the requested partition. The client should refresh metadata and retry."},
+  {id:174,topic:"Error Handling",q:"What is `RecordTooLargeException` in Kafka?",opts:["Consumer read too many records","A message exceeds the broker's `message.max.bytes` limit","Log segment is too large","Partition has too many records"],ans:1,sol:"`RecordTooLargeException` is thrown when a producer tries to send a message exceeding `message.max.bytes` on the broker or `max.request.size` on the producer."},
+  {id:175,topic:"Error Handling",q:"What is a `TimeoutException` in Kafka producer?",opts:["Consumer timed out","The request to send a record could not be completed within `request.timeout.ms`","Schema registry timeout","ZooKeeper connection timeout"],ans:1,sol:"A `TimeoutException` from the producer means the message couldn't be sent within `request.timeout.ms` (default 30s). Check broker availability, network, and buffer pressure."},
+  {id:176,topic:"Error Handling",q:"What is `retriable` vs `non-retriable` errors in Kafka producer?",opts:["All errors are retriable","Retriable: transient (network glitch, leader election); Non-retriable: permanent (message too large, auth failure)","All errors are non-retriable","Only timeout errors are retriable"],ans:1,sol:"Retriable errors (e.g., leader not available, network timeout) are automatically retried by the producer. Non-retriable errors (e.g., RecordTooLargeException, authentication failure) are not retried."},
+
+  // ─── KAFKA INTERNALS ADVANCED ──────────────────────────────────────────────
+  {id:177,topic:"Internals",q:"What is the 'fetch session' optimization in Kafka?",opts:["A consumer session cache","An optimization where brokers cache partition state between fetches, reducing redundant metadata in repeated requests","A producer batching session","A ZooKeeper session cache"],ans:1,sol:"Fetch sessions (Kafka 1.1) allow brokers to maintain state between consumer fetch requests. Subsequent fetches only transmit changes (not the full partition list), reducing CPU and network overhead."},
+  {id:178,topic:"Internals",q:"What is `rack awareness` in Kafka?",opts:["Physical rack monitoring","Distributing replicas across different racks/AZs to improve fault tolerance","Setting broker hardware type","A load-balancing algorithm"],ans:1,sol:"Rack awareness (via `broker.rack` config) causes Kafka to spread partition replicas across different racks or AZs, so the cluster can survive a rack failure without losing data."},
+  {id:179,topic:"Internals",q:"What does `replica.fetch.max.bytes` control?",opts:["Maximum message the consumer can fetch","Maximum bytes a follower requests from the leader per partition per fetch","Maximum replication lag","Maximum replica count"],ans:1,sol:"`replica.fetch.max.bytes` limits the bytes a follower tries to fetch from the leader per partition in a single request. Must be at least as large as the maximum expected message size."},
+  {id:180,topic:"Internals",q:"What is the 'Kraft' metadata topic (`__cluster_metadata`)?",opts:["A user-managed metadata topic","In KRaft mode, this internal topic stores all cluster metadata (broker registrations, topic configs, partition assignments) via Raft consensus","A topic for storing consumer group metadata","A topic for schema definitions"],ans:1,sol:"In KRaft mode, `__cluster_metadata` is the internal Raft log that stores all cluster metadata. The KRaft controller quorum replicates changes to this topic using the Raft consensus algorithm."},
+
+  // ─── KAFKA CONSUMER ADVANCED ───────────────────────────────────────────────
+  {id:181,topic:"Consumers",q:"What is `pause()` and `resume()` in Kafka consumer?",opts:["Stops and starts the consumer","Temporarily pauses consumption from specific partitions without leaving the group, useful for backpressure","Commits and releases offsets","Pauses the entire consumer group"],ans:1,sol:"`pause(partitions)` stops fetching from specified partitions without triggering a rebalance. `resume(partitions)` resumes fetching. Useful for backpressure — when downstream processing is slow."},
+  {id:182,topic:"Consumers",q:"What is `seek()` in Kafka consumer?",opts:["Searches for a specific message content","Sets the consumer's fetch position to a specific offset for a partition","Seeks the next available message","Finds the minimum offset"],ans:1,sol:"`seek(partition, offset)` manually sets the offset from which the consumer will read. Useful for replaying events, skipping corrupted messages, or starting from a specific position."},
+  {id:183,topic:"Consumers",q:"What is `seekToBeginning()` vs `seekToEnd()`?",opts:["Same as earliest/latest auto.offset.reset","seekToBeginning: seek to earliest offset for partitions; seekToEnd: seek to latest offset (no messages until new ones arrive)","Seeks to start/end of log segment","Resets to default offset"],ans:1,sol:"`seekToBeginning(partitions)` sets position to the earliest available offset. `seekToEnd(partitions)` sets it to the latest, so only new messages are received."},
+  {id:184,topic:"Consumers",q:"What is `wakeup()` method in Kafka consumer?",opts:["Restarts the consumer","Interrupts a blocking `poll()` call by throwing WakeupException, enabling clean shutdown","Wakes up an idle consumer","Clears consumer offsets"],ans:1,sol:"`consumer.wakeup()` is thread-safe and interrupts a blocking `poll()` call by causing it to throw `WakeupException`. This is the recommended way to stop a consumer from another thread."},
+
+  // ─── PRODUCER ADVANCED ─────────────────────────────────────────────────────
+  {id:185,topic:"Producers",q:"What is `max.in.flight.requests.per.connection` in Kafka producer?",opts:["Max concurrent connections per broker","Max number of unacknowledged requests the producer sends per broker connection","Max batch size","Max message size"],ans:1,sol:"This config limits how many requests can be in-flight (sent but not acknowledged) per broker connection. Setting it to 1 guarantees ordering even on retries (without idempotence), but reduces throughput."},
+  {id:186,topic:"Producers",q:"With idempotent producer enabled, what is the max allowed `max.in.flight.requests.per.connection`?",opts:["1","3","5","Unlimited"],ans:2,sol:"With `enable.idempotence=true`, Kafka allows up to 5 in-flight requests per connection while still guaranteeing exactly-once and ordering, because the broker can reorder using sequence numbers."},
+  {id:187,topic:"Producers",q:"What is `delivery.timeout.ms` in Kafka producer?",opts:["Max time to wait for consumer ACK","Total maximum time for a record delivery attempt (includes retries and wait time) before failing","Max network timeout","Max time to wait for leader election"],ans:1,sol:"`delivery.timeout.ms` (default 120s) is the maximum time from `send()` being called to delivery being acknowledged (or failed), spanning batching, retries, and acknowledgment wait."},
+  {id:188,topic:"Producers",q:"What is a Kafka producer `Callback`?",opts:["A synchronous method","An asynchronous callback invoked when the broker acknowledges (or fails) a sent record","A ZooKeeper event handler","A consumer rebalance notification"],ans:1,sol:"Producers can pass a `Callback` to `send()` which is called asynchronously when the record is acknowledged or fails. The callback receives `RecordMetadata` (on success) or an `Exception` (on failure)."},
+
+  // ─── KAFKA CONNECT ADVANCED ─────────────────────────────────────────────────
+  {id:189,topic:"Kafka Connect",q:"What is a 'Converter' in Kafka Connect?",opts:["A message compressor","A component that serializes/deserializes data between Kafka's byte format and connector's internal format (e.g., JSON, Avro)","A protocol converter","A schema version converter"],ans:1,sol:"Converters handle serialization of data moving through Kafka Connect. Common converters: JsonConverter, AvroConverter (with Schema Registry), StringConverter, ByteArrayConverter."},
+  {id:190,topic:"Kafka Connect",q:"What is a Kafka Connect 'Task'?",opts:["A scheduled job","A unit of work that actually reads or writes data — a connector spawns multiple tasks for parallelism","A ZooKeeper coordination task","A consumer group task"],ans:1,sol:"A Task is the actual worker unit in Kafka Connect. A connector divides its work into tasks for parallelism. Each task runs on a Connect worker and handles a portion of the data (e.g., a DB table partition)."},
+  {id:191,topic:"Kafka Connect",q:"What is 'exactly.once.support' in Kafka Connect sink connectors?",opts:["All sink connectors support EOS","A framework feature (Kafka 3.3+) allowing sink connectors to write exactly-once to external systems using Kafka transactions","A producer config","A consumer group feature"],ans:1,sol:"Kafka 3.3 introduced exactly-once support for Kafka Connect sinks, using read-committed consumers and transactional consumers to ensure records are delivered exactly once to sink systems."},
+
+  // ─── KAFKA FINAL ADVANCED ──────────────────────────────────────────────────
+  {id:192,topic:"Internals",q:"What is `group.instance.id` in Kafka consumer?",opts:["A static group identifier for the coordinator","A static consumer identity enabling 'static membership' — prevents rebalances when consumers restart","A consumer group version identifier","A schema version ID"],ans:1,sol:"Static membership (`group.instance.id`) assigns a persistent identity to a consumer. When the consumer restarts and reconnects within `session.timeout.ms`, its partition assignments are preserved without triggering a rebalance."},
+  {id:193,topic:"Consumers",q:"What is the Group Coordinator in Kafka?",opts:["A ZooKeeper node","A broker responsible for managing consumer group membership, offset commits, and triggering rebalances","A producer coordinator","A schema coordinator"],ans:1,sol:"The Group Coordinator is a broker that manages a consumer group's lifecycle: tracking membership, triggering rebalances when membership changes, and storing committed offsets in `__consumer_offsets`."},
+  {id:194,topic:"Consumers",q:"What is the Group Leader in a consumer group?",opts:["The broker managing the group","The first consumer to join a group that receives the full member list and decides partition assignment","The consumer with the most partitions","The consumer group administrator"],ans:1,sol:"The Group Leader is the first consumer to join. The coordinator sends it the full member list and supported strategies. The leader computes the assignment and sends it back to the coordinator."},
+  {id:195,topic:"Architecture",q:"In KRaft mode, what is a 'KRaft controller quorum'?",opts:["A set of ZooKeeper nodes","A set of brokers (3 or 5 recommended) that run the KRaft controller role and maintain cluster metadata via Raft consensus","A consumer group quorum","A replication quorum"],ans:1,sol:"In KRaft mode, a subset of brokers (or dedicated controller nodes) form the controller quorum, using the Raft consensus algorithm to maintain consistent cluster metadata without ZooKeeper."},
+  {id:196,topic:"Architecture",q:"What is a 'combined' vs 'isolated' node in KRaft?",opts:["Combined: broker+controller; Isolated: controller-only or broker-only nodes","Combined: multiple clusters; Isolated: single cluster","Combined: read+write; Isolated: read-only","Combined: producer+consumer; Isolated: producer or consumer only"],ans:0,sol:"In KRaft, nodes can be: combined (running both broker and controller roles, good for small clusters) or isolated (dedicated controller or broker nodes, recommended for large production clusters)."},
+  {id:197,topic:"Patterns",q:"What is the 'competing consumers' pattern in Kafka?",opts:["Consumers competing to be group leader","Multiple consumers in the same group each reading from different partitions, competing to process messages for horizontal scaling","Consumers competing for same offset","Cross-cluster consumer competition"],ans:1,sol:"Competing consumers is Kafka's built-in pattern: multiple consumers in a group each process messages from different partitions in parallel, distributing load automatically."},
+  {id:198,topic:"Performance",q:"What is `socket.send.buffer.bytes` and `socket.receive.buffer.bytes`?",opts:["Message size limits","TCP socket buffer sizes for network I/O, impacting throughput especially over WAN","Kafka log buffer sizes","Consumer buffer sizes"],ans:1,sol:"These configure the OS-level TCP socket buffers. Increasing them (e.g., to 1MB+) can significantly improve throughput on high-latency or high-bandwidth networks."},
+  {id:199,topic:"Monitoring",q:"What is the `UnderReplicatedPartitions` metric?",opts:["Partitions with fewer consumers than expected","Number of partitions where one or more replicas are not in-sync — critical alert metric","Number of partitions with no leader","Partitions with messages older than retention"],ans:1,sol:"`UnderReplicatedPartitions` counts partitions where ISR size is less than the replication factor. Non-zero value is a critical alert — indicates broker lag, disk issues, or network problems."},
+  {id:200,topic:"Architecture",q:"What is the difference between Kafka and traditional message queues like RabbitMQ?",opts:["No difference","Kafka retains messages in a log after consumption (consumers track offsets); RabbitMQ deletes messages once consumed. Kafka is a log-based distributed system optimized for high throughput and replay.","Kafka is slower than RabbitMQ","RabbitMQ is open-source; Kafka is proprietary"],ans:1,sol:"Key differences: Kafka stores messages in immutable logs (consumers can replay); RabbitMQ deletes after consumption. Kafka is partition-based for high throughput; RabbitMQ uses queues with routing. Kafka decouples producers/consumers via topics; RabbitMQ uses exchanges and bindings."},
+];
+
+// ── State ──────────────────────────────────────────────────────────────────
+const state = { answers: {}, revealed: new Set(), correct: 0, answered: 0 };
+let activeFilter = "All";
+let searchTerm = "";
+
+// ── Topics ─────────────────────────────────────────────────────────────────
+const allTopics = ["All", ...new Set(questions.map(q => q.topic))];
+
+function buildTopicBar() {
+  const bar = document.getElementById("topic-bar");
+  allTopics.forEach(t => {
+    const btn = document.createElement("button");
+    btn.className = "topic-btn" + (t === "All" ? " active" : "");
+    btn.textContent = t + (t === "All" ? ` (${questions.length})` : ` (${questions.filter(q=>q.topic===t).length})`);
+    btn.onclick = () => {
+      activeFilter = t;
+      document.querySelectorAll(".topic-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      filterQuestions();
+    };
+    bar.appendChild(btn);
+  });
+}
+
+// ── Render Questions ──────────────────────────────────────────────────────
+function buildQuiz() {
+  const container = document.getElementById("quiz-container");
+  container.innerHTML = "";
+  questions.forEach(q => {
+    const card = document.createElement("div");
+    card.className = "q-card";
+    card.id = `q-${q.id}`;
+
+    const labels = ["A","B","C","D"];
+    const optsHTML = q.opts.map((opt, i) => `
+      <div class="option" id="opt-${q.id}-${i}" onclick="selectAnswer(${q.id},${i})">
+        <span class="opt-label">${labels[i]}</span>
+        <span>${opt}</span>
+        <span class="check"></span>
+      </div>`).join("");
+
+    card.innerHTML = `
+      <div class="q-header">
+        <span class="q-num">Q${q.id}</span>
+        <span class="q-topic-tag">${q.topic}</span>
+        <span class="q-text">${q.q}</span>
+      </div>
+      <div class="options" id="opts-${q.id}">${optsHTML}</div>
+      <div class="solution" id="sol-${q.id}"><strong>✓ EXPLANATION</strong>${q.sol}</div>
+      <div class="q-actions">
+        <button class="btn btn-ghost" onclick="toggleSolution(${q.id})">Show Answer</button>
+      </div>`;
+    container.appendChild(card);
+  });
+}
+
+function selectAnswer(qId, optIdx) {
+  const q = questions.find(x => x.id === qId);
+  if (state.answers[qId] !== undefined) return;
+
+  const wasAnswered = Object.keys(state.answers).length;
+  state.answers[qId] = optIdx;
+  const isCorrect = optIdx === q.ans;
+  if (isCorrect) state.correct++;
+  state.answered++;
+
+  const labels = ["A","B","C","D"];
+  for (let i = 0; i < 4; i++) {
+    const opt = document.getElementById(`opt-${qId}-${i}`);
+    opt.classList.add("disabled");
+    if (i === q.ans) {
+      opt.classList.add("correct");
+      opt.querySelector(".check").textContent = "✓";
+    } else if (i === optIdx && !isCorrect) {
+      opt.classList.add("wrong");
+      opt.querySelector(".check").textContent = "✗";
+    }
+  }
+
+  // Auto-show solution
+  document.getElementById(`sol-${qId}`).classList.add("show");
+  document.getElementById(`q-${qId}`).classList.add("answered");
+  updateStats();
+}
+
+function toggleSolution(qId) {
+  const sol = document.getElementById(`sol-${qId}`);
+  const btn = sol.previousElementSibling.querySelector("button");
+  if (sol.classList.toggle("show")) {
+    btn.textContent = "Hide Answer";
+    state.revealed.add(qId);
+  } else {
+    btn.textContent = "Show Answer";
+    state.revealed.delete(qId);
+  }
+}
+
+function updateStats() {
+  const pct = state.answered > 0 ? Math.round((state.correct / state.answered) * 100) : 0;
+  document.getElementById("hdr-answered").textContent = state.answered;
+  document.getElementById("hdr-correct").textContent = state.correct;
+  document.getElementById("hdr-score").textContent = pct + "%";
+  document.getElementById("score-val").textContent = state.correct;
+  document.getElementById("score-frac").textContent = `/ ${state.answered} answered`;
+  document.getElementById("prog-text").textContent = `${state.answered} / 200 answered`;
+  document.getElementById("prog-fill").style.width = `${(state.answered / 200) * 100}%`;
+}
+
+function filterQuestions() {
+  searchTerm = document.getElementById("search-input").value.toLowerCase();
+  let visible = 0;
+  questions.forEach(q => {
+    const card = document.getElementById(`q-${q.id}`);
+    const topicMatch = activeFilter === "All" || q.topic === activeFilter;
+    const textMatch = !searchTerm || q.q.toLowerCase().includes(searchTerm) || q.sol.toLowerCase().includes(searchTerm);
+    if (topicMatch && textMatch) {
+      card.classList.remove("hidden");
+      visible++;
+    } else {
+      card.classList.add("hidden");
+    }
+  });
+  document.getElementById("visible-count").textContent = `Showing ${visible} questions`;
+}
+
+function resetAll() {
+  if (!confirm("Reset all answers and progress?")) return;
+  Object.assign(state, { answers: {}, revealed: new Set(), correct: 0, answered: 0 });
+  buildQuiz();
+  filterQuestions();
+  updateStats();
+}
+
+function showAllSolutions() {
+  questions.forEach(q => {
+    const sol = document.getElementById(`sol-${q.id}`);
+    if (sol) {
+      sol.classList.add("show");
+      // Show correct answer highlight
+      for (let i = 0; i < 4; i++) {
+        const opt = document.getElementById(`opt-${q.id}-${i}`);
+        if (!opt) continue;
+        opt.classList.add("disabled");
+        if (i === q.ans) {
+          opt.classList.add("correct");
+          opt.querySelector(".check").textContent = "✓";
+        }
+      }
+    }
+  });
+}
+
+// ── Init ───────────────────────────────────────────────────────────────────
+buildTopicBar();
+buildQuiz();
+filterQuestions();
+updateStats();
+</script>
+</body>
+</html>
