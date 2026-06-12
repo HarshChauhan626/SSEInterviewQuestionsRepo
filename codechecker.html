@@ -495,6 +495,10 @@
           <strong id="stat-rate">—</strong>
           <span>Pass Rate</span>
         </div>
+        <div class="stat-pill" style="margin-left: 6px;">
+          <strong id="stat-timer" style="color: var(--accent); font-family: 'JetBrains Mono', monospace;">--:--</strong>
+          <span>Time Left</span>
+        </div>
         <div class="streak-badge" id="streak-badge" title="Current streak">
           🔥 <span id="stat-streak">0</span>
         </div>
@@ -549,7 +553,10 @@
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
               Clear
             </button>
-            <button class="btn btn-reveal" id="btn-reveal" title="Show reference solution">
+            <button class="btn btn-ghost" id="btn-hint" title="Show a hint">
+              💡 Hint
+            </button>
+            <button class="btn btn-reveal" id="btn-reveal" title="Show full reference solution">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
               Reveal
             </button>
@@ -587,9 +594,15 @@
   let current      = null;
   let editor       = null;
   let revealed     = false;
+  let hintState    = 0;
 
-  const stats = { attempted: 0, passed: 0, streak: 0 };
   const filters = { diff: 'all', src: 'all' };
+
+  let progress = JSON.parse(localStorage.getItem('devnotes_progress') || '{"mastered":{}, "needsReview":{}, "attempted":0, "passed":0, "streak":0}');
+
+  function saveProgress() {
+    localStorage.setItem('devnotes_progress', JSON.stringify(progress));
+  }
 
   // Add a CSS rule for the select element to match filter-btn style
   const style = document.createElement('style');
@@ -636,14 +649,20 @@
       const compMatch = part.match(/\*\*Complexity:\*\*\s*[\r\n]+([\s\S]+?)(?=\n\n|\*\*|$)/);
       const javaMatch = part.match(/\*\*Java Solution:\*\*\s*[\r\n]+```java\s*[\r\n]([\s\S]*?)```/);
       if (!javaMatch) continue;
+
+      const solution = javaMatch[1];
+      const skeleton = extractSkeleton(solution);
+
       problems.push({
         num,
         title,
+        id: `${sourceName}-${num}`.replace(/\s+/g, ''),
         diff: normDiff(diffMatch ? diffMatch[1].trim() : ''),
         statement: stmtMatch ? stmtMatch[1].trim() : '',
         testCases: testMatch ? testMatch[1].trim() : '',
         complexity: compMatch ? compMatch[1].replace(/^-\s*/gm,'').trim() : '',
-        solution: javaMatch[1],
+        solution: solution,
+        skeleton: skeleton,
         source: sourceName
       });
     }
@@ -671,12 +690,18 @@
       const testMatch = part.match(/\*\*Test Cases:\*\*\s*[\r\n]+```[^\n]*[\r\n]([\s\S]*?)```/);
       const javaMatch = part.match(/\*\*Java Solution:\*\*\s*[\r\n]+```java\s*[\r\n]([\s\S]*?)```/);
       if (!javaMatch) continue;
+
+      const solution = javaMatch[1];
+      const skeleton = extractSkeleton(solution);
+
       problems.push({
         num, title, diff,
+        id: `${sourceName}-${num}`.replace(/\s+/g, ''),
         statement: stmtMatch ? stmtMatch[1].trim() : '',
         testCases: testMatch ? testMatch[1].trim() : '',
         complexity: '',
-        solution: javaMatch[1],
+        solution: solution,
+        skeleton: skeleton,
         source: sourceName
       });
     }
@@ -713,17 +738,31 @@
       const javaMatch = part.match(/### Java Code[^\r\n]*[\r\n]+```java\s*[\r\n]([\s\S]*?)```/);
       if (!javaMatch) continue;
 
+      const solution = javaMatch[1];
+      const skeleton = extractSkeleton(solution);
+
       problems.push({
         num, title,
+        id: `${sourceName}-${num}`.replace(/\s+/g, ''),
         diff: 'medium',  // topic files don't always label difficulty
         statement: stmtMatch ? stmtMatch[1].trim() : '',
         testCases,
         complexity: compMatch ? compMatch[0].trim() : '',
-        solution: javaMatch[1],
+        solution: solution,
+        skeleton: skeleton,
         source: sourceName
       });
     }
     return problems;
+  }
+
+  function extractSkeleton(code) {
+    // Looks for: class X { ... public/private Y methodName(...) {
+    const classMatch = code.match(/(class\s+\w+(?:<.*?>)?\s*(?:implements\s+\w+)?\s*\{[\s\S]*?(?:public|private|protected)?\s*(?:static\s+)?(?:<.*?>\s+)?[\w<>,\[\]\s]+\s+\w+\s*\([^)]*\)\s*(?:throws\s+[\w,\s]+)?\s*\{)/);
+    if (classMatch) {
+      return classMatch[1] + '\n\n    }\n}';
+    }
+    return '// Write your Java code here\n';
   }
 
   function normDiff(raw) {
@@ -840,31 +879,38 @@
     const normUser     = normalize(userCode);
     const normExpected = normalize(current.solution);
 
-    stats.attempted++;
+    progress.attempted++;
 
     if (normUser === normExpected) {
-      stats.passed++;
-      stats.streak++;
+      progress.passed++;
+      progress.streak++;
+      progress.mastered[current.id] = Date.now();
+      delete progress.needsReview[current.id];
+      saveProgress();
+      clearInterval(timerInterval); // Stop timer on success
       showSuccess();
     } else {
-      stats.streak = 0;
+      progress.streak = 0;
+      progress.needsReview[current.id] = Date.now();
+      delete progress.mastered[current.id];
+      saveProgress();
       showFail(normUser, normExpected);
     }
     updateStats();
   }
 
   function showSuccess() {
-    const panel = document.getElementById('result-panel');
-    panel.classList.remove('hidden');
-    panel.innerHTML = `
+    document.getElementById('result-panel').classList.remove('hidden');
+    document.getElementById('result-panel').innerHTML = `
       <div class="result-success">
-        <div class="result-success-icon">✅</div>
+        <div class="result-success-icon">🎉</div>
         <div class="result-success-text">
           <strong>Perfect Match!</strong>
-          <span>Your code matches the reference solution exactly (after normalization).</span>
+          <span>Your code matches the reference solution perfectly. Problem mastered.</span>
         </div>
-      </div>`;
-  }
+      </div>
+    `;
+  };
 
   function showFail(userNorm, expectedNorm) {
     const rows   = buildDiff(userNorm, expectedNorm);
@@ -872,26 +918,20 @@
 
     let tableRows = '';
     for (const r of rows) {
-      if (r.match) {
-        // Only show matching lines if they're near a diff (context ±1) — keeps the table short
-        continue;
-      }
+      if (r.match) continue;
       if (r.user !== null && r.expected !== null) {
-        // Line exists in both but differs
         tableRows += `<tr class="diff-bad">
           <td class="diff-line-num">${r.lineNum}</td>
           <td class="diff-your">${esc(r.user)}</td>
           <td class="diff-exp">${esc(r.expected)}</td>
         </tr>`;
       } else if (r.user !== null) {
-        // Extra line in user code
         tableRows += `<tr class="diff-only-bad">
           <td class="diff-line-num">${r.lineNum}</td>
           <td class="diff-your">${esc(r.user)}</td>
           <td class="diff-exp" style="color:var(--text-3);font-style:italic">(not expected)</td>
         </tr>`;
       } else {
-        // Missing line
         tableRows += `<tr class="diff-only-exp">
           <td class="diff-line-num">${r.lineNum}</td>
           <td class="diff-your" style="color:var(--text-3);font-style:italic">(missing)</td>
@@ -938,14 +978,64 @@
   ═══════════════════════════════════════════════════ */
 
   function updateStats() {
-    document.getElementById('stat-passed').textContent    = stats.passed;
-    document.getElementById('stat-attempted').textContent = stats.attempted;
-    document.getElementById('stat-streak').textContent    = stats.streak;
+    document.getElementById('stat-passed').textContent    = progress.passed;
+    document.getElementById('stat-attempted').textContent = progress.attempted;
+    document.getElementById('stat-streak').textContent    = progress.streak;
 
-    const rate = stats.attempted > 0
-      ? Math.round((stats.passed / stats.attempted) * 100) + '%'
-      : '—';
-    document.getElementById('stat-rate').textContent = rate;
+    const rate = progress.attempted === 0 ? 0 : Math.round((progress.passed / progress.attempted) * 100);
+    document.getElementById('stat-rate').textContent      = progress.attempted === 0 ? '—' : rate + '%';
+
+    const b = document.getElementById('streak-badge');
+    if (progress.streak >= 3) {
+      b.style.background = 'rgba(249,115,22,0.15)';
+      b.style.color = 'var(--orange)';
+      b.style.borderColor = 'rgba(249,115,22,0.3)';
+    } else {
+      b.style.background = 'rgba(251,191,36,0.1)';
+      b.style.color = 'var(--yellow)';
+      b.style.borderColor = 'rgba(251,191,36,0.25)';
+    }
+  }
+
+  /* ═══════════════════════════════════════════════════
+     TIMER
+  ═══════════════════════════════════════════════════ */
+
+  let timerInterval = null;
+  let timeRemaining = 0;
+
+  function startTimer(diff) {
+    clearInterval(timerInterval);
+    const el = document.getElementById('stat-timer');
+    el.style.color = 'var(--accent)';
+    
+    let mins = 25;
+    if (diff === 'easy') mins = 15;
+    if (diff === 'hard') mins = 40;
+    
+    timeRemaining = mins * 60;
+    updateTimerUI();
+    
+    timerInterval = setInterval(() => {
+      timeRemaining--;
+      updateTimerUI();
+      if (timeRemaining <= 0) {
+        clearInterval(timerInterval);
+        el.style.color = 'var(--red)';
+        el.textContent = "00:00";
+        showResultMsg("⏳ Time's Up! You can keep trying, or reveal the solution.");
+      }
+    }, 1000);
+  }
+
+  function updateTimerUI() {
+    const el = document.getElementById('stat-timer');
+    if (timeRemaining <= 0) return;
+    const m = Math.floor(timeRemaining / 60).toString().padStart(2, '0');
+    const s = (timeRemaining % 60).toString().padStart(2, '0');
+    el.textContent = `${m}:${s}`;
+    if (timeRemaining <= 60) el.style.color = 'var(--red)';
+    else if (timeRemaining <= 300) el.style.color = 'var(--yellow)';
   }
 
   /* ═══════════════════════════════════════════════════
@@ -953,12 +1043,13 @@
   ═══════════════════════════════════════════════════ */
 
   function applyFilters() {
+    const diff = filters.diff;
+    const src  = document.getElementById('filter-src').value;
+
     filtered = allProblems.filter(p => {
-      const diffOk = filters.diff === 'all' || p.diff === filters.diff;
-      const srcOk  = filters.src  === 'all'
-        || (filters.src === 'dsa'     && p.source === 'DSA Easy-Medium')
-        || (filters.src === 'strings' && p.source === 'Strings');
-      return diffOk && srcOk;
+      const matchDiff = (diff === 'all' || p.diff === diff);
+      const matchSrc  = (src === 'all' || p.source.toLowerCase() === src);
+      return matchDiff && matchSrc;
     });
   }
 
@@ -966,7 +1057,7 @@
      PICK RANDOM
   ═══════════════════════════════════════════════════ */
 
-  function pickRandom() {
+  function pickRandomProblem() {
     applyFilters();
     if (!filtered.length) {
       document.getElementById('prob-title').textContent = 'No problems match filter';
@@ -974,17 +1065,44 @@
       return;
     }
 
-    // Try not to repeat the last question
-    let pool = filtered.filter(p => p !== current);
-    if (!pool.length) pool = filtered;
+    // Weighted random selection
+    // unseen: weight 10
+    // needsReview: weight 30
+    // mastered: weight 1
+    
+    let pool = filtered;
+    if (pool.length > 1 && current) {
+      pool = pool.filter(p => p !== current);
+    }
 
-    current  = pool[Math.floor(Math.random() * pool.length)];
+    let totalWeight = 0;
+    const weights = pool.map(p => {
+      let w = 10; // unseen
+      if (progress.needsReview[p.id]) w = 30;
+      else if (progress.mastered[p.id]) w = 1;
+      totalWeight += w;
+      return w;
+    });
+
+    let random = Math.random() * totalWeight;
+    for (let i = 0; i < pool.length; i++) {
+      random -= weights[i];
+      if (random <= 0) {
+        current = pool[i];
+        break;
+      }
+    }
+
     revealed = false;
+    hintState = 0;
 
     displayProblem(current);
-    editor.setValue('');
+    editor.setValue(current.skeleton || '// Write your Java code here\n');
     editor.focus();
     hideResult();
+    document.getElementById('btn-reveal').disabled = false;
+    document.getElementById('btn-hint').disabled = false;
+    startTimer(current.diff);
   }
 
   /* ═══════════════════════════════════════════════════
@@ -1126,10 +1244,54 @@
     // Ctrl+Enter → check
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, checkSolution);
 
+    // 4. Filters
+    document.querySelectorAll('[data-filter-diff]').forEach(btn => {
+      btn.addEventListener('click', e => {
+        document.querySelectorAll('[data-filter-diff]').forEach(b => b.classList.remove('active'));
+        e.target.classList.add('active');
+        filters.diff = e.target.dataset.filterDiff;
+        pickRandomProblem();
+      });
+    });
+    document.getElementById('filter-src').addEventListener('change', e => {
+      pickRandomProblem();
+    });
+
     // 5. Wire up buttons
     document.getElementById('btn-check').addEventListener('click', checkSolution);
-    document.getElementById('btn-next').addEventListener('click', pickRandom);
-    document.getElementById('btn-reveal').addEventListener('click', revealSolution);
+    document.getElementById('btn-next').addEventListener('click', () => {
+      pickRandomProblem();
+    });
+
+    document.getElementById('btn-hint').addEventListener('click', () => {
+      if (!current || revealed) return;
+      hintState++;
+      const panel = document.getElementById('result-panel');
+      panel.classList.remove('hidden');
+      
+      if (hintState === 1) {
+        let txt = current.statement ? markdownStatement(current.statement) : 'No intuition text available.';
+        panel.innerHTML = `
+          <div class="result-fail" style="border-left: 4px solid var(--yellow);">
+            <div class="result-fail-header" style="margin-bottom:8px;">
+              <strong style="color:var(--yellow);">💡 Hint 1: Problem Statement / Intuition</strong>
+            </div>
+            <div style="font-size:0.85rem;color:var(--text-2);line-height:1.6;">${txt}</div>
+          </div>`;
+      } else if (hintState === 2) {
+        let txt = current.complexity ? esc(current.complexity) : 'Aim for the most optimal time and space complexity possible.';
+        panel.innerHTML = `
+          <div class="result-fail" style="border-left: 4px solid var(--yellow);">
+            <div class="result-fail-header" style="margin-bottom:8px;">
+              <strong style="color:var(--yellow);">💡 Hint 2: Target Complexity</strong>
+            </div>
+            <div style="font-size:0.85rem;color:var(--text-2);font-family:'JetBrains Mono',monospace;">${txt}</div>
+          </div>`;
+        document.getElementById('btn-hint').disabled = true; // No more hints, next is reveal
+      }
+    });
+
+    document.getElementById('btn-reveal').addEventListener('click', () => { revealSolution(); });
     document.getElementById('btn-clear').addEventListener('click', () => {
       editor.setValue('');
       hideResult();
