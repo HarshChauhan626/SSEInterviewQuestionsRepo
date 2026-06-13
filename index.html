@@ -576,12 +576,12 @@
     const fallbackFiles = [
       "a2arag.md",
       "agenticai.md",
-      "agenticaimcq.html",
-      "awssolutionarchitectmcq.html",
+      "quiz.html?id=agenticai",
+      "quiz.html?id=awssolutionarchitect",
       "backtracking.md",
       "binarysearch.md",
       "bitmanipulation.md",
-      "databases.html",
+      "quiz.html?id=databases",
       "databases.md",
       "disjoinset.md",
       "distributedsystems.md",
@@ -591,31 +591,32 @@
       "dsaeasytomedium_pseudocode.md",
       "golang.md",
       "golangcodequestions.md",
+      "quiz.html?id=go",
       "graph.md",
       "greedy.md",
       "heap.md",
       "intervals.md",
       "kafka.md",
-      "kafkaquiz.html",
+      "quiz.html?id=kafka",
       "kubernetes.md",
       "linkedlist.md",
       "monotonicstack.md",
       "nodejs.md",
-      "nodejsmcq.html",
+      "quiz.html?id=nodejs",
       "observability.md",
-      "postgresqlmcq.html",
+      "quiz.html?id=postgresql",
       "prefixsum.md",
       "puzzles.md",
       "queue.md",
       "react.md",
-      "reactnextjsquiz.html",
+      "quiz.html?id=reactnextjs",
       "recursion.md",
       "slidingwindow.md",
       "strings.md",
       "systemdesigneventdrivenetc.md",
       "systemdesigninterviewdesigncheatsheet.md",
       "systemdesignterminology.md",
-      "systemdesignmcq.html",
+      "quiz.html?id=systemdesign",
       "trees.md",
       "trie.md",
       "twopointer.md",
@@ -625,12 +626,12 @@
     const titleMap = {
       "a2arag.md": "A2A RAG",
       "agenticai.md": "Agentic AI",
-      "agenticaimcq.html": "Agentic AI MCQ",
-      "awssolutionarchitectmcq.html": "AWS Solution Architect MCQ",
+      "quiz.html?id=agenticai": "Agentic AI MCQ",
+      "quiz.html?id=awssolutionarchitect": "AWS Solution Architect MCQ",
       "backtracking.md": "Backtracking",
       "binarysearch.md": "Binary Search",
       "bitmanipulation.md": "Bit Manipulation",
-      "databases.html": "Databases MCQ",
+      "quiz.html?id=databases": "Databases MCQ",
       "databases.md": "Databases",
       "disjoinset.md": "Disjoint Set",
       "distributedsystems.md": "Distributed Systems",
@@ -640,31 +641,32 @@
       "dsaeasytomedium_pseudocode.md": "DSA Easy To Medium — Pseudo Code",
       "golang.md": "Golang",
       "golangcodequestions.md": "Golang Code Questions",
+      "quiz.html?id=go": "Golang Mastery Quiz",
       "graph.md": "Graph",
       "greedy.md": "Greedy",
       "heap.md": "Heap",
       "intervals.md": "Intervals",
       "kafka.md": "Kafka",
-      "kafkaquiz.html": "Kafka MCQ",
+      "quiz.html?id=kafka": "Kafka MCQ",
       "kubernetes.md": "Kubernetes",
       "linkedlist.md": "Linked List",
       "monotonicstack.md": "Monotonic Stack",
       "nodejs.md": "Node.js",
-      "nodejsmcq.html": "Node.js MCQ",
+      "quiz.html?id=nodejs": "Node.js MCQ",
       "observability.md": "Observability",
-      "postgresqlmcq.html": "PostgreSQL MCQ",
+      "quiz.html?id=postgresql": "PostgreSQL MCQ",
       "prefixsum.md": "Prefix Sum",
       "puzzles.md": "Puzzles",
       "queue.md": "Queue",
       "react.md": "React",
-      "reactnextjsquiz.html": "React & Next.js MCQ",
+      "quiz.html?id=reactnextjs": "React & Next.js MCQ",
       "recursion.md": "Recursion",
       "slidingwindow.md": "Sliding Window",
       "strings.md": "Strings",
       "systemdesigneventdrivenetc.md": "System Design: Event Driven Etc",
       "systemdesigninterviewdesigncheatsheet.md": "System Design Interview Cheatsheet",
       "systemdesignterminology.md": "System Design Terminology",
-      "systemdesignmcq.html": "System Design MCQ",
+      "quiz.html?id=systemdesign": "System Design MCQ",
       "trees.md": "Trees",
       "trie.md": "Trie",
       "twopointer.md": "Two Pointer",
@@ -673,14 +675,15 @@
 
     /* Quiz icon map */
     const quizIconMap = {
-      "agenticaimcq.html":          "🤖",
-      "awssolutionarchitectmcq.html":"☁️",
-      "databases.html":              "🗄️",
-      "kafkaquiz.html":              "⚡",
-      "nodejsmcq.html":              "🟢",
-      "postgresqlmcq.html":          "🐘",
-      "reactnextjsquiz.html":        "⚛️",
-      "systemdesignmcq.html":        "🏗️",
+      "quiz.html?id=agenticai":          "🤖",
+      "quiz.html?id=awssolutionarchitect":"☁️",
+      "quiz.html?id=databases":              "🗄️",
+      "quiz.html?id=kafka":              "⚡",
+      "quiz.html?id=nodejs":              "🟢",
+      "quiz.html?id=postgresql":          "🐘",
+      "quiz.html?id=reactnextjs":        "⚛️",
+      "quiz.html?id=systemdesign":        "🏗️",
+      "quiz.html?id=go":                 "🐹",
     };
 
     /* Note icon map — category-based */
@@ -763,7 +766,7 @@
         file.toLowerCase().includes(term) || titleFromFile(file).toLowerCase().includes(term)
       );
 
-      const quizFiles = allFiles.filter(f => f.endsWith(".html"));
+      const quizFiles = allFiles.filter(f => f.includes("quiz.html"));
       const noteFiles = allFiles.filter(f => f.endsWith(".md"));
 
       /* Render quizzes */
@@ -808,7 +811,7 @@
       notesShown.textContent = `${noteFiles.length} shown`;
 
       /* Update counters */
-      const totalQuizzes = libraryFiles.filter(f => f.endsWith(".html")).length;
+      const totalQuizzes = libraryFiles.filter(f => f.includes("quiz.html")).length;
       const totalNotes   = libraryFiles.filter(f => f.endsWith(".md")).length;
       quizCount.textContent = totalQuizzes;
       noteCount.textContent = totalNotes;
@@ -826,13 +829,15 @@
         if (Array.isArray(files) && files.length) {
           const mdFiles = files.filter(file => file.endsWith(".md"));
           const quizFiles = [
-            "agenticaimcq.html",
-            "awssolutionarchitectmcq.html",
-            "databases.html",
-            "kafkaquiz.html",
-            "nodejsmcq.html",
-            "postgresqlmcq.html",
-            "systemdesignmcq.html"
+            "quiz.html?id=agenticai",
+            "quiz.html?id=awssolutionarchitect",
+            "quiz.html?id=databases",
+            "quiz.html?id=kafka",
+            "quiz.html?id=nodejs",
+            "quiz.html?id=postgresql",
+            "quiz.html?id=reactnextjs",
+            "quiz.html?id=systemdesign",
+            "quiz.html?id=go"
           ];
           libraryFiles = [...mdFiles, ...quizFiles].sort((a, b) => a.localeCompare(b));
         }
