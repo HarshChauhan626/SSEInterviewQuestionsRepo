@@ -1,123 +1,10 @@
-/**
- * Unified Quiz Rebuilder
- * Extracts question data from existing files and wraps with new unified design
- */
-const fs = require('fs');
-const path = require('path');
-
-// ──────────────────────────────────────────────────────────────
-// Quiz configurations
-// ──────────────────────────────────────────────────────────────
-const QUIZ_CONFIGS = [
-  {
-    file: 'systemdesignmcq.html',
-    title: 'System Design Quiz — 300 Questions',
-    desc: '300 curated system design interview MCQs covering scalability, databases, distributed systems, and more.',
-    heading: 'System<br><span class="grad">Design</span> Quiz',
-    subtext: 'curated MCQs across topics. Master scalability, databases, distributed systems and more.',
-    pills: ['Scalability','Load Balancing','Caching','Databases','CAP Theorem','Consistency','Replication','Sharding','Microservices','Message Queues','CDN','API Design','Rate Limiting','Consensus Algorithms','Kubernetes'],
-    dataVar: 'ALL_QUESTIONS',
-    fieldMap: { cat:'cat', q:'q', opts:'opts', ans:'ans', exp:'exp' },
-    startFn: 'ALL_QUESTIONS',
-  },
-  {
-    file: 'awssolutionarchitectmcq.html',
-    title: 'AWS Solutions Architect Quiz — 200 Questions',
-    desc: '200 AWS Solutions Architect interview MCQs covering compute, storage, networking, security, and more.',
-    heading: 'AWS Solutions<br><span class="grad">Architect</span> Quiz',
-    subtext: 'curated MCQs across AWS domains. Prepare for Solutions Architect certification.',
-    pills: ['EC2','S3','VPC','IAM','RDS','DynamoDB','Lambda','CloudFormation','EKS','SQS','SNS','CloudFront','Route 53','ELB'],
-    dataVar: 'ALL_QUESTIONS',
-    fieldMap: { cat:'topic', q:'q', opts:'opts', ans:'ans', exp:'exp' },
-    startFn: 'ALL_QUESTIONS',
-
-  },
-  {
-    file: 'nodejsmcq.html',
-    title: 'Node.js Mastery Quiz — 200 Questions',
-    desc: '200 Node.js interview MCQs covering core modules, event loop, streams, clustering, performance and more.',
-    heading: 'Node.js<br><span class="grad">Mastery</span> Quiz',
-    subtext: 'curated MCQs covering core modules, event loop, streams, clustering, performance and advanced patterns.',
-    pills: ['Core Modules','Event Loop','Streams','Cluster & Workers','Express.js','Async/Await','Buffers','Child Processes','Performance','Security','Testing'],
-    dataVar: 'questions',
-    fieldMap: { cat:'cat', q:'q', opts:'opts', ans:'ans', exp:'exp' },
-    startFn: 'questions',
-  },
-  {
-    file: 'reactnextjsquiz.html',
-    title: 'Frontend Deep Dive Quiz — 200 Questions',
-    desc: '200 React, Next.js, DOM, and web interview MCQs. Master modern frontend development.',
-    heading: 'Frontend<br><span class="grad">Deep Dive</span> Quiz',
-    subtext: 'curated MCQs covering React, Next.js, DOM, Redux, Web APIs, Performance, Security, TypeScript, Testing.',
-    pills: ['React','Next.js','Browser DOM','Redux','Web APIs','Performance','Security','TypeScript','Webpack','Testing'],
-    dataVar: 'QUESTIONS',
-    fieldMap: { cat:'topic', q:'q', opts:'opts', ans:'ans', exp:'exp' },
-    startFn: 'QUESTIONS',
-  },
-  {
-    file: 'kafkaquiz.html',
-    title: 'Apache Kafka Interview Quiz — 200 Questions',
-    desc: '200 Apache Kafka interview MCQs covering fundamentals, architecture, producers, consumers, and streams.',
-    heading: 'Apache<br><span class="grad">Kafka</span> Quiz',
-    subtext: 'curated MCQs covering Kafka fundamentals, architecture, producers, consumers, streams, and security.',
-    pills: ['Fundamentals','Architecture','Producers','Consumers','Replication','Kafka Streams','Kafka Connect','Schema Registry','Exactly-Once','Performance','Security'],
-    dataVar: 'questions',
-    fieldMap: { cat:'topic', q:'q', opts:'opts', ans:'ans', exp:'sol' },
-    startFn: 'questions',
-  },
-  {
-    file: 'postgresqlmcq.html',
-    title: 'PostgreSQL Interview Quiz — 205 Questions',
-    desc: '205 PostgreSQL interview MCQs covering ACID, indexes, MVCC, partitioning, replication, and more.',
-    heading: 'PostgreSQL<br><span class="grad">Interview</span> Quiz',
-    subtext: 'curated MCQs covering ACID, indexes, MVCC, partitioning, replication, window functions, JSONB, and more.',
-    pills: ['Fundamentals','Indexes','MVCC & Transactions','Query Planning','Vacuum','Window Functions','JSONB','Partitioning','Triggers','Schemas & Roles','Replication'],
-    dataVar: 'QUESTIONS',
-    fieldMap: { cat:'topic', q:'q', opts:'o', ans:'a', exp:'e' },
-    startFn: 'QUESTIONS',
-  },
-  {
-    file: 'agenticaimcq.html',
-    title: 'Agentic AI MCQ Challenge — 200 Questions',
-    desc: '200 Agentic AI MCQs covering RAG, LLMs, LangChain, LangGraph, Vector DBs, Embeddings and more.',
-    heading: 'Agentic AI<br><span class="grad">MCQ</span> Challenge',
-    subtext: 'curated MCQs across RAG, LLMs, LangChain, LangGraph, Vector DBs, Embeddings, Architectures & System Design.',
-    pills: ['Agentic AI','RAG Systems','LLM Internals','LangChain','LangGraph','Vector Databases','Embeddings','System Design','Architecture Patterns'],
-    dataVar: 'questions',
-    fieldMap: { cat:'cat', q:'q', opts:'opts', ans:'ans', exp:'sol' },
-    startFn: 'questions',
-  },
-  {
-    file: 'databases.html',
-    title: 'Database Mastery Quiz — 200 Questions',
-    desc: '200 database MCQs covering PostgreSQL, DynamoDB, and MongoDB for interview preparation.',
-    heading: 'Database<br><span class="grad">Mastery</span> Quiz',
-    subtext: 'curated MCQs covering PostgreSQL, DynamoDB, and MongoDB with detailed explanations.',
-    pills: ['PostgreSQL','DynamoDB','MongoDB','ACID','Indexes','Replication','Partitioning','Transactions','Querying','Security'],
-    dataVar: 'ALL_QUESTIONS',
-    fieldMap: { cat:'topic', q:'q', opts:'o', ans:'a', exp:'sol' },
-    startFn: 'ALL_QUESTIONS',
-  },
-];
-
-// ──────────────────────────────────────────────────────────────
-// CSS + HTML Template generator
-// ──────────────────────────────────────────────────────────────
-function buildHTML(cfg, questionData) {
-  const pillsHTML = cfg.pills.map(p => `<span class="topic-pill">${p}</span>`).join('\n    ');
-  const catField = cfg.fieldMap.cat;
-  const qField = cfg.fieldMap.q;
-  const optsField = cfg.fieldMap.opts;
-  const ansField = cfg.fieldMap.ans;
-  const expField = cfg.fieldMap.exp;
-
-  return `<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>${cfg.title}</title>
-<meta name="description" content="${cfg.desc}">
+<title>Quiz</title>
+<meta name="description" content="Quiz Description">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   /* ═══════════════════════════════════════════
@@ -619,7 +506,7 @@ function buildHTML(cfg, questionData) {
     <a href="index.html" class="nav-back">
       <span class="nav-dot"></span>← Dev Notes
     </a>
-    <span class="nav-title" id="nav-title">${cfg.title.replace(/ — .+$/, '')}</span>
+    <span class="nav-title" id="nav-title">Quiz</span>
   </div>
   <div class="nav-right">
     <div class="nav-score-pill">
@@ -636,14 +523,14 @@ function buildHTML(cfg, questionData) {
 <div id="app-root">
   <div id="splash">
     <span class="splash-eyebrow"><span class="eyebrow-dot"></span>Interview Prep Series</span>
-    <h1 class="splash-title">${cfg.heading}</h1>
+    <h1 class="splash-title" id="splash-heading">Loading...</h1>
     <p class="splash-sub" id="splash-sub"></p>
     <div class="splash-stats">
       <div class="splash-stat"><span class="snum" id="stat-q">—</span><span class="slbl">Questions</span></div>
       <div class="splash-stat"><span class="snum" id="stat-t">—</span><span class="slbl">Topics</span></div>
       <div class="splash-stat"><span class="snum">4</span><span class="slbl">Options each</span></div>
     </div>
-    <div class="topic-pills">${pillsHTML}</div>
+    <div class="topic-pills" id="topic-pills-container"></div>
     <div class="mode-selector">
       <div class="mode-card active" id="mc-obo" onclick="selectViewMode('obo',this)">
         <span class="mode-icon">📖</span>
@@ -660,7 +547,7 @@ function buildHTML(cfg, questionData) {
       <label class="shuffle-toggle" id="shuffle-toggle" onclick="toggleShuffle(event)">
         <input type="checkbox" id="shuffle-cb"> 🔀 Shuffle Questions
       </label>
-      <button class="btn-start-quiz" onclick="startQuiz()">Start Quiz →</button>
+      <button class="btn-start-quiz" id="btn-start-quiz" style="display:none;" onclick="startQuiz()">Start Quiz →</button>
     </div>
   </div>
 
@@ -674,6 +561,7 @@ function buildHTML(cfg, questionData) {
       <div class="av-controls">
         <input type="text" class="av-search" id="av-search" placeholder="🔍 Search questions..." oninput="filterAV()">
         <span class="av-count" id="av-count"></span>
+        <button class="btn btn-ghost" onclick="shuffleAV()">🔀 Shuffle</button>
         <button class="btn btn-ghost" onclick="showResultModal()">📊 Score</button>
       </div>
       <div class="av-topic-bar" id="av-topic-bar"></div>
@@ -729,23 +617,320 @@ function buildHTML(cfg, questionData) {
 </div>
 
 <script>
-// ── DATA NORMALIZATION ──
-// Handles all question field variants across all quiz files
-${questionData}
 
-// Normalize to unified format: {cat, q, opts, ans, exp}
-const NORMALIZED = (function(){
-  const raw = typeof ${cfg.dataVar} !== 'undefined' ? ${cfg.dataVar} : [];
-  return raw.map(function(item){
+// Replace configuration map
+const QUIZ_CONFIGS = [
+  {
+    "id": "go",
+    "title": "Golang Mastery Quiz",
+    "desc": "Golang interview MCQs covering Goroutines, Channels, Generics, GC, and more.",
+    "heading": "Golang<br><span class=\"grad\">Mastery</span> Quiz",
+    "subtext": "curated MCQs covering Goroutines, Channels, Generics, Context, memory management and Go internals.",
+    "pills": [
+      "Goroutines",
+      "Channels",
+      "Sync Primitives",
+      "Context",
+      "Error Handling",
+      "Generics",
+      "Memory & GC"
+    ],
+    "fieldMap": {
+      "cat": "cat",
+      "q": "q",
+      "opts": "opts",
+      "ans": "ans",
+      "exp": "exp"
+    }
+  },
+  {
+    "id": "systemdesign",
+    "title": "System Design Quiz — 300 Questions",
+    "desc": "300 curated system design interview MCQs covering scalability, databases, distributed systems, and more.",
+    "heading": "System<br><span class=\"grad\">Design</span> Quiz",
+    "subtext": "curated MCQs across topics. Master scalability, databases, distributed systems and more.",
+    "pills": [
+      "Scalability",
+      "Load Balancing",
+      "Caching",
+      "Databases",
+      "CAP Theorem",
+      "Consistency",
+      "Replication",
+      "Sharding",
+      "Microservices",
+      "Message Queues",
+      "CDN",
+      "API Design",
+      "Rate Limiting",
+      "Consensus Algorithms",
+      "Kubernetes"
+    ],
+    "fieldMap": {
+      "cat": "cat",
+      "q": "q",
+      "opts": "opts",
+      "ans": "ans",
+      "exp": "exp"
+    }
+  },
+  {
+    "id": "awssolutionarchitect",
+    "title": "AWS Solutions Architect Quiz — 200 Questions",
+    "desc": "200 AWS Solutions Architect interview MCQs covering compute, storage, networking, security, and more.",
+    "heading": "AWS Solutions<br><span class=\"grad\">Architect</span> Quiz",
+    "subtext": "curated MCQs across AWS domains. Prepare for Solutions Architect certification.",
+    "pills": [
+      "EC2",
+      "S3",
+      "VPC",
+      "IAM",
+      "RDS",
+      "DynamoDB",
+      "Lambda",
+      "CloudFormation",
+      "EKS",
+      "SQS",
+      "SNS",
+      "CloudFront",
+      "Route 53",
+      "ELB"
+    ],
+    "fieldMap": {
+      "cat": "topic",
+      "q": "q",
+      "opts": "opts",
+      "ans": "ans",
+      "exp": "exp"
+    }
+  },
+  {
+    "id": "nodejs",
+    "title": "Node.js Mastery Quiz — 200 Questions",
+    "desc": "200 Node.js interview MCQs covering core modules, event loop, streams, clustering, performance and more.",
+    "heading": "Node.js<br><span class=\"grad\">Mastery</span> Quiz",
+    "subtext": "curated MCQs covering core modules, event loop, streams, clustering, performance and advanced patterns.",
+    "pills": [
+      "Core Modules",
+      "Event Loop",
+      "Streams",
+      "Cluster & Workers",
+      "Express.js",
+      "Async/Await",
+      "Buffers",
+      "Child Processes",
+      "Performance",
+      "Security",
+      "Testing"
+    ],
+    "fieldMap": {
+      "cat": "cat",
+      "q": "q",
+      "opts": "opts",
+      "ans": "ans",
+      "exp": "exp"
+    }
+  },
+  {
+    "id": "reactnextjs",
+    "title": "Frontend Deep Dive Quiz — 200 Questions",
+    "desc": "200 React, Next.js, DOM, and web interview MCQs. Master modern frontend development.",
+    "heading": "Frontend<br><span class=\"grad\">Deep Dive</span> Quiz",
+    "subtext": "curated MCQs covering React, Next.js, DOM, Redux, Web APIs, Performance, Security, TypeScript, Testing.",
+    "pills": [
+      "React",
+      "Next.js",
+      "Browser DOM",
+      "Redux",
+      "Web APIs",
+      "Performance",
+      "Security",
+      "TypeScript",
+      "Webpack",
+      "Testing"
+    ],
+    "fieldMap": {
+      "cat": "topic",
+      "q": "q",
+      "opts": "opts",
+      "ans": "ans",
+      "exp": "exp"
+    }
+  },
+  {
+    "id": "kafka",
+    "title": "Apache Kafka Interview Quiz — 200 Questions",
+    "desc": "200 Apache Kafka interview MCQs covering fundamentals, architecture, producers, consumers, and streams.",
+    "heading": "Apache<br><span class=\"grad\">Kafka</span> Quiz",
+    "subtext": "curated MCQs covering Kafka fundamentals, architecture, producers, consumers, streams, and security.",
+    "pills": [
+      "Fundamentals",
+      "Architecture",
+      "Producers",
+      "Consumers",
+      "Replication",
+      "Kafka Streams",
+      "Kafka Connect",
+      "Schema Registry",
+      "Exactly-Once",
+      "Performance",
+      "Security"
+    ],
+    "fieldMap": {
+      "cat": "topic",
+      "q": "q",
+      "opts": "opts",
+      "ans": "ans",
+      "exp": "sol"
+    }
+  },
+  {
+    "id": "postgresql",
+    "title": "PostgreSQL Interview Quiz — 205 Questions",
+    "desc": "205 PostgreSQL interview MCQs covering ACID, indexes, MVCC, partitioning, replication, and more.",
+    "heading": "PostgreSQL<br><span class=\"grad\">Interview</span> Quiz",
+    "subtext": "curated MCQs covering ACID, indexes, MVCC, partitioning, replication, window functions, JSONB, and more.",
+    "pills": [
+      "Fundamentals",
+      "Indexes",
+      "MVCC & Transactions",
+      "Query Planning",
+      "Vacuum",
+      "Window Functions",
+      "JSONB",
+      "Partitioning",
+      "Triggers",
+      "Schemas & Roles",
+      "Replication"
+    ],
+    "fieldMap": {
+      "cat": "topic",
+      "q": "q",
+      "opts": "o",
+      "ans": "a",
+      "exp": "e"
+    }
+  },
+  {
+    "id": "agenticai",
+    "title": "Agentic AI MCQ Challenge — 200 Questions",
+    "desc": "200 Agentic AI MCQs covering RAG, LLMs, LangChain, LangGraph, Vector DBs, Embeddings and more.",
+    "heading": "Agentic AI<br><span class=\"grad\">MCQ</span> Challenge",
+    "subtext": "curated MCQs across RAG, LLMs, LangChain, LangGraph, Vector DBs, Embeddings, Architectures & System Design.",
+    "pills": [
+      "Agentic AI",
+      "RAG Systems",
+      "LLM Internals",
+      "LangChain",
+      "LangGraph",
+      "Vector Databases",
+      "Embeddings",
+      "System Design",
+      "Architecture Patterns"
+    ],
+    "fieldMap": {
+      "cat": "cat",
+      "q": "q",
+      "opts": "opts",
+      "ans": "ans",
+      "exp": "sol"
+    }
+  },
+  {
+    "id": "databases",
+    "title": "Database Mastery Quiz — 200 Questions",
+    "desc": "200 database MCQs covering PostgreSQL, DynamoDB, and MongoDB for interview preparation.",
+    "heading": "Database<br><span class=\"grad\">Mastery</span> Quiz",
+    "subtext": "curated MCQs covering PostgreSQL, DynamoDB, and MongoDB with detailed explanations.",
+    "pills": [
+      "PostgreSQL",
+      "DynamoDB",
+      "MongoDB",
+      "ACID",
+      "Indexes",
+      "Replication",
+      "Partitioning",
+      "Transactions",
+      "Querying",
+      "Security"
+    ],
+    "fieldMap": {
+      "cat": "topic",
+      "q": "q",
+      "opts": "o",
+      "ans": "a",
+      "exp": "sol"
+    }
+  }
+];
+let cfg = null;
+
+// Parse URL ?id=
+const params = new URLSearchParams(window.location.search);
+const quizId = params.get('id');
+
+cfg = QUIZ_CONFIGS.find(c => c.id === quizId);
+if (!cfg) {
+  document.getElementById('splash').innerHTML = '<h1 style="margin-bottom:20px;margin-top:100px;">Quiz not found</h1><p>The requested quiz ID does not exist.</p><a href="index.html" class="nav-back" style="display:inline-block;margin-top:20px;"><span class="nav-dot"></span>← Back to Dev Notes</a>';
+} else {
+  // Update meta & title
+  document.title = cfg.title;
+  const metaDesc = document.querySelector('meta[name="description"]');
+  if(metaDesc) metaDesc.content = cfg.desc;
+  
+  // Update UI Elements
+  document.getElementById('splash-heading').innerHTML = cfg.heading;
+  document.getElementById('nav-title').textContent = cfg.title.replace(/ — .+$/, '');
+  
+  const pillsHTML = cfg.pills.map(p => '<span class="topic-pill">' + p + '</span>').join('\n    ');
+  document.getElementById('topic-pills-container').innerHTML = pillsHTML;
+  
+  // Load data dynamically
+  const script = document.createElement('script');
+  script.src = 'quiz-data/' + cfg.id + '.js';
+  script.onload = () => {
+    initData();
+  };
+  script.onerror = () => {
+    alert("Error loading quiz data!");
+  };
+  document.head.appendChild(script);
+}
+
+let NORMALIZED = [];
+
+function initData() {
+  if (typeof window.QUIZ_DATA === 'undefined') {
+    alert("Quiz data did not load correctly.");
+    return;
+  }
+  
+  const raw = window.QUIZ_DATA;
+  const catField = cfg.fieldMap.cat;
+  const qField = cfg.fieldMap.q;
+  const optsField = cfg.fieldMap.opts;
+  const ansField = cfg.fieldMap.ans;
+  const expField = cfg.fieldMap.exp;
+  
+  NORMALIZED = raw.map(function(item){
     return {
-      cat:  item['${catField}'] || item.cat || item.topic || item.db || 'General',
-      q:    item['${qField}']   || item.q  || '',
-      opts: item['${optsField}'] || item.opts || item.o || [],
-      ans:  typeof item['${ansField}'] !== 'undefined' ? item['${ansField}'] : (typeof item.ans !== 'undefined' ? item.ans : item.a),
-      exp:  item['${expField}'] || item.exp || item.sol || item.e || ''
+      cat:  item[catField] || item.cat || item.topic || item.db || 'General',
+      q:    item[qField]   || item.q  || '',
+      opts: item[optsField] || item.opts || item.o || [],
+      ans:  typeof item[ansField] !== 'undefined' ? item[ansField] : (typeof item.ans !== 'undefined' ? item.ans : item.a),
+      exp:  item[expField] || item.exp || item.sol || item.e || ''
     };
   });
-})();
+  
+  const cats = [...new Set(NORMALIZED.map(q=>q.cat))];
+  document.getElementById('stat-q').textContent = NORMALIZED.length;
+  document.getElementById('stat-t').textContent = cats.length;
+  document.getElementById('splash-sub').textContent = NORMALIZED.length + ' ' + cfg.subtext;
+  
+  // Now allow starting
+  document.getElementById('btn-start-quiz').style.display = 'inline-flex';
+}
+
 
 // ── STATE ──
 let viewMode = 'obo';   // 'obo' | 'av'
@@ -757,13 +942,7 @@ let avActiveTopic = 'all';
 let avAnswered = {}; // index -> chosen
 
 // ── INIT ──
-(function(){
-  const cats = [...new Set(NORMALIZED.map(q=>q.cat))];
-  document.getElementById('stat-q').textContent = NORMALIZED.length;
-  document.getElementById('stat-t').textContent = cats.length;
-  document.getElementById('splash-sub').textContent =
-    NORMALIZED.length + ' ${cfg.subtext}';
-})();
+
 
 // ── SPLASH CONTROLS ──
 function selectViewMode(mode, el){
@@ -948,7 +1127,7 @@ function buildAVTopicBar(){
   const cats = ['all', ...new Set(ACTIVE.map(function(q){ return q.cat; }))];
   const bar = document.getElementById('av-topic-bar');
   bar.innerHTML = cats.map(function(c){
-    return '<button class="av-chip' + (c==='all'?' active':'') + '" onclick="setAVTopic(\\\'' + c.replace(/'/g,"\\\\'") + '\\\',this)">' +
+    return '<button class="av-chip' + (c==='all'?' active':'') + '" onclick="setAVTopic(\'' + c.replace(/'/g,"\\'") + '\',this)">' +
       (c==='all' ? 'All Topics' : c) + '</button>';
   }).join('');
 }
@@ -958,6 +1137,15 @@ function setAVTopic(topic, el){
   document.querySelectorAll('.av-chip').forEach(function(c){ c.classList.remove('active'); });
   el.classList.add('active');
   filterAV();
+}
+
+function shuffleAV(){
+  if(Object.keys(avAnswered).length > 0) {
+    if(!confirm('Shuffling will clear your current answers. Continue?')) return;
+  }
+  ACTIVE.sort(()=>Math.random()-0.5);
+  avAnswered = {};
+  renderAV();
 }
 
 function renderAV(){
@@ -1071,7 +1259,7 @@ function showResultModal(){
   const pct = total ? Math.round((correct / total) * 100) : 0;
 
   // Grade
-  let grade = '📚 Needs Work', sub = 'Keep practicing! You\\'ll get there.';
+  let grade = '📚 Needs Work', sub = 'Keep practicing! You\'ll get there.';
   if(pct >= 90){ grade = '🏆 Expert Level'; sub = 'Outstanding! You really know this topic.'; }
   else if(pct >= 75){ grade = '🌟 Advanced'; sub = 'Great job! Minor gaps to fill.'; }
   else if(pct >= 60){ grade = '👍 Intermediate'; sub = 'Solid foundation. Keep going!'; }
@@ -1158,88 +1346,7 @@ function restartQuiz(){
   if(viewMode === 'obo'){ buildMinimap(); renderOBO(); }
   else { renderAV(); }
 }
+
 </script>
 </body>
-</html>`;
-}
-
-// ──────────────────────────────────────────────────────────────
-// Process each file
-// ──────────────────────────────────────────────────────────────
-QUIZ_CONFIGS.forEach(function(cfg) {
-  const filePath = path.join(__dirname, cfg.file);
-  if (!fs.existsSync(filePath)) {
-    console.log('SKIP (not found): ' + cfg.file);
-    return;
-  }
-
-  const content = fs.readFileSync(filePath, 'utf8');
-  
-  // Extract question data - find the variable declaration and closing ];
-  const dataVar = cfg.dataVar;
-  const startMarkers = [
-    'const ' + dataVar + ' = [',
-    'var ' + dataVar + ' = [',
-    'let ' + dataVar + ' = ['
-  ];
-  
-  let dataStart = -1;
-  let usedMarker = '';
-  for (const marker of startMarkers) {
-    const idx = content.indexOf(marker);
-    if (idx !== -1) {
-      dataStart = idx;
-      usedMarker = marker;
-      break;
-    }
-  }
-  
-  if (dataStart === -1) {
-    console.log('ERROR: Could not find question data in ' + cfg.file);
-    return;
-  }
-  
-  // Find the closing ]; by tracking bracket depth
-  let depth = 0;
-  let dataEnd = dataStart + usedMarker.length - 1;
-  let inString = false;
-  let stringChar = '';
-  let escaped = false;
-  
-  for (let i = dataStart + usedMarker.length - 1; i < content.length; i++) {
-    const ch = content[i];
-    if (escaped) { escaped = false; continue; }
-    if (ch === '\\' && inString) { escaped = true; continue; }
-    if (!inString && (ch === '"' || ch === "'" || ch === '`')) { inString = true; stringChar = ch; continue; }
-    if (inString && ch === stringChar) { inString = false; continue; }
-    if (!inString) {
-      if (ch === '[') depth++;
-      if (ch === ']') {
-        depth--;
-        if (depth === 0) {
-          dataEnd = i + 1;
-          // Check if followed by ; and/or newline
-          if (content[dataEnd] === ';') dataEnd++;
-          break;
-        }
-      }
-    }
-  }
-  
-  let questionData = content.slice(dataStart, dataEnd);
-  
-  // Also extract TOPICS const if present (for system design)
-  const topicsMatch = content.match(/const TOPICS\s*=\s*\[[^\]]+\];/);
-  if (topicsMatch) {
-    questionData = topicsMatch[0] + '\n\n' + questionData;
-  }
-  
-  // Escape script tags to prevent them from breaking the HTML script block
-  questionData = questionData.replace(/<\/script>/gi, '<\\/script>');
-  
-  const html = buildHTML(cfg, questionData);
-  fs.writeFileSync(filePath, html, 'utf8');
-  console.log('✓ Rebuilt: ' + cfg.file + ' (' + questionData.split('\n').length + ' lines of question data)');
-});
-
-console.log('\nDone! All quiz files rebuilt with unified design.');
+</html>
