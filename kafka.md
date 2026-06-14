@@ -3861,6 +3861,203 @@ If you only have time to set up 5 alerts:
 
 ---
 
+## Q71. What are the Most Common Issues with Kafka and Serverless Lambdas?
+
+Serverless functions like AWS Lambda consuming from Kafka can introduce unique challenges, primarily around impedance mismatch between scale and state.
+
+### 1. Connection Exhaustion Downstream
+**Issue**: Lambda can scale out massively (e.g., to hundreds of instances) in response to a surge in Kafka messages. If each Lambda opens a database connection, it can easily exhaust the DB connection pool.
+**Mitigation**: 
+- Limit the maximum concurrency of the Lambda function.
+- Use a connection proxy (like AWS RDS Proxy or PgBouncer) to multiplex connections.
+- Batch messages to process more records per Lambda invocation.
+
+### 2. Poison Pill Messages and Stuck Partitions
+**Issue**: If a Lambda fails to process a message in a batch, the entire batch might be retried endlessly, blocking the partition and increasing lag.
+**Mitigation**:
+- Catch exceptions in your code and route the problematic message to a Dead Letter Queue (DLQ).
+- Return partial batch success (e.g., `ReportBatchItemFailures` in AWS Lambda) so Kafka only retries the failed records and moves the offset forward for successful ones.
+
+### 3. Timeout and Frequent Rebalances
+**Issue**: If the Lambda processing takes longer than the consumer's timeout setting, the broker assumes the consumer died, triggering a rebalance.
+**Mitigation**:
+- Keep Lambda execution times well below the timeout threshold.
+- Tune the batch size (`BatchSize`) and time window (`MaximumBatchingWindowInSeconds`) to ensure the batch can be processed within the timeout limit.
+
+---
+
+## Q72. What are the Common Issues when Running Kafka on Kubernetes (EKS)?
+
+Running a stateful, disk-I/O heavy system like Kafka on Kubernetes requires careful configuration to avoid performance and stability issues.
+
+### 1. Pod Restarts Causing Endless Rebalances
+**Issue**: In Kubernetes, pods might be rescheduled, restarted, or evicted. When a Kafka consumer pod restarts, it leaves the consumer group and rejoins, triggering stop-the-world rebalances.
+**Mitigation**:
+- **Static Membership**: Use `group.instance.id` for consumers. The broker will recognize the pod when it rejoins and assign it the same partitions without triggering a rebalance (provided it rejoins within `session.timeout.ms`).
+- Ensure adequate pod resources (CPU/RAM requests and limits) to prevent OOM Kills or CPU throttling.
+
+### 2. Storage Bottlenecks (EBS Volumes)
+**Issue**: Network-attached storage like AWS EBS can become a bottleneck. Hitting IOPS or throughput limits will severely degrade broker performance.
+**Mitigation**:
+- Use high-performance storage classes (e.g., AWS `gp3` or `io2` with provisioned IOPS).
+- For maximum performance, use instance store volumes (local NVMe SSDs), relying on Kafka's replication (`replication.factor=3`) for high availability instead of the storage layer.
+
+### 3. Networking and `advertised.listeners` Complexity
+**Issue**: Clients outside the EKS cluster cannot connect to brokers because brokers return internal Pod IPs that are unroutable from the outside.
+**Mitigation**:
+- Carefully configure `listeners` and `advertised.listeners`. Use internal listeners (ClusterIP or headless services) for inter-broker communication and external listeners (NodePort or LoadBalancer) mapped to routable domain names for external clients.
+
+---
+
+## Q73. How do you Troubleshoot and Mitigate Consumer Lag?
+
+Consumer lag indicates that messages are being produced faster than they are being consumed.
+
+### 1. Slow Message Processing
+**Issue**: The consumer application takes too long to process each message (e.g., making slow API calls or single DB inserts).
+**Mitigation**:
+- **Batching**: Insert records into databases in batches rather than one by one.
+- **Async Processing**: Use asynchronous processing within the consumer (taking care of ordering guarantees if required).
+- Increase the number of partitions and scale out the consumer group to match.
+
+### 2. Hot Partitions (Skewed Data)
+**Issue**: Most traffic goes to a single partition because of an unbalanced partition key (e.g., one huge tenant ID), causing one consumer to lag while others are idle.
+**Mitigation**:
+- Redesign the partition key. Use a compound key (e.g., `TenantId-TimestampHour`) to spread the load across multiple partitions.
+
+### 3. Frequent Rebalances
+**Issue**: Consumer lag spikes periodically because the consumer group is constantly rebalancing.
+**Mitigation**:
+- Investigate why consumers are dropping out. Are they crashing (OOM)? Are they taking too long to poll (`max.poll.interval.ms` exceeded)?
+- Enable **Cooperative Rebalancing** (`partition.assignment.strategy=CooperativeStickyAssignor`) so partitions are not revoked from healthy consumers during a rebalance.
+
+---
+
+## Q74. How Do You Handle "Message Too Large" Exceptions?
+
+Kafka is optimized for small messages (typically 1KB to 10KB). The default `message.max.bytes` is just 1MB.
+
+### The Issue
+Producers fail with `RecordTooLargeException` when trying to send large JSON payloads, images, or documents. If you simply increase `message.max.bytes` on the broker, it increases memory pressure, degrades performance, and can cause GC pauses.
+
+### Mitigation
+- **Claim Check Pattern (Best Practice)**: Store the large payload in external storage (e.g., AWS S3, Azure Blob) and publish a message to Kafka containing just the URI/reference to that object. The consumer reads the URI and fetches the payload from S3.
+- **Compression**: Enable producer-side compression (`compression.type=lz4` or `zstd`) if the payload is highly compressible text (like JSON or XML).
+- **Chunking**: Split the large message into smaller chunks (e.g., 1MB each) with a common ID and sequence number, then reassemble them on the consumer side. This is complex and generally discouraged unless necessary.
+
+---
+
+## Q75. How Do You Resolve "Consumer Rebalancing Storms"?
+
+### The Issue
+In default configuration (Eager Rebalancing), when a consumer joins or leaves a group, *every* consumer stops processing, relinquishes its partitions, and waits for a new assignment. In large groups, this "stop-the-world" event causes massive lag spikes. If consumers keep dying and rejoining, you enter a "rebalance storm" where no progress is made.
+
+### Mitigation
+- **Cooperative Rebalancing**: Change `partition.assignment.strategy` to `CooperativeStickyAssignor`. Consumers retain their partitions during a rebalance, and only the partitions that actually need to move are revoked.
+- **Tune Timeouts**: If a rebalance is caused by consumers taking too long to process, increase `max.poll.interval.ms`. If caused by temporary network blips, tune `session.timeout.ms`.
+- **Static Membership**: As discussed for Kubernetes, configure `group.instance.id` so a restarted consumer is recognized and given back its exact partitions without triggering a rebalance.
+
+---
+
+## Q76. How Do You Prevent Unbounded Topic Growth (Disk Full)?
+
+### The Issue
+A runaway producer or a misconfigured topic can rapidly fill the broker's disk. When a broker's disk reaches 100%, the broker crashes and cannot be restarted until data is manually deleted, potentially causing an outage.
+
+### Mitigation
+- **Strict Retention Policies**: Set absolute maximums using `retention.bytes` (max size per partition) and `retention.ms` (max time).
+- **Monitor Disk Space**: Alert strictly when disk usage hits 75-80%. Use tools like Cruise Control to automatically move partitions away from a full broker.
+- **Tiered Storage (KIP-405)**: In modern Kafka versions, configure Tiered Storage to automatically offload older segments to cheap object storage (S3/GCS), keeping the local disk almost empty and preventing disk-full scenarios entirely.
+
+---
+
+## Q77. What Happens When ZooKeeper/KRaft Loses Quorum?
+
+### The Issue
+Kafka relies on a consensus system (ZooKeeper historically, or KRaft natively) to manage cluster metadata and elect leaders. If the majority of quorum nodes fail (e.g., 2 out of 3 nodes die), the cluster loses quorum.
+
+### Impact & Mitigation
+- **Impact**: Existing producers and consumers *might* continue working if they already have the metadata. However, no new topics can be created, no partition leaders can be elected, and if a broker dies, its partitions will remain offline because a new leader cannot be chosen.
+- **Mitigation**: 
+  - Always deploy an odd number of quorum nodes (3 or 5).
+  - Spread the quorum nodes across different Availability Zones (AZs) so an AZ outage doesn't take down the quorum.
+  - Dedicate specific nodes to be KRaft controllers (don't mix controller and broker roles in large clusters).
+
+---
+
+## Q78. How Do You Optimize Producer Batching and Latency?
+
+### The Issue
+A producer might experience high latency, or conversely, poor throughput, because it is sending too many tiny requests to the broker instead of batching them.
+
+### Mitigation
+- **High Throughput / Moderate Latency**: Increase `linger.ms` (e.g., 20-50ms) and `batch.size` (e.g., 1MB). The producer will wait up to `linger.ms` to fill the batch, greatly improving throughput and broker CPU efficiency.
+- **Ultra-Low Latency**: Set `linger.ms=0`. The producer sends messages immediately. This sacrifices throughput and increases broker network/CPU overhead but minimizes producer-side delay.
+- **Alert on `buffer.memory` Full**: If the producer produces faster than it can send to the broker, its internal buffer fills up, and `send()` blocks. Monitor the producer `buffer-exhausted-rate`.
+
+---
+
+## Q79. What are the Challenges with Cross-Region Replication?
+
+### The Issue
+Disaster recovery requires replicating Kafka data from one region to another (e.g., US-East to US-West). Due to the speed of light, synchronous replication across regions is too slow.
+
+### Mitigation
+- **Asynchronous Replication**: Use tools like **MirrorMaker 2** or **Confluent Cluster Linking**. Understand that replication is asynchronous, meaning the standby cluster will always be slightly behind (RPO > 0).
+- **Offset Translation**: When failing over, consumer offsets in the primary cluster don't perfectly match the secondary cluster. MM2 handles offset translation automatically so consumers can resume near where they left off.
+- **Active-Active Loops**: If doing active-active replication, ensure you don't create infinite replication loops (messages bouncing back and forth). MM2 prevents this using topic prefixes (e.g., `us-east.topicA`).
+
+---
+
+## Q80. How Do You Solve the "Zombie Consumer" Problem?
+
+### The Issue
+A consumer application deadlocks or its processing thread hangs forever (e.g., stuck on a slow DB query with no timeout). Because Kafka's heartbeat is sent by a separate background thread, the broker thinks the consumer is still alive. The partition gets "stuck"—no other consumer takes over, and lag grows infinitely.
+
+### Mitigation
+- **`max.poll.interval.ms`**: This is Kafka's built-in protection against zombie consumers. The consumer *must* call `poll()` within this interval. If it doesn't, the heartbeat thread voluntarily tells the broker to remove the consumer, triggering a rebalance so another consumer can take over.
+- **Strict Timeouts in Code**: Always use timeouts for downstream API/DB calls within your consumer loop.
+
+---
+
+## Q81. How Do You Handle Schema Evolution Breakages?
+
+### The Issue
+A producer adds or removes a field in the JSON payload. The downstream consumer, expecting the old format, throws a `NullPointerException` or deserialization error, causing a poison pill scenario.
+
+### Mitigation
+- **Schema Registry**: Use a Schema Registry (like Confluent's) with Avro, Protobuf, or JSON Schema.
+- **Enforce Compatibility Rules**: Configure the registry to reject schema updates that break compatibility. 
+  - *Backward Compatibility*: New consumer code can read old data.
+  - *Forward Compatibility*: Old consumer code can read new data.
+- **Centralized Governance**: Make schema changes a pull request process that requires consumer team approval.
+
+---
+
+## Q82. How Do You Secure Kafka from Unauthorized Access?
+
+### The Issue
+By default, Kafka allows anyone who can reach the broker IP to read from and write to any topic. A malicious or buggy service could delete topics or publish garbage data.
+
+### Mitigation
+- **Encryption in Transit**: Enable TLS (SSL) for all client-broker and broker-broker communication.
+- **Authentication**: Require clients to prove who they are using mTLS (Mutual TLS), SASL/SCRAM (username/password), or OAuth 2.0.
+- **Authorization (ACLs)**: Use Kafka's ACLs (Access Control Lists) to enforce the Principle of Least Privilege. E.g., `ServiceA` can only WRITE to `topic-a`, and `ServiceB` can only READ from `topic-a`.
+
+---
+
+## Q83. How Do You Resolve Hot Brokers and Uneven Load?
+
+### The Issue
+You notice Broker 1 is using 90% CPU and Disk, while Broker 2 and Broker 3 are at 10%. This happens when one broker becomes the leader for too many high-traffic partitions, or when partition sizes grow unevenly.
+
+### Mitigation
+- **Leader Election**: Run the `kafka-leader-election.sh` tool to restore the "preferred leaders," balancing leadership evenly across the cluster.
+- **Partition Reassignment**: Use the `kafka-reassign-partitions.sh` tool to physically move partition replicas from the hot broker to the colder brokers.
+- **Automated Balancing**: In production, install **Cruise Control** (open source by LinkedIn). It monitors broker utilization and automatically generates and executes partition reassignment plans to keep the cluster perfectly balanced without human intervention.
+
+---
+
 ## Quick Reference: The 80/90% Topics
 
 As noted in the introduction, mastering these questions covers 80-90% of senior-level Kafka interviews:
