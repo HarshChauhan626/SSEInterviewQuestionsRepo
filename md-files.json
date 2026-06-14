@@ -26,6 +26,7 @@
     "nodejs.md",
     "observability.md",
     "postgresqlmcq.html",
+    "postgresql.md",
     "prefixsum.md",
     "puzzles.md",
     "queue.md",
