@@ -2,6 +2,7 @@
   "files": [
     "a2arag.md",
     "agenticai.md",
+    "architecturalpatterns.md",
     "backtracking.md",
     "binarysearch.md",
     "bitmanipulation.md",
@@ -33,6 +34,7 @@
     "react.md",
     "reactnextjsquiz.html",
     "recursion.md",
+    "securityrelatedtopics.md",
     "slidingwindow.md",
     "strings.md",
     "systemdesigneventdrivenetc.md",
