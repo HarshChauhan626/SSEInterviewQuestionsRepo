@@ -396,6 +396,14 @@
             <input type="checkbox" id="topic-systemdesign">
             <label for="topic-systemdesign">System Design</label>
           </div>
+          <div class="checkbox-item">
+            <input type="checkbox" id="topic-agenticai">
+            <label for="topic-agenticai">Agentic AI</label>
+          </div>
+          <div class="checkbox-item">
+            <input type="checkbox" id="topic-awssolutionarchitect">
+            <label for="topic-awssolutionarchitect">AWS Solutions Architect</label>
+          </div>
         </div>
       </div>
     </div>
@@ -629,27 +637,39 @@ async function loadConceptualQuestions() {
 }
 
 async function loadMCQData() {
-  const topics = ['go', 'nodejs', 'reactnextjs', 'databases', 'postgresql', 'kafka', 'systemdesign'];
+  const topics = ['go', 'nodejs', 'reactnextjs', 'databases', 'postgresql', 'kafka', 'systemdesign', 'agenticai', 'awssolutionarchitect'];
+  
   for (const topic of topics) {
     try {
-      const script = document.createElement('script');
-      script.src = `quiz-data/${topic}.js`;
-      script.async = false;
-      document.head.appendChild(script);
-      await new Promise((resolve, reject) => {
-        script.onload = () => {
-          if (window.ALL_QUESTIONS) {
-            MCQ_DATA[topic] = [...window.ALL_QUESTIONS];
-            delete window.ALL_QUESTIONS;
-          }
-          resolve();
-        };
-        script.onerror = reject;
-      });
+      // Fetch as text first to avoid conflicts
+      const response = await fetch(`quiz-data/${topic}.js`, { cache: 'no-store' });
+      if (!response.ok) {
+        console.warn(`Failed to load ${topic}.js: HTTP ${response.status}`);
+        continue;
+      }
+      
+      const scriptText = await response.text();
+      
+      // Extract ALL_QUESTIONS array using regex
+      const questionsMatch = scriptText.match(/const\s+ALL_QUESTIONS\s*=\s*(\[[\s\S]*?\]);/);
+      if (questionsMatch) {
+        try {
+          // Safely evaluate the array
+          const questionsArray = eval('(' + questionsMatch[1] + ')');
+          MCQ_DATA[topic] = questionsArray;
+          console.log(`Loaded ${topic}: ${questionsArray.length} questions`);
+        } catch (evalError) {
+          console.error(`Error parsing ${topic} questions:`, evalError);
+        }
+      } else {
+        console.warn(`Could not find ALL_QUESTIONS in ${topic}.js`);
+      }
     } catch (error) {
       console.error(`Failed to load ${topic}:`, error);
     }
   }
+  
+  console.log('MCQ loading complete. Topics loaded:', Object.keys(MCQ_DATA).length);
 }
 
 function shuffleArray(array) {
@@ -668,8 +688,11 @@ function escapeHtml(text) {
 }
 
 function getSelectedTopics() {
-  const topics = ['go', 'nodejs', 'reactnextjs', 'databases', 'postgresql', 'kafka', 'systemdesign'];
-  return topics.filter(topic => document.getElementById(`topic-${topic}`).checked);
+  const topics = ['go', 'nodejs', 'reactnextjs', 'databases', 'postgresql', 'kafka', 'systemdesign', 'agenticai', 'awssolutionarchitect'];
+  return topics.filter(topic => {
+    const checkbox = document.getElementById(`topic-${topic}`);
+    return checkbox && checkbox.checked;
+  });
 }
 
 function generateTest() {
