@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Custom Test Generator — Dev Notes</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0c10;
+    --surface: #111318;
+    --surface2: #181c23;
+    --border: rgba(255,255,255,0.08);
+    --border-h: rgba(255,255,255,0.15);
+    --text: #e8edf5;
+    --text-2: #8b95a8;
+    --text-3: #565f70;
+    --accent: #6c8cff;
+    --accent-glow: rgba(108,140,255,0.18);
+    --correct: #22d3a6;
+    --wrong: #f87171;
+    --radius: 12px;
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'Inter', system-ui, sans-serif;
+  }
+  
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.6;
+    padding: 2rem 1rem;
+  }
+  
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  
+  /* Header */
+  .header {
+    text-align: center;
+    margin-bottom: 3rem;
+    animation: fadeUp 0.5s ease;
+  }
+  
+  .header h1 {
+    font-size: clamp(2rem, 5vw, 3rem);
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+    background: linear-gradient(135deg, #6c8cff 0%, #a78bfa 50%, #22d3a6 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  .header p {
+    color: var(--text-2);
+    font-size: 1rem;
+  }
+  
+  /* Generator Section */
+  .generator {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 2rem;
+    margin-bottom: 2rem;
+    animation: fadeUp 0.5s 0.1s both;
+  }
+  
+  .config-grid {
+    display: grid;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .config-item label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-2);
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  
+  .config-item select,
+  .config-item input[type="number"] {
+    width: 100%;
+    padding: 0.75rem;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 0.95rem;
+  }
+  
+  .config-item select:focus,
+  .config-item input:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+  
+  .checkbox-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+  
+  .checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+  }
+  
+  .checkbox-item input {
+    cursor: pointer;
+  }
+  
+  .checkbox-item label {
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: var(--text-2);
+    margin: 0;
+    text-transform: none;
+    letter-spacing: normal;
+  }
+  
+  .btn {
+    padding: 0.9rem 2rem;
+    border: none;
+    border-radius: 100px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    font-family: var(--sans);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+    box-shadow: 0 4px 20px rgba(108,140,255,0.3);
+    width: 100%;
+  }
+  
+  .btn-primary:hover {
+    background: #7c9cff;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(108,140,255,0.4);
+  }
+  
+  .stats-preview {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-top: 1rem;
+    font-size: 0.85rem;
+    color: var(--text-3);
+    display: none;
+  }
+  
+  .stats-preview.show {
+    display: block;
+  }
+  
+  .stats-preview strong {
+    color: var(--accent);
+    font-weight: 700;
+  }
+  
+  /* Test Display */
+  .test-display {
+    display: none;
+    animation: fadeUp 0.5s ease;
+  }
+  
+  .test-display.show {
+    display: block;
+  }
+  
+  .question-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 2rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .q-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+  }
+  
+  .q-number {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--accent);
+    background: var(--accent-glow);
+    border: 1px solid rgba(108,140,255,0.3);
+    padding: 0.25rem 0.75rem;
+    border-radius: 4px;
+  }
+  
+  .q-type {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    color: var(--text-3);
+  }
+  
+  .q-type.dsa {
+    background: rgba(249,115,22,0.1);
+    border-color: rgba(249,115,22,0.3);
+    color: #f97316;
+  }
+  
+  .q-type.mcq {
+    background: rgba(34,211,166,0.1);
+    border-color: rgba(34,211,166,0.3);
+    color: var(--correct);
+  }
+  
+  .q-category {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    color: var(--text-3);
+  }
+  
+  .q-text {
+    font-size: 1.05rem;
+    font-weight: 500;
+    line-height: 1.6;
+    color: var(--text);
+    margin-bottom: 1rem;
+  }
+  
+  .q-text code {
+    font-family: var(--mono);
+    background: var(--surface2);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 4px;
+    padding: 0.15rem 0.4rem;
+    font-size: 0.9em;
+    color: #a5b4fc;
+  }
+  
+  .options-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-top: 1rem;
+  }
+  
+  .option {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.85rem 1rem;
+    transition: all 0.15s;
+  }
+  
+  .opt-letter {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    font-weight: 700;
+    min-width: 24px;
+    height: 24px;
+    border-radius: 5px;
+    border: 1px solid rgba(255,255,255,0.1);
+    background: var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-2);
+    flex-shrink: 0;
+  }
+  
+  .opt-text {
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: var(--text);
+  }
+  
+  .dsa-note {
+    background: var(--surface2);
+    border-left: 3px solid var(--accent);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-top: 1rem;
+    font-size: 0.85rem;
+    color: var(--text-2);
+    line-height: 1.6;
+  }
+  
+  .actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-top: 2rem;
+  }
+  
+  .btn-secondary {
+    background: transparent;
+    color: var(--text-2);
+    border: 1px solid var(--border);
+    padding: 0.75rem 1.5rem;
+  }
+  
+  .btn-secondary:hover {
+    border-color: var(--border-h);
+    color: var(--text);
+  }
+  
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  @media (max-width: 640px) {
+    body { padding: 1rem 0.5rem; }
+    .generator { padding: 1.5rem; }
+    .question-card { padding: 1.5rem; }
+    .actions { flex-direction: column; }
+    .btn { width: 100%; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>Custom Test Generator</h1>
+    <p>Generate random DSA & language-specific quiz questions for interview prep</p>
+    <p id="loadingStatus" style="font-size: 0.85rem; color: var(--text-3); margin-top: 0.5rem;">
+      Loading questions... ⏳
+    </p>
+  </div>
+  
+  <div class="generator">
+    <div class="config-grid">
+      <div class="config-item">
+        <label>Number of DSA Questions</label>
+        <input type="number" id="dsaCount" min="1" max="10" value="3">
+      </div>
+      
+      <div class="config-item">
+        <label>Number of MCQ Questions</label>
+        <input type="number" id="mcqCount" min="1" max="10" value="4">
+      </div>
+      
+      <div class="config-item">
+        <label>Select Language/Topic for MCQs</label>
+        <div class="checkbox-group">
+          <div class="checkbox-item">
+            <input type="checkbox" id="topic-go" checked>
+            <label for="topic-go">Golang</label>
+          </div>
+          <div class="checkbox-item">
+            <input type="checkbox" id="topic-nodejs" checked>
+            <label for="topic-nodejs">Node.js</label>
+          </div>
+          <div class="checkbox-item">
+            <input type="checkbox" id="topic-reactnextjs">
+            <label for="topic-reactnextjs">React/Next.js</label>
+          </div>
+          <div class="checkbox-item">
+            <input type="checkbox" id="topic-databases">
+            <label for="topic-databases">Databases</label>
+          </div>
+          <div class="checkbox-item">
+            <input type="checkbox" id="topic-postgresql">
+            <label for="topic-postgresql">PostgreSQL</label>
+          </div>
+          <div class="checkbox-item">
+            <input type="checkbox" id="topic-kafka">
+            <label for="topic-kafka">Kafka</label>
+          </div>
+          <div class="checkbox-item">
+            <input type="checkbox" id="topic-systemdesign">
+            <label for="topic-systemdesign">System Design</label>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <button class="btn btn-primary" onclick="generateTest()">🎲 Generate Random Test</button>
+    
+    <div class="stats-preview" id="statsPreview">
+      <strong>📊 Available Questions:</strong><br>
+      <span id="statsText">Loading...</span>
+    </div>
+  </div>
+  
+  <div class="test-display" id="testDisplay">
+    <div id="questionsContainer"></div>
+    <div class="actions">
+      <button class="btn btn-secondary" onclick="resetTest()">← Generate New Test</button>
+      <button class="btn btn-primary" onclick="window.print()">🖨️ Print Test</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// DSA question bank - loaded dynamically from markdown files
+let DSA_QUESTIONS = [];
+let DSA_LOADED = false;
+
+// MCQ data loader
+let MCQ_DATA = {};
+
+// DSA Parsers (adapted from codechecker.html)
+function parseDSAFile(text, sourceName) {
+  const problems = [];
+  const parts = text.split(/(?=^### \d+\.)/m).filter(s => /^### \d+\./.test(s.trim()));
+  for (const part of parts) {
+    const nm = part.match(/^### (\d+)\.\s*(.+?)$/m);
+    if (!nm) continue;
+    const num = parseInt(nm[1]);
+    const title = nm[2].trim();
+    const diffMatch = part.match(/\*\*Difficulty:\*\*\s*(.+?)[\r\n]/);
+    const stmtMatch = part.match(/\*\*Problem Statement:\*\*\s*[\r\n]+([\s\S]+?)(?=\*\*(?:Test Cases|Complexity|Java))/);
+    
+    const diff = diffMatch ? diffMatch[1].trim().toLowerCase() : 'medium';
+    const category = sourceName;
+    
+    problems.push({
+      num, title,
+      category,
+      difficulty: diff.includes('easy') ? 'easy' : diff.includes('hard') ? 'hard' : 'medium',
+      statement: stmtMatch ? stmtMatch[1].trim() : '',
+      source: sourceName
+    });
+  }
+  return problems;
+}
+
+function parseStringsFile(text, sourceName) {
+  const problems = [];
+  const parts = text.split(/(?=^## \d+\.)/m).filter(s => /^## \d+\./.test(s.trim()));
+  for (const part of parts) {
+    const nm = part.match(/^## (\d+)\.\s*[🟢🟡🔴]?\s*(.+?)$/m);
+    if (!nm) continue;
+    const num = parseInt(nm[1]);
+    const title = nm[2].trim().replace(/[🟢🟡🔴]\s*/g, '').trim();
+    const firstLine = part.split('\n')[0];
+    let difficulty = 'medium';
+    if (/🟢/.test(firstLine)) difficulty = 'easy';
+    else if (/🔴/.test(firstLine)) difficulty = 'hard';
+    const stmtMatch = part.match(/\*\*Problem:\*\*\s*(.+?)(?=\n\n|\*\*)/s);
+    
+    problems.push({
+      num, title,
+      category: sourceName,
+      difficulty,
+      statement: stmtMatch ? stmtMatch[1].trim() : '',
+      source: sourceName
+    });
+  }
+  return problems;
+}
+
+function parseTopicFile(text, sourceName) {
+  const problems = [];
+  const parts = text
+    .split(/(?=^## (?:Problem \d+|\d+\.))/m)
+    .filter(s => /^## (?:Problem \d+|\d+\.)/.test(s.trim()));
+
+  for (const part of parts) {
+    const nm = part.match(/^## (?:Problem )?(\d+)[.\s—–-]+([^\r\n]+)/m);
+    if (!nm) continue;
+    const num = parseInt(nm[1]);
+    const title = nm[2].trim().replace(/^[—–-]\s*/, '').replace(/[🟢🟡🔴]\s*/g, '').trim();
+    const stmtMatch = part.match(/### Problem Statement[^\r\n]*[\r\n]+([\s\S]+?)(?=###|$)/);
+    
+    problems.push({
+      num, title,
+      category: sourceName,
+      difficulty: 'medium',
+      statement: stmtMatch ? stmtMatch[1].trim() : '',
+      source: sourceName
+    });
+  }
+  return problems;
+}
+
+async function loadDSAQuestions() {
+  if (DSA_LOADED) return;
+  
+  const sources = [
+    { url: 'dsaeasytomedium.md', parser: parseDSAFile, name: 'DSA Easy-Medium' },
+    { url: 'strings.md', parser: parseStringsFile, name: 'Strings' },
+    { url: 'backtracking.md', parser: parseTopicFile, name: 'Backtracking' },
+    { url: 'binarysearch.md', parser: parseTopicFile, name: 'Binary Search' },
+    { url: 'bitmanipulation.md', parser: parseTopicFile, name: 'Bit Manipulation' },
+    { url: 'disjoinset.md', parser: parseTopicFile, name: 'Disjoint Set' },
+    { url: 'dp.md', parser: parseTopicFile, name: 'Dynamic Programming' },
+    { url: 'graph.md', parser: parseTopicFile, name: 'Graph' },
+    { url: 'greedy.md', parser: parseTopicFile, name: 'Greedy' },
+    { url: 'heap.md', parser: parseTopicFile, name: 'Heap' },
+    { url: 'intervals.md', parser: parseTopicFile, name: 'Intervals' },
+    { url: 'linkedlist.md', parser: parseTopicFile, name: 'Linked List' },
+    { url: 'monotonicstack.md', parser: parseTopicFile, name: 'Monotonic Stack' },
+    { url: 'prefixsum.md', parser: parseTopicFile, name: 'Prefix Sum' },
+    { url: 'queue.md', parser: parseTopicFile, name: 'Queue & Stack' },
+    { url: 'recursion.md', parser: parseTopicFile, name: 'Recursion' },
+    { url: 'slidingwindow.md', parser: parseTopicFile, name: 'Sliding Window' },
+    { url: 'trees.md', parser: parseTopicFile, name: 'Trees' },
+    { url: 'trie.md', parser: parseTopicFile, name: 'Trie' },
+    { url: 'twopointer.md', parser: parseTopicFile, name: 'Two Pointers' }
+  ];
+
+  const results = await Promise.allSettled(
+    sources.map(s => fetch(s.url, { cache: 'no-store' })
+      .then(r => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.text();
+      }))
+  );
+
+  for (let i = 0; i < sources.length; i++) {
+    if (results[i].status === 'fulfilled') {
+      try {
+        const parsed = sources[i].parser(results[i].value, sources[i].name);
+        DSA_QUESTIONS.push(...parsed);
+      } catch (e) {
+        console.warn(`Parse error in ${sources[i].url}:`, e);
+      }
+    } else {
+      console.warn(`Failed to fetch ${sources[i].url}:`, results[i].reason);
+    }
+  }
+  
+  DSA_LOADED = true;
+  console.log(`Loaded ${DSA_QUESTIONS.length} DSA problems from ${sources.length} sources`);
+}
+
+async function loadMCQData() {
+  const topics = ['go', 'nodejs', 'reactnextjs', 'databases', 'postgresql', 'kafka', 'systemdesign'];
+  for (const topic of topics) {
+    try {
+      const script = document.createElement('script');
+      script.src = `quiz-data/${topic}.js`;
+      script.async = false;
+      document.head.appendChild(script);
+      await new Promise((resolve, reject) => {
+        script.onload = () => {
+          if (window.ALL_QUESTIONS) {
+            MCQ_DATA[topic] = [...window.ALL_QUESTIONS];
+            delete window.ALL_QUESTIONS;
+          }
+          resolve();
+        };
+        script.onerror = reject;
+      });
+    } catch (error) {
+      console.error(`Failed to load ${topic}:`, error);
+    }
+  }
+}
+
+function shuffleArray(array) {
+  const arr = [...array];
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+function getSelectedTopics() {
+  const topics = ['go', 'nodejs', 'reactnextjs', 'databases', 'postgresql', 'kafka', 'systemdesign'];
+  return topics.filter(topic => document.getElementById(`topic-${topic}`).checked);
+}
+
+function generateTest() {
+  const dsaCount = parseInt(document.getElementById('dsaCount').value) || 3;
+  const mcqCount = parseInt(document.getElementById('mcqCount').value) || 4;
+  const selectedTopics = getSelectedTopics();
+  
+  if (!DSA_LOADED || DSA_QUESTIONS.length === 0) {
+    alert('DSA questions are still loading. Please wait and try again.');
+    return;
+  }
+  
+  if (selectedTopics.length === 0) {
+    alert('Please select at least one topic for MCQ questions!');
+    return;
+  }
+  
+  // Get random DSA questions
+  const randomDSA = shuffleArray(DSA_QUESTIONS).slice(0, dsaCount);
+  
+  // Get random MCQ questions from selected topics
+  const allMCQs = [];
+  selectedTopics.forEach(topic => {
+    if (MCQ_DATA[topic]) {
+      allMCQs.push(...MCQ_DATA[topic].map(q => ({ ...q, topic })));
+    }
+  });
+  
+  if (allMCQs.length === 0) {
+    alert('MCQ data is still loading. Please wait and try again.');
+    return;
+  }
+  
+  const randomMCQs = shuffleArray(allMCQs).slice(0, mcqCount);
+  
+  // Combine and shuffle all questions
+  const allQuestions = [
+    ...randomDSA.map(q => ({ type: 'dsa', ...q })),
+    ...randomMCQs.map(q => ({ type: 'mcq', ...q }))
+  ];
+  
+  const finalQuestions = shuffleArray(allQuestions);
+  
+  // Render questions
+  renderQuestions(finalQuestions);
+  
+  // Show test display
+  document.getElementById('testDisplay').classList.add('show');
+  document.querySelector('.generator').style.display = 'none';
+  
+  // Scroll to top
+  window.scrollTo(0, 0);
+}
+
+function renderQuestions(questions) {
+  const container = document.getElementById('questionsContainer');
+  container.innerHTML = '';
+  
+  questions.forEach((q, index) => {
+    const card = document.createElement('div');
+    card.className = 'question-card';
+    
+    if (q.type === 'dsa') {
+      const difficultyBadge = q.difficulty ? `<span class="q-category">⚡ ${q.difficulty}</span>` : '';
+      card.innerHTML = `
+        <div class="q-header">
+          <span class="q-number">Question ${index + 1}</span>
+          <span class="q-type dsa">DSA Problem</span>
+          <span class="q-category">${q.category}</span>
+          ${difficultyBadge}
+        </div>
+        <div class="q-text">
+          <strong>Problem ${q.num}:</strong> ${q.title}
+        </div>
+        ${q.statement ? `<div class="dsa-note"><strong>📝 Problem:</strong> ${escapeHtml(q.statement.substring(0, 200))}${q.statement.length > 200 ? '...' : ''}</div>` : ''}
+        <div class="dsa-note">
+          <strong>✍️ Task:</strong> Write your solution. Consider time and space complexity.<br>
+          <strong>💡 Reference:</strong> Check <code>${q.source}</code> for complete problem statement, test cases and solution.
+        </div>
+      `;
+    } else {
+      const letters = ['A', 'B', 'C', 'D'];
+      const optionsHTML = q.opts.map((opt, i) => `
+        <div class="option">
+          <span class="opt-letter">${letters[i]}</span>
+          <span class="opt-text">${opt}</span>
+        </div>
+      `).join('');
+      
+      card.innerHTML = `
+        <div class="q-header">
+          <span class="q-number">Question ${index + 1}</span>
+          <span class="q-type mcq">MCQ</span>
+          <span class="q-category">${q.topic.toUpperCase()}</span>
+          ${q.cat ? `<span class="q-category">${q.cat}</span>` : ''}
+        </div>
+        <div class="q-text">${q.q}</div>
+        <div class="options-list">
+          ${optionsHTML}
+        </div>
+      `;
+    }
+    
+    container.appendChild(card);
+  });
+}
+
+function resetTest() {
+  document.getElementById('testDisplay').classList.remove('show');
+  document.querySelector('.generator').style.display = 'block';
+  window.scrollTo(0, 0);
+}
+
+// Load MCQ data and DSA questions on page load
+Promise.all([loadMCQData(), loadDSAQuestions()]).then(() => {
+  console.log('All data loaded successfully');
+  console.log(`Total DSA: ${DSA_QUESTIONS.length}, Total MCQ topics: ${Object.keys(MCQ_DATA).length}`);
+  
+  // Update loading status
+  const statusEl = document.getElementById('loadingStatus');
+  if (statusEl) {
+    const mcqCount = Object.values(MCQ_DATA).reduce((sum, arr) => sum + arr.length, 0);
+    statusEl.innerHTML = `✅ Loaded <strong>${DSA_QUESTIONS.length}</strong> DSA problems & <strong>${mcqCount}</strong> MCQ questions from <strong>${Object.keys(MCQ_DATA).length}</strong> topics`;
+    statusEl.style.color = 'var(--correct)';
+  }
+  
+  // Show stats preview
+  updateStatsPreview();
+}).catch(err => {
+  console.error('Error loading data:', err);
+  const statusEl = document.getElementById('loadingStatus');
+  if (statusEl) {
+    statusEl.innerHTML = '❌ Error loading questions. Please refresh the page.';
+    statusEl.style.color = 'var(--wrong)';
+  }
+});
+
+function updateStatsPreview() {
+  const selectedTopics = getSelectedTopics();
+  const mcqCount = selectedTopics.reduce((sum, topic) => {
+    return sum + (MCQ_DATA[topic] ? MCQ_DATA[topic].length : 0);
+  }, 0);
+  
+  const statsEl = document.getElementById('statsPreview');
+  const statsText = document.getElementById('statsText');
+  
+  if (DSA_QUESTIONS.length > 0) {
+    statsEl.classList.add('show');
+    statsText.innerHTML = `
+      DSA Problems: <strong>${DSA_QUESTIONS.length}</strong> from 20 categories<br>
+      MCQ Questions: <strong>${mcqCount}</strong> from ${selectedTopics.length} selected topic${selectedTopics.length !== 1 ? 's' : ''}<br>
+      <em style="font-size: 0.8rem;">Total pool: ${DSA_QUESTIONS.length + mcqCount} questions</em>
+    `;
+  }
+}
+
+// Update stats when checkboxes change
+document.querySelectorAll('input[type="checkbox"][id^="topic-"]').forEach(cb => {
+  cb.addEventListener('change', updateStatsPreview);
+});
+</script>
+</body>
+</html>
