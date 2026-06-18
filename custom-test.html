@@ -641,31 +641,31 @@ async function loadMCQData() {
   
   for (const topic of topics) {
     try {
-      // Fetch as text first to avoid conflicts
-      const response = await fetch(`quiz-data/${topic}.js`, { cache: 'no-store' });
-      if (!response.ok) {
-        console.warn(`Failed to load ${topic}.js: HTTP ${response.status}`);
-        continue;
-      }
-      
-      const scriptText = await response.text();
-      
-      // Extract ALL_QUESTIONS array using regex
-      const questionsMatch = scriptText.match(/const\s+ALL_QUESTIONS\s*=\s*(\[[\s\S]*?\]);/);
-      if (questionsMatch) {
-        try {
-          // Safely evaluate the array
-          const questionsArray = eval('(' + questionsMatch[1] + ')');
-          MCQ_DATA[topic] = questionsArray;
-          console.log(`Loaded ${topic}: ${questionsArray.length} questions`);
-        } catch (evalError) {
-          console.error(`Error parsing ${topic} questions:`, evalError);
-        }
-      } else {
-        console.warn(`Could not find ALL_QUESTIONS in ${topic}.js`);
-      }
+      // Use the same approach as quiz.html - dynamic script loading
+      await new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = `quiz-data/${topic}.js`;
+        script.onload = () => {
+          // Check if ALL_QUESTIONS was loaded
+          if (window.ALL_QUESTIONS) {
+            MCQ_DATA[topic] = [...window.ALL_QUESTIONS];
+            console.log(`Loaded ${topic}: ${window.ALL_QUESTIONS.length} questions`);
+            // Clear the global variable to avoid conflicts
+            delete window.ALL_QUESTIONS;
+            delete window.TOPICS;
+          } else {
+            console.warn(`${topic}.js loaded but ALL_QUESTIONS not found`);
+          }
+          resolve();
+        };
+        script.onerror = () => {
+          console.error(`Failed to load ${topic}.js`);
+          reject(new Error(`Failed to load ${topic}.js`));
+        };
+        document.head.appendChild(script);
+      });
     } catch (error) {
-      console.error(`Failed to load ${topic}:`, error);
+      console.error(`Error loading ${topic}:`, error);
     }
   }
   
