@@ -905,6 +905,35 @@
     const arrowSvg = `<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2">
       <path d="M2.5 6h7m-3-3 3 3-3 3"/>
     </svg>`;
+    
+    // Render tools section with proper arrow
+    const toolsGrid = document.getElementById('toolsGrid');
+    if (toolsGrid) {
+      toolsGrid.innerHTML = `
+        <a class="tool-card" href="codechecker.html">
+          <div class="tool-card-icon">💻</div>
+          <div class="tool-card-body">
+            <div class="tool-card-title">Code Checker</div>
+            <div class="tool-card-desc">Write solutions from memory and check against reference implementations. Includes timer, hints, and progress tracking.</div>
+          </div>
+          <div class="tool-card-footer">
+            <span class="tool-pill">Practice</span>
+            <span class="tool-arrow">${arrowSvg}</span>
+          </div>
+        </a>
+        <a class="tool-card" href="custom-test.html">
+          <div class="tool-card-icon">🎲</div>
+          <div class="tool-card-body">
+            <div class="tool-card-title">Custom Test Generator</div>
+            <div class="tool-card-desc">Generate randomized tests with 500+ DSA problems and 1000+ MCQ questions. Mix & match topics for focused practice.</div>
+          </div>
+          <div class="tool-card-footer">
+            <span class="tool-pill">Quiz</span>
+            <span class="tool-arrow">${arrowSvg}</span>
+          </div>
+        </a>
+      `;
+    }
 
     function renderList() {
       const term = filter.value.trim().toLowerCase();

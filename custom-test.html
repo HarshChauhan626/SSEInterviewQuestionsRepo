@@ -420,7 +420,9 @@
 <script>
 // DSA question bank - loaded dynamically from markdown files
 let DSA_QUESTIONS = [];
+let CONCEPTUAL_QUESTIONS = []; // NEW: For non-DSA conceptual questions
 let DSA_LOADED = false;
+let CONCEPTUAL_LOADED = false;
 
 // MCQ data loader
 let MCQ_DATA = {};
@@ -500,6 +502,38 @@ function parseTopicFile(text, sourceName) {
   return problems;
 }
 
+// NEW: Parser for conceptual questions (System Design, Terminology, etc.)
+function parseConceptualFile(text, sourceName) {
+  const questions = [];
+  
+  // Match heading patterns for conceptual topics
+  const headingRegex = /^##\s+(.+?)$/gm;
+  const matches = [...text.matchAll(headingRegex)];
+  
+  for (let i = 0; i < matches.length; i++) {
+    const title = matches[i][1].trim().replace(/[🟢🟡🔴]\s*/g, '');
+    const startIndex = matches[i].index;
+    const endIndex = i < matches.length - 1 ? matches[i + 1].index : text.length;
+    const content = text.substring(startIndex, endIndex);
+    
+    // Extract description (first paragraph after heading)
+    const descMatch = content.match(/^##[^\n]+\n+([^\n]+)/);
+    const description = descMatch ? descMatch[1].trim() : '';
+    
+    if (title && title.length > 3) { // Filter out very short titles
+      questions.push({
+        title,
+        category: sourceName,
+        description: description.substring(0, 300), // Limit description length
+        source: sourceName,
+        type: 'conceptual'
+      });
+    }
+  }
+  
+  return questions;
+}
+
 async function loadDSAQuestions() {
   if (DSA_LOADED) return;
   
@@ -551,6 +585,49 @@ async function loadDSAQuestions() {
   console.log(`Loaded ${DSA_QUESTIONS.length} DSA problems from ${sources.length} sources`);
 }
 
+// NEW: Load conceptual questions from terminology/theory files
+async function loadConceptualQuestions() {
+  if (CONCEPTUAL_LOADED) return;
+  
+  const sources = [
+    { url: 'systemdesignterminology.md', name: 'System Design Terms' },
+    { url: 'systemdesigneventdrivenetc.md', name: 'Event-Driven Systems' },
+    { url: 'systemdesigninterviewdesigncheatsheet.md', name: 'System Design Patterns' },
+    { url: 'golang.md', name: 'Golang Concepts' },
+    { url: 'kafka.md', name: 'Kafka Concepts' },
+    { url: 'databases.md', name: 'Database Concepts' },
+    { url: 'distributedsystems.md', name: 'Distributed Systems' },
+    { url: 'kubernetes.md', name: 'Kubernetes' },
+    { url: 'observability.md', name: 'Observability' },
+    { url: 'architecturalpatterns.md', name: 'Architectural Patterns' },
+    { url: 'puzzles.md', name: 'Puzzles' }
+  ];
+
+  const results = await Promise.allSettled(
+    sources.map(s => fetch(s.url, { cache: 'no-store' })
+      .then(r => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.text();
+      }))
+  );
+
+  for (let i = 0; i < sources.length; i++) {
+    if (results[i].status === 'fulfilled') {
+      try {
+        const parsed = parseConceptualFile(results[i].value, sources[i].name);
+        CONCEPTUAL_QUESTIONS.push(...parsed);
+      } catch (e) {
+        console.warn(`Parse error in ${sources[i].url}:`, e);
+      }
+    } else {
+      console.warn(`Failed to fetch ${sources[i].url}:`, results[i].reason);
+    }
+  }
+  
+  CONCEPTUAL_LOADED = true;
+  console.log(`Loaded ${CONCEPTUAL_QUESTIONS.length} conceptual questions from ${sources.length} sources`);
+}
+
 async function loadMCQData() {
   const topics = ['go', 'nodejs', 'reactnextjs', 'databases', 'postgresql', 'kafka', 'systemdesign'];
   for (const topic of topics) {
@@ -600,8 +677,18 @@ function generateTest() {
   const mcqCount = parseInt(document.getElementById('mcqCount').value) || 4;
   const selectedTopics = getSelectedTopics();
   
+  console.log('Generate test clicked');
+  console.log('DSA_LOADED:', DSA_LOADED, 'DSA count:', DSA_QUESTIONS.length);
+  console.log('CONCEPTUAL_LOADED:', CONCEPTUAL_LOADED, 'Conceptual count:', CONCEPTUAL_QUESTIONS.length);
+  console.log('Selected topics:', selectedTopics);
+  
   if (!DSA_LOADED || DSA_QUESTIONS.length === 0) {
     alert('DSA questions are still loading. Please wait and try again.');
+    return;
+  }
+  
+  if (!CONCEPTUAL_LOADED || CONCEPTUAL_QUESTIONS.length === 0) {
+    alert('Conceptual questions are still loading. Please wait and try again.');
     return;
   }
   
@@ -610,8 +697,9 @@ function generateTest() {
     return;
   }
   
-  // Get random DSA questions
-  const randomDSA = shuffleArray(DSA_QUESTIONS).slice(0, dsaCount);
+  // Combine DSA coding problems with conceptual questions
+  const allDSA = [...DSA_QUESTIONS, ...CONCEPTUAL_QUESTIONS];
+  const randomDSA = shuffleArray(allDSA).slice(0, dsaCount);
   
   // Get random MCQ questions from selected topics
   const allMCQs = [];
@@ -630,11 +718,13 @@ function generateTest() {
   
   // Combine and shuffle all questions
   const allQuestions = [
-    ...randomDSA.map(q => ({ type: 'dsa', ...q })),
+    ...randomDSA.map(q => ({ type: q.type === 'conceptual' ? 'conceptual' : 'dsa', ...q })),
     ...randomMCQs.map(q => ({ type: 'mcq', ...q }))
   ];
   
   const finalQuestions = shuffleArray(allQuestions);
+  
+  console.log('Final questions:', finalQuestions.length);
   
   // Render questions
   renderQuestions(finalQuestions);
@@ -673,6 +763,22 @@ function renderQuestions(questions) {
           <strong>💡 Reference:</strong> Check <code>${q.source}</code> for complete problem statement, test cases and solution.
         </div>
       `;
+    } else if (q.type === 'conceptual') {
+      card.innerHTML = `
+        <div class="q-header">
+          <span class="q-number">Question ${index + 1}</span>
+          <span class="q-type" style="background: rgba(147,51,234,0.1); border-color: rgba(147,51,234,0.3); color: #a78bfa;">Theory</span>
+          <span class="q-category">${q.category}</span>
+        </div>
+        <div class="q-text">
+          <strong>Topic:</strong> ${q.title}
+        </div>
+        ${q.description ? `<div class="dsa-note"><strong>📝 Context:</strong> ${escapeHtml(q.description)}</div>` : ''}
+        <div class="dsa-note">
+          <strong>✍️ Task:</strong> Explain this concept, its use cases, and implementation details.<br>
+          <strong>💡 Reference:</strong> Check <code>${q.source}</code> for complete details and examples.
+        </div>
+      `;
     } else {
       const letters = ['A', 'B', 'C', 'D'];
       const optionsHTML = q.opts.map((opt, i) => `
@@ -707,15 +813,16 @@ function resetTest() {
 }
 
 // Load MCQ data and DSA questions on page load
-Promise.all([loadMCQData(), loadDSAQuestions()]).then(() => {
+Promise.all([loadMCQData(), loadDSAQuestions(), loadConceptualQuestions()]).then(() => {
   console.log('All data loaded successfully');
-  console.log(`Total DSA: ${DSA_QUESTIONS.length}, Total MCQ topics: ${Object.keys(MCQ_DATA).length}`);
+  console.log(`Total DSA: ${DSA_QUESTIONS.length}, Conceptual: ${CONCEPTUAL_QUESTIONS.length}, Total MCQ topics: ${Object.keys(MCQ_DATA).length}`);
   
   // Update loading status
   const statusEl = document.getElementById('loadingStatus');
   if (statusEl) {
     const mcqCount = Object.values(MCQ_DATA).reduce((sum, arr) => sum + arr.length, 0);
-    statusEl.innerHTML = `✅ Loaded <strong>${DSA_QUESTIONS.length}</strong> DSA problems & <strong>${mcqCount}</strong> MCQ questions from <strong>${Object.keys(MCQ_DATA).length}</strong> topics`;
+    const totalQuestions = DSA_QUESTIONS.length + CONCEPTUAL_QUESTIONS.length + mcqCount;
+    statusEl.innerHTML = `✅ Loaded <strong>${DSA_QUESTIONS.length}</strong> DSA problems, <strong>${CONCEPTUAL_QUESTIONS.length}</strong> conceptual questions & <strong>${mcqCount}</strong> MCQ questions`;
     statusEl.style.color = 'var(--correct)';
   }
   
@@ -739,12 +846,14 @@ function updateStatsPreview() {
   const statsEl = document.getElementById('statsPreview');
   const statsText = document.getElementById('statsText');
   
-  if (DSA_QUESTIONS.length > 0) {
+  const totalDSAConceptual = DSA_QUESTIONS.length + CONCEPTUAL_QUESTIONS.length;
+  
+  if (totalDSAConceptual > 0) {
     statsEl.classList.add('show');
     statsText.innerHTML = `
-      DSA Problems: <strong>${DSA_QUESTIONS.length}</strong> from 20 categories<br>
+      DSA + Conceptual: <strong>${totalDSAConceptual}</strong> (${DSA_QUESTIONS.length} DSA + ${CONCEPTUAL_QUESTIONS.length} theory)<br>
       MCQ Questions: <strong>${mcqCount}</strong> from ${selectedTopics.length} selected topic${selectedTopics.length !== 1 ? 's' : ''}<br>
-      <em style="font-size: 0.8rem;">Total pool: ${DSA_QUESTIONS.length + mcqCount} questions</em>
+      <em style="font-size: 0.8rem;">Total pool: ${totalDSAConceptual + mcqCount} questions</em>
     `;
   }
 }
