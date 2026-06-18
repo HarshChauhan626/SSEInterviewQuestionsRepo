@@ -641,27 +641,41 @@ async function loadMCQData() {
   
   for (const topic of topics) {
     try {
-      // Use the same approach as quiz.html - dynamic script loading
+      // Load script dynamically and extract data
       await new Promise((resolve, reject) => {
         const script = document.createElement('script');
         script.src = `quiz-data/${topic}.js`;
+        script.id = `mcq-script-${topic}`;
+        
         script.onload = () => {
-          // Check if ALL_QUESTIONS was loaded
-          if (window.ALL_QUESTIONS) {
-            MCQ_DATA[topic] = [...window.ALL_QUESTIONS];
-            console.log(`Loaded ${topic}: ${window.ALL_QUESTIONS.length} questions`);
-            // Clear the global variable to avoid conflicts
-            delete window.ALL_QUESTIONS;
-            delete window.TOPICS;
-          } else {
-            console.warn(`${topic}.js loaded but ALL_QUESTIONS not found`);
+          try {
+            // Check if QUIZ_DATA was loaded (quiz.html pattern)
+            if (window.QUIZ_DATA && Array.isArray(window.QUIZ_DATA)) {
+              MCQ_DATA[topic] = [...window.QUIZ_DATA];
+              console.log(`Loaded ${topic}: ${window.QUIZ_DATA.length} questions`);
+              // Clear the global variable
+              delete window.QUIZ_DATA;
+            } else {
+              console.warn(`Could not load ${topic}: QUIZ_DATA not found`);
+            }
+            
+            // Remove script after loading to avoid conflicts
+            const scriptEl = document.getElementById(`mcq-script-${topic}`);
+            if (scriptEl) scriptEl.remove();
+            
+          } catch (err) {
+            console.error(`Error processing ${topic}:`, err);
           }
           resolve();
         };
+        
         script.onerror = () => {
           console.error(`Failed to load ${topic}.js`);
-          reject(new Error(`Failed to load ${topic}.js`));
+          const scriptEl = document.getElementById(`mcq-script-${topic}`);
+          if (scriptEl) scriptEl.remove();
+          resolve(); // Don't reject, just skip this topic
         };
+        
         document.head.appendChild(script);
       });
     } catch (error) {
@@ -669,7 +683,8 @@ async function loadMCQData() {
     }
   }
   
-  console.log('MCQ loading complete. Topics loaded:', Object.keys(MCQ_DATA).length);
+  const totalMCQs = Object.values(MCQ_DATA).reduce((sum, arr) => sum + arr.length, 0);
+  console.log(`MCQ loading complete. Topics: ${Object.keys(MCQ_DATA).length}, Total MCQs: ${totalMCQs}`);
 }
 
 function shuffleArray(array) {
@@ -703,6 +718,7 @@ function generateTest() {
   console.log('Generate test clicked');
   console.log('DSA_LOADED:', DSA_LOADED, 'DSA count:', DSA_QUESTIONS.length);
   console.log('CONCEPTUAL_LOADED:', CONCEPTUAL_LOADED, 'Conceptual count:', CONCEPTUAL_QUESTIONS.length);
+  console.log('MCQ topics loaded:', Object.keys(MCQ_DATA).length);
   console.log('Selected topics:', selectedTopics);
   
   if (!DSA_LOADED || DSA_QUESTIONS.length === 0) {
@@ -715,37 +731,56 @@ function generateTest() {
     return;
   }
   
-  if (selectedTopics.length === 0) {
-    alert('Please select at least one topic for MCQ questions!');
-    return;
-  }
-  
   // Combine DSA coding problems with conceptual questions
   const allDSA = [...DSA_QUESTIONS, ...CONCEPTUAL_QUESTIONS];
   const randomDSA = shuffleArray(allDSA).slice(0, dsaCount);
   
-  // Get random MCQ questions from selected topics
+  // Get random MCQ questions from selected topics (if available)
   const allMCQs = [];
-  selectedTopics.forEach(topic => {
-    if (MCQ_DATA[topic]) {
-      allMCQs.push(...MCQ_DATA[topic].map(q => ({ ...q, topic })));
-    }
-  });
+  let mcqAvailable = false;
   
-  if (allMCQs.length === 0) {
-    alert('MCQ data is still loading. Please wait and try again.');
-    return;
+  if (Object.keys(MCQ_DATA).length > 0) {
+    selectedTopics.forEach(topic => {
+      if (MCQ_DATA[topic]) {
+        allMCQs.push(...MCQ_DATA[topic].map(q => ({ ...q, topic })));
+        mcqAvailable = true;
+      }
+    });
   }
   
-  const randomMCQs = shuffleArray(allMCQs).slice(0, mcqCount);
+  let finalQuestions = [];
   
-  // Combine and shuffle all questions
-  const allQuestions = [
-    ...randomDSA.map(q => ({ type: q.type === 'conceptual' ? 'conceptual' : 'dsa', ...q })),
-    ...randomMCQs.map(q => ({ type: 'mcq', ...q }))
-  ];
-  
-  const finalQuestions = shuffleArray(allQuestions);
+  if (mcqAvailable && allMCQs.length > 0) {
+    // MCQs are available, include them
+    const randomMCQs = shuffleArray(allMCQs).slice(0, mcqCount);
+    
+    // Combine and shuffle all questions
+    const allQuestions = [
+      ...randomDSA.map(q => ({ type: q.type === 'conceptual' ? 'conceptual' : 'dsa', ...q })),
+      ...randomMCQs.map(q => ({ type: 'mcq', ...q }))
+    ];
+    
+    finalQuestions = shuffleArray(allQuestions);
+  } else {
+    // No MCQs available, just use DSA + Conceptual
+    console.warn('MCQ questions not available. Generating test with DSA + Conceptual questions only.');
+    
+    // Get more DSA questions to compensate
+    const totalQuestions = dsaCount + mcqCount;
+    const extraDSA = shuffleArray(allDSA).slice(0, totalQuestions);
+    
+    finalQuestions = shuffleArray(extraDSA.map(q => ({ 
+      type: q.type === 'conceptual' ? 'conceptual' : 'dsa', 
+      ...q 
+    })));
+    
+    // Show info message
+    if (selectedTopics.length > 0) {
+      setTimeout(() => {
+        alert(`Note: MCQ questions are not available. Generated ${finalQuestions.length} DSA/Conceptual questions instead.`);
+      }, 100);
+    }
+  }
   
   console.log('Final questions:', finalQuestions.length);
   
@@ -845,7 +880,12 @@ Promise.all([loadMCQData(), loadDSAQuestions(), loadConceptualQuestions()]).then
   if (statusEl) {
     const mcqCount = Object.values(MCQ_DATA).reduce((sum, arr) => sum + arr.length, 0);
     const totalQuestions = DSA_QUESTIONS.length + CONCEPTUAL_QUESTIONS.length + mcqCount;
-    statusEl.innerHTML = `✅ Loaded <strong>${DSA_QUESTIONS.length}</strong> DSA problems, <strong>${CONCEPTUAL_QUESTIONS.length}</strong> conceptual questions & <strong>${mcqCount}</strong> MCQ questions`;
+    
+    if (mcqCount > 0) {
+      statusEl.innerHTML = `✅ Loaded <strong>${DSA_QUESTIONS.length}</strong> DSA problems, <strong>${CONCEPTUAL_QUESTIONS.length}</strong> conceptual questions & <strong>${mcqCount}</strong> MCQ questions`;
+    } else {
+      statusEl.innerHTML = `✅ Loaded <strong>${DSA_QUESTIONS.length}</strong> DSA problems & <strong>${CONCEPTUAL_QUESTIONS.length}</strong> conceptual questions<br><span style="font-size: 0.85rem; color: var(--text-3);">Note: MCQ questions not available (will generate extra DSA questions instead)</span>`;
+    }
     statusEl.style.color = 'var(--correct)';
   }
   
@@ -873,11 +913,19 @@ function updateStatsPreview() {
   
   if (totalDSAConceptual > 0) {
     statsEl.classList.add('show');
-    statsText.innerHTML = `
-      DSA + Conceptual: <strong>${totalDSAConceptual}</strong> (${DSA_QUESTIONS.length} DSA + ${CONCEPTUAL_QUESTIONS.length} theory)<br>
-      MCQ Questions: <strong>${mcqCount}</strong> from ${selectedTopics.length} selected topic${selectedTopics.length !== 1 ? 's' : ''}<br>
-      <em style="font-size: 0.8rem;">Total pool: ${totalDSAConceptual + mcqCount} questions</em>
-    `;
+    
+    if (mcqCount > 0) {
+      statsText.innerHTML = `
+        DSA + Conceptual: <strong>${totalDSAConceptual}</strong> (${DSA_QUESTIONS.length} DSA + ${CONCEPTUAL_QUESTIONS.length} theory)<br>
+        MCQ Questions: <strong>${mcqCount}</strong> from ${selectedTopics.length} selected topic${selectedTopics.length !== 1 ? 's' : ''}<br>
+        <em style="font-size: 0.8rem;">Total pool: ${totalDSAConceptual + mcqCount} questions</em>
+      `;
+    } else {
+      statsText.innerHTML = `
+        DSA + Conceptual: <strong>${totalDSAConceptual}</strong> (${DSA_QUESTIONS.length} DSA + ${CONCEPTUAL_QUESTIONS.length} theory)<br>
+        <em style="font-size: 0.8rem; color: var(--text-3);">MCQ questions not loaded - will use extra DSA questions instead</em>
+      `;
+    }
   }
 }
 
