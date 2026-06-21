@@ -714,50 +714,31 @@
       "architecturalpatterns.md",
       "quiz.html?id=agenticai",
       "quiz.html?id=awssolutionarchitect",
-      "backtracking.md",
-      "binarysearch.md",
-      "bitmanipulation.md",
       "quiz.html?id=databases",
       "databases.md",
-      "disjoinset.md",
       "distributedsystems.md",
       "dotnet.md",
-      "dp.md",
       "dsaeasytomedium.md",
-      "dsaeasytomedium_pseudocode.md",
+      "dsaextended.html",
       "golang.md",
       "golangcodequestions.md",
       "quiz.html?id=go",
-      "graph.md",
-      "greedy.md",
-      "heap.md",
-      "intervals.md",
       "kafka.md",
       "quiz.html?id=kafka",
       "kubernetes.md",
-      "linkedlist.md",
-      "monotonicstack.md",
       "nodejs.md",
       "quiz.html?id=nodejs",
       "observability.md",
       "quiz.html?id=postgresql",
       "postgresql.md",
-      "prefixsum.md",
       "puzzles.md",
-      "queue.md",
       "react.md",
       "quiz.html?id=reactnextjs",
-      "recursion.md",
       "securityrelatedtopics.md",
-      "slidingwindow.md",
-      "strings.md",
       "systemdesigneventdrivenetc.md",
       "systemdesigninterviewdesigncheatsheet.md",
       "systemdesignterminology.md",
       "quiz.html?id=systemdesign",
-      "trees.md",
-      "trie.md",
-      "twopointer.md",
       "websocket.md"
     ];
 
@@ -767,50 +748,31 @@
       "architecturalpatterns.md": "Architectural Patterns",
       "quiz.html?id=agenticai": "Agentic AI MCQ",
       "quiz.html?id=awssolutionarchitect": "AWS Solution Architect MCQ",
-      "backtracking.md": "Backtracking",
-      "binarysearch.md": "Binary Search",
-      "bitmanipulation.md": "Bit Manipulation",
       "quiz.html?id=databases": "Databases MCQ",
       "databases.md": "Databases",
-      "disjoinset.md": "Disjoint Set",
       "distributedsystems.md": "Distributed Systems",
       "dotnet.md": ".NET",
-      "dp.md": "Dynamic Programming",
       "dsaeasytomedium.md": "DSA Easy To Medium",
-      "dsaeasytomedium_pseudocode.md": "DSA Easy To Medium — Pseudo Code",
+      "dsaextended.html": "DSA Extended",
       "golang.md": "Golang",
       "golangcodequestions.md": "Golang Code Questions",
       "quiz.html?id=go": "Golang Mastery Quiz",
-      "graph.md": "Graph",
-      "greedy.md": "Greedy",
-      "heap.md": "Heap",
-      "intervals.md": "Intervals",
       "kafka.md": "Kafka",
       "quiz.html?id=kafka": "Kafka MCQ",
       "kubernetes.md": "Kubernetes",
-      "linkedlist.md": "Linked List",
-      "monotonicstack.md": "Monotonic Stack",
       "nodejs.md": "Node.js",
       "quiz.html?id=nodejs": "Node.js MCQ",
       "observability.md": "Observability",
       "quiz.html?id=postgresql": "PostgreSQL MCQ",
       "postgresql.md": "PostgreSQL",
-      "prefixsum.md": "Prefix Sum",
       "puzzles.md": "Puzzles",
-      "queue.md": "Queue",
       "react.md": "React",
       "quiz.html?id=reactnextjs": "React & Next.js MCQ",
-      "recursion.md": "Recursion",
       "securityrelatedtopics.md": "Security Related Topics",
-      "slidingwindow.md": "Sliding Window",
-      "strings.md": "Strings",
       "systemdesigneventdrivenetc.md": "System Design: Event Driven Etc",
       "systemdesigninterviewdesigncheatsheet.md": "System Design Interview Cheatsheet",
       "systemdesignterminology.md": "System Design Terminology",
       "quiz.html?id=systemdesign": "System Design MCQ",
-      "trees.md": "Trees",
-      "trie.md": "Trie",
-      "twopointer.md": "Two Pointer",
       "websocket.md": "WebSocket",
       "custom-test.html": "Custom Test Generator"
     };
@@ -834,45 +796,62 @@
       "a2arag.md":           "🔗",
       "agenticai.md":        "🤖",
       "architecturalpatterns.md": "🏗️",
-      "backtracking.md":     "↩️",
-      "binarysearch.md":     "🔍",
-      "bitmanipulation.md":  "⚙️",
       "databases.md":        "🗄️",
-      "disjoinset.md":       "🔀",
       "distributedsystems.md":"🌐",
       "dotnet.md":           "💜",
-      "dp.md":               "🧠",
       "dsaeasytomedium.md":  "📊",
-      "dsaeasytomedium_pseudocode.md": "📋",
+      "dsaextended.html":    "🧭",
       "golang.md":           "🔵",
       "golangcodequestions.md": "💻",
-      "graph.md":            "🕸️",
-      "greedy.md":           "💰",
-      "heap.md":             "🏔️",
-      "intervals.md":        "📏",
       "kafka.md":            "⚡",
       "kubernetes.md":       "☸️",
-      "linkedlist.md":       "🔗",
-      "monotonicstack.md":   "📈",
       "nodejs.md":           "🟢",
       "observability.md":    "🔭",
       "postgresql.md":       "🐘",
-      "prefixsum.md":        "➕",
       "puzzles.md":          "🧩",
-      "queue.md":            "📥",
       "react.md":            "⚛️",
-      "recursion.md":        "🔄",
       "securityrelatedtopics.md": "🔐",
-      "slidingwindow.md":    "🪟",
-      "strings.md":          "🔤",
       "systemdesigneventdrivenetc.md": "🏛️",
       "systemdesigninterviewdesigncheatsheet.md": "📐",
       "systemdesignterminology.md": "📖",
-      "trees.md":            "🌲",
-      "trie.md":             "🌳",
-      "twopointer.md":       "👆",
       "websocket.md":        "🔌",
     };
+
+    const visibleDsaNotes = new Set([
+      "dsaeasytomedium.md",
+      "dsaextended.html"
+    ]);
+
+    const hiddenDsaTopicNotes = new Set([
+      "backtracking.md",
+      "binarysearch.md",
+      "bitmanipulation.md",
+      "disjoinset.md",
+      "dp.md",
+      "dsaeasytomedium_pseudocode.md",
+      "graph.md",
+      "greedy.md",
+      "heap.md",
+      "intervals.md",
+      "linkedlist.md",
+      "monotonicstack.md",
+      "prefixsum.md",
+      "queue.md",
+      "recursion.md",
+      "slidingwindow.md",
+      "strings.md",
+      "trees.md",
+      "trie.md",
+      "twopointer.md"
+    ]);
+
+    function isNoteFile(file) {
+      return file.endsWith(".md") || visibleDsaNotes.has(file);
+    }
+
+    function noteHref(file) {
+      return file.endsWith(".md") ? `markdownreader.html?file=${encodeURIComponent(file)}` : file;
+    }
 
     let libraryFiles = [...fallbackFiles];
 
@@ -942,7 +921,7 @@
       );
 
       const quizFiles = allFiles.filter(f => f.includes("quiz.html"));
-      const noteFiles = allFiles.filter(f => f.endsWith(".md"));
+      const noteFiles = allFiles.filter(isNoteFile);
 
       /* Render quizzes */
       const quizCards = quizFiles.map(file => {
@@ -968,7 +947,7 @@
 
       /* Render notes */
       const noteCards = noteFiles.map(file => {
-        const href  = `markdownreader.html?file=${encodeURIComponent(file)}`;
+        const href  = noteHref(file);
         const title = titleFromFile(file);
         const icon  = noteIconMap[file] || "📄";
         return `
@@ -987,7 +966,7 @@
 
       /* Update counters */
       const totalQuizzes = libraryFiles.filter(f => f.includes("quiz.html")).length;
-      const totalNotes   = libraryFiles.filter(f => f.endsWith(".md")).length;
+      const totalNotes   = libraryFiles.filter(isNoteFile).length;
       quizCount.textContent = totalQuizzes;
       noteCount.textContent = totalNotes;
       count.textContent     = libraryFiles.length;
@@ -1002,7 +981,7 @@
         const manifest = await response.json();
         const files = Array.isArray(manifest) ? manifest : manifest.files;
         if (Array.isArray(files) && files.length) {
-          const mdFiles = files.filter(file => file.endsWith(".md"));
+          const noteFiles = files.filter(file => file.endsWith(".md") && !hiddenDsaTopicNotes.has(file));
           const quizFiles = [
             "custom-test.html",
             "quiz.html?id=agenticai",
@@ -1015,7 +994,7 @@
             "quiz.html?id=systemdesign",
             "quiz.html?id=go"
           ];
-          libraryFiles = [...mdFiles, ...quizFiles].sort((a, b) => a.localeCompare(b));
+          libraryFiles = [...noteFiles, "dsaextended.html", ...quizFiles].sort((a, b) => a.localeCompare(b));
         }
       } catch (error) {
         libraryFiles = [...fallbackFiles];

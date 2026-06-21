@@ -1,0 +1,1291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DSA Extended - Complete Problem Index</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --bg: #0a0c10;
+            --surface: #111318;
+            --surface2: #181c23;
+            --border: rgba(255,255,255,0.08);
+            --border-hover: rgba(255,255,255,0.18);
+            --text: #e8edf5;
+            --text-2: #8b95a8;
+            --text-3: #565f70;
+            --accent: #6c8cff;
+            --accent-glow: rgba(108,140,255,0.18);
+            --note-accent: #22d3a6;
+            --note-glow: rgba(34,211,166,0.12);
+            --radius: 12px;
+            --radius-lg: 18px;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.025;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+            background-size: 200px;
+        }
+
+        .blob {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(100px);
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.35;
+        }
+        .blob-1 {
+            width: 600px;
+            height: 500px;
+            top: -180px;
+            left: -200px;
+            background: radial-gradient(circle, rgba(108,140,255,0.25) 0%, transparent 70%);
+        }
+        .blob-2 {
+            width: 500px;
+            height: 400px;
+            top: 0;
+            right: -180px;
+            background: radial-gradient(circle, rgba(249,115,22,0.18) 0%, transparent 70%);
+        }
+        .blob-3 {
+            width: 400px;
+            height: 400px;
+            bottom: 10%;
+            left: 35%;
+            background: radial-gradient(circle, rgba(34,211,166,0.12) 0%, transparent 70%);
+        }
+
+        nav {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 clamp(16px, 5vw, 48px);
+            height: 60px;
+            background: rgba(10,12,16,0.75);
+            backdrop-filter: blur(20px) saturate(1.4);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+            font-size: 1rem;
+            color: var(--text);
+            text-decoration: none;
+            letter-spacing: -0.01em;
+        }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-link {
+            color: var(--text-2);
+            text-decoration: none;
+            font-size: 0.86rem;
+            font-weight: 600;
+            padding: 8px 11px;
+            border-radius: 8px;
+            transition: background 180ms, color 180ms;
+        }
+
+        .nav-link:hover {
+            color: var(--text);
+            background: rgba(255,255,255,0.06);
+        }
+
+        .nav-logo-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent);
+            box-shadow: 0 0 10px var(--accent);
+            animation: pulse 2.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(0.85); }
+        }
+
+        main {
+            position: relative;
+            z-index: 1;
+            width: min(1400px, calc(100% - 32px));
+            margin: 0 auto;
+            padding: 72px 0 100px;
+        }
+
+        .hero {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
+            gap: 32px;
+            align-items: end;
+            margin-bottom: 38px;
+        }
+
+        .hero-eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--accent);
+            margin-bottom: 20px;
+            padding: 5px 12px;
+            border: 1px solid rgba(108,140,255,0.25);
+            border-radius: 999px;
+            background: rgba(108,140,255,0.07);
+        }
+
+        .hero-eyebrow::before {
+            content: '';
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: var(--accent);
+            box-shadow: 0 0 6px var(--accent);
+        }
+
+        .hero h1 {
+            font-size: clamp(2.4rem, 6vw, 4.2rem);
+            font-weight: 800;
+            line-height: 1.05;
+            letter-spacing: -0.03em;
+            color: var(--text);
+            max-width: 850px;
+            margin-bottom: 20px;
+        }
+
+        .hero h1 em {
+            font-style: normal;
+            background: linear-gradient(135deg, #6c8cff 0%, #a78bfa 50%, #22d3a6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-desc {
+            font-size: 1.05rem;
+            line-height: 1.75;
+            color: var(--text-2);
+            max-width: 660px;
+        }
+
+        .hero-panel {
+            background: linear-gradient(180deg, rgba(17,19,24,0.92), rgba(17,19,24,0.66));
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 18px;
+            box-shadow: 0 18px 56px rgba(0,0,0,0.22);
+        }
+
+        .hero-panel-label {
+            color: var(--text-3);
+            font-size: 0.74rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+        }
+
+        .hero-panel-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 12px 0;
+            border-top: 1px solid var(--border);
+            color: var(--text-2);
+            font-size: 0.9rem;
+        }
+
+        .hero-panel-row:first-of-type {
+            border-top: 0;
+            padding-top: 0;
+        }
+
+        .hero-panel-row strong {
+            color: var(--text);
+            font-weight: 700;
+            text-align: right;
+        }
+
+        .controls-panel {
+            position: sticky;
+            top: 76px;
+            z-index: 50;
+            margin-bottom: 28px;
+            padding: 14px;
+            background: rgba(10,12,16,0.78);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            backdrop-filter: blur(20px) saturate(1.25);
+            box-shadow: 0 16px 50px rgba(0,0,0,0.22);
+        }
+
+        .search-row {
+            display: grid;
+            grid-template-columns: minmax(240px, 1fr) auto;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .search-bar {
+            position: relative;
+        }
+
+        .search-bar svg {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 17px;
+            height: 17px;
+            color: var(--text-3);
+            pointer-events: none;
+        }
+
+        #searchBox {
+            width: 100%;
+            height: 50px;
+            padding: 0 50px 0 46px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text);
+            font: 0.95rem/1 'Inter', sans-serif;
+            outline: none;
+            transition: border-color 180ms, box-shadow 180ms;
+        }
+
+        #searchBox::placeholder {
+            color: var(--text-3);
+        }
+
+        #searchBox:focus {
+            border-color: rgba(108,140,255,0.5);
+            box-shadow: 0 0 0 3px rgba(108,140,255,0.1);
+        }
+
+        .clear-search {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 34px;
+            height: 34px;
+            border: 0;
+            border-radius: 8px;
+            background: transparent;
+            color: var(--text-3);
+            font-size: 1.25rem;
+            line-height: 1;
+            cursor: pointer;
+            transition: background 180ms, color 180ms;
+        }
+
+        .clear-search:hover {
+            background: rgba(255,255,255,0.06);
+            color: var(--text);
+        }
+
+        .search-meta {
+            min-width: 148px;
+            color: var(--text-2);
+            font-size: 0.84rem;
+            font-weight: 600;
+            text-align: right;
+        }
+
+        .topic-jump {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding: 12px 2px 2px;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-hover) transparent;
+        }
+
+        .topic-chip {
+            flex: 0 0 auto;
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            background: rgba(17,19,24,0.78);
+            color: var(--text-2);
+            font: 700 0.78rem/1 'Inter', sans-serif;
+            padding: 8px 11px;
+            cursor: pointer;
+            transition: background 180ms, border-color 180ms, color 180ms, transform 180ms;
+        }
+
+        .topic-chip:hover {
+            transform: translateY(-1px);
+            background: rgba(34,211,166,0.08);
+            border-color: rgba(34,211,166,0.28);
+            color: var(--text);
+        }
+
+        .stats-bar {
+            display: flex;
+            justify-content: space-around;
+            background: var(--surface);
+            padding: 24px;
+            border-radius: var(--radius-lg);
+            margin-bottom: 48px;
+            border: 1px solid var(--border);
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2.2em;
+            font-weight: 800;
+            color: var(--accent);
+            letter-spacing: -0.02em;
+        }
+
+        .stat-label {
+            color: var(--text-2);
+            font-size: 0.85em;
+            margin-top: 4px;
+        }
+
+        .topic-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 16px;
+            margin-bottom: 48px;
+            align-items: start;
+        }
+
+        .topic-card {
+            position: relative;
+            background: var(--surface);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            border: 1px solid var(--border);
+            overflow: hidden;
+            transition: transform 200ms, box-shadow 200ms, border-color 200ms;
+        }
+
+        .topic-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent), var(--note-accent));
+            opacity: 0.75;
+        }
+
+        .topic-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            background: radial-gradient(circle at top left, var(--note-glow) 0%, transparent 65%);
+            transition: opacity 250ms;
+        }
+
+        .topic-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 18px 48px rgba(0,0,0,0.3), 0 0 0 1px rgba(34,211,166,0.1);
+            border-color: rgba(34,211,166,0.35);
+        }
+
+        .topic-card:hover::before {
+            opacity: 1;
+        }
+
+        .topic-card-header {
+            position: relative;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 12px;
+            align-items: start;
+            margin-bottom: 18px;
+        }
+
+        .topic-title {
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            letter-spacing: -0.02em;
+            transition: color 200ms;
+        }
+
+        .topic-title:hover {
+            color: var(--note-accent);
+        }
+
+        .topic-meta {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 8px;
+            color: var(--text-3);
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .topic-action {
+            color: var(--text-2);
+            text-decoration: none;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 8px 10px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            transition: background 180ms, border-color 180ms, color 180ms;
+        }
+
+        .topic-action:hover {
+            color: var(--text);
+            background: rgba(108,140,255,0.08);
+            border-color: rgba(108,140,255,0.28);
+        }
+
+        .topic-icon {
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .problem-list {
+            position: relative;
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .problem-list li {
+            padding: 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .problem-list li:last-child {
+            border-bottom: none;
+        }
+
+        .problem-link {
+            position: relative;
+            color: var(--text-2);
+            text-decoration: none;
+            display: grid;
+            grid-template-columns: auto minmax(0, 1fr) auto;
+            gap: 10px;
+            align-items: center;
+            min-height: 42px;
+            transition: background 200ms, color 200ms;
+            padding: 8px 8px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+
+        .problem-link:hover {
+            background: rgba(255,255,255,0.035);
+            color: var(--note-accent);
+            font-weight: 500;
+        }
+
+        .problem-number {
+            display: inline-block;
+            background: rgba(108,140,255,0.15);
+            color: var(--accent);
+            padding: 3px 9px;
+            border-radius: 5px;
+            font-size: 0.75em;
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .problem-name {
+            min-width: 0;
+            line-height: 1.45;
+        }
+
+        .problem-arrow {
+            color: var(--text-3);
+            opacity: 0;
+            transform: translateX(-4px);
+            transition: opacity 180ms, transform 180ms, color 180ms;
+        }
+
+        .problem-link:hover .problem-arrow {
+            color: var(--note-accent);
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .empty-state {
+            display: none;
+            text-align: center;
+            color: var(--text-2);
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 36px 20px;
+            margin-top: 18px;
+        }
+
+        .empty-state strong {
+            display: block;
+            color: var(--text);
+            font-size: 1rem;
+            margin-bottom: 8px;
+        }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .animate-in {
+            animation: fadeUp 0.45s ease both;
+        }
+
+        .animate-delay-1 { animation-delay: 0.05s; }
+        .animate-delay-2 { animation-delay: 0.10s; }
+        .animate-delay-3 { animation-delay: 0.15s; }
+
+        @media (max-width: 768px) {
+            main {
+                padding: 40px 0 80px;
+            }
+
+            nav {
+                height: auto;
+                min-height: 60px;
+                gap: 12px;
+                flex-wrap: wrap;
+                padding-top: 10px;
+                padding-bottom: 10px;
+            }
+
+            .nav-actions {
+                width: 100%;
+                overflow-x: auto;
+            }
+
+            .hero {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .hero h1 {
+                font-size: 2.2rem;
+            }
+
+            .controls-panel {
+                position: relative;
+                top: auto;
+            }
+
+            .search-row {
+                grid-template-columns: 1fr;
+            }
+
+            .search-meta {
+                text-align: left;
+            }
+
+            .topic-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-bar {
+                flex-direction: column;
+                gap: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="blob blob-1" aria-hidden="true"></div>
+    <div class="blob blob-2" aria-hidden="true"></div>
+    <div class="blob blob-3" aria-hidden="true"></div>
+
+    <nav>
+        <a href="index.html" class="nav-logo">
+            <div class="nav-logo-dot"></div>
+            Dev Notes
+        </a>
+        <div class="nav-actions" aria-label="Page links">
+            <a class="nav-link" href="index.html">Home</a>
+            <a class="nav-link" href="markdownreader.html?file=dsaeasytomedium.md">Easy to Medium</a>
+        </div>
+    </nav>
+
+    <main>
+        <section class="hero animate-in">
+            <div>
+                <div class="hero-eyebrow">Complete DSA Problem Index</div>
+                <h1>All <em>DSA problems</em> organized by pattern.</h1>
+                <p class="hero-desc">A comprehensive index of Data Structures & Algorithms problems from every topic. Search, jump by pattern, or open a full topic guide with detailed solutions, intuition, and code.</p>
+            </div>
+            <aside class="hero-panel" aria-label="Index summary">
+                <div class="hero-panel-label">Study map</div>
+                <div class="hero-panel-row">
+                    <span>Coverage</span>
+                    <strong>Pattern-first</strong>
+                </div>
+                <div class="hero-panel-row">
+                    <span>Open any topic</span>
+                    <strong>Full guide</strong>
+                </div>
+                <div class="hero-panel-row">
+                    <span>Search scope</span>
+                    <strong>Topics + problems</strong>
+                </div>
+            </aside>
+        </section>
+
+        <div class="controls-panel animate-in animate-delay-1">
+            <div class="search-row">
+                <div class="search-bar">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <circle cx="11" cy="11" r="7"></circle>
+                        <path d="m21 21-4.35-4.35"></path>
+                    </svg>
+                    <input type="text" id="searchBox" placeholder="Search problems by name or topic..." autocomplete="off">
+                    <button class="clear-search" id="clearSearch" type="button" aria-label="Clear search">×</button>
+                </div>
+                <div class="search-meta" id="searchMeta">Showing all problems</div>
+            </div>
+            <div class="topic-jump" id="topicJump" aria-label="Jump to topic"></div>
+        </div>
+
+        <div class="stats-bar animate-in animate-delay-2">
+            <div class="stat-item">
+                <div class="stat-number" id="totalTopics">0</div>
+                <div class="stat-label">Topics</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="totalProblems">0</div>
+                <div class="stat-label">Total Problems</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="totalPatterns">0</div>
+                <div class="stat-label">Patterns Covered</div>
+            </div>
+        </div>
+
+        <div class="topic-grid animate-in animate-delay-3" id="topicGrid"></div>
+        <div class="empty-state" id="emptyState">
+            <strong>No matching DSA problems found.</strong>
+            Try a topic name like graph, window, trie, or DP.
+        </div>
+    </main>
+
+    <script>
+        const topics = [
+            {
+                "name": "Backtracking",
+                "file": "backtracking.md",
+                "icon": "🔄",
+                "problems": [
+                    "Subsets (Power Set)",
+                    "Subsets II (With Duplicates)",
+                    "Permutations",
+                    "Permutations II (With Duplicates)",
+                    "Combination Sum",
+                    "Combination Sum II (Each element used once)",
+                    "N-Queens",
+                    "Word Search",
+                    "Palindrome Partitioning",
+                    "Sudoku Solver"
+                ]
+            },
+            {
+                "name": "Binary Search",
+                "file": "binarysearch.md",
+                "icon": "🔍",
+                "problems": [
+                    "Classic Binary Search",
+                    "Find First and Last Position (Search Range)",
+                    "Search in Rotated Sorted Array",
+                    "Find Minimum in Rotated Sorted Array",
+                    "Koko Eating Bananas (Binary Search on Answer)",
+                    "Median of Two Sorted Arrays",
+                    "Find Peak Element",
+                    "Search a 2D Matrix",
+                    "Aggressive Cows / Allocate Books (Maximize Minimum)",
+                    "Find in Mountain Array (Unknown Size / Double Binary Search)"
+                ]
+            },
+            {
+                "name": "Bit Manipulation",
+                "file": "bitmanipulation.md",
+                "icon": "💻",
+                "problems": [
+                    "Check if a Number is a Power of Two",
+                    "Count Set Bits (Hamming Weight / Popcount)",
+                    "Find the Single Number (XOR Trick)",
+                    "Find Two Non-Repeating Numbers",
+                    "Reverse Bits of an Integer",
+                    "Find the Missing Number",
+                    "Subsets Generation using Bitmask",
+                    "Maximum XOR of Two Numbers in an Array",
+                    "Counting Bits — Number of 1s for 0 to N",
+                    "Single Number III — Element Appearing Once When Others Appear Three Times"
+                ]
+            },
+            {
+                "name": "Disjoint Set (Union-Find)",
+                "file": "disjoinset.md",
+                "icon": "🔗",
+                "problems": [
+                    "Number of Connected Components in an Undirected Graph",
+                    "Number of Islands (Union-Find approach)",
+                    "Redundant Connection",
+                    "Accounts Merge",
+                    "Graph Valid Tree",
+                    "Smallest String With Swaps",
+                    "Satisfiability of Equality Equations",
+                    "Minimum Spanning Tree — Kruskal's Algorithm",
+                    "Detect Cycle in Undirected Graph / Number of Operations to Make Network Connected",
+                    "Swim in Rising Water"
+                ]
+            },
+            {
+                "name": "Dynamic Programming",
+                "file": "dp.md",
+                "icon": "📊",
+                "problems": [
+                    "Climbing Stairs (Linear DP / Fibonacci)",
+                    "House Robber (Linear DP with Skip)",
+                    "Longest Increasing Subsequence (LIS)",
+                    "Longest Common Subsequence (LCS)",
+                    "Edit Distance (Levenshtein)",
+                    "0/1 Knapsack",
+                    "Coin Change (Minimum Coins)",
+                    "Coin Change II (Count Ways)",
+                    "Partition Equal Subset Sum",
+                    "Word Break",
+                    "Matrix Chain Multiplication (Interval DP)",
+                    "Burst Balloons (Interval DP — Reverse Thinking)",
+                    "Unique Paths (Grid DP)",
+                    "Minimum Path Sum (Grid DP)",
+                    "Maximal Square (2D Grid DP)",
+                    "Best Time to Buy/Sell Stock with Cooldown (State Machine DP)",
+                    "Longest Palindromic Substring (Palindrome DP)",
+                    "Decode Ways (Conditional Linear DP)",
+                    "Distinct Subsequences (Count DP on Two Sequences)",
+                    "Russian Doll Envelopes (2D LIS)"
+                ]
+            },
+            {
+                "name": "Graph Algorithms",
+                "file": "graph.md",
+                "icon": "🕸️",
+                "problems": [
+                    "Number of Islands",
+                    "Clone Graph",
+                    "Course Schedule",
+                    "Course Schedule II",
+                    "Number of Connected Components",
+                    "Pacific Atlantic Water Flow",
+                    "Walls and Gates",
+                    "Shortest Path in Binary Matrix",
+                    "Word Ladder",
+                    "Network Delay Time",
+                    "Cheapest Flights Within K Stops",
+                    "Redundant Connection",
+                    "Alien Dictionary",
+                    "Graph Valid Tree",
+                    "Swim in Rising Water"
+                ]
+            },
+            {
+                "name": "Greedy Algorithms",
+                "file": "greedy.md",
+                "icon": "🎯",
+                "problems": [
+                    "Activity Selection / Interval Scheduling",
+                    "Fractional Knapsack",
+                    "Jump Game II — Minimum Jumps",
+                    "Gas Station",
+                    "Meeting Rooms II — Minimum Meeting Rooms",
+                    "Task Scheduler",
+                    "Candy Distribution",
+                    "Huffman Encoding (Greedy + Heap)",
+                    "Minimum Number of Platforms (Trains)",
+                    "Minimum Cost to Connect Ropes"
+                ]
+            },
+            {
+                "name": "Heap (Priority Queue)",
+                "file": "heap.md",
+                "icon": "⛰️",
+                "problems": [
+                    "Kth Largest Element in an Array",
+                    "Top K Frequent Elements",
+                    "Merge K Sorted Lists",
+                    "Find Median from Data Stream",
+                    "Task Scheduler",
+                    "K Closest Points to Origin",
+                    "Reorganize String",
+                    "Dijkstra's Shortest Path",
+                    "Minimum Cost to Connect Ropes (Huffman-style)",
+                    "Find K Pairs with Smallest Sums"
+                ]
+            },
+            {
+                "name": "Intervals",
+                "file": "intervals.md",
+                "icon": "📏",
+                "problems": [
+                    "Merge Intervals",
+                    "Insert Interval",
+                    "Meeting Rooms I (Can Attend All?)",
+                    "Meeting Rooms II (Minimum Rooms Required)",
+                    "Non-Overlapping Intervals (Minimum Removals)",
+                    "Minimum Number of Arrows to Burst Balloons",
+                    "Maximum CPU Load / Peak Overlap Count",
+                    "Employee Free Time",
+                    "Interval List Intersections",
+                    "Summary Ranges / Data Stream as Disjoint Intervals"
+                ]
+            },
+            {
+                "name": "Linked List",
+                "file": "linkedlist.md",
+                "icon": "🔗",
+                "problems": [
+                    "Reverse a Linked List",
+                    "Detect Cycle in a Linked List",
+                    "Find the Middle of a Linked List",
+                    "Merge Two Sorted Linked Lists",
+                    "Remove Nth Node from End of List",
+                    "Linked List Cycle II — Find Cycle Start",
+                    "Reorder List",
+                    "Merge K Sorted Linked Lists",
+                    "Intersection of Two Linked Lists",
+                    "Palindrome Linked List",
+                    "Flatten a Multilevel Doubly Linked List",
+                    "Copy List with Random Pointer",
+                    "Sort a Linked List (Merge Sort)",
+                    "LRU Cache",
+                    "Reverse Nodes in k-Group"
+                ]
+            },
+            {
+                "name": "Monotonic Stack",
+                "file": "monotonicstack.md",
+                "icon": "📚",
+                "problems": [
+                    "Next Greater Element I",
+                    "Daily Temperatures",
+                    "Largest Rectangle in Histogram",
+                    "Trapping Rain Water",
+                    "Maximal Rectangle (Binary Matrix)",
+                    "Stock Span Problem",
+                    "Remove K Digits to Make Smallest Number",
+                    "Next Greater Element II (Circular Array)",
+                    "Sum of Subarray Minimums",
+                    "Largest Rectangle in Buildings / Skyline (132 Pattern)"
+                ]
+            },
+            {
+                "name": "Prefix Sum",
+                "file": "prefixsum.md",
+                "icon": "➕",
+                "problems": [
+                    "Range Sum Query (1D)",
+                    "Subarray Sum Equals K",
+                    "Product of Array Except Self",
+                    "Find Pivot Index",
+                    "Contiguous Array (Equal 0s and 1s)",
+                    "Range Sum Query 2D (Immutable)",
+                    "Subarray Sums Divisible by K",
+                    "Maximum Sum of Subarray of Size K (Sliding Window + Prefix)",
+                    "Count of Range Sum",
+                    "Minimum Size Subarray Sum (Prefix Sum + Binary Search)"
+                ]
+            },
+            {
+                "name": "Queue",
+                "file": "queue.md",
+                "icon": "📋",
+                "problems": [
+                    "Sliding Window Maximum",
+                    "First Non-Repeating Character in Stream",
+                    "BFS – Shortest Path in Binary Matrix",
+                    "Design Circular Queue",
+                    "Rotten Oranges – Multi-Source BFS",
+                    "Design Hit Counter",
+                    "Largest Rectangle in Histogram",
+                    "Sliding Window Minimum with Deque",
+                    "Task Scheduler",
+                    "Design Snake Game"
+                ]
+            },
+            {
+                "name": "Recursion",
+                "file": "recursion.md",
+                "icon": "🔁",
+                "problems": [
+                    "Factorial",
+                    "Fibonacci Number",
+                    "Power Function (Fast Exponentiation)",
+                    "Binary Search (Recursive)",
+                    "Merge Sort",
+                    "Tower of Hanoi",
+                    "Generate All Subsets (Power Set)",
+                    "Permutations of a String/Array",
+                    "Combination Sum",
+                    "N-Queens",
+                    "Word Search in Grid",
+                    "Flatten Nested List (Recursive Structures)",
+                    "Height of Binary Tree",
+                    "Diameter of Binary Tree",
+                    "Validate Binary Search Tree",
+                    "Lowest Common Ancestor (LCA)",
+                    "Decode Ways",
+                    "Letter Combinations of a Phone Number",
+                    "Regular Expression Matching",
+                    "Sudoku Solver"
+                ]
+            },
+            {
+                "name": "Sliding Window",
+                "file": "slidingwindow.md",
+                "icon": "🪟",
+                "problems": [
+                    "Maximum Sum Subarray of Size K",
+                    "Longest Substring Without Repeating Characters",
+                    "Minimum Window Substring",
+                    "Longest Substring with At Most K Distinct Characters",
+                    "Fruits Into Baskets",
+                    "Longest Repeating Character Replacement",
+                    "Permutation in String",
+                    "Find All Anagrams in a String",
+                    "Maximum Consecutive Ones III",
+                    "Subarray Product Less Than K",
+                    "Minimum Size Subarray Sum",
+                    "Sliding Window Maximum",
+                    "Count Distinct Subarrays with At Most K Distinct",
+                    "Longest Subarray with Ones After Deletion",
+                    "Minimum Window Subsequence"
+                ]
+            },
+            {
+                "name": "Strings",
+                "file": "strings.md",
+                "icon": "📝",
+                "problems": [
+                    "Longest Substring Without Repeating Characters",
+                    "Longest Repeating Character Replacement",
+                    "Minimum Window Substring",
+                    "Permutation in String",
+                    "Find All Anagrams in a String",
+                    "Longest Substring with At Most K Distinct Characters",
+                    "Group Anagrams",
+                    "Valid Anagram",
+                    "Isomorphic Strings",
+                    "Word Pattern",
+                    "Determine if Two Strings Are Close",
+                    "Find the Difference",
+                    "Reverse Words in a String",
+                    "String Compression",
+                    "Zigzag Conversion",
+                    "Remove All Adjacent Duplicates in String II",
+                    "Multiply Strings",
+                    "Reverse Words in a String III",
+                    "String to Integer (atoi)",
+                    "Decode String",
+                    "Compare Version Numbers",
+                    "Simplify Path",
+                    "Restore IP Addresses",
+                    "Basic Calculator II",
+                    "Longest Palindromic Substring",
+                    "Palindromic Substrings",
+                    "Valid Palindrome II",
+                    "Count Palindromic Subsequences",
+                    "Partition Labels",
+                    "Remove Duplicate Letters",
+                    "Reorganize String",
+                    "Partition String Into Substrings With Unique Characters",
+                    "Implement strStr()",
+                    "Repeated DNA Sequences",
+                    "Longest Happy Prefix",
+                    "Word Break",
+                    "Decode Ways",
+                    "Interleaving String",
+                    "Longest Common Subsequence",
+                    "Word Ladder",
+                    "Edit Distance",
+                    "Distinct Subsequences",
+                    "Word Search II",
+                    "Alien Dictionary",
+                    "Text Justification",
+                    "Shortest Way to Form String",
+                    "Minimum Deletions to Make Character Frequencies Unique",
+                    "Encode and Decode Strings",
+                    "Find and Replace Pattern",
+                    "Shortest Palindrome",
+                    "Longest Common Prefix",
+                    "First Unique Character in a String",
+                    "Ransom Note",
+                    "Check if a String Contains All Binary Codes of Size K",
+                    "Maximum Number of Vowels in a Substring of Given Length",
+                    "Swap For Longest Repeated Character Substring",
+                    "Count and Say",
+                    "Remove Duplicate Letters to Obtain Lexicographically Smallest Result",
+                    "Custom Sort String",
+                    "Smallest Subsequence of Distinct Characters"
+                ]
+            },
+            {
+                "name": "Trees",
+                "file": "trees.md",
+                "icon": "🌳",
+                "problems": [
+                    "Binary Tree Maximum Path Sum",
+                    "Diameter of Binary Tree",
+                    "Lowest Common Ancestor (LCA) of a Binary Tree",
+                    "Binary Tree Level Order Traversal",
+                    "Serialize and Deserialize Binary Tree",
+                    "Validate Binary Search Tree",
+                    "Binary Tree Right Side View",
+                    "Construct Binary Tree from Preorder and Inorder Traversal",
+                    "Kth Smallest Element in a BST",
+                    "Flatten Binary Tree to Linked List",
+                    "Path Sum II (All Root-to-Leaf Paths with Target Sum)",
+                    "Morris Inorder Traversal (O(1) Space)",
+                    "Count Good Nodes in a Binary Tree",
+                    "Fenwick Tree (Binary Indexed Tree) — Range Sum Queries",
+                    "Fenwick Tree — Count of Smaller Numbers After Self"
+                ]
+            },
+            {
+                "name": "Trie",
+                "file": "trie.md",
+                "icon": "🔤",
+                "problems": [
+                    "Implement Trie (Prefix Tree)",
+                    "Word Search II",
+                    "Replace Words",
+                    "Design Add and Search Words",
+                    "Longest Word in Dictionary",
+                    "Maximum XOR of Two Numbers in an Array",
+                    "Palindrome Pairs",
+                    "Word Break II",
+                    "Design Search Autocomplete System",
+                    "Count Distinct Substrings (Suffix Trie)"
+                ]
+            },
+            {
+                "name": "Two Pointers",
+                "file": "twopointer.md",
+                "icon": "👉👈",
+                "problems": [
+                    "Two Sum II (Sorted Array)",
+                    "Container With Most Water",
+                    "3Sum",
+                    "Remove Duplicates from Sorted Array",
+                    "Linked List Cycle Detection (Floyd's Algorithm)",
+                    "Trapping Rain Water",
+                    "Minimum Size Subarray Sum",
+                    "Longest Substring Without Repeating Characters",
+                    "Sort Colors (Dutch National Flag)",
+                    "Merge Sorted Array"
+                ]
+            }
+        ];
+
+        function initializePage() {
+            const topicGrid = document.getElementById('topicGrid');
+            const topicJump = document.getElementById('topicJump');
+            let totalProblems = 0;
+
+            topics.forEach((topic, topicIndex) => {
+                totalProblems += topic.problems.length;
+
+                const card = document.createElement('div');
+                card.className = 'topic-card';
+                card.id = `topic-${topicIndex}`;
+                card.setAttribute('data-topic', topic.name.toLowerCase());
+
+                const header = document.createElement('div');
+                header.className = 'topic-card-header';
+
+                const titleWrap = document.createElement('div');
+                const title = document.createElement('div');
+                title.className = 'topic-title';
+                title.innerHTML = `<span class="topic-icon">${topic.icon}</span>${topic.name}`;
+                title.onclick = () => openMarkdown(topic.file);
+
+                const meta = document.createElement('div');
+                meta.className = 'topic-meta';
+                meta.textContent = `${topic.problems.length} problems`;
+
+                const topicAction = document.createElement('a');
+                topicAction.className = 'topic-action';
+                topicAction.href = `markdownreader.html?file=${topic.file}`;
+                topicAction.textContent = 'Open';
+
+                titleWrap.appendChild(title);
+                titleWrap.appendChild(meta);
+                header.appendChild(titleWrap);
+                header.appendChild(topicAction);
+
+                const problemList = document.createElement('ul');
+                problemList.className = 'problem-list';
+
+                topic.problems.forEach((problem, index) => {
+                    const li = document.createElement('li');
+                    const link = document.createElement('a');
+                    link.href = '#';
+                    link.className = 'problem-link';
+                    link.setAttribute('data-problem', problem.toLowerCase());
+                    link.innerHTML = `<span class="problem-number">${index + 1}</span><span class="problem-name">${problem}</span><span class="problem-arrow">→</span>`;
+                    link.onclick = (e) => {
+                        e.preventDefault();
+                        openMarkdown(topic.file, problem);
+                    };
+                    li.appendChild(link);
+                    problemList.appendChild(li);
+                });
+
+                const chip = document.createElement('button');
+                chip.className = 'topic-chip';
+                chip.type = 'button';
+                chip.textContent = `${topic.icon} ${topic.name}`;
+                chip.onclick = () => {
+                    card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                };
+                topicJump.appendChild(chip);
+
+                card.appendChild(header);
+                card.appendChild(problemList);
+                topicGrid.appendChild(card);
+            });
+
+
+            document.getElementById('totalTopics').textContent = topics.length;
+            document.getElementById('totalProblems').textContent = totalProblems;
+            document.getElementById('totalPatterns').textContent = topics.length;
+
+            setupSearch();
+        }
+
+        function openMarkdown(file, problem = null) {
+            let url = `markdownreader.html?file=${file}`;
+            if (problem) {
+                const anchor = problem.toLowerCase()
+                    .replace(/[^\w\s-]/g, '')
+                    .replace(/\s+/g, '-')
+                    .replace(/--+/g, '-');
+                url += `#${anchor}`;
+            }
+            window.location.href = url;
+        }
+
+        function setupSearch() {
+            const searchBox = document.getElementById('searchBox');
+            const clearSearch = document.getElementById('clearSearch');
+            const searchMeta = document.getElementById('searchMeta');
+            const emptyState = document.getElementById('emptyState');
+            const cards = document.querySelectorAll('.topic-card');
+            const totalProblems = topics.reduce((sum, topic) => sum + topic.problems.length, 0);
+
+            function applySearch() {
+                const searchTerm = searchBox.value.trim().toLowerCase();
+                let visibleTopics = 0;
+                let visibleProblems = 0;
+
+                cards.forEach(card => {
+                    const topicName = card.getAttribute('data-topic');
+                    const problemLinks = card.querySelectorAll('.problem-link');
+                    let hasMatch = false;
+
+                    if (topicName.includes(searchTerm)) {
+                        hasMatch = true;
+                        problemLinks.forEach(link => {
+                            link.parentElement.style.display = '';
+                            visibleProblems++;
+                        });
+                    } else {
+                        problemLinks.forEach(link => {
+                            const problemName = link.getAttribute('data-problem');
+                            if (problemName.includes(searchTerm)) {
+                                link.parentElement.style.display = '';
+                                hasMatch = true;
+                                visibleProblems++;
+                            } else {
+                                link.parentElement.style.display = 'none';
+                            }
+                        });
+                    }
+
+                    if (hasMatch) visibleTopics++;
+                    card.style.display = hasMatch ? '' : 'none';
+                });
+
+                if (!searchTerm) {
+                    searchMeta.textContent = `Showing ${totalProblems} problems`;
+                } else {
+                    searchMeta.textContent = `${visibleProblems} problems in ${visibleTopics} topics`;
+                }
+                emptyState.style.display = visibleTopics ? 'none' : 'block';
+                clearSearch.style.visibility = searchTerm ? 'visible' : 'hidden';
+            }
+
+            clearSearch.addEventListener('click', () => {
+                searchBox.value = '';
+                searchBox.focus();
+                applySearch();
+            });
+
+            searchBox.addEventListener('input', applySearch);
+            applySearch();
+        }
+
+        window.onload = initializePage;
+    </script>
+</body>
+</html>
