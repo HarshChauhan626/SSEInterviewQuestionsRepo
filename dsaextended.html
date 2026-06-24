@@ -734,6 +734,54 @@
             line-height: 1.45;
         }
 
+        .problem-badges {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            flex-shrink: 0;
+        }
+
+        /* LeetCode difficulty badges */
+        .badge-diff {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 7px;
+            border-radius: 5px;
+            font-size: 0.68em;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            letter-spacing: 0.02em;
+            white-space: nowrap;
+        }
+        .badge-easy   { background: rgba(34,197,94,0.15);  color: #4ade80; border: 1px solid rgba(34,197,94,0.28); }
+        .badge-medium { background: rgba(251,146,60,0.15); color: #fb923c; border: 1px solid rgba(251,146,60,0.28); }
+        .badge-hard   { background: rgba(248,113,113,0.15);color: #f87171; border: 1px solid rgba(248,113,113,0.28); }
+
+        /* Interview priority badges */
+        .badge-priority {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 7px;
+            border-radius: 5px;
+            font-size: 0.68em;
+            font-weight: 800;
+            font-family: 'JetBrains Mono', monospace;
+            letter-spacing: 0.02em;
+            white-space: nowrap;
+        }
+        .badge-p0 { background: rgba(239,68,68,0.18);  color: #ef4444; border: 1px solid rgba(239,68,68,0.35); }
+        .badge-p1 { background: rgba(234,179,8,0.15);  color: #eab308; border: 1px solid rgba(234,179,8,0.30); }
+        .badge-p2 { background: rgba(148,163,184,0.12);color: #94a3b8; border: 1px solid rgba(148,163,184,0.22); }
+
+        /* Random list badge row */
+        .random-badges {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-top: 5px;
+            flex-wrap: wrap;
+        }
+
         .problem-arrow {
             color: var(--text-3);
             opacity: 0;
@@ -746,6 +794,37 @@
             opacity: 1;
             transform: translateX(0);
         }
+
+        /* Sort-by control row */
+        .sort-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .sort-row label {
+            color: var(--text-2);
+            font-size: 0.78rem;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+        .sort-select {
+            height: 36px;
+            padding: 0 12px;
+            background: rgba(10,12,16,0.52);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font: 0.85rem/1 'Inter', sans-serif;
+            outline: none;
+            cursor: pointer;
+            transition: border-color 180ms, box-shadow 180ms;
+        }
+        .sort-select:focus {
+            border-color: rgba(108,140,255,0.5);
+            box-shadow: 0 0 0 3px rgba(108,140,255,0.1);
+        }
+        .sort-select option { background: #111318; }
 
         .empty-state {
             display: none;
@@ -929,6 +1008,14 @@
                 </div>
                 <button class="generate-button" id="generateRandom" type="button">Generate List</button>
             </div>
+            <div class="sort-row">
+                <label for="sortMode">Sort By:</label>
+                <select id="sortMode" class="sort-select">
+                    <option value="random">🔀 Random (default)</option>
+                    <option value="priority">🔥 Priority (P0 → P2)</option>
+                    <option value="level">📊 Level (Easy → Hard)</option>
+                </select>
+            </div>
             <div class="random-results" id="randomResults" aria-live="polite">
                 <div class="random-results-header">
                     <span id="randomSummary">Generated questions</span>
@@ -941,421 +1028,395 @@
     </main>
 
     <script>
+        // Each problem: { name, level: 'Easy'|'Medium'|'Hard', priority: 'P0'|'P1'|'P2' }
+        // Priority: P0 = Must-know (asked in 80%+ interviews), P1 = Important, P2 = Good-to-know
         const topics = [
             {
-                "name": "Backtracking",
-                "file": "backtracking.md",
-                "icon": "🔄",
-                "problems": [
-                    "Subsets (Power Set)",
-                    "Subsets II (With Duplicates)",
-                    "Permutations",
-                    "Permutations II (With Duplicates)",
-                    "Combination Sum",
-                    "Combination Sum II (Each element used once)",
-                    "N-Queens",
-                    "Word Search",
-                    "Palindrome Partitioning",
-                    "Sudoku Solver"
+                name: "Backtracking", file: "backtracking.md", icon: "🔄",
+                problems: [
+                    { name: "Subsets (Power Set)",                              level: "Easy",   priority: "P0" },
+                    { name: "Subsets II (With Duplicates)",                      level: "Medium", priority: "P1" },
+                    { name: "Permutations",                                      level: "Medium", priority: "P0" },
+                    { name: "Permutations II (With Duplicates)",                 level: "Medium", priority: "P1" },
+                    { name: "Combination Sum",                                   level: "Medium", priority: "P0" },
+                    { name: "Combination Sum II (Each element used once)",       level: "Medium", priority: "P1" },
+                    { name: "N-Queens",                                          level: "Hard",   priority: "P0" },
+                    { name: "Word Search",                                       level: "Medium", priority: "P0" },
+                    { name: "Palindrome Partitioning",                           level: "Medium", priority: "P1" },
+                    { name: "Sudoku Solver",                                     level: "Hard",   priority: "P1" }
                 ]
             },
             {
-                "name": "Binary Search",
-                "file": "binarysearch.md",
-                "icon": "🔍",
-                "problems": [
-                    "Classic Binary Search",
-                    "Find First and Last Position (Search Range)",
-                    "Search in Rotated Sorted Array",
-                    "Find Minimum in Rotated Sorted Array",
-                    "Koko Eating Bananas (Binary Search on Answer)",
-                    "Median of Two Sorted Arrays",
-                    "Find Peak Element",
-                    "Search a 2D Matrix",
-                    "Aggressive Cows / Allocate Books (Maximize Minimum)",
-                    "Find in Mountain Array (Unknown Size / Double Binary Search)"
+                name: "Binary Search", file: "binarysearch.md", icon: "🔍",
+                problems: [
+                    { name: "Classic Binary Search",                                            level: "Easy",   priority: "P0" },
+                    { name: "Find First and Last Position (Search Range)",                      level: "Medium", priority: "P0" },
+                    { name: "Search in Rotated Sorted Array",                                  level: "Medium", priority: "P0" },
+                    { name: "Find Minimum in Rotated Sorted Array",                            level: "Medium", priority: "P0" },
+                    { name: "Koko Eating Bananas (Binary Search on Answer)",                   level: "Medium", priority: "P1" },
+                    { name: "Median of Two Sorted Arrays",                                     level: "Hard",   priority: "P0" },
+                    { name: "Find Peak Element",                                               level: "Medium", priority: "P1" },
+                    { name: "Search a 2D Matrix",                                              level: "Medium", priority: "P0" },
+                    { name: "Aggressive Cows / Allocate Books (Maximize Minimum)",             level: "Hard",   priority: "P1" },
+                    { name: "Find in Mountain Array (Unknown Size / Double Binary Search)",    level: "Hard",   priority: "P2" }
                 ]
             },
             {
-                "name": "Bit Manipulation",
-                "file": "bitmanipulation.md",
-                "icon": "💻",
-                "problems": [
-                    "Check if a Number is a Power of Two",
-                    "Count Set Bits (Hamming Weight / Popcount)",
-                    "Find the Single Number (XOR Trick)",
-                    "Find Two Non-Repeating Numbers",
-                    "Reverse Bits of an Integer",
-                    "Find the Missing Number",
-                    "Subsets Generation using Bitmask",
-                    "Maximum XOR of Two Numbers in an Array",
-                    "Counting Bits — Number of 1s for 0 to N",
-                    "Single Number III — Element Appearing Once When Others Appear Three Times"
+                name: "Bit Manipulation", file: "bitmanipulation.md", icon: "💻",
+                problems: [
+                    { name: "Check if a Number is a Power of Two",                            level: "Easy",   priority: "P1" },
+                    { name: "Count Set Bits (Hamming Weight / Popcount)",                     level: "Easy",   priority: "P1" },
+                    { name: "Find the Single Number (XOR Trick)",                             level: "Easy",   priority: "P0" },
+                    { name: "Find Two Non-Repeating Numbers",                                 level: "Medium", priority: "P1" },
+                    { name: "Reverse Bits of an Integer",                                    level: "Easy",   priority: "P1" },
+                    { name: "Find the Missing Number",                                       level: "Easy",   priority: "P0" },
+                    { name: "Subsets Generation using Bitmask",                              level: "Medium", priority: "P1" },
+                    { name: "Maximum XOR of Two Numbers in an Array",                        level: "Medium", priority: "P2" },
+                    { name: "Counting Bits — Number of 1s for 0 to N",                      level: "Easy",   priority: "P1" },
+                    { name: "Single Number III — Element Appearing Once When Others Appear Three Times", level: "Medium", priority: "P2" }
                 ]
             },
             {
-                "name": "Disjoint Set (Union-Find)",
-                "file": "disjoinset.md",
-                "icon": "🔗",
-                "problems": [
-                    "Number of Connected Components in an Undirected Graph",
-                    "Number of Islands (Union-Find approach)",
-                    "Redundant Connection",
-                    "Accounts Merge",
-                    "Graph Valid Tree",
-                    "Smallest String With Swaps",
-                    "Satisfiability of Equality Equations",
-                    "Minimum Spanning Tree — Kruskal's Algorithm",
-                    "Detect Cycle in Undirected Graph / Number of Operations to Make Network Connected",
-                    "Swim in Rising Water"
+                name: "Disjoint Set (Union-Find)", file: "disjoinset.md", icon: "🔗",
+                problems: [
+                    { name: "Number of Connected Components in an Undirected Graph", level: "Medium", priority: "P0" },
+                    { name: "Number of Islands (Union-Find approach)",               level: "Medium", priority: "P0" },
+                    { name: "Redundant Connection",                                  level: "Medium", priority: "P1" },
+                    { name: "Accounts Merge",                                        level: "Medium", priority: "P1" },
+                    { name: "Graph Valid Tree",                                      level: "Medium", priority: "P1" },
+                    { name: "Smallest String With Swaps",                            level: "Medium", priority: "P2" },
+                    { name: "Satisfiability of Equality Equations",                  level: "Medium", priority: "P2" },
+                    { name: "Minimum Spanning Tree — Kruskal's Algorithm",           level: "Medium", priority: "P1" },
+                    { name: "Detect Cycle in Undirected Graph / Number of Operations to Make Network Connected", level: "Medium", priority: "P1" },
+                    { name: "Swim in Rising Water",                                  level: "Hard",   priority: "P2" }
                 ]
             },
             {
-                "name": "Dynamic Programming",
-                "file": "dp.md",
-                "icon": "📊",
-                "problems": [
-                    "Climbing Stairs (Linear DP / Fibonacci)",
-                    "House Robber (Linear DP with Skip)",
-                    "Longest Increasing Subsequence (LIS)",
-                    "Longest Common Subsequence (LCS)",
-                    "Edit Distance (Levenshtein)",
-                    "0/1 Knapsack",
-                    "Coin Change (Minimum Coins)",
-                    "Coin Change II (Count Ways)",
-                    "Partition Equal Subset Sum",
-                    "Word Break",
-                    "Matrix Chain Multiplication (Interval DP)",
-                    "Burst Balloons (Interval DP — Reverse Thinking)",
-                    "Unique Paths (Grid DP)",
-                    "Minimum Path Sum (Grid DP)",
-                    "Maximal Square (2D Grid DP)",
-                    "Best Time to Buy/Sell Stock with Cooldown (State Machine DP)",
-                    "Longest Palindromic Substring (Palindrome DP)",
-                    "Decode Ways (Conditional Linear DP)",
-                    "Distinct Subsequences (Count DP on Two Sequences)",
-                    "Russian Doll Envelopes (2D LIS)"
+                name: "Dynamic Programming", file: "dp.md", icon: "📊",
+                problems: [
+                    { name: "Climbing Stairs (Linear DP / Fibonacci)",                            level: "Easy",   priority: "P0" },
+                    { name: "House Robber (Linear DP with Skip)",                                 level: "Medium", priority: "P0" },
+                    { name: "Longest Increasing Subsequence (LIS)",                              level: "Medium", priority: "P0" },
+                    { name: "Longest Common Subsequence (LCS)",                                  level: "Medium", priority: "P0" },
+                    { name: "Edit Distance (Levenshtein)",                                       level: "Hard",   priority: "P0" },
+                    { name: "0/1 Knapsack",                                                      level: "Medium", priority: "P0" },
+                    { name: "Coin Change (Minimum Coins)",                                       level: "Medium", priority: "P0" },
+                    { name: "Coin Change II (Count Ways)",                                       level: "Medium", priority: "P1" },
+                    { name: "Partition Equal Subset Sum",                                        level: "Medium", priority: "P1" },
+                    { name: "Word Break",                                                        level: "Medium", priority: "P0" },
+                    { name: "Matrix Chain Multiplication (Interval DP)",                        level: "Hard",   priority: "P1" },
+                    { name: "Burst Balloons (Interval DP — Reverse Thinking)",                  level: "Hard",   priority: "P2" },
+                    { name: "Unique Paths (Grid DP)",                                            level: "Medium", priority: "P0" },
+                    { name: "Minimum Path Sum (Grid DP)",                                        level: "Medium", priority: "P1" },
+                    { name: "Maximal Square (2D Grid DP)",                                       level: "Medium", priority: "P1" },
+                    { name: "Best Time to Buy/Sell Stock with Cooldown (State Machine DP)",      level: "Medium", priority: "P1" },
+                    { name: "Longest Palindromic Substring (Palindrome DP)",                    level: "Medium", priority: "P0" },
+                    { name: "Decode Ways (Conditional Linear DP)",                              level: "Medium", priority: "P0" },
+                    { name: "Distinct Subsequences (Count DP on Two Sequences)",                level: "Hard",   priority: "P2" },
+                    { name: "Russian Doll Envelopes (2D LIS)",                                  level: "Hard",   priority: "P2" }
                 ]
             },
             {
-                "name": "Graph Algorithms",
-                "file": "graph.md",
-                "icon": "🕸️",
-                "problems": [
-                    "Number of Islands",
-                    "Clone Graph",
-                    "Course Schedule",
-                    "Course Schedule II",
-                    "Number of Connected Components",
-                    "Pacific Atlantic Water Flow",
-                    "Walls and Gates",
-                    "Shortest Path in Binary Matrix",
-                    "Word Ladder",
-                    "Network Delay Time",
-                    "Cheapest Flights Within K Stops",
-                    "Redundant Connection",
-                    "Alien Dictionary",
-                    "Graph Valid Tree",
-                    "Swim in Rising Water"
+                name: "Graph Algorithms", file: "graph.md", icon: "🕸️",
+                problems: [
+                    { name: "Number of Islands",                   level: "Medium", priority: "P0" },
+                    { name: "Clone Graph",                          level: "Medium", priority: "P0" },
+                    { name: "Course Schedule",                      level: "Medium", priority: "P0" },
+                    { name: "Course Schedule II",                   level: "Medium", priority: "P0" },
+                    { name: "Number of Connected Components",       level: "Medium", priority: "P0" },
+                    { name: "Pacific Atlantic Water Flow",          level: "Medium", priority: "P1" },
+                    { name: "Walls and Gates",                      level: "Medium", priority: "P1" },
+                    { name: "Shortest Path in Binary Matrix",       level: "Medium", priority: "P1" },
+                    { name: "Word Ladder",                          level: "Hard",   priority: "P1" },
+                    { name: "Network Delay Time",                   level: "Medium", priority: "P1" },
+                    { name: "Cheapest Flights Within K Stops",      level: "Medium", priority: "P1" },
+                    { name: "Redundant Connection",                 level: "Medium", priority: "P1" },
+                    { name: "Alien Dictionary",                     level: "Hard",   priority: "P1" },
+                    { name: "Graph Valid Tree",                     level: "Medium", priority: "P1" },
+                    { name: "Swim in Rising Water",                 level: "Hard",   priority: "P2" }
                 ]
             },
             {
-                "name": "Greedy Algorithms",
-                "file": "greedy.md",
-                "icon": "🎯",
-                "problems": [
-                    "Activity Selection / Interval Scheduling",
-                    "Fractional Knapsack",
-                    "Jump Game II — Minimum Jumps",
-                    "Gas Station",
-                    "Meeting Rooms II — Minimum Meeting Rooms",
-                    "Task Scheduler",
-                    "Candy Distribution",
-                    "Huffman Encoding (Greedy + Heap)",
-                    "Minimum Number of Platforms (Trains)",
-                    "Minimum Cost to Connect Ropes"
+                name: "Greedy Algorithms", file: "greedy.md", icon: "🎯",
+                problems: [
+                    { name: "Activity Selection / Interval Scheduling",    level: "Medium", priority: "P0" },
+                    { name: "Fractional Knapsack",                          level: "Medium", priority: "P1" },
+                    { name: "Jump Game II — Minimum Jumps",                 level: "Medium", priority: "P0" },
+                    { name: "Gas Station",                                  level: "Medium", priority: "P1" },
+                    { name: "Meeting Rooms II — Minimum Meeting Rooms",     level: "Medium", priority: "P0" },
+                    { name: "Task Scheduler",                               level: "Medium", priority: "P0" },
+                    { name: "Candy Distribution",                           level: "Hard",   priority: "P1" },
+                    { name: "Huffman Encoding (Greedy + Heap)",             level: "Medium", priority: "P2" },
+                    { name: "Minimum Number of Platforms (Trains)",         level: "Medium", priority: "P1" },
+                    { name: "Minimum Cost to Connect Ropes",                level: "Medium", priority: "P2" }
                 ]
             },
             {
-                "name": "Heap (Priority Queue)",
-                "file": "heap.md",
-                "icon": "⛰️",
-                "problems": [
-                    "Kth Largest Element in an Array",
-                    "Top K Frequent Elements",
-                    "Merge K Sorted Lists",
-                    "Find Median from Data Stream",
-                    "Task Scheduler",
-                    "K Closest Points to Origin",
-                    "Reorganize String",
-                    "Dijkstra's Shortest Path",
-                    "Minimum Cost to Connect Ropes (Huffman-style)",
-                    "Find K Pairs with Smallest Sums"
+                name: "Heap (Priority Queue)", file: "heap.md", icon: "⛰️",
+                problems: [
+                    { name: "Kth Largest Element in an Array",              level: "Medium", priority: "P0" },
+                    { name: "Top K Frequent Elements",                      level: "Medium", priority: "P0" },
+                    { name: "Merge K Sorted Lists",                         level: "Hard",   priority: "P0" },
+                    { name: "Find Median from Data Stream",                 level: "Hard",   priority: "P0" },
+                    { name: "Task Scheduler",                               level: "Medium", priority: "P0" },
+                    { name: "K Closest Points to Origin",                   level: "Medium", priority: "P1" },
+                    { name: "Reorganize String",                            level: "Medium", priority: "P1" },
+                    { name: "Dijkstra's Shortest Path",                     level: "Medium", priority: "P1" },
+                    { name: "Minimum Cost to Connect Ropes (Huffman-style)",level: "Medium", priority: "P2" },
+                    { name: "Find K Pairs with Smallest Sums",              level: "Medium", priority: "P2" }
                 ]
             },
             {
-                "name": "Intervals",
-                "file": "intervals.md",
-                "icon": "📏",
-                "problems": [
-                    "Merge Intervals",
-                    "Insert Interval",
-                    "Meeting Rooms I (Can Attend All?)",
-                    "Meeting Rooms II (Minimum Rooms Required)",
-                    "Non-Overlapping Intervals (Minimum Removals)",
-                    "Minimum Number of Arrows to Burst Balloons",
-                    "Maximum CPU Load / Peak Overlap Count",
-                    "Employee Free Time",
-                    "Interval List Intersections",
-                    "Summary Ranges / Data Stream as Disjoint Intervals"
+                name: "Intervals", file: "intervals.md", icon: "📏",
+                problems: [
+                    { name: "Merge Intervals",                                         level: "Medium", priority: "P0" },
+                    { name: "Insert Interval",                                         level: "Medium", priority: "P0" },
+                    { name: "Meeting Rooms I (Can Attend All?)",                       level: "Easy",   priority: "P0" },
+                    { name: "Meeting Rooms II (Minimum Rooms Required)",               level: "Medium", priority: "P0" },
+                    { name: "Non-Overlapping Intervals (Minimum Removals)",            level: "Medium", priority: "P1" },
+                    { name: "Minimum Number of Arrows to Burst Balloons",              level: "Medium", priority: "P1" },
+                    { name: "Maximum CPU Load / Peak Overlap Count",                  level: "Medium", priority: "P1" },
+                    { name: "Employee Free Time",                                      level: "Hard",   priority: "P2" },
+                    { name: "Interval List Intersections",                             level: "Medium", priority: "P1" },
+                    { name: "Summary Ranges / Data Stream as Disjoint Intervals",      level: "Medium", priority: "P2" }
                 ]
             },
             {
-                "name": "Linked List",
-                "file": "linkedlist.md",
-                "icon": "🔗",
-                "problems": [
-                    "Reverse a Linked List",
-                    "Detect Cycle in a Linked List",
-                    "Find the Middle of a Linked List",
-                    "Merge Two Sorted Linked Lists",
-                    "Remove Nth Node from End of List",
-                    "Linked List Cycle II — Find Cycle Start",
-                    "Reorder List",
-                    "Merge K Sorted Linked Lists",
-                    "Intersection of Two Linked Lists",
-                    "Palindrome Linked List",
-                    "Flatten a Multilevel Doubly Linked List",
-                    "Copy List with Random Pointer",
-                    "Sort a Linked List (Merge Sort)",
-                    "LRU Cache",
-                    "Reverse Nodes in k-Group"
+                name: "Linked List", file: "linkedlist.md", icon: "🔗",
+                problems: [
+                    { name: "Reverse a Linked List",                          level: "Easy",   priority: "P0" },
+                    { name: "Detect Cycle in a Linked List",                  level: "Easy",   priority: "P0" },
+                    { name: "Find the Middle of a Linked List",               level: "Easy",   priority: "P0" },
+                    { name: "Merge Two Sorted Linked Lists",                  level: "Easy",   priority: "P0" },
+                    { name: "Remove Nth Node from End of List",               level: "Medium", priority: "P0" },
+                    { name: "Linked List Cycle II — Find Cycle Start",        level: "Medium", priority: "P1" },
+                    { name: "Reorder List",                                   level: "Medium", priority: "P1" },
+                    { name: "Merge K Sorted Linked Lists",                    level: "Hard",   priority: "P0" },
+                    { name: "Intersection of Two Linked Lists",               level: "Easy",   priority: "P1" },
+                    { name: "Palindrome Linked List",                         level: "Easy",   priority: "P1" },
+                    { name: "Flatten a Multilevel Doubly Linked List",        level: "Medium", priority: "P2" },
+                    { name: "Copy List with Random Pointer",                  level: "Medium", priority: "P1" },
+                    { name: "Sort a Linked List (Merge Sort)",                level: "Medium", priority: "P1" },
+                    { name: "LRU Cache",                                      level: "Medium", priority: "P0" },
+                    { name: "Reverse Nodes in k-Group",                       level: "Hard",   priority: "P1" }
                 ]
             },
             {
-                "name": "Monotonic Stack",
-                "file": "monotonicstack.md",
-                "icon": "📚",
-                "problems": [
-                    "Next Greater Element I",
-                    "Daily Temperatures",
-                    "Largest Rectangle in Histogram",
-                    "Trapping Rain Water",
-                    "Maximal Rectangle (Binary Matrix)",
-                    "Stock Span Problem",
-                    "Remove K Digits to Make Smallest Number",
-                    "Next Greater Element II (Circular Array)",
-                    "Sum of Subarray Minimums",
-                    "Largest Rectangle in Buildings / Skyline (132 Pattern)"
+                name: "Monotonic Stack", file: "monotonicstack.md", icon: "📚",
+                problems: [
+                    { name: "Next Greater Element I",                                          level: "Easy",   priority: "P1" },
+                    { name: "Daily Temperatures",                                              level: "Medium", priority: "P0" },
+                    { name: "Largest Rectangle in Histogram",                                 level: "Hard",   priority: "P0" },
+                    { name: "Trapping Rain Water",                                            level: "Hard",   priority: "P0" },
+                    { name: "Maximal Rectangle (Binary Matrix)",                              level: "Hard",   priority: "P1" },
+                    { name: "Stock Span Problem",                                             level: "Medium", priority: "P1" },
+                    { name: "Remove K Digits to Make Smallest Number",                       level: "Medium", priority: "P1" },
+                    { name: "Next Greater Element II (Circular Array)",                      level: "Medium", priority: "P1" },
+                    { name: "Sum of Subarray Minimums",                                      level: "Medium", priority: "P2" },
+                    { name: "Largest Rectangle in Buildings / Skyline (132 Pattern)",        level: "Hard",   priority: "P2" }
                 ]
             },
             {
-                "name": "Prefix Sum",
-                "file": "prefixsum.md",
-                "icon": "➕",
-                "problems": [
-                    "Range Sum Query (1D)",
-                    "Subarray Sum Equals K",
-                    "Product of Array Except Self",
-                    "Find Pivot Index",
-                    "Contiguous Array (Equal 0s and 1s)",
-                    "Range Sum Query 2D (Immutable)",
-                    "Subarray Sums Divisible by K",
-                    "Maximum Sum of Subarray of Size K (Sliding Window + Prefix)",
-                    "Count of Range Sum",
-                    "Minimum Size Subarray Sum (Prefix Sum + Binary Search)"
+                name: "Prefix Sum", file: "prefixsum.md", icon: "➕",
+                problems: [
+                    { name: "Range Sum Query (1D)",                                           level: "Easy",   priority: "P0" },
+                    { name: "Subarray Sum Equals K",                                          level: "Medium", priority: "P0" },
+                    { name: "Product of Array Except Self",                                   level: "Medium", priority: "P0" },
+                    { name: "Find Pivot Index",                                               level: "Easy",   priority: "P1" },
+                    { name: "Contiguous Array (Equal 0s and 1s)",                            level: "Medium", priority: "P1" },
+                    { name: "Range Sum Query 2D (Immutable)",                                 level: "Medium", priority: "P1" },
+                    { name: "Subarray Sums Divisible by K",                                  level: "Medium", priority: "P1" },
+                    { name: "Maximum Sum of Subarray of Size K (Sliding Window + Prefix)",   level: "Easy",   priority: "P1" },
+                    { name: "Count of Range Sum",                                             level: "Hard",   priority: "P2" },
+                    { name: "Minimum Size Subarray Sum (Prefix Sum + Binary Search)",         level: "Medium", priority: "P2" }
                 ]
             },
             {
-                "name": "Queue",
-                "file": "queue.md",
-                "icon": "📋",
-                "problems": [
-                    "Sliding Window Maximum",
-                    "First Non-Repeating Character in Stream",
-                    "BFS – Shortest Path in Binary Matrix",
-                    "Design Circular Queue",
-                    "Rotten Oranges – Multi-Source BFS",
-                    "Design Hit Counter",
-                    "Largest Rectangle in Histogram",
-                    "Sliding Window Minimum with Deque",
-                    "Task Scheduler",
-                    "Design Snake Game"
+                name: "Queue", file: "queue.md", icon: "📋",
+                problems: [
+                    { name: "Sliding Window Maximum",                  level: "Hard",   priority: "P0" },
+                    { name: "First Non-Repeating Character in Stream",  level: "Medium", priority: "P1" },
+                    { name: "BFS – Shortest Path in Binary Matrix",     level: "Medium", priority: "P0" },
+                    { name: "Design Circular Queue",                    level: "Medium", priority: "P1" },
+                    { name: "Rotten Oranges – Multi-Source BFS",        level: "Medium", priority: "P0" },
+                    { name: "Design Hit Counter",                       level: "Medium", priority: "P2" },
+                    { name: "Largest Rectangle in Histogram",           level: "Hard",   priority: "P0" },
+                    { name: "Sliding Window Minimum with Deque",        level: "Medium", priority: "P1" },
+                    { name: "Task Scheduler",                           level: "Medium", priority: "P0" },
+                    { name: "Design Snake Game",                        level: "Medium", priority: "P2" }
                 ]
             },
             {
-                "name": "Recursion",
-                "file": "recursion.md",
-                "icon": "🔁",
-                "problems": [
-                    "Factorial",
-                    "Fibonacci Number",
-                    "Power Function (Fast Exponentiation)",
-                    "Binary Search (Recursive)",
-                    "Merge Sort",
-                    "Tower of Hanoi",
-                    "Generate All Subsets (Power Set)",
-                    "Permutations of a String/Array",
-                    "Combination Sum",
-                    "N-Queens",
-                    "Word Search in Grid",
-                    "Flatten Nested List (Recursive Structures)",
-                    "Height of Binary Tree",
-                    "Diameter of Binary Tree",
-                    "Validate Binary Search Tree",
-                    "Lowest Common Ancestor (LCA)",
-                    "Decode Ways",
-                    "Letter Combinations of a Phone Number",
-                    "Regular Expression Matching",
-                    "Sudoku Solver"
+                name: "Recursion", file: "recursion.md", icon: "🔁",
+                problems: [
+                    { name: "Factorial",                                      level: "Easy",   priority: "P1" },
+                    { name: "Fibonacci Number",                                level: "Easy",   priority: "P1" },
+                    { name: "Power Function (Fast Exponentiation)",            level: "Medium", priority: "P1" },
+                    { name: "Binary Search (Recursive)",                       level: "Easy",   priority: "P1" },
+                    { name: "Merge Sort",                                      level: "Medium", priority: "P0" },
+                    { name: "Tower of Hanoi",                                  level: "Medium", priority: "P2" },
+                    { name: "Generate All Subsets (Power Set)",                level: "Medium", priority: "P0" },
+                    { name: "Permutations of a String/Array",                  level: "Medium", priority: "P0" },
+                    { name: "Combination Sum",                                 level: "Medium", priority: "P0" },
+                    { name: "N-Queens",                                        level: "Hard",   priority: "P0" },
+                    { name: "Word Search in Grid",                             level: "Medium", priority: "P0" },
+                    { name: "Flatten Nested List (Recursive Structures)",      level: "Medium", priority: "P2" },
+                    { name: "Height of Binary Tree",                          level: "Easy",   priority: "P0" },
+                    { name: "Diameter of Binary Tree",                        level: "Easy",   priority: "P0" },
+                    { name: "Validate Binary Search Tree",                    level: "Medium", priority: "P0" },
+                    { name: "Lowest Common Ancestor (LCA)",                   level: "Medium", priority: "P0" },
+                    { name: "Decode Ways",                                    level: "Medium", priority: "P0" },
+                    { name: "Letter Combinations of a Phone Number",          level: "Medium", priority: "P1" },
+                    { name: "Regular Expression Matching",                    level: "Hard",   priority: "P2" },
+                    { name: "Sudoku Solver",                                  level: "Hard",   priority: "P1" }
                 ]
             },
             {
-                "name": "Sliding Window",
-                "file": "slidingwindow.md",
-                "icon": "🪟",
-                "problems": [
-                    "Maximum Sum Subarray of Size K",
-                    "Longest Substring Without Repeating Characters",
-                    "Minimum Window Substring",
-                    "Longest Substring with At Most K Distinct Characters",
-                    "Fruits Into Baskets",
-                    "Longest Repeating Character Replacement",
-                    "Permutation in String",
-                    "Find All Anagrams in a String",
-                    "Maximum Consecutive Ones III",
-                    "Subarray Product Less Than K",
-                    "Minimum Size Subarray Sum",
-                    "Sliding Window Maximum",
-                    "Count Distinct Subarrays with At Most K Distinct",
-                    "Longest Subarray with Ones After Deletion",
-                    "Minimum Window Subsequence"
+                name: "Sliding Window", file: "slidingwindow.md", icon: "🪟",
+                problems: [
+                    { name: "Maximum Sum Subarray of Size K",                         level: "Easy",   priority: "P0" },
+                    { name: "Longest Substring Without Repeating Characters",         level: "Medium", priority: "P0" },
+                    { name: "Minimum Window Substring",                               level: "Hard",   priority: "P0" },
+                    { name: "Longest Substring with At Most K Distinct Characters",   level: "Medium", priority: "P1" },
+                    { name: "Fruits Into Baskets",                                    level: "Medium", priority: "P1" },
+                    { name: "Longest Repeating Character Replacement",                level: "Medium", priority: "P1" },
+                    { name: "Permutation in String",                                  level: "Medium", priority: "P0" },
+                    { name: "Find All Anagrams in a String",                          level: "Medium", priority: "P1" },
+                    { name: "Maximum Consecutive Ones III",                           level: "Medium", priority: "P1" },
+                    { name: "Subarray Product Less Than K",                           level: "Medium", priority: "P1" },
+                    { name: "Minimum Size Subarray Sum",                              level: "Medium", priority: "P1" },
+                    { name: "Sliding Window Maximum",                                 level: "Hard",   priority: "P0" },
+                    { name: "Count Distinct Subarrays with At Most K Distinct",       level: "Medium", priority: "P2" },
+                    { name: "Longest Subarray with Ones After Deletion",              level: "Medium", priority: "P2" },
+                    { name: "Minimum Window Subsequence",                             level: "Hard",   priority: "P2" }
                 ]
             },
             {
-                "name": "Strings",
-                "file": "strings.md",
-                "icon": "📝",
-                "problems": [
-                    "Longest Substring Without Repeating Characters",
-                    "Longest Repeating Character Replacement",
-                    "Minimum Window Substring",
-                    "Permutation in String",
-                    "Find All Anagrams in a String",
-                    "Longest Substring with At Most K Distinct Characters",
-                    "Group Anagrams",
-                    "Valid Anagram",
-                    "Isomorphic Strings",
-                    "Word Pattern",
-                    "Determine if Two Strings Are Close",
-                    "Find the Difference",
-                    "Reverse Words in a String",
-                    "String Compression",
-                    "Zigzag Conversion",
-                    "Remove All Adjacent Duplicates in String II",
-                    "Multiply Strings",
-                    "Reverse Words in a String III",
-                    "String to Integer (atoi)",
-                    "Decode String",
-                    "Compare Version Numbers",
-                    "Simplify Path",
-                    "Restore IP Addresses",
-                    "Basic Calculator II",
-                    "Longest Palindromic Substring",
-                    "Palindromic Substrings",
-                    "Valid Palindrome II",
-                    "Count Palindromic Subsequences",
-                    "Partition Labels",
-                    "Remove Duplicate Letters",
-                    "Reorganize String",
-                    "Partition String Into Substrings With Unique Characters",
-                    "Implement strStr()",
-                    "Repeated DNA Sequences",
-                    "Longest Happy Prefix",
-                    "Word Break",
-                    "Decode Ways",
-                    "Interleaving String",
-                    "Longest Common Subsequence",
-                    "Word Ladder",
-                    "Edit Distance",
-                    "Distinct Subsequences",
-                    "Word Search II",
-                    "Alien Dictionary",
-                    "Text Justification",
-                    "Shortest Way to Form String",
-                    "Minimum Deletions to Make Character Frequencies Unique",
-                    "Encode and Decode Strings",
-                    "Find and Replace Pattern",
-                    "Shortest Palindrome",
-                    "Longest Common Prefix",
-                    "First Unique Character in a String",
-                    "Ransom Note",
-                    "Check if a String Contains All Binary Codes of Size K",
-                    "Maximum Number of Vowels in a Substring of Given Length",
-                    "Swap For Longest Repeated Character Substring",
-                    "Count and Say",
-                    "Remove Duplicate Letters to Obtain Lexicographically Smallest Result",
-                    "Custom Sort String",
-                    "Smallest Subsequence of Distinct Characters"
+                name: "Strings", file: "strings.md", icon: "📝",
+                problems: [
+                    { name: "Longest Substring Without Repeating Characters",                     level: "Medium", priority: "P0" },
+                    { name: "Longest Repeating Character Replacement",                            level: "Medium", priority: "P1" },
+                    { name: "Minimum Window Substring",                                           level: "Hard",   priority: "P0" },
+                    { name: "Permutation in String",                                              level: "Medium", priority: "P0" },
+                    { name: "Find All Anagrams in a String",                                      level: "Medium", priority: "P1" },
+                    { name: "Longest Substring with At Most K Distinct Characters",               level: "Medium", priority: "P1" },
+                    { name: "Group Anagrams",                                                     level: "Medium", priority: "P0" },
+                    { name: "Valid Anagram",                                                      level: "Easy",   priority: "P0" },
+                    { name: "Isomorphic Strings",                                                 level: "Easy",   priority: "P1" },
+                    { name: "Word Pattern",                                                       level: "Easy",   priority: "P1" },
+                    { name: "Determine if Two Strings Are Close",                                 level: "Medium", priority: "P2" },
+                    { name: "Find the Difference",                                                level: "Easy",   priority: "P2" },
+                    { name: "Reverse Words in a String",                                          level: "Medium", priority: "P1" },
+                    { name: "String Compression",                                                 level: "Medium", priority: "P1" },
+                    { name: "Zigzag Conversion",                                                  level: "Medium", priority: "P2" },
+                    { name: "Remove All Adjacent Duplicates in String II",                        level: "Medium", priority: "P2" },
+                    { name: "Multiply Strings",                                                   level: "Medium", priority: "P2" },
+                    { name: "Reverse Words in a String III",                                      level: "Easy",   priority: "P2" },
+                    { name: "String to Integer (atoi)",                                           level: "Medium", priority: "P1" },
+                    { name: "Decode String",                                                      level: "Medium", priority: "P0" },
+                    { name: "Compare Version Numbers",                                            level: "Medium", priority: "P2" },
+                    { name: "Simplify Path",                                                      level: "Medium", priority: "P2" },
+                    { name: "Restore IP Addresses",                                               level: "Medium", priority: "P2" },
+                    { name: "Basic Calculator II",                                                level: "Medium", priority: "P1" },
+                    { name: "Longest Palindromic Substring",                                      level: "Medium", priority: "P0" },
+                    { name: "Palindromic Substrings",                                             level: "Medium", priority: "P1" },
+                    { name: "Valid Palindrome II",                                                level: "Easy",   priority: "P1" },
+                    { name: "Count Palindromic Subsequences",                                     level: "Hard",   priority: "P2" },
+                    { name: "Partition Labels",                                                   level: "Medium", priority: "P1" },
+                    { name: "Remove Duplicate Letters",                                           level: "Medium", priority: "P2" },
+                    { name: "Reorganize String",                                                  level: "Medium", priority: "P1" },
+                    { name: "Partition String Into Substrings With Unique Characters",            level: "Medium", priority: "P2" },
+                    { name: "Implement strStr()",                                                 level: "Easy",   priority: "P1" },
+                    { name: "Repeated DNA Sequences",                                             level: "Medium", priority: "P2" },
+                    { name: "Longest Happy Prefix",                                               level: "Hard",   priority: "P2" },
+                    { name: "Word Break",                                                         level: "Medium", priority: "P0" },
+                    { name: "Decode Ways",                                                        level: "Medium", priority: "P0" },
+                    { name: "Interleaving String",                                                level: "Medium", priority: "P2" },
+                    { name: "Longest Common Subsequence",                                         level: "Medium", priority: "P0" },
+                    { name: "Word Ladder",                                                        level: "Hard",   priority: "P1" },
+                    { name: "Edit Distance",                                                      level: "Hard",   priority: "P0" },
+                    { name: "Distinct Subsequences",                                              level: "Hard",   priority: "P2" },
+                    { name: "Word Search II",                                                     level: "Hard",   priority: "P1" },
+                    { name: "Alien Dictionary",                                                   level: "Hard",   priority: "P1" },
+                    { name: "Text Justification",                                                 level: "Hard",   priority: "P2" },
+                    { name: "Shortest Way to Form String",                                        level: "Medium", priority: "P2" },
+                    { name: "Minimum Deletions to Make Character Frequencies Unique",             level: "Medium", priority: "P2" },
+                    { name: "Encode and Decode Strings",                                          level: "Medium", priority: "P1" },
+                    { name: "Find and Replace Pattern",                                           level: "Medium", priority: "P2" },
+                    { name: "Shortest Palindrome",                                                level: "Hard",   priority: "P2" },
+                    { name: "Longest Common Prefix",                                              level: "Easy",   priority: "P1" },
+                    { name: "First Unique Character in a String",                                 level: "Easy",   priority: "P1" },
+                    { name: "Ransom Note",                                                        level: "Easy",   priority: "P1" },
+                    { name: "Check if a String Contains All Binary Codes of Size K",              level: "Medium", priority: "P2" },
+                    { name: "Maximum Number of Vowels in a Substring of Given Length",            level: "Medium", priority: "P2" },
+                    { name: "Swap For Longest Repeated Character Substring",                      level: "Medium", priority: "P2" },
+                    { name: "Count and Say",                                                      level: "Medium", priority: "P2" },
+                    { name: "Remove Duplicate Letters to Obtain Lexicographically Smallest Result",level: "Medium", priority: "P2" },
+                    { name: "Custom Sort String",                                                 level: "Medium", priority: "P2" },
+                    { name: "Smallest Subsequence of Distinct Characters",                        level: "Medium", priority: "P2" }
                 ]
             },
             {
-                "name": "Trees",
-                "file": "trees.md",
-                "icon": "🌳",
-                "problems": [
-                    "Binary Tree Maximum Path Sum",
-                    "Diameter of Binary Tree",
-                    "Lowest Common Ancestor (LCA) of a Binary Tree",
-                    "Binary Tree Level Order Traversal",
-                    "Serialize and Deserialize Binary Tree",
-                    "Validate Binary Search Tree",
-                    "Binary Tree Right Side View",
-                    "Construct Binary Tree from Preorder and Inorder Traversal",
-                    "Kth Smallest Element in a BST",
-                    "Flatten Binary Tree to Linked List",
-                    "Path Sum II (All Root-to-Leaf Paths with Target Sum)",
-                    "Morris Inorder Traversal (O(1) Space)",
-                    "Count Good Nodes in a Binary Tree",
-                    "Fenwick Tree (Binary Indexed Tree) — Range Sum Queries",
-                    "Fenwick Tree — Count of Smaller Numbers After Self"
+                name: "Trees", file: "trees.md", icon: "🌳",
+                problems: [
+                    { name: "Binary Tree Maximum Path Sum",                                       level: "Hard",   priority: "P0" },
+                    { name: "Diameter of Binary Tree",                                            level: "Easy",   priority: "P0" },
+                    { name: "Lowest Common Ancestor (LCA) of a Binary Tree",                      level: "Medium", priority: "P0" },
+                    { name: "Binary Tree Level Order Traversal",                                  level: "Medium", priority: "P0" },
+                    { name: "Serialize and Deserialize Binary Tree",                              level: "Hard",   priority: "P0" },
+                    { name: "Validate Binary Search Tree",                                        level: "Medium", priority: "P0" },
+                    { name: "Binary Tree Right Side View",                                        level: "Medium", priority: "P1" },
+                    { name: "Construct Binary Tree from Preorder and Inorder Traversal",          level: "Medium", priority: "P1" },
+                    { name: "Kth Smallest Element in a BST",                                     level: "Medium", priority: "P1" },
+                    { name: "Flatten Binary Tree to Linked List",                                 level: "Medium", priority: "P1" },
+                    { name: "Path Sum II (All Root-to-Leaf Paths with Target Sum)",               level: "Medium", priority: "P1" },
+                    { name: "Morris Inorder Traversal (O(1) Space)",                              level: "Medium", priority: "P2" },
+                    { name: "Count Good Nodes in a Binary Tree",                                 level: "Medium", priority: "P2" },
+                    { name: "Fenwick Tree (Binary Indexed Tree) — Range Sum Queries",             level: "Medium", priority: "P2" },
+                    { name: "Fenwick Tree — Count of Smaller Numbers After Self",                 level: "Hard",   priority: "P2" }
                 ]
             },
             {
-                "name": "Trie",
-                "file": "trie.md",
-                "icon": "🔤",
-                "problems": [
-                    "Implement Trie (Prefix Tree)",
-                    "Word Search II",
-                    "Replace Words",
-                    "Design Add and Search Words",
-                    "Longest Word in Dictionary",
-                    "Maximum XOR of Two Numbers in an Array",
-                    "Palindrome Pairs",
-                    "Word Break II",
-                    "Design Search Autocomplete System",
-                    "Count Distinct Substrings (Suffix Trie)"
+                name: "Trie", file: "trie.md", icon: "🔤",
+                problems: [
+                    { name: "Implement Trie (Prefix Tree)",             level: "Medium", priority: "P0" },
+                    { name: "Word Search II",                            level: "Hard",   priority: "P1" },
+                    { name: "Replace Words",                             level: "Medium", priority: "P1" },
+                    { name: "Design Add and Search Words",               level: "Medium", priority: "P1" },
+                    { name: "Longest Word in Dictionary",                level: "Medium", priority: "P2" },
+                    { name: "Maximum XOR of Two Numbers in an Array",   level: "Medium", priority: "P2" },
+                    { name: "Palindrome Pairs",                          level: "Hard",   priority: "P2" },
+                    { name: "Word Break II",                             level: "Hard",   priority: "P1" },
+                    { name: "Design Search Autocomplete System",         level: "Hard",   priority: "P2" },
+                    { name: "Count Distinct Substrings (Suffix Trie)",  level: "Hard",   priority: "P2" }
                 ]
             },
             {
-                "name": "Two Pointers",
-                "file": "twopointer.md",
-                "icon": "👉👈",
-                "problems": [
-                    "Two Sum II (Sorted Array)",
-                    "Container With Most Water",
-                    "3Sum",
-                    "Remove Duplicates from Sorted Array",
-                    "Linked List Cycle Detection (Floyd's Algorithm)",
-                    "Trapping Rain Water",
-                    "Minimum Size Subarray Sum",
-                    "Longest Substring Without Repeating Characters",
-                    "Sort Colors (Dutch National Flag)",
-                    "Merge Sorted Array"
+                name: "Two Pointers", file: "twopointer.md", icon: "👉👈",
+                problems: [
+                    { name: "Two Sum II (Sorted Array)",                               level: "Easy",   priority: "P0" },
+                    { name: "Container With Most Water",                               level: "Medium", priority: "P0" },
+                    { name: "3Sum",                                                    level: "Medium", priority: "P0" },
+                    { name: "Remove Duplicates from Sorted Array",                     level: "Easy",   priority: "P0" },
+                    { name: "Linked List Cycle Detection (Floyd's Algorithm)",         level: "Easy",   priority: "P0" },
+                    { name: "Trapping Rain Water",                                    level: "Hard",   priority: "P0" },
+                    { name: "Minimum Size Subarray Sum",                              level: "Medium", priority: "P1" },
+                    { name: "Longest Substring Without Repeating Characters",         level: "Medium", priority: "P0" },
+                    { name: "Sort Colors (Dutch National Flag)",                       level: "Medium", priority: "P1" },
+                    { name: "Merge Sorted Array",                                     level: "Easy",   priority: "P1" }
                 ]
             }
         ];
+
+        function diffBadge(level) {
+            const cls = { Easy: 'badge-easy', Medium: 'badge-medium', Hard: 'badge-hard' }[level] || 'badge-medium';
+            return `<span class="badge-diff ${cls}">${level}</span>`;
+        }
+
+        function priorityBadge(priority) {
+            const cls = { P0: 'badge-p0', P1: 'badge-p1', P2: 'badge-p2' }[priority] || 'badge-p2';
+            return `<span class="badge-priority ${cls}">${priority}</span>`;
+        }
 
         function initializePage() {
             const topicGrid = document.getElementById('topicGrid');
@@ -1401,11 +1462,15 @@
                     const link = document.createElement('a');
                     link.href = '#';
                     link.className = 'problem-link';
-                    link.setAttribute('data-problem', problem.toLowerCase());
-                    link.innerHTML = `<span class="problem-number">${index + 1}</span><span class="problem-name">${problem}</span><span class="problem-arrow">→</span>`;
+                    link.setAttribute('data-problem', problem.name.toLowerCase());
+                    link.innerHTML = `
+                        <span class="problem-number">${index + 1}</span>
+                        <span class="problem-name">${problem.name}</span>
+                        <span class="problem-badges">${diffBadge(problem.level)}${priorityBadge(problem.priority)}</span>
+                    `;
                     link.onclick = (e) => {
                         e.preventDefault();
-                        openMarkdown(topic.file, problem);
+                        openMarkdown(topic.file, problem.name);
                     };
                     li.appendChild(link);
                     problemList.appendChild(li);
@@ -1424,7 +1489,6 @@
                 card.appendChild(problemList);
                 topicGrid.appendChild(card);
             });
-
 
             document.getElementById('totalTopics').textContent = topics.length;
             document.getElementById('totalProblems').textContent = totalProblems;
@@ -1458,7 +1522,9 @@
                     topic: topic.name,
                     icon: topic.icon,
                     file: topic.file,
-                    problem
+                    name: problem.name,
+                    level: problem.level,
+                    priority: problem.priority
                 }))
             );
         }
@@ -1478,31 +1544,47 @@
             return questions.slice(0, count);
         }
 
+        const LEVEL_ORDER    = { Easy: 0, Medium: 1, Hard: 2 };
+        const PRIORITY_ORDER = { P0: 0, P1: 1, P2: 2 };
+
         function setupRandomGenerator() {
-            const input = document.getElementById('randomCount');
-            const button = document.getElementById('generateRandom');
-            const results = document.getElementById('randomResults');
-            const list = document.getElementById('randomList');
-            const summary = document.getElementById('randomSummary');
+            const input    = document.getElementById('randomCount');
+            const button   = document.getElementById('generateRandom');
+            const results  = document.getElementById('randomResults');
+            const list     = document.getElementById('randomList');
+            const summary  = document.getElementById('randomSummary');
+            const sortMode = document.getElementById('sortMode');
 
             function renderRandomList() {
                 const count = clampQuestionCount(input.value);
                 input.value = count;
-                const selected = getRandomQuestions(count);
+                let selected = getRandomQuestions(count);
+
+                const mode = sortMode.value;
+                if (mode === 'priority') {
+                    selected.sort((a, b) => PRIORITY_ORDER[a.priority] - PRIORITY_ORDER[b.priority]
+                        || LEVEL_ORDER[a.level] - LEVEL_ORDER[b.level]);
+                } else if (mode === 'level') {
+                    selected.sort((a, b) => LEVEL_ORDER[a.level] - LEVEL_ORDER[b.level]
+                        || PRIORITY_ORDER[a.priority] - PRIORITY_ORDER[b.priority]);
+                }
+
+                const modeLabel = { random: 'random', priority: 'by priority', level: 'by level' }[mode];
 
                 list.innerHTML = selected.map((item, index) => `
                     <li>
-                        <a class="random-link" href="${getMarkdownUrl(item.file, item.problem)}">
+                        <a class="random-link" href="${getMarkdownUrl(item.file, item.name)}">
                             <span class="random-index">${index + 1}</span>
                             <span class="random-question">
-                                <span class="random-question-name">${item.problem}</span>
+                                <span class="random-question-name">${item.name}</span>
                                 <span class="random-topic-name">${item.icon} ${item.topic}</span>
+                                <span class="random-badges">${diffBadge(item.level)}${priorityBadge(item.priority)}</span>
                             </span>
                         </a>
                     </li>
                 `).join('');
 
-                summary.textContent = `${count} random questions`;
+                summary.textContent = `${count} questions — sorted ${modeLabel}`;
                 results.style.display = 'block';
             }
 
