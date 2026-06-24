@@ -260,9 +260,197 @@
 
         .search-row {
             display: grid;
-            grid-template-columns: minmax(240px, 1fr) auto;
+            grid-template-columns: minmax(240px, 1fr) auto auto;
             gap: 12px;
             align-items: center;
+        }
+
+        /* View toggle */
+        .view-toggle {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 9px;
+            padding: 3px;
+            flex-shrink: 0;
+        }
+        .view-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            height: 36px;
+            padding: 0 13px;
+            border: 0;
+            border-radius: 7px;
+            background: transparent;
+            color: var(--text-2);
+            font: 700 0.78rem/1 'Inter', sans-serif;
+            cursor: pointer;
+            transition: background 180ms, color 180ms;
+            white-space: nowrap;
+        }
+        .view-btn svg { width: 14px; height: 14px; flex-shrink: 0; }
+        .view-btn:hover { color: var(--text); background: rgba(255,255,255,0.05); }
+        .view-btn.active {
+            background: rgba(108,140,255,0.18);
+            color: var(--accent);
+            border: 1px solid rgba(108,140,255,0.3);
+        }
+
+        /* Flat list container */
+        .flat-list-container {
+            display: none;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            margin-bottom: 48px;
+        }
+        .flat-list-header {
+            display: grid;
+            grid-template-columns: 44px minmax(0,1fr) 130px 80px 54px;
+            gap: 10px;
+            align-items: center;
+            padding: 10px 16px;
+            border-bottom: 1px solid var(--border);
+            background: rgba(255,255,255,0.02);
+            color: var(--text-3);
+            font: 700 0.72rem/1 'Inter', sans-serif;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+        .flat-list { list-style: none; }
+        .flat-item { border-bottom: 1px solid var(--border); }
+        .flat-item:last-child { border-bottom: none; }
+        .flat-link {
+            display: grid;
+            grid-template-columns: 44px minmax(0,1fr) 130px 80px 54px;
+            gap: 10px;
+            align-items: center;
+            padding: 10px 16px;
+            color: var(--text-2);
+            text-decoration: none;
+            font-size: 0.88rem;
+            transition: background 180ms, color 180ms;
+        }
+        .flat-link:hover {
+            background: rgba(255,255,255,0.03);
+            color: var(--note-accent);
+        }
+        .flat-num {
+            background: rgba(108,140,255,0.12);
+            color: var(--accent);
+            border-radius: 5px;
+            padding: 3px 0;
+            text-align: center;
+            font: 600 0.72rem/1 'JetBrains Mono', monospace;
+        }
+        .flat-name { min-width: 0; line-height: 1.45; font-weight: 500; }
+        .flat-topic {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            color: var(--text-3);
+            font-size: 0.78rem;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .flat-level { justify-self: center; }
+        .flat-priority { justify-self: center; }
+
+        /* ── Flat list filter bar ─────────────────────────────────────── */
+        .flat-filter-bar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+            background: rgba(255,255,255,0.015);
+        }
+        .filter-group-label {
+            color: var(--text-3);
+            font: 700 0.7rem/1 'Inter', sans-serif;
+            letter-spacing: 0.07em;
+            text-transform: uppercase;
+            white-space: nowrap;
+            margin-right: 2px;
+        }
+        .filter-sep {
+            width: 1px;
+            height: 20px;
+            background: var(--border);
+            flex-shrink: 0;
+            margin: 0 4px;
+        }
+        .filter-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 10px;
+            border-radius: 999px;
+            border: 1px solid var(--border);
+            background: rgba(255,255,255,0.03);
+            color: var(--text-2);
+            font: 700 0.74rem/1 'Inter', sans-serif;
+            cursor: pointer;
+            transition: background 150ms, border-color 150ms, color 150ms, transform 120ms;
+            user-select: none;
+        }
+        .filter-pill:hover { transform: translateY(-1px); background: rgba(255,255,255,0.06); }
+        /* Priority active states */
+        .filter-pill[data-val="P0"].active { background: rgba(239,68,68,0.18);  color: #ef4444; border-color: rgba(239,68,68,0.45); }
+        .filter-pill[data-val="P1"].active { background: rgba(234,179,8,0.15);  color: #eab308; border-color: rgba(234,179,8,0.4); }
+        .filter-pill[data-val="P2"].active { background: rgba(148,163,184,0.15);color: #94a3b8; border-color: rgba(148,163,184,0.35); }
+        /* Level active states */
+        .filter-pill[data-val="Easy"].active   { background: rgba(34,197,94,0.15);  color: #4ade80; border-color: rgba(34,197,94,0.38); }
+        .filter-pill[data-val="Medium"].active { background: rgba(251,146,60,0.15); color: #fb923c; border-color: rgba(251,146,60,0.38); }
+        .filter-pill[data-val="Hard"].active   { background: rgba(248,113,113,0.15);color: #f87171; border-color: rgba(248,113,113,0.38); }
+        /* Count chip on pill */
+        .pill-count {
+            background: rgba(255,255,255,0.1);
+            border-radius: 999px;
+            padding: 1px 6px;
+            font-size: 0.68rem;
+            font-weight: 600;
+            min-width: 18px;
+            text-align: center;
+        }
+        .filter-clear-btn {
+            margin-left: auto;
+            border: 0;
+            background: transparent;
+            color: var(--text-3);
+            font: 600 0.76rem/1 'Inter', sans-serif;
+            cursor: pointer;
+            padding: 4px 6px;
+            border-radius: 6px;
+            transition: color 150ms, background 150ms;
+        }
+        .filter-clear-btn:hover { color: var(--text); background: rgba(255,255,255,0.06); }
+        .filter-result-chip {
+            margin-left: 4px;
+            padding: 3px 9px;
+            border-radius: 999px;
+            background: rgba(108,140,255,0.12);
+            border: 1px solid rgba(108,140,255,0.25);
+            color: var(--accent);
+            font: 700 0.72rem/1 'JetBrains Mono', monospace;
+            white-space: nowrap;
+        }
+
+        @media (max-width: 640px) {
+            .flat-list-header,
+            .flat-link {
+                grid-template-columns: 36px minmax(0,1fr) auto auto;
+            }
+            .flat-list-header .col-topic,
+            .flat-topic { display: none; }
+            .flat-filter-bar { gap: 6px; }
         }
 
         .search-bar {
@@ -966,6 +1154,16 @@
                     <input type="text" id="searchBox" placeholder="Search problems by name or topic..." autocomplete="off">
                     <button class="clear-search" id="clearSearch" type="button" aria-label="Clear search">×</button>
                 </div>
+                <div class="view-toggle" role="group" aria-label="View mode">
+                    <button class="view-btn active" id="btnCardView" type="button">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+                        Cards
+                    </button>
+                    <button class="view-btn" id="btnFlatView" type="button">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+                        Flat List
+                    </button>
+                </div>
                 <div class="search-meta" id="searchMeta">Showing all problems</div>
             </div>
             <div class="topic-jump" id="topicJump" aria-label="Jump to topic"></div>
@@ -987,6 +1185,38 @@
         </div>
 
         <div class="topic-grid animate-in animate-delay-3" id="topicGrid"></div>
+
+        <!-- Flat list view -->
+        <div class="flat-list-container animate-in" id="flatListContainer">
+
+            <!-- Filter bar -->
+            <div class="flat-filter-bar" id="flatFilterBar">
+                <span class="filter-group-label">Priority</span>
+                <button class="filter-pill" data-group="priority" data-val="P0" type="button">🔴 P0 <span class="pill-count" id="cnt-P0"></span></button>
+                <button class="filter-pill" data-group="priority" data-val="P1" type="button">🟡 P1 <span class="pill-count" id="cnt-P1"></span></button>
+                <button class="filter-pill" data-group="priority" data-val="P2" type="button">⬜ P2 <span class="pill-count" id="cnt-P2"></span></button>
+
+                <div class="filter-sep"></div>
+
+                <span class="filter-group-label">Level</span>
+                <button class="filter-pill" data-group="level" data-val="Easy"   type="button">Easy   <span class="pill-count" id="cnt-Easy"></span></button>
+                <button class="filter-pill" data-group="level" data-val="Medium" type="button">Medium <span class="pill-count" id="cnt-Medium"></span></button>
+                <button class="filter-pill" data-group="level" data-val="Hard"   type="button">Hard   <span class="pill-count" id="cnt-Hard"></span></button>
+
+                <span class="filter-result-chip" id="flatResultChip" style="display:none"></span>
+                <button class="filter-clear-btn" id="flatClearFilters" type="button" style="display:none">✕ Clear filters</button>
+            </div>
+
+            <div class="flat-list-header">
+                <span>#</span>
+                <span>Problem</span>
+                <span class="col-topic">Topic</span>
+                <span style="text-align:center">Level</span>
+                <span style="text-align:center">Priority</span>
+            </div>
+            <ul class="flat-list" id="flatList"></ul>
+        </div>
+
         <div class="empty-state" id="emptyState">
             <strong>No matching DSA problems found.</strong>
             Try a topic name like graph, window, trie, or DP.
@@ -1594,67 +1824,236 @@
             button.addEventListener('click', renderRandomList);
         }
 
-        function setupSearch() {
-            const searchBox = document.getElementById('searchBox');
-            const clearSearch = document.getElementById('clearSearch');
-            const searchMeta = document.getElementById('searchMeta');
-            const emptyState = document.getElementById('emptyState');
-            const cards = document.querySelectorAll('.topic-card');
-            const totalProblems = topics.reduce((sum, topic) => sum + topic.problems.length, 0);
+        // ── Build flat list ───────────────────────────────────────────────
+        function buildFlatList() {
+            const flatList = document.getElementById('flatList');
+            let globalIndex = 0;
+            topics.forEach(topic => {
+                topic.problems.forEach(problem => {
+                    globalIndex++;
+                    const li = document.createElement('li');
+                    li.className = 'flat-item';
+                    li.setAttribute('data-problem',  problem.name.toLowerCase());
+                    li.setAttribute('data-topic',    topic.name.toLowerCase());
+                    li.setAttribute('data-priority', problem.priority);
+                    li.setAttribute('data-level',    problem.level);
 
-            function applySearch() {
-                const searchTerm = searchBox.value.trim().toLowerCase();
-                let visibleTopics = 0;
-                let visibleProblems = 0;
-
-                cards.forEach(card => {
-                    const topicName = card.getAttribute('data-topic');
-                    const problemLinks = card.querySelectorAll('.problem-link');
-                    let hasMatch = false;
-
-                    if (topicName.includes(searchTerm)) {
-                        hasMatch = true;
-                        problemLinks.forEach(link => {
-                            link.parentElement.style.display = '';
-                            visibleProblems++;
-                        });
-                    } else {
-                        problemLinks.forEach(link => {
-                            const problemName = link.getAttribute('data-problem');
-                            if (problemName.includes(searchTerm)) {
-                                link.parentElement.style.display = '';
-                                hasMatch = true;
-                                visibleProblems++;
-                            } else {
-                                link.parentElement.style.display = 'none';
-                            }
-                        });
-                    }
-
-                    if (hasMatch) visibleTopics++;
-                    card.style.display = hasMatch ? '' : 'none';
+                    const a = document.createElement('a');
+                    a.className = 'flat-link';
+                    a.href = getMarkdownUrl(topic.file, problem.name);
+                    a.innerHTML = `
+                        <span class="flat-num">${globalIndex}</span>
+                        <span class="flat-name">${problem.name}</span>
+                        <span class="flat-topic">${topic.icon} ${topic.name}</span>
+                        <span class="flat-level">${diffBadge(problem.level)}</span>
+                        <span class="flat-priority">${priorityBadge(problem.priority)}</span>
+                    `;
+                    li.appendChild(a);
+                    flatList.appendChild(li);
                 });
+            });
+        }
 
-                if (!searchTerm) {
-                    searchMeta.textContent = `Showing ${totalProblems} problems`;
+        // ── View toggle ───────────────────────────────────────────────────
+        let currentView = 'cards'; // 'cards' | 'flat'
+
+        function setupViewToggle(applySearchFn) {
+            const btnCard = document.getElementById('btnCardView');
+            const btnFlat = document.getElementById('btnFlatView');
+            const topicGrid  = document.getElementById('topicGrid');
+            const flatCont   = document.getElementById('flatListContainer');
+            const topicJump  = document.getElementById('topicJump');
+
+            function setView(mode) {
+                currentView = mode;
+                if (mode === 'cards') {
+                    topicGrid.style.display = '';
+                    flatCont.style.display  = 'none';
+                    topicJump.style.display = '';
+                    btnCard.classList.add('active');
+                    btnFlat.classList.remove('active');
                 } else {
-                    searchMeta.textContent = `${visibleProblems} problems in ${visibleTopics} topics`;
+                    topicGrid.style.display = 'none';
+                    flatCont.style.display  = '';
+                    topicJump.style.display = 'none';
+                    btnFlat.classList.add('active');
+                    btnCard.classList.remove('active');
                 }
-                emptyState.style.display = visibleTopics ? 'none' : 'block';
-                clearSearch.style.visibility = searchTerm ? 'visible' : 'hidden';
+                applySearchFn();
             }
 
-            clearSearch.addEventListener('click', () => {
+            btnCard.addEventListener('click', () => setView('cards'));
+            btnFlat.addEventListener('click', () => setView('flat'));
+        }
+
+        // active filter state
+        const activeFilters = { priority: new Set(), level: new Set() };
+
+        // ── Flat list filters setup ───────────────────────────────────────
+        function setupFlatFilters(applySearchFn) {
+            const pills       = document.querySelectorAll('#flatFilterBar .filter-pill');
+            const clearBtn    = document.getElementById('flatClearFilters');
+            const resultChip  = document.getElementById('flatResultChip');
+
+            pills.forEach(pill => {
+                pill.addEventListener('click', () => {
+                    const group = pill.dataset.group;   // 'priority' | 'level'
+                    const val   = pill.dataset.val;
+
+                    if (activeFilters[group].has(val)) {
+                        activeFilters[group].delete(val);
+                        pill.classList.remove('active');
+                    } else {
+                        activeFilters[group].add(val);
+                        pill.classList.add('active');
+                    }
+
+                    const anyActive = activeFilters.priority.size > 0 || activeFilters.level.size > 0;
+                    clearBtn.style.display   = anyActive ? '' : 'none';
+
+                    applySearchFn();
+                });
+            });
+
+            clearBtn.addEventListener('click', () => {
+                activeFilters.priority.clear();
+                activeFilters.level.clear();
+                pills.forEach(p => p.classList.remove('active'));
+                clearBtn.style.display    = 'none';
+                resultChip.style.display  = 'none';
+                applySearchFn();
+            });
+        }
+
+        // ── Search (works in both views) ──────────────────────────────────
+        function setupSearch() {
+            const searchBox  = document.getElementById('searchBox');
+            const clearBtn   = document.getElementById('clearSearch');
+            const searchMeta = document.getElementById('searchMeta');
+            const emptyState = document.getElementById('emptyState');
+            const totalProblems = topics.reduce((sum, t) => sum + t.problems.length, 0);
+
+            function applySearch() {
+                const term = searchBox.value.trim().toLowerCase();
+                let visibleProblems = 0;
+                let visibleTopics   = 0;
+
+                if (currentView === 'cards') {
+                    // --- card view ---
+                    const cards = document.querySelectorAll('.topic-card');
+                    cards.forEach(card => {
+                        const topicName  = card.getAttribute('data-topic');
+                        const links      = card.querySelectorAll('.problem-link');
+                        let hasMatch     = false;
+
+                        if (topicName.includes(term)) {
+                            hasMatch = true;
+                            links.forEach(link => {
+                                link.parentElement.style.display = '';
+                                visibleProblems++;
+                            });
+                        } else {
+                            links.forEach(link => {
+                                const match = link.getAttribute('data-problem').includes(term);
+                                link.parentElement.style.display = match ? '' : 'none';
+                                if (match) { hasMatch = true; visibleProblems++; }
+                            });
+                        }
+                        if (hasMatch) visibleTopics++;
+                        card.style.display = hasMatch ? '' : 'none';
+                    });
+                    emptyState.style.display = visibleTopics ? 'none' : 'block';
+                    searchMeta.textContent = term
+                        ? `${visibleProblems} problems in ${visibleTopics} topics`
+                        : `Showing ${totalProblems} problems`;
+
+                } else {
+                    // --- flat list view ---
+                    const filterPriority = activeFilters.priority;  // Set
+                    const filterLevel    = activeFilters.level;      // Set
+                    const anyFilter      = filterPriority.size > 0 || filterLevel.size > 0;
+
+                    // per-value counts (for pill badges)
+                    const counts = { P0: 0, P1: 0, P2: 0, Easy: 0, Medium: 0, Hard: 0 };
+
+                    const items = document.querySelectorAll('#flatList .flat-item');
+                    let i = 0;
+                    items.forEach(item => {
+                        const probMatch  = !term ||
+                            item.getAttribute('data-problem').includes(term) ||
+                            item.getAttribute('data-topic').includes(term);
+
+                        const itemPriority = item.getAttribute('data-priority');
+                        const itemLevel    = item.getAttribute('data-level');
+
+                        const priorityOk = filterPriority.size === 0 || filterPriority.has(itemPriority);
+                        const levelOk    = filterLevel.size    === 0 || filterLevel.has(itemLevel);
+
+                        const show = probMatch && priorityOk && levelOk;
+                        item.style.display = show ? '' : 'none';
+                        if (show) {
+                            i++;
+                            item.querySelector('.flat-num').textContent = i;
+                        }
+
+                        // count matching items per value (ignoring the OTHER group's filter
+                        // so each pill shows how many it would contribute)
+                        if (probMatch) {
+                            const levelMatchForCount = filterLevel.size === 0 || filterLevel.has(itemLevel);
+                            if (levelMatchForCount) counts[itemPriority] = (counts[itemPriority] || 0) + 1;
+
+                            const prioMatchForCount  = filterPriority.size === 0 || filterPriority.has(itemPriority);
+                            if (prioMatchForCount)  counts[itemLevel]    = (counts[itemLevel]    || 0) + 1;
+                        }
+                    });
+
+                    // update pill count badges
+                    ['P0','P1','P2','Easy','Medium','Hard'].forEach(v => {
+                        const el = document.getElementById(`cnt-${v}`);
+                        if (el) el.textContent = counts[v] || '';
+                    });
+
+                    // result chip
+                    const resultChip = document.getElementById('flatResultChip');
+                    if (anyFilter) {
+                        resultChip.textContent  = `${i} shown`;
+                        resultChip.style.display = '';
+                    } else {
+                        resultChip.style.display = 'none';
+                    }
+
+                    visibleProblems = i;
+                    emptyState.style.display = (i === 0) ? 'block' : 'none';
+                    searchMeta.textContent = (term || anyFilter)
+                        ? `${i} problems found`
+                        : `Showing ${totalProblems} problems`;
+                }
+
+                clearBtn.style.visibility = term ? 'visible' : 'hidden';
+            }
+
+            clearBtn.addEventListener('click', () => {
                 searchBox.value = '';
                 searchBox.focus();
                 applySearch();
             });
-
             searchBox.addEventListener('input', applySearch);
-            applySearch();
+
+            // expose so view-toggle and filters can call it
+            return applySearch;
         }
 
-        window.onload = initializePage;
+        window.onload = function() {
+            initializePage();
+            buildFlatList();
+            const applySearch = setupSearch();
+            setupViewToggle(applySearch);
+            setupFlatFilters(applySearch);
+            // trigger initial count badges
+            applySearch();
+            // hide flat container initially (card view is default)
+            document.getElementById('flatListContainer').style.display = 'none';
+        };
     </script>
 </body>
 </html>
