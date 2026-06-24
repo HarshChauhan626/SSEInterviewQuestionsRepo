@@ -1725,7 +1725,6 @@
             document.getElementById('totalPatterns').textContent = topics.length;
             document.getElementById('randomTotal').textContent = `${totalProblems} available`;
 
-            setupSearch();
             setupRandomGenerator();
         }
 
@@ -1867,14 +1866,14 @@
             function setView(mode) {
                 currentView = mode;
                 if (mode === 'cards') {
-                    topicGrid.style.display = '';
+                    topicGrid.style.display = 'grid';
                     flatCont.style.display  = 'none';
-                    topicJump.style.display = '';
+                    topicJump.style.display = 'flex';
                     btnCard.classList.add('active');
                     btnFlat.classList.remove('active');
                 } else {
                     topicGrid.style.display = 'none';
-                    flatCont.style.display  = '';
+                    flatCont.style.display  = 'block';
                     topicJump.style.display = 'none';
                     btnFlat.classList.add('active');
                     btnCard.classList.remove('active');
