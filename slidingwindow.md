@@ -7,21 +7,23 @@
 
 ## Table of Contents
 
-1. [Maximum Sum Subarray of Size K](#1-maximum-sum-subarray-of-size-k) — Fixed window basics
-2. [Longest Substring Without Repeating Characters](#2-longest-substring-without-repeating-characters) — Dynamic window + set
-3. [Minimum Window Substring](#3-minimum-window-substring) — Dynamic window + frequency map
-4. [Longest Substring with At Most K Distinct Characters](#4-longest-substring-with-at-most-k-distinct-characters) — Dynamic window + map
-5. [Fruits Into Baskets](#5-fruits-into-baskets) — At most 2 distinct (disguised)
-6. [Longest Repeating Character Replacement](#6-longest-repeating-character-replacement) — Window with max-freq trick
-7. [Permutation in String](#7-permutation-in-string) — Fixed window + anagram check
-8. [Find All Anagrams in a String](#8-find-all-anagrams-in-a-string) — Fixed window, all positions
-9. [Maximum Consecutive Ones III](#9-maximum-consecutive-ones-iii) — Binary array + flip budget
-10. [Subarray Product Less Than K](#10-subarray-product-less-than-k) — Count subarrays, product constraint
-11. [Minimum Size Subarray Sum](#11-minimum-size-subarray-sum) — Shortest window meeting target
-12. [Sliding Window Maximum](#12-sliding-window-maximum) — Fixed window + monotonic deque
-13. [Count Distinct Subarrays with At Most K Distinct](#13-count-distinct-subarrays-with-at-most-k-distinct) — at-most trick
-14. [Longest Subarray with Ones After Deletion](#14-longest-subarray-with-ones-after-deletion) — Zero-budget window
-15. [Minimum Window Subsequence](#15-minimum-window-subsequence) — Subsequence variant
+| # | Problem | Difficulty | Jump to Solution |
+|---|---------|:----------:|-----------------|
+| 1 | Maximum Sum Subarray of Size K | 🟢 Easy | [→ #1](#maximum-sum-subarray-of-size-k) |
+| 2 | Longest Substring Without Repeating Characters | 🟡 Medium | [→ #2](#longest-substring-without-repeating-characters) |
+| 3 | Minimum Window Substring | 🔴 Hard | [→ #3](#minimum-window-substring) |
+| 4 | Longest Substring with At Most K Distinct Characters | 🟡 Medium | [→ #4](#longest-substring-with-at-most-k-distinct-characters) |
+| 5 | Fruits Into Baskets | 🟡 Medium | [→ #5](#fruits-into-baskets) |
+| 6 | Longest Repeating Character Replacement | 🟡 Medium | [→ #6](#longest-repeating-character-replacement) |
+| 7 | Permutation in String | 🟡 Medium | [→ #7](#permutation-in-string) |
+| 8 | Find All Anagrams in a String | 🟡 Medium | [→ #8](#find-all-anagrams-in-a-string) |
+| 9 | Maximum Consecutive Ones III | 🟡 Medium | [→ #9](#maximum-consecutive-ones-iii) |
+| 10 | Subarray Product Less Than K | 🟡 Medium | [→ #10](#subarray-product-less-than-k) |
+| 11 | Minimum Size Subarray Sum | 🟡 Medium | [→ #11](#minimum-size-subarray-sum) |
+| 12 | Sliding Window Maximum | 🔴 Hard | [→ #12](#sliding-window-maximum) |
+| 13 | Count Distinct Subarrays with At Most K Distinct | 🟡 Medium | [→ #13](#count-distinct-subarrays-with-at-most-k-distinct) |
+| 14 | Longest Subarray with Ones After Deletion | 🟡 Medium | [→ #14](#longest-subarray-with-ones-after-deletion) |
+| 15 | Minimum Window Subsequence | 🔴 Hard | [→ #15](#minimum-window-subsequence) |
 
 ---
 
@@ -35,6 +37,7 @@ A sliding window maintains two pointers (`left`, `right`) that define the curren
 
 ---
 
+<a id="maximum-sum-subarray-of-size-k"></a>
 ## 1. Maximum Sum Subarray of Size K
 
 ### Problem
@@ -73,6 +76,7 @@ Input: nums = [-1,-2,-3,-4], k = 2  →  Output: -3  (subarray [-1,-2])
 
 ---
 
+<a id="longest-substring-without-repeating-characters"></a>
 ## 2. Longest Substring Without Repeating Characters
 
 ### Problem
@@ -115,6 +119,7 @@ Input: "dvdf"      →  Output: 3  ("vdf")
 
 ---
 
+<a id="minimum-window-substring"></a>
 ## 3. Minimum Window Substring
 
 ### Problem
@@ -168,6 +173,7 @@ Input: s = "aa",             t = "aa"  →  Output: "aa"
 
 ---
 
+<a id="longest-substring-with-at-most-k-distinct-characters"></a>
 ## 4. Longest Substring with At Most K Distinct Characters
 
 ### Problem
@@ -213,6 +219,7 @@ Input: s = "aabbcc",  k = 3  →  Output: 6
 
 ---
 
+<a id="fruits-into-baskets"></a>
 ## 5. Fruits Into Baskets
 
 ### Problem
@@ -254,6 +261,7 @@ Input: [3,3,3,1,2,1,1] →  Output: 5  ([1,2,1,1]... wait: [3,3,3,1] is 4, [1,2,
 
 ---
 
+<a id="longest-repeating-character-replacement"></a>
 ## 6. Longest Repeating Character Replacement
 
 ### Problem
@@ -298,6 +306,7 @@ Input: s = "ABCDE", k = 1     →  Output: 2
 
 ---
 
+<a id="permutation-in-string"></a>
 ## 7. Permutation in String
 
 ### Problem
@@ -352,6 +361,7 @@ Input: s1 = "abc", s2 = "abc"        →  true
 
 ---
 
+<a id="find-all-anagrams-in-a-string"></a>
 ## 8. Find All Anagrams in a String
 
 ### Problem
@@ -405,6 +415,7 @@ Input: s = "af",         p = "be"   →  []
 
 ---
 
+<a id="maximum-consecutive-ones-iii"></a>
 ## 9. Maximum Consecutive Ones III
 
 ### Problem
@@ -445,6 +456,7 @@ Input: nums = [0,0,0], k = 0  →  Output: 0
 
 ---
 
+<a id="subarray-product-less-than-k"></a>
 ## 10. Subarray Product Less Than K
 
 ### Problem
@@ -485,6 +497,7 @@ Input: nums = [10],       k = 10   →  Output: 0
 
 ---
 
+<a id="minimum-size-subarray-sum"></a>
 ## 11. Minimum Size Subarray Sum
 
 ### Problem
@@ -523,6 +536,7 @@ Input: target = 15, nums = [1,2,3,4,5]     →  Output: 5
 
 ---
 
+<a id="sliding-window-maximum"></a>
 ## 12. Sliding Window Maximum
 
 ### Problem
@@ -575,6 +589,7 @@ Input: nums = [4,-2],               k = 2  →  [4]
 
 ---
 
+<a id="count-distinct-subarrays-with-at-most-k-distinct"></a>
 ## 13. Count Distinct Subarrays with At Most K Distinct
 
 ### Problem
@@ -622,6 +637,7 @@ Input: nums = [1,2,3],     k = 1  →  Output: 3
 
 ---
 
+<a id="longest-subarray-with-ones-after-deletion"></a>
 ## 14. Longest Subarray with Ones After Deletion
 
 ### Problem
@@ -662,6 +678,7 @@ Input: [0,0,0]          →  Output: 0
 
 ---
 
+<a id="minimum-window-subsequence"></a>
 ## 15. Minimum Window Subsequence
 
 ### Problem

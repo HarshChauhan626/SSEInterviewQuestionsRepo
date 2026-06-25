@@ -4,23 +4,24 @@
 
 ---
 
-## 📚 Table of Contents
-
-1. [Reverse a Linked List](#1-reverse-a-linked-list)
-2. [Detect Cycle in a Linked List](#2-detect-cycle-in-a-linked-list)
-3. [Find the Middle of a Linked List](#3-find-the-middle-of-a-linked-list)
-4. [Merge Two Sorted Linked Lists](#4-merge-two-sorted-linked-lists)
-5. [Remove Nth Node from End of List](#5-remove-nth-node-from-end-of-list)
-6. [Linked List Cycle II — Find Cycle Start](#6-linked-list-cycle-ii--find-cycle-start)
-7. [Reorder List](#7-reorder-list)
-8. [Merge K Sorted Linked Lists](#8-merge-k-sorted-linked-lists)
-9. [Intersection of Two Linked Lists](#9-intersection-of-two-linked-lists)
-10. [Palindrome Linked List](#10-palindrome-linked-list)
-11. [Flatten a Multilevel Doubly Linked List](#11-flatten-a-multilevel-doubly-linked-list)
-12. [Copy List with Random Pointer](#12-copy-list-with-random-pointer)
-13. [Sort a Linked List (Merge Sort)](#13-sort-a-linked-list-merge-sort)
-14. [LRU Cache](#14-lru-cache)
-15. [Reverse Nodes in k-Group](#15-reverse-nodes-in-k-group)
+## Table of Contents
+| # | Problem | Difficulty | Jump to Solution |
+|---|---------|:----------:|----------------|
+| 1 | Reverse a Linked List | 🟢 Easy | [→ #1](#reverse-a-linked-list) |
+| 2 | Detect Cycle in a Linked List | 🟢 Easy | [→ #2](#detect-cycle-in-a-linked-list) |
+| 3 | Find the Middle of a Linked List | 🟢 Easy | [→ #3](#find-the-middle-of-a-linked-list) |
+| 4 | Merge Two Sorted Linked Lists | 🟢 Easy | [→ #4](#merge-two-sorted-linked-lists) |
+| 5 | Remove Nth Node from End of List | 🟡 Medium | [→ #5](#remove-nth-node-from-end-of-list) |
+| 6 | Linked List Cycle II — Find Cycle Start | 🟡 Medium | [→ #6](#linked-list-cycle-ii--find-cycle-start) |
+| 7 | Reorder List | 🟡 Medium | [→ #7](#reorder-list) |
+| 8 | Merge K Sorted Linked Lists | 🔴 Hard | [→ #8](#merge-k-sorted-linked-lists) |
+| 9 | Intersection of Two Linked Lists | 🟢 Easy | [→ #9](#intersection-of-two-linked-lists) |
+| 10 | Palindrome Linked List | 🟢 Easy | [→ #10](#palindrome-linked-list) |
+| 11 | Flatten a Multilevel Doubly Linked List | 🟡 Medium | [→ #11](#flatten-a-multilevel-doubly-linked-list) |
+| 12 | Copy List with Random Pointer | 🟡 Medium | [→ #12](#copy-list-with-random-pointer) |
+| 13 | Sort a Linked List (Merge Sort) | 🟡 Medium | [→ #13](#sort-a-linked-list-merge-sort) |
+| 14 | LRU Cache | 🟡 Medium | [→ #14](#lru-cache) |
+| 15 | Reverse Nodes in k-Group | 🔴 Hard | [→ #15](#reverse-nodes-in-k-group) |
 
 ---
 
@@ -39,6 +40,7 @@ class ListNode {
 
 ---
 
+<a id="reverse-a-linked-list"></a>
 ## 1. Reverse a Linked List
 
 ### Problem Statement
@@ -87,6 +89,7 @@ public ListNode reverseList(ListNode head) {
 
 ---
 
+<a id="detect-cycle-in-a-linked-list"></a>
 ## 2. Detect Cycle in a Linked List
 
 ### Problem Statement
@@ -140,6 +143,7 @@ public boolean hasCycle(ListNode head) {
 
 ---
 
+<a id="find-the-middle-of-a-linked-list"></a>
 ## 3. Find the Middle of a Linked List
 
 ### Problem Statement
@@ -189,6 +193,7 @@ public ListNode middleNode(ListNode head) {
 
 ---
 
+<a id="merge-two-sorted-linked-lists"></a>
 ## 4. Merge Two Sorted Linked Lists
 
 ### Problem Statement
@@ -244,6 +249,7 @@ public ListNode mergeTwoLists(ListNode l1, ListNode l2) {
 
 ---
 
+<a id="remove-nth-node-from-end-of-list"></a>
 ## 5. Remove Nth Node from End of List
 
 ### Problem Statement
@@ -302,6 +308,7 @@ public ListNode removeNthFromEnd(ListNode head, int n) {
 
 ---
 
+<a id="linked-list-cycle-ii--find-cycle-start"></a>
 ## 6. Linked List Cycle II — Find Cycle Start
 
 ### Problem Statement
@@ -363,6 +370,7 @@ public ListNode detectCycle(ListNode head) {
 
 ---
 
+<a id="reorder-list"></a>
 ## 7. Reorder List
 
 ### Problem Statement
@@ -439,6 +447,7 @@ private ListNode reverseList(ListNode head) {
 
 ---
 
+<a id="merge-k-sorted-linked-lists"></a>
 ## 8. Merge K Sorted Linked Lists
 
 ### Problem Statement
@@ -501,6 +510,7 @@ public ListNode mergeKLists(ListNode[] lists) {
 
 ---
 
+<a id="intersection-of-two-linked-lists"></a>
 ## 9. Intersection of Two Linked Lists
 
 ### Problem Statement
@@ -552,6 +562,7 @@ public ListNode getIntersectionNode(ListNode headA, ListNode headB) {
 
 ---
 
+<a id="palindrome-linked-list"></a>
 ## 10. Palindrome Linked List
 
 ### Problem Statement
@@ -626,6 +637,7 @@ private ListNode reverseList(ListNode head) {
 
 ---
 
+<a id="flatten-a-multilevel-doubly-linked-list"></a>
 ## 11. Flatten a Multilevel Doubly Linked List
 
 ### Problem Statement
@@ -701,6 +713,7 @@ public Node flatten(Node head) {
 
 ---
 
+<a id="copy-list-with-random-pointer"></a>
 ## 12. Copy List with Random Pointer
 
 ### Problem Statement
@@ -771,6 +784,7 @@ public Node copyRandomList(Node head) {
 
 ---
 
+<a id="sort-a-linked-list-merge-sort"></a>
 ## 13. Sort a Linked List (Merge Sort)
 
 ### Problem Statement
@@ -847,6 +861,7 @@ private ListNode merge(ListNode l1, ListNode l2) {
 
 ---
 
+<a id="lru-cache"></a>
 ## 14. LRU Cache
 
 ### Problem Statement
@@ -945,6 +960,7 @@ class LRUCache {
 
 ---
 
+<a id="reverse-nodes-in-k-group"></a>
 ## 15. Reverse Nodes in k-Group
 
 ### Problem Statement

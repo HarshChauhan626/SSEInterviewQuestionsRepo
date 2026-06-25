@@ -6,17 +6,18 @@
 ---
 
 ## Table of Contents
-
-1. [Classic Binary Search](#1-classic-binary-search)
-2. [Find First and Last Position (Search Range)](#2-find-first-and-last-position-search-range)
-3. [Search in Rotated Sorted Array](#3-search-in-rotated-sorted-array)
-4. [Find Minimum in Rotated Sorted Array](#4-find-minimum-in-rotated-sorted-array)
-5. [Koko Eating Bananas (Binary Search on Answer)](#5-koko-eating-bananas-binary-search-on-answer)
-6. [Median of Two Sorted Arrays](#6-median-of-two-sorted-arrays)
-7. [Find Peak Element](#7-find-peak-element)
-8. [Search a 2D Matrix](#8-search-a-2d-matrix)
-9. [Aggressive Cows / Allocate Books (Maximize Minimum)](#9-aggressive-cows--allocate-books-maximize-minimum)
-10. [Find in Mountain Array (Unknown Size / Double Binary Search)](#10-find-in-mountain-array-unknown-size--double-binary-search)
+| # | Problem | Difficulty | Jump to Solution |
+|---|---------|:----------:|------------------|
+| 1 | Classic Binary Search | 🟢 Easy | [→ #1](#classic-binary-search) |
+| 2 | Find First and Last Position (Search Range) | 🟡 Medium | [→ #2](#find-first-and-last-position-search-range) |
+| 3 | Search in Rotated Sorted Array | 🟡 Medium | [→ #3](#search-in-rotated-sorted-array) |
+| 4 | Find Minimum in Rotated Sorted Array | 🟡 Medium | [→ #4](#find-minimum-in-rotated-sorted-array) |
+| 5 | Koko Eating Bananas (Binary Search on Answer) | 🟡 Medium | [→ #5](#koko-eating-bananas-binary-search-on-answer) |
+| 6 | Median of Two Sorted Arrays | 🔴 Hard | [→ #6](#median-of-two-sorted-arrays) |
+| 7 | Find Peak Element | 🟡 Medium | [→ #7](#find-peak-element) |
+| 8 | Search a 2D Matrix | 🟡 Medium | [→ #8](#search-a-2d-matrix) |
+| 9 | Aggressive Cows / Allocate Books (Maximize Minimum) | 🔴 Hard | [→ #9](#aggressive-cows--allocate-books-maximize-minimum) |
+| 10 | Find in Mountain Array (Unknown Size / Double Binary Search) | 🔴 Hard | [→ #10](#find-in-mountain-array-unknown-size--double-binary-search) |
 
 ---
 
@@ -49,6 +50,7 @@ Avoids integer overflow compared to `(lo + hi) / 2`.
 
 ---
 
+<a id="classic-binary-search"></a>
 ## 1. Classic Binary Search
 
 ### Problem Statement
@@ -100,6 +102,7 @@ class Solution {
 
 ---
 
+<a id="find-first-and-last-position-search-range"></a>
 ## 2. Find First and Last Position (Search Range)
 
 ### Problem Statement
@@ -178,6 +181,7 @@ class Solution {
 
 ---
 
+<a id="search-in-rotated-sorted-array"></a>
 ## 3. Search in Rotated Sorted Array
 
 ### Problem Statement
@@ -253,6 +257,7 @@ class Solution {
 
 ---
 
+<a id="find-minimum-in-rotated-sorted-array"></a>
 ## 4. Find Minimum in Rotated Sorted Array
 
 ### Problem Statement
@@ -303,6 +308,7 @@ class Solution {
 
 ---
 
+<a id="koko-eating-bananas-binary-search-on-answer"></a>
 ## 5. Koko Eating Bananas (Binary Search on Answer)
 
 ### Problem Statement
@@ -366,6 +372,7 @@ class Solution {
 
 ---
 
+<a id="median-of-two-sorted-arrays"></a>
 ## 6. Median of Two Sorted Arrays
 
 ### Problem Statement
@@ -444,6 +451,7 @@ class Solution {
 
 ---
 
+<a id="find-peak-element"></a>
 ## 7. Find Peak Element
 
 ### Problem Statement
@@ -498,6 +506,7 @@ class Solution {
 
 ---
 
+<a id="search-a-2d-matrix"></a>
 ## 8. Search a 2D Matrix
 
 ### Problem Statement
@@ -548,6 +557,7 @@ class Solution {
 
 ---
 
+<a id="aggressive-cows--allocate-books-maximize-minimum"></a>
 ## 9. Aggressive Cows / Allocate Books (Maximize Minimum)
 
 ### Problem Statement
@@ -668,6 +678,7 @@ class AllocateBooks {
 
 ---
 
+<a id="find-in-mountain-array-unknown-size--double-binary-search"></a>
 ## 10. Find in Mountain Array (Unknown Size / Double Binary Search)
 
 ### Problem Statement

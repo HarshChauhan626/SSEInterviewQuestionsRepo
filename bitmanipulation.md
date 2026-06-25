@@ -6,16 +6,18 @@
 
 ## Table of Contents
 
-1. [Check if a Number is a Power of Two](#1-check-if-a-number-is-a-power-of-two)
-2. [Count Set Bits (Hamming Weight / Popcount)](#2-count-set-bits-hamming-weight--popcount)
-3. [Find the Single Number (XOR Trick)](#3-find-the-single-number-xor-trick)
-4. [Find Two Non-Repeating Numbers](#4-find-two-non-repeating-numbers)
-5. [Reverse Bits of an Integer](#5-reverse-bits-of-an-integer)
-6. [Find the Missing Number](#6-find-the-missing-number)
-7. [Subsets Generation using Bitmask](#7-subsets-generation-using-bitmask)
-8. [Maximum XOR of Two Numbers in an Array (Trie / Greedy Bit)](#8-maximum-xor-of-two-numbers-in-an-array)
-9. [Counting Bits — Number of 1s for 0 to N (DP + Bit)](#9-counting-bits--number-of-1s-for-0-to-n)
-10. [Single Number III — Element Appearing Once When Others Appear Three Times](#10-single-number-iii--element-appearing-once-when-others-appear-three-times)
+| # | Problem | Difficulty | Jump to Solution |
+|---|---------|:----------:|-----------------|
+| 1 | Check if a Number is a Power of Two | 🟢 Easy | [→ #1](#check-if-a-number-is-a-power-of-two) |
+| 2 | Count Set Bits (Hamming Weight / Popcount) | 🟢 Easy | [→ #2](#count-set-bits-hamming-weight--popcount) |
+| 3 | Find the Single Number (XOR Trick) | 🟢 Easy | [→ #3](#find-the-single-number-xor-trick) |
+| 4 | Find Two Non-Repeating Numbers | 🟡 Medium | [→ #4](#find-two-non-repeating-numbers) |
+| 5 | Reverse Bits of an Integer | 🟢 Easy | [→ #5](#reverse-bits-of-an-integer) |
+| 6 | Find the Missing Number | 🟢 Easy | [→ #6](#find-the-missing-number) |
+| 7 | Subsets Generation using Bitmask | 🟡 Medium | [→ #7](#subsets-generation-using-bitmask) |
+| 8 | Maximum XOR of Two Numbers in an Array | 🟡 Medium | [→ #8](#maximum-xor-of-two-numbers-in-an-array) |
+| 9 | Counting Bits — Number of 1s for 0 to N | 🟢 Easy | [→ #9](#counting-bits--number-of-1s-for-0-to-n) |
+| 10 | Single Number III — Element Appearing Once When Others Appear Three Times | 🟡 Medium | [→ #10](#single-number-iii--element-appearing-once-when-others-appear-three-times) |
 
 ---
 
@@ -34,6 +36,7 @@
 
 ---
 
+<a id="check-if-a-number-is-a-power-of-two"></a>
 ## 1. Check if a Number is a Power of Two
 
 ### Problem Statement
@@ -105,6 +108,7 @@ public class PowerOfTwo {
 
 ---
 
+<a id="count-set-bits-hamming-weight--popcount"></a>
 ## 2. Count Set Bits (Hamming Weight / Popcount)
 
 ### Problem Statement
@@ -174,6 +178,7 @@ public class CountSetBits {
 
 ---
 
+<a id="find-the-single-number-xor-trick"></a>
 ## 3. Find the Single Number (XOR Trick)
 
 ### Problem Statement
@@ -237,6 +242,7 @@ public class SingleNumber {
 
 ---
 
+<a id="find-two-non-repeating-numbers"></a>
 ## 4. Find Two Non-Repeating Numbers
 
 ### Problem Statement
@@ -309,6 +315,7 @@ public class TwoSingleNumbers {
 
 ---
 
+<a id="reverse-bits-of-an-integer"></a>
 ## 5. Reverse Bits of an Integer
 
 ### Problem Statement
@@ -380,6 +387,7 @@ public class ReverseBits {
 
 ---
 
+<a id="find-the-missing-number"></a>
 ## 6. Find the Missing Number
 
 ### Problem Statement
@@ -449,6 +457,7 @@ public class MissingNumber {
 
 ---
 
+<a id="subsets-generation-using-bitmask"></a>
 ## 7. Subsets Generation using Bitmask
 
 ### Problem Statement
@@ -526,6 +535,7 @@ public class Subsets {
 
 ---
 
+<a id="maximum-xor-of-two-numbers-in-an-array"></a>
 ## 8. Maximum XOR of Two Numbers in an Array
 
 ### Problem Statement
@@ -605,6 +615,7 @@ public class MaximumXOR {
 
 ---
 
+<a id="counting-bits--number-of-1s-for-0-to-n"></a>
 ## 9. Counting Bits — Number of 1s for 0 to N
 
 ### Problem Statement
@@ -681,6 +692,7 @@ public class CountingBits {
 
 ---
 
+<a id="single-number-iii--element-appearing-once-when-others-appear-three-times"></a>
 ## 10. Single Number III — Element Appearing Once When Others Appear Three Times
 
 ### Problem Statement

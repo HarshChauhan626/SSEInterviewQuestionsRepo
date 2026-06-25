@@ -19,23 +19,24 @@ class TrieNode {
 
 ---
 
-## Pattern Map
+## Table of Contents
 
-| # | Problem | Pattern |
-|---|---------|---------|
-| 1 | Implement Trie | Core structure |
-| 2 | Word Search II | Trie + DFS/Backtracking |
-| 3 | Replace Words | Prefix replacement |
-| 4 | Design Add and Search Words | Wildcard search |
-| 5 | Longest Word in Dictionary | BFS/DFS on Trie |
-| 6 | Maximum XOR of Two Numbers | Bit Trie |
-| 7 | Palindrome Pairs | Trie + Palindrome check |
-| 8 | Word Break II | Trie + DP/Backtracking |
-| 9 | Autocomplete System | Trie + Frequency ranking |
-| 10 | Count Distinct Substrings | Suffix Trie |
+| # | Problem | Difficulty | Jump to Solution |
+|---|---------|:----------:|-----------------|
+| 1 | Implement Trie (Prefix Tree) | 🟡 Medium | [→ #1](#implement-trie-prefix-tree) |
+| 2 | Word Search II | 🔴 Hard | [→ #2](#word-search-ii) |
+| 3 | Replace Words | 🟡 Medium | [→ #3](#replace-words) |
+| 4 | Design Add and Search Words | 🟡 Medium | [→ #4](#design-add-and-search-words) |
+| 5 | Longest Word in Dictionary | 🟡 Medium | [→ #5](#longest-word-in-dictionary) |
+| 6 | Maximum XOR of Two Numbers in an Array | 🟡 Medium | [→ #6](#maximum-xor-of-two-numbers-in-an-array) |
+| 7 | Palindrome Pairs | 🔴 Hard | [→ #7](#palindrome-pairs) |
+| 8 | Word Break II | 🔴 Hard | [→ #8](#word-break-ii) |
+| 9 | Design Search Autocomplete System | 🔴 Hard | [→ #9](#design-search-autocomplete-system) |
+| 10 | Count Distinct Substrings (Suffix Trie) | 🔴 Hard | [→ #10](#count-distinct-substrings-suffix-trie) |
 
 ---
 
+<a id="implement-trie-prefix-tree"></a>
 ## Problem 1 — Implement Trie (Prefix Tree)
 
 ### Problem Statement
@@ -122,6 +123,7 @@ Output: true, false
 
 ---
 
+<a id="word-search-ii"></a>
 ## Problem 2 — Word Search II (LeetCode 212)
 
 ### Problem Statement
@@ -217,6 +219,7 @@ Output: ["oat","eat"]  (order may vary)
 
 ---
 
+<a id="replace-words"></a>
 ## Problem 3 — Replace Words (LeetCode 648)
 
 ### Problem Statement
@@ -299,6 +302,7 @@ Output: "e e"
 
 ---
 
+<a id="design-add-and-search-words"></a>
 ## Problem 4 — Design Add and Search Words (LeetCode 211)
 
 ### Problem Statement
@@ -376,6 +380,7 @@ search("...")                  → false (no 3-letter word added)
 
 ---
 
+<a id="longest-word-in-dictionary"></a>
 ## Problem 5 — Longest Word in Dictionary (LeetCode 720)
 
 ### Problem Statement
@@ -452,6 +457,7 @@ words=[]                                           → ""
 
 ---
 
+<a id="maximum-xor-of-two-numbers-in-an-array"></a>
 ## Problem 6 — Maximum XOR of Two Numbers in an Array (LeetCode 421)
 
 ### Problem Statement
@@ -528,6 +534,7 @@ nums=[8,10,2]      → 10  (8 XOR 2 = 10)
 
 ---
 
+<a id="palindrome-pairs"></a>
 ## Problem 7 — Palindrome Pairs (LeetCode 336)
 
 ### Problem Statement
@@ -625,6 +632,7 @@ words=["lls","s","sssll"] → [[1,0],[0,2]]
 
 ---
 
+<a id="word-break-ii"></a>
 ## Problem 8 — Word Break II (LeetCode 140)
 
 ### Problem Statement
@@ -718,6 +726,7 @@ Output: []
 
 ---
 
+<a id="design-search-autocomplete-system"></a>
 ## Problem 9 — Design Search Autocomplete System (LeetCode 642)
 
 ### Problem Statement
@@ -807,6 +816,7 @@ input('i') → ["i love you","i"] // "i" now has freq 1
 
 ---
 
+<a id="count-distinct-substrings-suffix-trie"></a>
 ## Problem 10 — Count Distinct Substrings (Suffix Trie)
 
 ### Problem Statement

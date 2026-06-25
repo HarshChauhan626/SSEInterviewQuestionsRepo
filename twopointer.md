@@ -24,6 +24,24 @@ Two Pointer is a technique where you maintain **two indices** (pointers) into a 
 
 ---
 
+## Table of Contents
+
+| # | Problem | Difficulty | Jump to Solution |
+|---|---------|:----------:|-----------------|
+| 1 | Two Sum II (Sorted Array) | 🟢 Easy | [→ #1](#two-sum-ii-sorted-array) |
+| 2 | Container With Most Water | 🟡 Medium | [→ #2](#container-with-most-water) |
+| 3 | 3Sum | 🟡 Medium | [→ #3](#3sum) |
+| 4 | Remove Duplicates from Sorted Array | 🟢 Easy | [→ #4](#remove-duplicates-from-sorted-array) |
+| 5 | Linked List Cycle Detection (Floyd's Algorithm) | 🟢 Easy | [→ #5](#linked-list-cycle-detection-floyds-algorithm) |
+| 6 | Trapping Rain Water | 🔴 Hard | [→ #6](#trapping-rain-water) |
+| 7 | Minimum Size Subarray Sum | 🟡 Medium | [→ #7](#minimum-size-subarray-sum) |
+| 8 | Longest Substring Without Repeating Characters | 🟡 Medium | [→ #8](#longest-substring-without-repeating-characters) |
+| 9 | Sort Colors (Dutch National Flag) | 🟡 Medium | [→ #9](#sort-colors-dutch-national-flag) |
+| 10 | Merge Sorted Array | 🟢 Easy | [→ #10](#merge-sorted-array) |
+
+---
+
+<a id="two-sum-ii-sorted-array"></a>
 ## Problem 1 — Two Sum II (Sorted Array)
 
 **LeetCode 167** | Difficulty: Easy | Variant: Opposite Ends
@@ -88,6 +106,7 @@ public int[] twoSum(int[] numbers, int target) {
 
 ---
 
+<a id="container-with-most-water"></a>
 ## Problem 2 — Container With Most Water
 
 **LeetCode 11** | Difficulty: Medium | Variant: Opposite Ends
@@ -158,6 +177,7 @@ public int maxArea(int[] height) {
 
 ---
 
+<a id="3sum"></a>
 ## Problem 3 — 3Sum
 
 **LeetCode 15** | Difficulty: Medium | Variant: Opposite Ends + Sorting
@@ -235,6 +255,7 @@ public List<List<Integer>> threeSum(int[] nums) {
 
 ---
 
+<a id="remove-duplicates-from-sorted-array"></a>
 ## Problem 4 — Remove Duplicates from Sorted Array
 
 **LeetCode 26** | Difficulty: Easy | Variant: Slow/Fast (Same Direction)
@@ -293,6 +314,7 @@ public int removeDuplicates(int[] nums) {
 
 ---
 
+<a id="linked-list-cycle-detection-floyds-algorithm"></a>
 ## Problem 5 — Linked List Cycle Detection (Floyd's Algorithm)
 
 **LeetCode 141 / 142** | Difficulty: Easy/Medium | Variant: Slow/Fast Pointers
@@ -378,6 +400,7 @@ null             hasCycle=false, detectCycle=null       ✓ empty list
 
 ---
 
+<a id="trapping-rain-water"></a>
 ## Problem 6 — Trapping Rain Water
 
 **LeetCode 42** | Difficulty: Hard | Variant: Opposite Ends
@@ -449,6 +472,7 @@ public int trap(int[] height) {
 
 ---
 
+<a id="minimum-size-subarray-sum"></a>
 ## Problem 7 — Minimum Size Subarray Sum
 
 **LeetCode 209** | Difficulty: Medium | Variant: Slow/Fast (Sliding Window)
@@ -510,6 +534,7 @@ target=6,  [10,2,3]           → 1   ✓ first element alone
 
 ---
 
+<a id="longest-substring-without-repeating-characters"></a>
 ## Problem 8 — Longest Substring Without Repeating Characters
 
 **LeetCode 3** | Difficulty: Medium | Variant: Slow/Fast + HashMap
@@ -574,6 +599,7 @@ public int lengthOfLongestSubstring(String s) {
 
 ---
 
+<a id="sort-colors-dutch-national-flag"></a>
 ## Problem 9 — Sort Colors (Dutch National Flag)
 
 **LeetCode 75** | Difficulty: Medium | Variant: Three Pointers
@@ -647,6 +673,7 @@ public void sortColors(int[] nums) {
 
 ---
 
+<a id="merge-sorted-array"></a>
 ## Problem 10 — Merge Sorted Array
 
 **LeetCode 88** | Difficulty: Easy | Variant: Two-Array Pointers (Reverse)

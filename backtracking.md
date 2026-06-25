@@ -5,6 +5,22 @@
 
 ---
 
+## Table of Contents
+| # | Problem | Difficulty | Jump to Solution |
+|---|---------|:----------:|------------------|
+| 1 | Subsets (Power Set) | 🟢 Easy | [→ #1](#subsets-power-set) |
+| 2 | Subsets II (With Duplicates) | 🟡 Medium | [→ #2](#subsets-ii-with-duplicates) |
+| 3 | Permutations | 🟡 Medium | [→ #3](#permutations) |
+| 4 | Permutations II (With Duplicates) | 🟡 Medium | [→ #4](#permutations-ii-with-duplicates) |
+| 5 | Combination Sum | 🟡 Medium | [→ #5](#combination-sum) |
+| 6 | Combination Sum II (Each element used once) | 🟡 Medium | [→ #6](#combination-sum-ii-each-element-used-once) |
+| 7 | N-Queens | 🔴 Hard | [→ #7](#n-queens) |
+| 8 | Word Search | 🟡 Medium | [→ #8](#word-search) |
+| 9 | Palindrome Partitioning | 🟡 Medium | [→ #9](#palindrome-partitioning) |
+| 10 | Sudoku Solver | 🔴 Hard | [→ #10](#sudoku-solver) |
+
+---
+
 ## The Universal Backtracking Template
 
 ```java
@@ -33,6 +49,7 @@ void backtrack(State current, Result result, ...) {
 
 ---
 
+<a id="subsets-power-set"></a>
 ## Problem 1 — Subsets (Power Set)
 
 ### Problem Statement
@@ -106,6 +123,7 @@ class Subsets {
 
 ---
 
+<a id="subsets-ii-with-duplicates"></a>
 ## Problem 2 — Subsets II (With Duplicates)
 
 ### Problem Statement
@@ -168,6 +186,7 @@ class SubsetsII {
 
 ---
 
+<a id="permutations"></a>
 ## Problem 3 — Permutations
 
 ### Problem Statement
@@ -234,6 +253,7 @@ class Permutations {
 
 ---
 
+<a id="permutations-ii-with-duplicates"></a>
 ## Problem 4 — Permutations II (With Duplicates)
 
 ### Problem Statement
@@ -303,6 +323,7 @@ class PermutationsII {
 
 ---
 
+<a id="combination-sum"></a>
 ## Problem 5 — Combination Sum
 
 ### Problem Statement
@@ -367,6 +388,7 @@ class CombinationSum {
 
 ---
 
+<a id="combination-sum-ii-each-element-used-once"></a>
 ## Problem 6 — Combination Sum II (Each element used once)
 
 ### Problem Statement
@@ -433,6 +455,7 @@ class CombinationSumII {
 
 ---
 
+<a id="n-queens"></a>
 ## Problem 7 — N-Queens
 
 ### Problem Statement
@@ -524,6 +547,7 @@ class NQueens {
 
 ---
 
+<a id="word-search"></a>
 ## Problem 8 — Word Search
 
 ### Problem Statement
@@ -599,6 +623,7 @@ class WordSearch {
 
 ---
 
+<a id="palindrome-partitioning"></a>
 ## Problem 9 — Palindrome Partitioning
 
 ### Problem Statement
@@ -675,6 +700,7 @@ class PalindromePartitioning {
 
 ---
 
+<a id="sudoku-solver"></a>
 ## Problem 10 — Sudoku Solver
 
 ### Problem Statement

@@ -5,17 +5,18 @@
 ---
 
 ## Table of Contents
-
-1. [Sliding Window Maximum (Monotonic Deque)](#1-sliding-window-maximum)
-2. [First Non-Repeating Character in Stream](#2-first-non-repeating-character-in-stream)
-3. [BFS – Shortest Path in Binary Matrix](#3-bfs--shortest-path-in-binary-matrix)
-4. [Design Circular Queue](#4-design-circular-queue)
-5. [Rotten Oranges – Multi-Source BFS](#5-rotten-oranges--multi-source-bfs)
-6. [Design Hit Counter (Sliding Window Queue)](#6-design-hit-counter)
-7. [Largest Rectangle in Histogram (Monotonic Stack + Queue intuition)](#7-largest-rectangle-in-histogram)
-8. [Sliding Window Minimum with Deque](#8-sliding-window-minimum-with-deque)
-9. [Task Scheduler (Greedy + Queue)](#9-task-scheduler)
-10. [Design Snake Game (Deque Simulation)](#10-design-snake-game)
+| # | Problem | Difficulty | Jump to Solution |
+|---|---------|:----------:|-----------------|
+| 1 | Sliding Window Maximum | 🔴 Hard | [→ #1](#sliding-window-maximum) |
+| 2 | First Non-Repeating Character in Stream | 🟡 Medium | [→ #2](#first-non-repeating-character-in-stream) |
+| 3 | BFS – Shortest Path in Binary Matrix | 🟡 Medium | [→ #3](#bfs--shortest-path-in-binary-matrix) |
+| 4 | Design Circular Queue | 🟡 Medium | [→ #4](#design-circular-queue) |
+| 5 | Rotten Oranges – Multi-Source BFS | 🟡 Medium | [→ #5](#rotten-oranges--multi-source-bfs) |
+| 6 | Design Hit Counter | 🟡 Medium | [→ #6](#design-hit-counter) |
+| 7 | Largest Rectangle in Histogram | 🔴 Hard | [→ #7](#largest-rectangle-in-histogram) |
+| 8 | Sliding Window Minimum with Deque | 🟡 Medium | [→ #8](#sliding-window-minimum-with-deque) |
+| 9 | Task Scheduler | 🟡 Medium | [→ #9](#task-scheduler) |
+| 10 | Design Snake Game | 🟡 Medium | [→ #10](#design-snake-game) |
 
 ---
 
@@ -36,6 +37,7 @@
 
 ---
 
+<a id="sliding-window-maximum"></a>
 ## 1. Sliding Window Maximum
 
 ### Problem Statement
@@ -131,6 +133,7 @@ public class SlidingWindowMaximum {
 
 ---
 
+<a id="first-non-repeating-character-in-stream"></a>
 ## 2. First Non-Repeating Character in Stream
 
 ### Problem Statement
@@ -212,6 +215,7 @@ public class FirstNonRepeatingInStream {
 
 ---
 
+<a id="bfs--shortest-path-in-binary-matrix"></a>
 ## 3. BFS – Shortest Path in Binary Matrix
 
 ### Problem Statement
@@ -301,6 +305,7 @@ public class ShortestPathBinaryMatrix {
 
 ---
 
+<a id="design-circular-queue"></a>
 ## 4. Design Circular Queue
 
 ### Problem Statement
@@ -396,6 +401,7 @@ public class MyCircularQueue {
 
 ---
 
+<a id="rotten-oranges--multi-source-bfs"></a>
 ## 5. Rotten Oranges – Multi-Source BFS
 
 ### Problem Statement
@@ -492,6 +498,7 @@ public class RottingOranges {
 
 ---
 
+<a id="design-hit-counter"></a>
 ## 6. Design Hit Counter
 
 ### Problem Statement
@@ -569,6 +576,7 @@ public class HitCounter {
 
 ---
 
+<a id="largest-rectangle-in-histogram"></a>
 ## 7. Largest Rectangle in Histogram
 
 ### Problem Statement
@@ -647,6 +655,7 @@ public class LargestRectangleHistogram {
 
 ---
 
+<a id="sliding-window-minimum-with-deque"></a>
 ## 8. Sliding Window Minimum with Deque
 
 ### Problem Statement
@@ -733,6 +742,7 @@ public class SlidingWindowMinimum {
 
 ---
 
+<a id="task-scheduler"></a>
 ## 9. Task Scheduler
 
 ### Problem Statement
@@ -833,6 +843,7 @@ public class TaskScheduler {
 
 ---
 
+<a id="design-snake-game"></a>
 ## 10. Design Snake Game
 
 ### Problem Statement

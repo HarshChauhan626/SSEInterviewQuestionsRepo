@@ -29,6 +29,23 @@ Use a heap whenever you need **repeated access to the smallest or largest elemen
 
 ---
 
+## Table of Contents
+| # | Problem | Difficulty | Jump to Solution |
+|---|---------|:----------:|------------------|
+| 1 | Kth Largest Element in an Array | 🟡 Medium | [→ #1](#kth-largest-element-in-an-array) |
+| 2 | Top K Frequent Elements | 🟡 Medium | [→ #2](#top-k-frequent-elements) |
+| 3 | Merge K Sorted Lists | 🔴 Hard | [→ #3](#merge-k-sorted-lists) |
+| 4 | Find Median from Data Stream | 🔴 Hard | [→ #4](#find-median-from-data-stream) |
+| 5 | Task Scheduler | 🟡 Medium | [→ #5](#task-scheduler) |
+| 6 | K Closest Points to Origin | 🟡 Medium | [→ #6](#k-closest-points-to-origin) |
+| 7 | Reorganize String | 🟡 Medium | [→ #7](#reorganize-string) |
+| 8 | Dijkstra's Shortest Path | 🟡 Medium | [→ #8](#dijkstras-shortest-path) |
+| 9 | Minimum Cost to Connect Ropes (Huffman-style) | 🟡 Medium | [→ #9](#minimum-cost-to-connect-ropes-huffman-style) |
+| 10 | Find K Pairs with Smallest Sums | 🟡 Medium | [→ #10](#find-k-pairs-with-smallest-sums) |
+
+---
+
+<a id="kth-largest-element-in-an-array"></a>
 ## Problem 1 — Kth Largest Element in an Array
 
 ### Problem Statement
@@ -84,6 +101,7 @@ nums = [-1,-2,-3], k=2 → -2
 
 ---
 
+<a id="top-k-frequent-elements"></a>
 ## Problem 2 — Top K Frequent Elements
 
 ### Problem Statement
@@ -147,6 +165,7 @@ nums=[4,1,1,2,2,3], k=2 → [1,2]
 
 ---
 
+<a id="merge-k-sorted-lists"></a>
 ## Problem 3 — Merge K Sorted Lists
 
 ### Problem Statement
@@ -215,6 +234,7 @@ lists = [[1],[0]]                → [0,1]
 
 ---
 
+<a id="find-median-from-data-stream"></a>
 ## Problem 4 — Find Median from Data Stream
 
 ### Problem Statement
@@ -287,6 +307,7 @@ class MedianFinder {
 
 ---
 
+<a id="task-scheduler"></a>
 ## Problem 5 — Task Scheduler
 
 ### Problem Statement
@@ -361,6 +382,7 @@ tasks=['A'], n=0 → 1
 
 ---
 
+<a id="k-closest-points-to-origin"></a>
 ## Problem 6 — K Closest Points to Origin
 
 ### Problem Statement
@@ -417,6 +439,7 @@ points=[[1,1],[10,10],[2,2]], k=1 → [[1,1]]
 
 ---
 
+<a id="reorganize-string"></a>
 ## Problem 7 — Reorganize String
 
 ### Problem Statement
@@ -495,6 +518,7 @@ class ReorganizeString {
 
 ---
 
+<a id="dijkstras-shortest-path"></a>
 ## Problem 8 — Dijkstra's Shortest Path
 
 ### Problem Statement
@@ -573,6 +597,7 @@ n=3, edges=[[0,1,1],[1,2,1],[0,2,10]], src=0 → [0, 1, 2]
 
 ---
 
+<a id="minimum-cost-to-connect-ropes-huffman-style"></a>
 ## Problem 9 — Minimum Cost to Connect Ropes (Huffman-style)
 
 ### Problem Statement
@@ -633,6 +658,7 @@ ropes=[20,4,8,2]  → 54
 
 ---
 
+<a id="find-k-pairs-with-smallest-sums"></a>
 ## Problem 10 — Find K Pairs with Smallest Sums
 
 ### Problem Statement

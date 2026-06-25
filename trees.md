@@ -15,6 +15,29 @@ Patterns covered: DFS, BFS, recursion, diameter, LCA, serialization, BST, path s
 
 ---
 
+## Table of Contents
+
+| # | Problem | Difficulty | Jump to Solution |
+|---|---------|:----------:|-----------------|
+| 1 | Binary Tree Maximum Path Sum | 🔴 Hard | [→ #1](#binary-tree-maximum-path-sum) |
+| 2 | Diameter of Binary Tree | 🟢 Easy | [→ #2](#diameter-of-binary-tree) |
+| 3 | Lowest Common Ancestor (LCA) of a Binary Tree | 🟡 Medium | [→ #3](#lowest-common-ancestor-lca-of-a-binary-tree) |
+| 4 | Binary Tree Level Order Traversal | 🟡 Medium | [→ #4](#binary-tree-level-order-traversal) |
+| 5 | Serialize and Deserialize Binary Tree | 🔴 Hard | [→ #5](#serialize-and-deserialize-binary-tree) |
+| 6 | Validate Binary Search Tree | 🟡 Medium | [→ #6](#validate-binary-search-tree) |
+| 7 | Binary Tree Right Side View | 🟡 Medium | [→ #7](#binary-tree-right-side-view) |
+| 8 | Construct Binary Tree from Preorder and Inorder Traversal | 🟡 Medium | [→ #8](#construct-binary-tree-from-preorder-and-inorder-traversal) |
+| 9 | Kth Smallest Element in a BST | 🟡 Medium | [→ #9](#kth-smallest-element-in-a-bst) |
+| 10 | Flatten Binary Tree to Linked List | 🟡 Medium | [→ #10](#flatten-binary-tree-to-linked-list) |
+| 11 | Path Sum II (All Root-to-Leaf Paths with Target Sum) | 🟡 Medium | [→ #11](#path-sum-ii-all-root-to-leaf-paths-with-target-sum) |
+| 12 | Morris Inorder Traversal (O(1) Space) | 🟡 Medium | [→ #12](#morris-inorder-traversal-o1-space) |
+| 13 | Count Good Nodes in a Binary Tree | 🟡 Medium | [→ #13](#count-good-nodes-in-a-binary-tree) |
+| 14 | Fenwick Tree (Binary Indexed Tree) — Range Sum Queries | 🟡 Medium | [→ #14](#fenwick-tree-binary-indexed-tree--range-sum-queries) |
+| 15 | Fenwick Tree — Count of Smaller Numbers After Self | 🔴 Hard | [→ #15](#fenwick-tree--count-of-smaller-numbers-after-self) |
+
+---
+
+<a id="binary-tree-maximum-path-sum"></a>
 ## Problem 1 — Binary Tree Maximum Path Sum
 
 ### Problem Statement
@@ -80,6 +103,7 @@ class Solution {
 
 ---
 
+<a id="diameter-of-binary-tree"></a>
 ## Problem 2 — Diameter of Binary Tree
 
 ### Problem Statement
@@ -131,6 +155,7 @@ class Solution {
 
 ---
 
+<a id="lowest-common-ancestor-lca-of-a-binary-tree"></a>
 ## Problem 3 — Lowest Common Ancestor (LCA) of a Binary Tree
 
 ### Problem Statement
@@ -178,6 +203,7 @@ class Solution {
 
 ---
 
+<a id="binary-tree-level-order-traversal"></a>
 ## Problem 4 — Binary Tree Level Order Traversal
 
 ### Problem Statement
@@ -236,6 +262,7 @@ class Solution {
 
 ---
 
+<a id="serialize-and-deserialize-binary-tree"></a>
 ## Problem 5 — Serialize and Deserialize Binary Tree
 
 ### Problem Statement
@@ -290,6 +317,7 @@ public class Codec {
 
 ---
 
+<a id="validate-binary-search-tree"></a>
 ## Problem 6 — Validate Binary Search Tree
 
 ### Problem Statement
@@ -332,6 +360,7 @@ class Solution {
 
 ---
 
+<a id="binary-tree-right-side-view"></a>
 ## Problem 7 — Binary Tree Right Side View
 
 ### Problem Statement
@@ -387,6 +416,7 @@ class Solution {
 
 ---
 
+<a id="construct-binary-tree-from-preorder-and-inorder-traversal"></a>
 ## Problem 8 — Construct Binary Tree from Preorder and Inorder Traversal
 
 ### Problem Statement
@@ -445,6 +475,7 @@ class Solution {
 
 ---
 
+<a id="kth-smallest-element-in-a-bst"></a>
 ## Problem 9 — Kth Smallest Element in a BST
 
 ### Problem Statement
@@ -491,6 +522,7 @@ class Solution {
 
 ---
 
+<a id="flatten-binary-tree-to-linked-list"></a>
 ## Problem 10 — Flatten Binary Tree to Linked List
 
 ### Problem Statement
@@ -538,6 +570,7 @@ class Solution {
 
 ---
 
+<a id="path-sum-ii-all-root-to-leaf-paths-with-target-sum"></a>
 ## Problem 11 — Path Sum II (All Root-to-Leaf Paths with Target Sum)
 
 ### Problem Statement
@@ -592,6 +625,7 @@ class Solution {
 
 ---
 
+<a id="morris-inorder-traversal-o1-space"></a>
 ## Problem 12 — Morris Inorder Traversal (O(1) Space)
 
 ### Problem Statement
@@ -647,6 +681,7 @@ class Solution {
 
 ---
 
+<a id="count-good-nodes-in-a-binary-tree"></a>
 ## Problem 13 — Count Good Nodes in a Binary Tree
 
 ### Problem Statement
@@ -698,6 +733,7 @@ class Solution {
 
 ---
 
+<a id="fenwick-tree-binary-indexed-tree--range-sum-queries"></a>
 ## Problem 14 — Fenwick Tree (Binary Indexed Tree) — Range Sum Queries
 
 ### Problem Statement
@@ -762,6 +798,7 @@ class NumArray {
 
 ---
 
+<a id="fenwick-tree--count-of-smaller-numbers-after-self"></a>
 ## Problem 15 — Fenwick Tree — Count of Smaller Numbers After Self
 
 ### Problem Statement

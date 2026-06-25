@@ -4,6 +4,22 @@
 
 ---
 
+## Table of Contents
+| # | Problem | Difficulty | Jump to Solution |
+|---|---------|:----------:|----------------|
+| 1 | Next Greater Element I | 🟢 Easy | [→ #1](#next-greater-element-i) |
+| 2 | Daily Temperatures | 🟡 Medium | [→ #2](#daily-temperatures) |
+| 3 | Largest Rectangle in Histogram | 🔴 Hard | [→ #3](#largest-rectangle-in-histogram) |
+| 4 | Trapping Rain Water | 🔴 Hard | [→ #4](#trapping-rain-water) |
+| 5 | Maximal Rectangle (Binary Matrix) | 🔴 Hard | [→ #5](#maximal-rectangle-binary-matrix) |
+| 6 | Stock Span Problem | 🟡 Medium | [→ #6](#stock-span-problem) |
+| 7 | Remove K Digits to Make Smallest Number | 🟡 Medium | [→ #7](#remove-k-digits-to-make-smallest-number) |
+| 8 | Next Greater Element II (Circular Array) | 🟡 Medium | [→ #8](#next-greater-element-ii-circular-array) |
+| 9 | Sum of Subarray Minimums | 🟡 Medium | [→ #9](#sum-of-subarray-minimums) |
+| 10 | Largest Rectangle in Buildings / Skyline (132 Pattern) | 🔴 Hard | [→ #10](#largest-rectangle-in-buildings--skyline-132-pattern) |
+
+---
+
 ## What is a Monotonic Stack?
 
 A **monotonic stack** is a stack that maintains elements in either strictly increasing or strictly decreasing order from bottom to top. When a new element violates the monotonic property, elements are popped and processed before pushing.
@@ -42,6 +58,7 @@ for (int i = 0; i < n; i++) {
 
 ---
 
+<a id="next-greater-element-i"></a>
 ## Problem 1 — Next Greater Element I
 
 ### Problem Statement
@@ -106,6 +123,7 @@ Input:  nums1=[3],     nums2=[3]          → [-1]
 
 ---
 
+<a id="daily-temperatures"></a>
 ## Problem 2 — Daily Temperatures
 
 ### Problem Statement
@@ -162,6 +180,7 @@ Input: [70,70,70]                → [0,0,0]
 
 ---
 
+<a id="largest-rectangle-in-histogram"></a>
 ## Problem 3 — Largest Rectangle in Histogram
 
 ### Problem Statement
@@ -225,6 +244,7 @@ Input: [5,4,3,2,1]    → 9
 
 ---
 
+<a id="trapping-rain-water"></a>
 ## Problem 4 — Trapping Rain Water
 
 ### Problem Statement
@@ -287,6 +307,7 @@ Input: []                         → 0
 
 ---
 
+<a id="maximal-rectangle-binary-matrix"></a>
 ## Problem 5 — Maximal Rectangle (Binary Matrix)
 
 ### Problem Statement
@@ -368,6 +389,7 @@ Input: [["1","1"],["1","1"]] → 4
 
 ---
 
+<a id="stock-span-problem"></a>
 ## Problem 6 — Stock Span Problem
 
 ### Problem Statement
@@ -426,6 +448,7 @@ Input: [40,30,20,10]            → [1,1,1,1]
 
 ---
 
+<a id="remove-k-digits-to-make-smallest-number"></a>
 ## Problem 7 — Remove K Digits to Make Smallest Number
 
 ### Problem Statement
@@ -499,6 +522,7 @@ Input: "1234",    k=2 → "12"
 
 ---
 
+<a id="next-greater-element-ii-circular-array"></a>
 ## Problem 8 — Next Greater Element II (Circular Array)
 
 ### Problem Statement
@@ -560,6 +584,7 @@ Input: [3,3]       → [-1,-1]
 
 ---
 
+<a id="sum-of-subarray-minimums"></a>
 ## Problem 9 — Sum of Subarray Minimums
 
 ### Problem Statement
@@ -638,6 +663,7 @@ Input: [1,1,1]      → 6  (careful with duplicates)
 
 ---
 
+<a id="largest-rectangle-in-buildings--skyline-132-pattern"></a>
 ## Problem 10 — Largest Rectangle in Buildings / Skyline (132 Pattern)
 
 ### Problem Statement

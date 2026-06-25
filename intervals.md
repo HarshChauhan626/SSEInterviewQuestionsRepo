@@ -4,6 +4,22 @@
 
 ---
 
+## Table of Contents
+| # | Problem | Difficulty | Jump to Solution |
+|---|---------|:----------:|----------------|
+| 1 | Merge Intervals | 🟡 Medium | [→ #1](#merge-intervals) |
+| 2 | Insert Interval | 🟡 Medium | [→ #2](#insert-interval) |
+| 3 | Meeting Rooms I (Can Attend All?) | 🟢 Easy | [→ #3](#meeting-rooms-i-can-attend-all) |
+| 4 | Meeting Rooms II (Minimum Rooms Required) | 🟡 Medium | [→ #4](#meeting-rooms-ii-minimum-rooms-required) |
+| 5 | Non-Overlapping Intervals (Minimum Removals) | 🟡 Medium | [→ #5](#non-overlapping-intervals-minimum-removals) |
+| 6 | Minimum Number of Arrows to Burst Balloons | 🟡 Medium | [→ #6](#minimum-number-of-arrows-to-burst-balloons) |
+| 7 | Maximum CPU Load / Peak Overlap Count | 🟡 Medium | [→ #7](#maximum-cpu-load--peak-overlap-count) |
+| 8 | Employee Free Time | 🔴 Hard | [→ #8](#employee-free-time) |
+| 9 | Interval List Intersections | 🟡 Medium | [→ #9](#interval-list-intersections) |
+| 10 | Summary Ranges / Data Stream as Disjoint Intervals | 🟡 Medium | [→ #10](#summary-ranges--data-stream-as-disjoint-intervals) |
+
+---
+
 ## Core Intuition Before You Start
 
 **What makes interval problems special?**
@@ -23,6 +39,7 @@ They DON'T overlap if: b < c || d < a
 
 ---
 
+<a id="merge-intervals"></a>
 ## Problem 1 — Merge Intervals
 
 ### Problem Statement
@@ -99,6 +116,7 @@ public class MergeIntervals {
 
 ---
 
+<a id="insert-interval"></a>
 ## Problem 2 — Insert Interval
 
 ### Problem Statement
@@ -176,6 +194,7 @@ public class InsertInterval {
 
 ---
 
+<a id="meeting-rooms-i-can-attend-all"></a>
 ## Problem 3 — Meeting Rooms I (Can Attend All?)
 
 ### Problem Statement
@@ -235,6 +254,7 @@ public class MeetingRooms {
 
 ---
 
+<a id="meeting-rooms-ii-minimum-rooms-required"></a>
 ## Problem 4 — Meeting Rooms II (Minimum Rooms Required)
 
 ### Problem Statement
@@ -304,6 +324,7 @@ public class MeetingRoomsII {
 
 ---
 
+<a id="non-overlapping-intervals-minimum-removals"></a>
 ## Problem 5 — Non-Overlapping Intervals (Minimum Removals)
 
 ### Problem Statement
@@ -375,6 +396,7 @@ public class NonOverlappingIntervals {
 
 ---
 
+<a id="minimum-number-of-arrows-to-burst-balloons"></a>
 ## Problem 6 — Minimum Number of Arrows to Burst Balloons
 
 ### Problem Statement
@@ -445,6 +467,7 @@ public class MinArrowsBalloons {
 
 ---
 
+<a id="maximum-cpu-load--peak-overlap-count"></a>
 ## Problem 7 — Maximum CPU Load / Peak Overlap Count
 
 ### Problem Statement
@@ -521,6 +544,7 @@ public class MaxCPULoad {
 
 ---
 
+<a id="employee-free-time"></a>
 ## Problem 8 — Employee Free Time
 
 ### Problem Statement
@@ -611,6 +635,7 @@ public class EmployeeFreeTime {
 
 ---
 
+<a id="interval-list-intersections"></a>
 ## Problem 9 — Interval List Intersections
 
 ### Problem Statement
@@ -691,6 +716,7 @@ public class IntervalIntersection {
 
 ---
 
+<a id="summary-ranges--data-stream-as-disjoint-intervals"></a>
 ## Problem 10 — Summary Ranges / Data Stream as Disjoint Intervals
 
 ### Problem Statement

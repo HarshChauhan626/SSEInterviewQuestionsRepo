@@ -7,6 +7,23 @@
 
 ---
 
+## Table of Contents
+| # | Problem | Difficulty | Jump to Solution |
+|---|---------|:----------:|-----------------|
+| 1 | Range Sum Query (1D) | 🟢 Easy | [→ #1](#range-sum-query-1d) |
+| 2 | Subarray Sum Equals K | 🟡 Medium | [→ #2](#subarray-sum-equals-k) |
+| 3 | Product of Array Except Self | 🟡 Medium | [→ #3](#product-of-array-except-self) |
+| 4 | Find Pivot Index | 🟢 Easy | [→ #4](#find-pivot-index) |
+| 5 | Contiguous Array (Equal 0s and 1s) | 🟡 Medium | [→ #5](#contiguous-array-equal-0s-and-1s) |
+| 6 | Range Sum Query 2D (Immutable) | 🟡 Medium | [→ #6](#range-sum-query-2d-immutable) |
+| 7 | Subarray Sums Divisible by K | 🟡 Medium | [→ #7](#subarray-sums-divisible-by-k) |
+| 8 | Maximum Sum of Subarray of Size K (Sliding Window + Prefix) | 🟢 Easy | [→ #8](#maximum-sum-of-subarray-of-size-k-sliding-window--prefix) |
+| 9 | Count of Range Sum | 🔴 Hard | [→ #9](#count-of-range-sum) |
+| 10 | Minimum Size Subarray Sum (Prefix Sum + Binary Search) | 🟡 Medium | [→ #10](#minimum-size-subarray-sum-prefix-sum--binary-search) |
+
+---
+
+<a id="range-sum-query-1d"></a>
 ## Problem 1 — Range Sum Query (1D)
 **LeetCode 303**
 
@@ -60,6 +77,7 @@ class NumArray {
 
 ---
 
+<a id="subarray-sum-equals-k"></a>
 ## Problem 2 — Subarray Sum Equals K
 **LeetCode 560**
 
@@ -114,6 +132,7 @@ class Solution {
 
 ---
 
+<a id="product-of-array-except-self"></a>
 ## Problem 3 — Product of Array Except Self
 **LeetCode 238**
 
@@ -170,6 +189,7 @@ class Solution {
 
 ---
 
+<a id="find-pivot-index"></a>
 ## Problem 4 — Find Pivot Index
 **LeetCode 724**
 
@@ -220,6 +240,7 @@ class Solution {
 
 ---
 
+<a id="contiguous-array-equal-0s-and-1s"></a>
 ## Problem 5 — Contiguous Array (Equal 0s and 1s)
 **LeetCode 525**
 
@@ -274,6 +295,7 @@ class Solution {
 
 ---
 
+<a id="range-sum-query-2d-immutable"></a>
 ## Problem 6 — Range Sum Query 2D (Immutable)
 **LeetCode 304**
 
@@ -334,6 +356,7 @@ sumRegion(0,0,4,4) → 58
 
 ---
 
+<a id="subarray-sums-divisible-by-k"></a>
 ## Problem 7 — Subarray Sums Divisible by K
 **LeetCode 974**
 
@@ -385,6 +408,7 @@ class Solution {
 
 ---
 
+<a id="maximum-sum-of-subarray-of-size-k-sliding-window--prefix"></a>
 ## Problem 8 — Maximum Sum of Subarray of Size K (Sliding Window + Prefix)
 **LeetCode 643 variant / classic**
 
@@ -432,6 +456,7 @@ class Solution {
 
 ---
 
+<a id="count-of-range-sum"></a>
 ## Problem 9 — Count of Range Sum
 **LeetCode 327**
 
@@ -503,6 +528,7 @@ class Solution {
 
 ---
 
+<a id="minimum-size-subarray-sum-prefix-sum--binary-search"></a>
 ## Problem 10 — Minimum Size Subarray Sum (Prefix Sum + Binary Search)
 **LeetCode 209**
 

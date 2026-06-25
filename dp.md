@@ -43,8 +43,34 @@ Before diving into problems, internalize this:
 
 ---
 
+## Table of Contents
+
+| # | Problem | Difficulty | Jump to Solution |
+|---|---------|:----------:|-----------------|
+| 1 | Climbing Stairs (Linear DP / Fibonacci) | 🟢 Easy | [→ #1](#climbing-stairs-linear-dp--fibonacci) |
+| 2 | House Robber (Linear DP with Skip) | 🟡 Medium | [→ #2](#house-robber-linear-dp-with-skip) |
+| 3 | Longest Increasing Subsequence (LIS) | 🟡 Medium | [→ #3](#longest-increasing-subsequence-lis) |
+| 4 | Longest Common Subsequence (LCS) | 🟡 Medium | [→ #4](#longest-common-subsequence-lcs) |
+| 5 | Edit Distance (Levenshtein) | 🔴 Hard | [→ #5](#edit-distance-levenshtein) |
+| 6 | 0/1 Knapsack | 🟡 Medium | [→ #6](#01-knapsack) |
+| 7 | Coin Change (Minimum Coins) | 🟡 Medium | [→ #7](#coin-change-minimum-coins) |
+| 8 | Coin Change II (Count Ways) | 🟡 Medium | [→ #8](#coin-change-ii-count-ways) |
+| 9 | Partition Equal Subset Sum | 🟡 Medium | [→ #9](#partition-equal-subset-sum) |
+| 10 | Word Break | 🟡 Medium | [→ #10](#word-break) |
+| 11 | Matrix Chain Multiplication (Interval DP) | 🔴 Hard | [→ #11](#matrix-chain-multiplication-interval-dp) |
+| 12 | Burst Balloons (Interval DP — Reverse Thinking) | 🔴 Hard | [→ #12](#burst-balloons-interval-dp--reverse-thinking) |
+| 13 | Unique Paths (Grid DP) | 🟡 Medium | [→ #13](#unique-paths-grid-dp) |
+| 14 | Minimum Path Sum (Grid DP) | 🟡 Medium | [→ #14](#minimum-path-sum-grid-dp) |
+| 15 | Maximal Square (2D Grid DP) | 🟡 Medium | [→ #15](#maximal-square-2d-grid-dp) |
+| 16 | Best Time to Buy/Sell Stock with Cooldown (State Machine DP) | 🟡 Medium | [→ #16](#best-time-to-buysell-stock-with-cooldown-state-machine-dp) |
+| 17 | Longest Palindromic Substring (Palindrome DP) | 🟡 Medium | [→ #17](#longest-palindromic-substring-palindrome-dp) |
+| 18 | Decode Ways (Conditional Linear DP) | 🟡 Medium | [→ #18](#decode-ways-conditional-linear-dp) |
+| 19 | Distinct Subsequences (Count DP on Two Sequences) | 🔴 Hard | [→ #19](#distinct-subsequences-count-dp-on-two-sequences) |
+| 20 | Russian Doll Envelopes (2D LIS) | 🔴 Hard | [→ #20](#russian-doll-envelopes-2d-lis) |
+
 ---
 
+<a id="climbing-stairs-linear-dp--fibonacci"></a>
 ## Problem 1 — Climbing Stairs (Linear DP / Fibonacci)
 
 ### Problem Statement
@@ -92,6 +118,7 @@ public int climbStairs(int n) {
 
 ---
 
+<a id="house-robber-linear-dp-with-skip"></a>
 ## Problem 2 — House Robber (Linear DP with Skip)
 
 ### Problem Statement
@@ -141,8 +168,7 @@ public int rob(int[] nums) {
 
 ---
 
----
-
+<a id="longest-increasing-subsequence-lis"></a>
 ## Problem 3 — Longest Increasing Subsequence (LIS)
 
 ### Problem Statement
@@ -211,8 +237,7 @@ public int lengthOfLIS_NLogN(int[] nums) {
 
 ---
 
----
-
+<a id="longest-common-subsequence-lcs"></a>
 ## Problem 4 — Longest Common Subsequence (LCS)
 
 ### Problem Statement
@@ -258,8 +283,7 @@ public int longestCommonSubsequence(String text1, String text2) {
 
 ---
 
----
-
+<a id="edit-distance-levenshtein"></a>
 ## Problem 5 — Edit Distance (Levenshtein)
 
 ### Problem Statement
@@ -308,8 +332,7 @@ public int minDistance(String word1, String word2) {
 
 ---
 
----
-
+<a id="01-knapsack"></a>
 ## Problem 6 — 0/1 Knapsack
 
 ### Problem Statement
@@ -366,8 +389,7 @@ public int knapsack1D(int W, int[] weights, int[] values, int n) {
 
 ---
 
----
-
+<a id="coin-change-minimum-coins"></a>
 ## Problem 7 — Coin Change (Minimum Coins)
 
 ### Problem Statement
@@ -418,8 +440,7 @@ public int coinChange(int[] coins, int amount) {
 
 ---
 
----
-
+<a id="coin-change-ii-count-ways"></a>
 ## Problem 8 — Coin Change II (Count Ways)
 
 ### Problem Statement
@@ -462,8 +483,7 @@ If amounts were outer and coins inner, we'd count [1,2] and [2,1] as different �
 
 ---
 
----
-
+<a id="partition-equal-subset-sum"></a>
 ## Problem 9 — Partition Equal Subset Sum
 
 ### Problem Statement
@@ -508,8 +528,7 @@ public boolean canPartition(int[] nums) {
 
 ---
 
----
-
+<a id="word-break"></a>
 ## Problem 10 — Word Break
 
 ### Problem Statement
@@ -554,8 +573,7 @@ public boolean wordBreak(String s, List<String> wordDict) {
 
 ---
 
----
-
+<a id="matrix-chain-multiplication-interval-dp"></a>
 ## Problem 11 — Matrix Chain Multiplication (Interval DP)
 
 ### Problem Statement
@@ -602,8 +620,7 @@ public int matrixChainOrder(int[] dims) {
 
 ---
 
----
-
+<a id="burst-balloons-interval-dp--reverse-thinking"></a>
 ## Problem 12 — Burst Balloons (Interval DP — Reverse Thinking)
 
 ### Problem Statement
@@ -653,8 +670,7 @@ public int maxCoins(int[] nums) {
 
 ---
 
----
-
+<a id="unique-paths-grid-dp"></a>
 ## Problem 13 — Unique Paths (Grid DP)
 
 ### Problem Statement
@@ -691,8 +707,7 @@ public int uniquePaths(int m, int n) {
 
 ---
 
----
-
+<a id="minimum-path-sum-grid-dp"></a>
 ## Problem 14 — Minimum Path Sum (Grid DP)
 
 ### Problem Statement
@@ -730,8 +745,7 @@ public int minPathSum(int[][] grid) {
 
 ---
 
----
-
+<a id="maximal-square-2d-grid-dp"></a>
 ## Problem 15 — Maximal Square (2D Grid DP)
 
 ### Problem Statement
@@ -779,8 +793,7 @@ public int maximalSquare(char[][] matrix) {
 
 ---
 
----
-
+<a id="best-time-to-buysell-stock-with-cooldown-state-machine-dp"></a>
 ## Problem 16 — Best Time to Buy/Sell Stock with Cooldown (State Machine DP)
 
 ### Problem Statement
@@ -825,8 +838,7 @@ public int maxProfit(int[] prices) {
 
 ---
 
----
-
+<a id="longest-palindromic-substring-palindrome-dp"></a>
 ## Problem 17 — Longest Palindromic Substring (Palindrome DP)
 
 ### Problem Statement
@@ -884,8 +896,7 @@ public String longestPalindrome(String s) {
 
 ---
 
----
-
+<a id="decode-ways-conditional-linear-dp"></a>
 ## Problem 18 — Decode Ways (Conditional Linear DP)
 
 ### Problem Statement
@@ -931,8 +942,7 @@ public int numDecodings(String s) {
 
 ---
 
----
-
+<a id="distinct-subsequences-count-dp-on-two-sequences"></a>
 ## Problem 19 — Distinct Subsequences (Count DP on Two Sequences)
 
 ### Problem Statement
@@ -978,8 +988,7 @@ public int numDistinct(String s, String t) {
 
 ---
 
----
-
+<a id="russian-doll-envelopes-2d-lis"></a>
 ## Problem 20 — Russian Doll Envelopes (2D LIS)
 
 ### Problem Statement

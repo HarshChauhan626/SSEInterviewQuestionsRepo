@@ -5,22 +5,23 @@
 ---
 
 ## Table of Contents
-
-1. [Number of Islands (DFS/BFS on Grid)](#1-number-of-islands)
-2. [Clone Graph (DFS + HashMap)](#2-clone-graph)
-3. [Course Schedule (Cycle Detection — Directed)](#3-course-schedule)
-4. [Course Schedule II (Topological Sort — Kahn's BFS)](#4-course-schedule-ii)
-5. [Number of Connected Components (Union-Find)](#5-number-of-connected-components)
-6. [Pacific Atlantic Water Flow (Multi-source BFS/DFS)](#6-pacific-atlantic-water-flow)
-7. [Walls and Gates (Multi-source BFS)](#7-walls-and-gates)
-8. [Shortest Path in Binary Matrix (BFS)](#8-shortest-path-in-binary-matrix)
-9. [Word Ladder (BFS + Level Order)](#9-word-ladder)
-10. [Dijkstra's Algorithm — Network Delay Time](#10-network-delay-time)
-11. [Bellman-Ford — Cheapest Flights Within K Stops](#11-cheapest-flights-within-k-stops)
-12. [Redundant Connection (Union-Find / Cycle in Undirected)](#12-redundant-connection)
-13. [Alien Dictionary (Topological Sort on Characters)](#13-alien-dictionary)
-14. [Graph Valid Tree (Union-Find + Edge Count)](#14-graph-valid-tree)
-15. [Swim in Rising Water (Binary Search + BFS / Dijkstra)](#15-swim-in-rising-water)
+| # | Problem | Difficulty | Jump to Solution |
+|---|---------|:----------:|------------------|
+| 1 | Number of Islands | 🟡 Medium | [→ #1](#number-of-islands) |
+| 2 | Clone Graph | 🟡 Medium | [→ #2](#clone-graph) |
+| 3 | Course Schedule | 🟡 Medium | [→ #3](#course-schedule) |
+| 4 | Course Schedule II | 🟡 Medium | [→ #4](#course-schedule-ii) |
+| 5 | Number of Connected Components | 🟡 Medium | [→ #5](#number-of-connected-components) |
+| 6 | Pacific Atlantic Water Flow | 🟡 Medium | [→ #6](#pacific-atlantic-water-flow) |
+| 7 | Walls and Gates | 🟡 Medium | [→ #7](#walls-and-gates) |
+| 8 | Shortest Path in Binary Matrix | 🟡 Medium | [→ #8](#shortest-path-in-binary-matrix) |
+| 9 | Word Ladder | 🔴 Hard | [→ #9](#word-ladder) |
+| 10 | Network Delay Time | 🟡 Medium | [→ #10](#network-delay-time) |
+| 11 | Cheapest Flights Within K Stops | 🟡 Medium | [→ #11](#cheapest-flights-within-k-stops) |
+| 12 | Redundant Connection | 🟡 Medium | [→ #12](#redundant-connection) |
+| 13 | Alien Dictionary | 🔴 Hard | [→ #13](#alien-dictionary) |
+| 14 | Graph Valid Tree | 🟡 Medium | [→ #14](#graph-valid-tree) |
+| 15 | Swim in Rising Water | 🔴 Hard | [→ #15](#swim-in-rising-water) |
 
 ---
 
@@ -40,6 +41,7 @@
 
 ---
 
+<a id="number-of-islands"></a>
 ## 1. Number of Islands
 
 ### Problem Statement
@@ -103,6 +105,7 @@ class Solution {
 
 ---
 
+<a id="clone-graph"></a>
 ## 2. Clone Graph
 
 ### Problem Statement
@@ -155,6 +158,7 @@ class Solution {
 
 ---
 
+<a id="course-schedule"></a>
 ## 3. Course Schedule
 
 ### Problem Statement
@@ -216,6 +220,7 @@ class Solution {
 
 ---
 
+<a id="course-schedule-ii"></a>
 ## 4. Course Schedule II
 
 ### Problem Statement
@@ -278,6 +283,7 @@ class Solution {
 
 ---
 
+<a id="number-of-connected-components"></a>
 ## 5. Number of Connected Components
 
 ### Problem Statement
@@ -340,6 +346,7 @@ class Solution {
 
 ---
 
+<a id="pacific-atlantic-water-flow"></a>
 ## 6. Pacific Atlantic Water Flow
 
 ### Problem Statement
@@ -415,6 +422,7 @@ class Solution {
 
 ---
 
+<a id="walls-and-gates"></a>
 ## 7. Walls and Gates
 
 ### Problem Statement
@@ -473,6 +481,7 @@ class Solution {
 
 ---
 
+<a id="shortest-path-in-binary-matrix"></a>
 ## 8. Shortest Path in Binary Matrix
 
 ### Problem Statement
@@ -535,6 +544,7 @@ class Solution {
 
 ---
 
+<a id="word-ladder"></a>
 ## 9. Word Ladder
 
 ### Problem Statement
@@ -601,6 +611,7 @@ class Solution {
 
 ---
 
+<a id="network-delay-time"></a>
 ## 10. Network Delay Time
 
 ### Problem Statement
@@ -673,6 +684,7 @@ class Solution {
 
 ---
 
+<a id="cheapest-flights-within-k-stops"></a>
 ## 11. Cheapest Flights Within K Stops
 
 ### Problem Statement
@@ -725,6 +737,7 @@ class Solution {
 
 ---
 
+<a id="redundant-connection"></a>
 ## 12. Redundant Connection
 
 ### Problem Statement
@@ -785,6 +798,7 @@ class Solution {
 
 ---
 
+<a id="alien-dictionary"></a>
 ## 13. Alien Dictionary
 
 ### Problem Statement
@@ -863,6 +877,7 @@ class Solution {
 
 ---
 
+<a id="graph-valid-tree"></a>
 ## 14. Graph Valid Tree
 
 ### Problem Statement
@@ -924,6 +939,7 @@ class Solution {
 
 ---
 
+<a id="swim-in-rising-water"></a>
 ## 15. Swim in Rising Water
 
 ### Problem Statement

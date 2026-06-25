@@ -747,6 +747,31 @@
       buildToc();
       await renderMermaidBlocks();
       docMeta.textContent = `${file} • ${source.split(/\s+/).filter(Boolean).length.toLocaleString()} words`;
+
+      // ── Scroll to URL hash after render ──────────────────────────────
+      const hash = location.hash;
+      if (hash) {
+        // Small delay so layout settles after mermaid / hljs paint
+        setTimeout(() => {
+          // Try exact id match first, then anchor-name match
+          const target = reader.querySelector(hash) ||
+                         reader.querySelector(`[name="${hash.slice(1)}"]`);
+          if (target) {
+            target.scrollIntoView({ behavior: "smooth", block: "start" });
+          }
+        }, 120);
+      }
+
+      // ── Wire internal links in rendered markdown ──────────────────────
+      content.querySelectorAll('a[href^="#"]').forEach(link => {
+        link.addEventListener("click", e => {
+          e.preventDefault();
+          const id = link.getAttribute("href");
+          const el = reader.querySelector(id) ||
+                     reader.querySelector(`[name="${id.slice(1)}"]`);
+          if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+        });
+      });
     }
 
     fileSearch.addEventListener("input", renderFiles);

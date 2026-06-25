@@ -50,6 +50,24 @@ class UnionFind {
 
 ---
 
+## Table of Contents
+
+| # | Problem | Difficulty | Jump to Solution |
+|---|---------|:----------:|-----------------|
+| 1 | Number of Connected Components in an Undirected Graph | 🟡 Medium | [→ #1](#number-of-connected-components-in-an-undirected-graph) |
+| 2 | Number of Islands (Union-Find approach) | 🟡 Medium | [→ #2](#number-of-islands-union-find-approach) |
+| 3 | Redundant Connection | 🟡 Medium | [→ #3](#redundant-connection) |
+| 4 | Accounts Merge | 🟡 Medium | [→ #4](#accounts-merge) |
+| 5 | Graph Valid Tree | 🟡 Medium | [→ #5](#graph-valid-tree) |
+| 6 | Smallest String With Swaps | 🟡 Medium | [→ #6](#smallest-string-with-swaps) |
+| 7 | Satisfiability of Equality Equations | 🟡 Medium | [→ #7](#satisfiability-of-equality-equations) |
+| 8 | Minimum Spanning Tree — Kruskal's Algorithm | 🟡 Medium | [→ #8](#minimum-spanning-tree--kruskals-algorithm) |
+| 9 | Detect Cycle in Undirected Graph / Number of Operations to Make Network Connected | 🟡 Medium | [→ #9](#detect-cycle-in-undirected-graph--number-of-operations-to-make-network-connected) |
+| 10 | Swim in Rising Water | 🔴 Hard | [→ #10](#swim-in-rising-water) |
+
+---
+
+<a id="number-of-connected-components-in-an-undirected-graph"></a>
 ## Problem 1 — Number of Connected Components in an Undirected Graph
 
 ### Problem Statement
@@ -96,6 +114,7 @@ class Solution {
 
 ---
 
+<a id="number-of-islands-union-find-approach"></a>
 ## Problem 2 — Number of Islands (Union-Find approach)
 
 ### Problem Statement
@@ -158,6 +177,7 @@ class Solution {
 
 ---
 
+<a id="redundant-connection"></a>
 ## Problem 3 — Redundant Connection
 
 ### Problem Statement
@@ -200,6 +220,7 @@ class Solution {
 
 ---
 
+<a id="accounts-merge"></a>
 ## Problem 4 — Accounts Merge
 
 ### Problem Statement
@@ -274,6 +295,7 @@ class Solution {
 
 ---
 
+<a id="graph-valid-tree"></a>
 ## Problem 5 — Graph Valid Tree
 
 ### Problem Statement
@@ -324,6 +346,7 @@ class Solution {
 
 ---
 
+<a id="smallest-string-with-swaps"></a>
 ## Problem 6 — Smallest String With Swaps
 
 ### Problem Statement
@@ -381,6 +404,7 @@ class Solution {
 
 ---
 
+<a id="satisfiability-of-equality-equations"></a>
 ## Problem 7 — Satisfiability of Equality Equations
 
 ### Problem Statement
@@ -433,6 +457,7 @@ class Solution {
 
 ---
 
+<a id="minimum-spanning-tree--kruskals-algorithm"></a>
 ## Problem 8 — Minimum Spanning Tree — Kruskal's Algorithm
 
 ### Problem Statement
@@ -483,6 +508,7 @@ class Solution {
 
 ---
 
+<a id="detect-cycle-in-undirected-graph--number-of-operations-to-make-network-connected"></a>
 ## Problem 9 — Detect Cycle in Undirected Graph / Number of Operations to Make Network Connected
 
 ### Problem Statement
@@ -533,6 +559,7 @@ class Solution {
 
 ---
 
+<a id="swim-in-rising-water"></a>
 ## Problem 10 — Swim in Rising Water
 
 ### Problem Statement

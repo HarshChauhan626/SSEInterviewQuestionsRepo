@@ -10,19 +10,22 @@
 ---
 
 ## Table of Contents
-1. [Activity Selection / Interval Scheduling](#1-activity-selection--interval-scheduling)
-2. [Fractional Knapsack](#2-fractional-knapsack)
-3. [Jump Game II — Minimum Jumps](#3-jump-game-ii--minimum-jumps)
-4. [Gas Station](#4-gas-station)
-5. [Meeting Rooms II — Minimum Meeting Rooms](#5-meeting-rooms-ii--minimum-meeting-rooms)
-6. [Task Scheduler](#6-task-scheduler)
-7. [Candy Distribution](#7-candy-distribution)
-8. [Huffman Encoding (Greedy + Heap)](#8-huffman-encoding-greedy--heap)
-9. [Minimum Number of Platforms (Trains)](#9-minimum-number-of-platforms-trains)
-10. [Minimum Cost to Connect Ropes (Kruskal-style Greedy)](#10-minimum-cost-to-connect-ropes)
+| # | Problem | Difficulty | Jump to Solution |
+|---|---------|:----------:|------------------|
+| 1 | Activity Selection / Interval Scheduling | 🟡 Medium | [→ #1](#activity-selection--interval-scheduling) |
+| 2 | Fractional Knapsack | 🟡 Medium | [→ #2](#fractional-knapsack) |
+| 3 | Jump Game II — Minimum Jumps | 🟡 Medium | [→ #3](#jump-game-ii--minimum-jumps) |
+| 4 | Gas Station | 🟡 Medium | [→ #4](#gas-station) |
+| 5 | Meeting Rooms II — Minimum Meeting Rooms | 🟡 Medium | [→ #5](#meeting-rooms-ii--minimum-meeting-rooms) |
+| 6 | Task Scheduler | 🟡 Medium | [→ #6](#task-scheduler) |
+| 7 | Candy Distribution | 🔴 Hard | [→ #7](#candy-distribution) |
+| 8 | Huffman Encoding (Greedy + Heap) | 🟡 Medium | [→ #8](#huffman-encoding-greedy--heap) |
+| 9 | Minimum Number of Platforms (Trains) | 🟡 Medium | [→ #9](#minimum-number-of-platforms-trains) |
+| 10 | Minimum Cost to Connect Ropes | 🟡 Medium | [→ #10](#minimum-cost-to-connect-ropes) |
 
 ---
 
+<a id="activity-selection--interval-scheduling"></a>
 ## 1. Activity Selection / Interval Scheduling
 
 ### Problem Statement
@@ -110,6 +113,7 @@ public class ActivitySelection {
 
 ---
 
+<a id="fractional-knapsack"></a>
 ## 2. Fractional Knapsack
 
 ### Problem Statement
@@ -198,6 +202,7 @@ public class FractionalKnapsack {
 
 ---
 
+<a id="jump-game-ii--minimum-jumps"></a>
 ## 3. Jump Game II — Minimum Jumps
 
 ### Problem Statement
@@ -267,6 +272,7 @@ public class JumpGameII {
 
 ---
 
+<a id="gas-station"></a>
 ## 4. Gas Station
 
 ### Problem Statement
@@ -340,6 +346,7 @@ public class GasStation {
 
 ---
 
+<a id="meeting-rooms-ii--minimum-meeting-rooms"></a>
 ## 5. Meeting Rooms II — Minimum Meeting Rooms
 
 ### Problem Statement
@@ -420,6 +427,7 @@ public class MeetingRoomsII {
 
 ---
 
+<a id="task-scheduler"></a>
 ## 6. Task Scheduler
 
 ### Problem Statement
@@ -490,6 +498,7 @@ public class TaskScheduler {
 
 ---
 
+<a id="candy-distribution"></a>
 ## 7. Candy Distribution
 
 ### Problem Statement
@@ -568,6 +577,7 @@ public class CandyDistribution {
 
 ---
 
+<a id="huffman-encoding-greedy--heap"></a>
 ## 8. Huffman Encoding (Greedy + Heap)
 
 ### Problem Statement
@@ -668,6 +678,7 @@ public class HuffmanEncoding {
 
 ---
 
+<a id="minimum-number-of-platforms-trains"></a>
 ## 9. Minimum Number of Platforms (Trains)
 
 ### Problem Statement
@@ -746,6 +757,7 @@ public class MinPlatforms {
 
 ---
 
+<a id="minimum-cost-to-connect-ropes"></a>
 ## 10. Minimum Cost to Connect Ropes
 
 ### Problem Statement

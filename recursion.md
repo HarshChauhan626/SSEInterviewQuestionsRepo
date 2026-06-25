@@ -13,6 +13,33 @@
 
 ---
 
+## Table of Contents
+| # | Problem | Difficulty | Jump to Solution |
+|---|---------|:----------:|-----------------|
+| 1 | Factorial | 🟢 Easy | [→ #1](#factorial) |
+| 2 | Fibonacci Number | 🟢 Easy | [→ #2](#fibonacci-number) |
+| 3 | Power Function (Fast Exponentiation) | 🟡 Medium | [→ #3](#power-function-fast-exponentiation) |
+| 4 | Binary Search (Recursive) | 🟢 Easy | [→ #4](#binary-search-recursive) |
+| 5 | Merge Sort | 🟡 Medium | [→ #5](#merge-sort) |
+| 6 | Tower of Hanoi | 🟡 Medium | [→ #6](#tower-of-hanoi) |
+| 7 | Generate All Subsets (Power Set) | 🟡 Medium | [→ #7](#generate-all-subsets-power-set) |
+| 8 | Permutations of a String/Array | 🟡 Medium | [→ #8](#permutations-of-a-stringarray) |
+| 9 | Combination Sum | 🟡 Medium | [→ #9](#combination-sum) |
+| 10 | N-Queens | 🔴 Hard | [→ #10](#n-queens) |
+| 11 | Word Search in Grid | 🟡 Medium | [→ #11](#word-search-in-grid) |
+| 12 | Flatten Nested List (Recursive Structures) | 🟡 Medium | [→ #12](#flatten-nested-list-recursive-structures) |
+| 13 | Height of Binary Tree | 🟢 Easy | [→ #13](#height-of-binary-tree) |
+| 14 | Diameter of Binary Tree | 🟢 Easy | [→ #14](#diameter-of-binary-tree) |
+| 15 | Validate Binary Search Tree | 🟡 Medium | [→ #15](#validate-binary-search-tree) |
+| 16 | Lowest Common Ancestor (LCA) | 🟡 Medium | [→ #16](#lowest-common-ancestor-lca) |
+| 17 | Decode Ways | 🟡 Medium | [→ #17](#decode-ways) |
+| 18 | Letter Combinations of a Phone Number | 🟡 Medium | [→ #18](#letter-combinations-of-a-phone-number) |
+| 19 | Regular Expression Matching | 🔴 Hard | [→ #19](#regular-expression-matching) |
+| 20 | Sudoku Solver | 🔴 Hard | [→ #20](#sudoku-solver) |
+
+---
+
+<a id="factorial"></a>
 ## Problem 1 — Factorial
 
 ### Problem Statement
@@ -55,6 +82,7 @@ public class Factorial {
 
 ---
 
+<a id="fibonacci-number"></a>
 ## Problem 2 — Fibonacci Number
 
 ### Problem Statement
@@ -112,6 +140,7 @@ public class Fibonacci {
 
 ---
 
+<a id="power-function-fast-exponentiation"></a>
 ## Problem 3 — Power Function (Fast Exponentiation)
 
 ### Problem Statement
@@ -157,6 +186,7 @@ public class Power {
 
 ---
 
+<a id="binary-search-recursive"></a>
 ## Problem 4 — Binary Search (Recursive)
 
 ### Problem Statement
@@ -203,6 +233,7 @@ public class BinarySearch {
 
 ---
 
+<a id="merge-sort"></a>
 ## Problem 5 — Merge Sort
 
 ### Problem Statement
@@ -258,6 +289,7 @@ public class MergeSort {
 
 ---
 
+<a id="tower-of-hanoi"></a>
 ## Problem 6 — Tower of Hanoi
 
 ### Problem Statement
@@ -298,6 +330,7 @@ public class TowerOfHanoi {
 
 ---
 
+<a id="generate-all-subsets-power-set"></a>
 ## Problem 7 — Generate All Subsets (Power Set)
 
 ### Problem Statement
@@ -350,6 +383,7 @@ public class PowerSet {
 
 ---
 
+<a id="permutations-of-a-stringarray"></a>
 ## Problem 8 — Permutations of a String/Array
 
 ### Problem Statement
@@ -410,6 +444,7 @@ public class Permutations {
 
 ---
 
+<a id="combination-sum"></a>
 ## Problem 9 — Combination Sum
 
 ### Problem Statement
@@ -463,6 +498,7 @@ public class CombinationSum {
 
 ---
 
+<a id="n-queens"></a>
 ## Problem 10 — N-Queens
 
 ### Problem Statement
@@ -534,6 +570,7 @@ public class NQueens {
 
 ---
 
+<a id="word-search-in-grid"></a>
 ## Problem 11 — Word Search in Grid
 
 ### Problem Statement
@@ -601,6 +638,7 @@ public class WordSearch {
 
 ---
 
+<a id="flatten-nested-list-recursive-structures"></a>
 ## Problem 12 — Flatten Nested List (Recursive Structures)
 
 ### Problem Statement
@@ -665,6 +703,7 @@ public class FlattenList {
 
 ---
 
+<a id="height-of-binary-tree"></a>
 ## Problem 13 — Height of Binary Tree
 
 ### Problem Statement
@@ -715,6 +754,7 @@ public class TreeHeight {
 
 ---
 
+<a id="diameter-of-binary-tree"></a>
 ## Problem 14 — Diameter of Binary Tree
 
 ### Problem Statement
@@ -772,6 +812,7 @@ public class TreeDiameter {
 
 ---
 
+<a id="validate-binary-search-tree"></a>
 ## Problem 15 — Validate Binary Search Tree
 
 ### Problem Statement
@@ -829,6 +870,7 @@ public class ValidBST {
 
 ---
 
+<a id="lowest-common-ancestor-lca"></a>
 ## Problem 16 — Lowest Common Ancestor (LCA)
 
 ### Problem Statement
@@ -883,6 +925,7 @@ public class LCA {
 
 ---
 
+<a id="decode-ways"></a>
 ## Problem 17 — Decode Ways
 
 ### Problem Statement
@@ -941,6 +984,7 @@ public class DecodeWays {
 
 ---
 
+<a id="letter-combinations-of-a-phone-number"></a>
 ## Problem 18 — Letter Combinations of a Phone Number
 
 ### Problem Statement
@@ -1004,6 +1048,7 @@ public class PhoneCombinations {
 
 ---
 
+<a id="regular-expression-matching"></a>
 ## Problem 19 — Regular Expression Matching
 
 ### Problem Statement
@@ -1075,6 +1120,7 @@ public class RegexMatch {
 
 ---
 
+<a id="sudoku-solver"></a>
 ## Problem 20 — Sudoku Solver
 
 ### Problem Statement
