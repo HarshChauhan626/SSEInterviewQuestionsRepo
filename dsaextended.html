@@ -410,6 +410,8 @@
         .filter-pill[data-val="Easy"].active   { background: rgba(34,197,94,0.15);  color: #4ade80; border-color: rgba(34,197,94,0.38); }
         .filter-pill[data-val="Medium"].active { background: rgba(251,146,60,0.15); color: #fb923c; border-color: rgba(251,146,60,0.38); }
         .filter-pill[data-val="Hard"].active   { background: rgba(248,113,113,0.15);color: #f87171; border-color: rgba(248,113,113,0.38); }
+        /* Topic active states */
+        .filter-pill[data-group="topic"].active { background: rgba(108,140,255,0.18); color: var(--accent); border-color: rgba(108,140,255,0.45); }
         /* Count chip on pill */
         .pill-count {
             background: rgba(255,255,255,0.1);
@@ -1676,6 +1678,7 @@
 
                 const topicAction = document.createElement('a');
                 topicAction.className = 'topic-action';
+                topicAction.target = '_blank';
                 topicAction.href = `markdownreader.html?file=${topic.file}`;
                 topicAction.textContent = 'Open';
 
@@ -1742,7 +1745,7 @@
 
         function openMarkdown(file, problem = null) {
             const url = getMarkdownUrl(file, problem);
-            window.location.href = url;
+            window.open(url, '_blank');
         }
 
         function getAllQuestions() {
@@ -1802,7 +1805,7 @@
 
                 list.innerHTML = selected.map((item, index) => `
                     <li>
-                        <a class="random-link" href="${getMarkdownUrl(item.file, item.name)}">
+                        <a class="random-link" target="_blank" href="${getMarkdownUrl(item.file, item.name)}">
                             <span class="random-index">${index + 1}</span>
                             <span class="random-question">
                                 <span class="random-question-name">${item.name}</span>
@@ -1839,6 +1842,7 @@
 
                     const a = document.createElement('a');
                     a.className = 'flat-link';
+                    a.target = '_blank';
                     a.href = getMarkdownUrl(topic.file, problem.name);
                     a.innerHTML = `
                         <span class="flat-num">${globalIndex}</span>
@@ -1850,6 +1854,29 @@
                     li.appendChild(a);
                     flatList.appendChild(li);
                 });
+            });
+
+            // Dynamically inject topic filter pills into the filter bar
+            const filterBar = document.getElementById('flatFilterBar');
+            const sep = document.createElement('div');
+            sep.className = 'filter-sep';
+            
+            const label = document.createElement('span');
+            label.className = 'filter-group-label';
+            label.textContent = 'Topic';
+
+            const resultChip = document.getElementById('flatResultChip');
+            filterBar.insertBefore(sep, resultChip);
+            filterBar.insertBefore(label, resultChip);
+
+            topics.forEach(topic => {
+                const btn = document.createElement('button');
+                btn.className = 'filter-pill';
+                btn.setAttribute('data-group', 'topic');
+                btn.setAttribute('data-val', topic.name.toLowerCase());
+                btn.type = 'button';
+                btn.innerHTML = `${topic.icon} ${topic.name} <span class="pill-count"></span>`;
+                filterBar.insertBefore(btn, resultChip);
             });
         }
 
@@ -1886,7 +1913,7 @@
         }
 
         // active filter state
-        const activeFilters = { priority: new Set(), level: new Set() };
+        const activeFilters = { priority: new Set(), level: new Set(), topic: new Set() };
 
         // ── Flat list filters setup ───────────────────────────────────────
         function setupFlatFilters(applySearchFn) {
@@ -1907,7 +1934,7 @@
                         pill.classList.add('active');
                     }
 
-                    const anyActive = activeFilters.priority.size > 0 || activeFilters.level.size > 0;
+                    const anyActive = activeFilters.priority.size > 0 || activeFilters.level.size > 0 || activeFilters.topic.size > 0;
                     clearBtn.style.display   = anyActive ? '' : 'none';
 
                     applySearchFn();
@@ -1917,6 +1944,7 @@
             clearBtn.addEventListener('click', () => {
                 activeFilters.priority.clear();
                 activeFilters.level.clear();
+                activeFilters.topic.clear();
                 pills.forEach(p => p.classList.remove('active'));
                 clearBtn.style.display    = 'none';
                 resultChip.style.display  = 'none';
@@ -1970,10 +1998,11 @@
                     // --- flat list view ---
                     const filterPriority = activeFilters.priority;  // Set
                     const filterLevel    = activeFilters.level;      // Set
-                    const anyFilter      = filterPriority.size > 0 || filterLevel.size > 0;
+                    const filterTopic    = activeFilters.topic;      // Set
+                    const anyFilter      = filterPriority.size > 0 || filterLevel.size > 0 || filterTopic.size > 0;
 
                     // per-value counts (for pill badges)
-                    const counts = { P0: 0, P1: 0, P2: 0, Easy: 0, Medium: 0, Hard: 0 };
+                    const counts = { priority: {}, level: {}, topic: {} };
 
                     const items = document.querySelectorAll('#flatList .flat-item');
                     let i = 0;
@@ -1984,11 +2013,13 @@
 
                         const itemPriority = item.getAttribute('data-priority');
                         const itemLevel    = item.getAttribute('data-level');
+                        const itemTopic    = item.getAttribute('data-topic');
 
                         const priorityOk = filterPriority.size === 0 || filterPriority.has(itemPriority);
                         const levelOk    = filterLevel.size    === 0 || filterLevel.has(itemLevel);
+                        const topicOk    = filterTopic.size    === 0 || filterTopic.has(itemTopic);
 
-                        const show = probMatch && priorityOk && levelOk;
+                        const show = probMatch && priorityOk && levelOk && topicOk;
                         item.style.display = show ? '' : 'none';
                         if (show) {
                             i++;
@@ -1999,17 +2030,23 @@
                         // so each pill shows how many it would contribute)
                         if (probMatch) {
                             const levelMatchForCount = filterLevel.size === 0 || filterLevel.has(itemLevel);
-                            if (levelMatchForCount) counts[itemPriority] = (counts[itemPriority] || 0) + 1;
-
+                            const topicMatchForCount = filterTopic.size === 0 || filterTopic.has(itemTopic);
                             const prioMatchForCount  = filterPriority.size === 0 || filterPriority.has(itemPriority);
-                            if (prioMatchForCount)  counts[itemLevel]    = (counts[itemLevel]    || 0) + 1;
+
+                            if (levelMatchForCount && topicMatchForCount) counts.priority[itemPriority] = (counts.priority[itemPriority] || 0) + 1;
+                            if (prioMatchForCount && topicMatchForCount)  counts.level[itemLevel]       = (counts.level[itemLevel]       || 0) + 1;
+                            if (prioMatchForCount && levelMatchForCount)  counts.topic[itemTopic]       = (counts.topic[itemTopic]       || 0) + 1;
                         }
                     });
 
                     // update pill count badges
-                    ['P0','P1','P2','Easy','Medium','Hard'].forEach(v => {
-                        const el = document.getElementById(`cnt-${v}`);
-                        if (el) el.textContent = counts[v] || '';
+                    const pills = document.querySelectorAll('#flatFilterBar .filter-pill');
+                    pills.forEach(pill => {
+                        const grp = pill.dataset.group;
+                        const val = pill.dataset.val;
+                        const c = counts[grp] && counts[grp][val] ? counts[grp][val] : 0;
+                        const badge = pill.querySelector('.pill-count');
+                        if (badge) badge.textContent = c > 0 ? c : '';
                     });
 
                     // result chip
