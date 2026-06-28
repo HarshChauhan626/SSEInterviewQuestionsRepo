@@ -665,6 +665,18 @@
       </div>
     </div>
 
+    <!-- Misc section -->
+    <div id="miscSection" class="animate-in animate-delay-3">
+      <div class="section-header">
+        <span class="section-badge note" style="background: rgba(167,139,250,0.1); border: 1px solid rgba(167,139,250,0.25); color: var(--accent2);">Misc</span>
+        <h2 class="section-title">Scenario-Based Questions</h2>
+        <div class="section-divider"></div>
+        <span class="section-count">1 available</span>
+      </div>
+      <div class="tools-grid" id="miscGrid">
+      </div>
+    </div>
+
     <!-- Tools section -->
     <div id="toolsSection" class="animate-in animate-delay-3">
       <div class="section-header">
@@ -911,6 +923,24 @@
           </div>
           <div class="tool-card-footer">
             <span class="tool-pill">Quiz</span>
+            <span class="tool-arrow">${arrowSvg}</span>
+          </div>
+        </a>
+      `;
+    }
+
+    // Render misc section
+    const miscGrid = document.getElementById('miscGrid');
+    if (miscGrid) {
+      miscGrid.innerHTML = `
+        <a class="tool-card" href="scenariobasedsystemdesignquestions.html">
+          <div class="tool-card-icon">🏗️</div>
+          <div class="tool-card-body">
+            <div class="tool-card-title">System Design Scenarios</div>
+            <div class="tool-card-desc">Real-world failures, distributed chaos, and the architecture decisions that matter at scale. Includes 38 detailed scenarios.</div>
+          </div>
+          <div class="tool-card-footer">
+            <span class="tool-pill" style="background: rgba(167,139,250,0.1); color: var(--accent2);">Scenarios</span>
             <span class="tool-arrow">${arrowSvg}</span>
           </div>
         </a>

@@ -1,0 +1,2328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>38 System Design Scenarios — SkillHive</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #181c27;
+    --surface2: #1e2335;
+    --border: #2a2f45;
+    --border-light: #333a55;
+    --accent: #6c8bff;
+    --accent2: #a78bfa;
+    --accent3: #34d399;
+    --accent-warn: #f59e0b;
+    --accent-danger: #f87171;
+    --text: #e2e8f0;
+    --text-muted: #8892aa;
+    --text-faint: #4a5270;
+    --mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+    --sans: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+  /* ── HERO ── */
+  .hero {
+    border-bottom: 1px solid var(--border);
+    padding: 56px 24px 48px;
+    text-align: center;
+    background: radial-gradient(ellipse 80% 60% at 50% -10%, rgba(108,139,255,0.12) 0%, transparent 70%);
+  }
+
+  .hero-eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 16px;
+    display: inline-block;
+  }
+
+  .hero h1 {
+    font-size: clamp(26px, 5vw, 46px);
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1.15;
+    margin-bottom: 16px;
+    background: linear-gradient(135deg, #e2e8f0 0%, #a5b4fc 60%, #6c8bff 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero p {
+    color: var(--text-muted);
+    max-width: 580px;
+    margin: 0 auto 28px;
+    font-size: 15px;
+  }
+
+  .tag-row {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .tag {
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    background: var(--surface);
+  }
+
+  .tag.green { border-color: rgba(52,211,153,0.3); color: var(--accent3); background: rgba(52,211,153,0.05); }
+  .tag.blue  { border-color: rgba(108,139,255,0.3); color: var(--accent); background: rgba(108,139,255,0.05); }
+  .tag.purple{ border-color: rgba(167,139,250,0.3); color: var(--accent2); background: rgba(167,139,250,0.05); }
+
+  /* ── LAYOUT ── */
+  .page {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 24px;
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    gap: 0;
+    align-items: start;
+  }
+
+  /* ── TOC SIDEBAR ── */
+  .toc {
+    position: sticky;
+    top: 24px;
+    padding: 24px 0 24px 0;
+    border-right: 1px solid var(--border);
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+  }
+
+  .toc::-webkit-scrollbar { width: 3px; }
+  .toc::-webkit-scrollbar-track { background: transparent; }
+  .toc::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .toc-title {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    padding: 0 20px 12px;
+    display: block;
+  }
+
+  .toc a {
+    display: block;
+    padding: 5px 20px;
+    font-size: 12px;
+    color: var(--text-muted);
+    text-decoration: none;
+    border-left: 2px solid transparent;
+    transition: all 0.15s;
+    line-height: 1.4;
+  }
+
+  .toc a:hover {
+    color: var(--accent);
+    border-left-color: var(--accent);
+    background: rgba(108,139,255,0.05);
+  }
+
+  .toc-num {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-faint);
+    margin-right: 6px;
+  }
+
+  /* ── MAIN CONTENT ── */
+  .main {
+    padding: 40px 0 80px 40px;
+  }
+
+  /* ── QUESTION CARD ── */
+  .q-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-bottom: 32px;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+
+  .q-card:hover { border-color: var(--border-light); }
+
+  .q-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .q-num {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-faint);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 2px 7px;
+    min-width: 36px;
+    text-align: center;
+    flex-shrink: 0;
+    margin-top: 3px;
+  }
+
+  .q-title-block { flex: 1; }
+
+  .q-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1.3;
+    margin-bottom: 6px;
+  }
+
+  .q-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+
+  .q-tag {
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 3px;
+    border: 1px solid var(--border);
+    color: var(--text-faint);
+    background: var(--bg);
+  }
+
+  .q-toggle {
+    color: var(--text-faint);
+    font-size: 18px;
+    line-height: 1;
+    flex-shrink: 0;
+    transition: transform 0.2s;
+    margin-top: 2px;
+  }
+
+  .q-card.open .q-toggle { transform: rotate(180deg); }
+
+  .q-body {
+    display: none;
+    padding: 28px 24px;
+  }
+
+  .q-card.open .q-body { display: block; }
+
+  /* ── SCENARIO BOX ── */
+  .scenario-box {
+    background: rgba(108,139,255,0.06);
+    border: 1px solid rgba(108,139,255,0.2);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 6px 6px 0;
+    padding: 14px 16px;
+    margin-bottom: 24px;
+    font-size: 14px;
+    color: var(--text);
+    line-height: 1.6;
+  }
+
+  .scenario-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--accent);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    display: block;
+  }
+
+  /* ── SECTION LABELS ── */
+  .section-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    margin-bottom: 10px;
+    margin-top: 22px;
+    display: block;
+  }
+
+  .section-label:first-of-type { margin-top: 0; }
+
+  /* ── ANSWER TEXT ── */
+  .answer-text {
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.75;
+    margin-bottom: 16px;
+  }
+
+  .answer-text strong { color: var(--accent); font-weight: 600; }
+
+  /* ── DIAGRAM ── */
+  .diagram {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+    margin: 20px 0;
+    overflow-x: auto;
+  }
+
+  .diagram-title {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-faint);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 14px;
+  }
+
+  .diagram svg { display: block; max-width: 100%; height: auto; }
+
+  /* ── CODE BLOCK ── */
+  .code-block {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 14px 16px;
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.6;
+    color: #a5b4fc;
+    overflow-x: auto;
+    margin: 14px 0;
+    white-space: pre;
+  }
+
+  .code-block .kw { color: #f472b6; }
+  .code-block .str { color: #34d399; }
+  .code-block .cm { color: #4a5270; }
+  .code-block .fn { color: #93c5fd; }
+  .code-block .num { color: #fb923c; }
+
+  /* ── CONCEPT PILLS ── */
+  .concept-grid {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin: 10px 0 18px;
+  }
+
+  .concept-pill {
+    font-size: 12px;
+    font-weight: 500;
+    padding: 5px 12px;
+    border-radius: 20px;
+    border: 1px solid;
+  }
+
+  .cp-blue   { border-color: rgba(108,139,255,0.35); color: #93c5fd; background: rgba(108,139,255,0.08); }
+  .cp-green  { border-color: rgba(52,211,153,0.35);  color: #6ee7b7; background: rgba(52,211,153,0.08);  }
+  .cp-purple { border-color: rgba(167,139,250,0.35); color: #c4b5fd; background: rgba(167,139,250,0.08); }
+  .cp-amber  { border-color: rgba(245,158,11,0.35);  color: #fcd34d; background: rgba(245,158,11,0.08);  }
+  .cp-red    { border-color: rgba(248,113,113,0.35); color: #fca5a5; background: rgba(248,113,113,0.08); }
+
+  /* ── STEP LIST ── */
+  .step-list { list-style: none; margin: 10px 0; }
+
+  .step-list li {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+    color: var(--text);
+    line-height: 1.5;
+  }
+
+  .step-list li:last-child { border-bottom: none; }
+
+  .step-num {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--accent);
+    background: rgba(108,139,255,0.1);
+    border: 1px solid rgba(108,139,255,0.2);
+    border-radius: 3px;
+    padding: 2px 6px;
+    min-width: 28px;
+    text-align: center;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  /* ── CALLOUT ── */
+  .callout {
+    border-radius: 6px;
+    padding: 12px 16px;
+    margin: 16px 0;
+    font-size: 13px;
+    line-height: 1.6;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+
+  .callout.tip   { background: rgba(52,211,153,0.07);  border: 1px solid rgba(52,211,153,0.2);  color: #a7f3d0; }
+  .callout.warn  { background: rgba(245,158,11,0.07);  border: 1px solid rgba(245,158,11,0.2);  color: #fde68a; }
+  .callout.info  { background: rgba(108,139,255,0.07); border: 1px solid rgba(108,139,255,0.2); color: #bfdbfe; }
+  .callout.error { background: rgba(248,113,113,0.07); border: 1px solid rgba(248,113,113,0.2); color: #fecaca; }
+
+  .callout-icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+
+  /* ── TRADEOFFS TABLE ── */
+  .tradeoff-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    margin: 14px 0;
+  }
+
+  .tradeoff-table th {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    text-align: left;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .tradeoff-table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+    vertical-align: top;
+    line-height: 1.5;
+  }
+
+  .tradeoff-table tr:last-child td { border-bottom: none; }
+  .tradeoff-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+  .td-pro  { color: #6ee7b7; font-weight: 500; }
+  .td-con  { color: #fca5a5; font-weight: 500; }
+
+  /* ── EXPAND ALL ── */
+  .expand-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 28px;
+  }
+
+  .btn {
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 7px 14px;
+    border-radius: 5px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 0.05em;
+  }
+
+  .btn:hover { border-color: var(--accent); color: var(--accent); background: rgba(108,139,255,0.07); }
+  .btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .btn.primary:hover { background: #5a78f0; border-color: #5a78f0; }
+
+  /* ── PROGRESS ── */
+  .progress-bar {
+    height: 2px;
+    background: var(--border);
+    border-radius: 1px;
+    margin: 0 0 32px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 1px;
+    transition: width 0.3s;
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 768px) {
+    .page { grid-template-columns: 1fr; }
+    .toc { display: none; }
+    .main { padding: 24px 0 60px; }
+    .hero { padding: 36px 20px 32px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+  <span class="hero-eyebrow">// System Design Interview Prep</span>
+  <h1>38 Scenario-Based<br>System Design Questions</h1>
+  <p>Real-world failures, distributed chaos, and the architecture decisions that matter at scale. Answer every question like you're in the interview room.</p>
+  <div class="tag-row">
+    <span class="tag blue">Distributed Systems</span>
+    <span class="tag green">Reliability Engineering</span>
+    <span class="tag purple">Scalability</span>
+    <span class="tag">Kafka</span>
+    <span class="tag">Caching</span>
+    <span class="tag">Microservices</span>
+  </div>
+</div>
+
+<!-- PAGE LAYOUT -->
+<div class="page">
+
+  <!-- SIDEBAR TOC -->
+  <nav class="toc">
+    <span class="toc-title">// questions</span>
+    <a href="#q1"><span class="toc-num">01</span>URL Shortener Crash</a>
+    <a href="#q2"><span class="toc-num">02</span>WhatsApp Duplicates</a>
+    <a href="#q3"><span class="toc-num">03</span>Wrong Rider Location</a>
+    <a href="#q4"><span class="toc-num">04</span>Double Seat Booking</a>
+    <a href="#q5"><span class="toc-num">05</span>Netflix Buffering</a>
+    <a href="#q6"><span class="toc-num">06</span>Uber Surge Pricing</a>
+    <a href="#q7"><span class="toc-num">07</span>Amazon Cart Stale Data</a>
+    <a href="#q8"><span class="toc-num">08</span>Instagram Notif Storm</a>
+    <a href="#q9"><span class="toc-num">09</span>Payment Deducted, Order Failed</a>
+    <a href="#q10"><span class="toc-num">10</span>YouTube Video Pipeline</a>
+    <a href="#q11"><span class="toc-num">11</span>Kafka Duplicate Event</a>
+    <a href="#q12"><span class="toc-num">12</span>Out-of-Order Events</a>
+    <a href="#q13"><span class="toc-num">13</span>Notif Service Crash</a>
+    <a href="#q14"><span class="toc-num">14</span>Instagram Avoids JOINs</a>
+    <a href="#q15"><span class="toc-num">15</span>DynamoDB Hot Partition</a>
+    <a href="#q16"><span class="toc-num">16</span>Redis Cache Stampede</a>
+    <a href="#q17"><span class="toc-num">17</span>AI Chatbot Wrong Answers</a>
+    <a href="#q18"><span class="toc-num">18</span>AI Platform Costs Explode</a>
+    <a href="#q19"><span class="toc-num">19</span>AI Search Feels Slow</a>
+    <a href="#q20"><span class="toc-num">20</span>OTP Service Fails</a>
+    <a href="#q21"><span class="toc-num">21</span>Cascading Microservice Failure</a>
+    <a href="#q22"><span class="toc-num">22</span>API Gateway Bottleneck</a>
+    <span class="toc-section">Added 16</span>
+    <a href="#q23"><span class="toc-num">23</span>Dropbox File Sync Conflict</a>
+    <a href="#q24"><span class="toc-num">24</span>Google Docs Concurrent Edits</a>
+    <a href="#q25"><span class="toc-num">25</span>Database Replication Lag</a>
+    <a href="#q26"><span class="toc-num">26</span>Distributed Cron Job Runs Twice</a>
+    <a href="#q27"><span class="toc-num">27</span>Paytm Wallet Balance Wrong</a>
+    <a href="#q28"><span class="toc-num">28</span>WhatsApp Last Seen</a>
+    <a href="#q29"><span class="toc-num">29</span>Leaderboard at Scale</a>
+    <a href="#q30"><span class="toc-num">30</span>S3 Upload Slow in India</a>
+    <a href="#q31"><span class="toc-num">31</span>Service Discovery Failure</a>
+    <a href="#q32"><span class="toc-num">32</span>Multi-Region Data Sync</a>
+    <a href="#q33"><span class="toc-num">33</span>Dark Mode Feature Flag</a>
+    <a href="#q34"><span class="toc-num">34</span>Elasticsearch Goes OOM</a>
+    <a href="#q35"><span class="toc-num">35</span>Zero-Downtime Deployment</a>
+    <a href="#q36"><span class="toc-num">36</span>Autocomplete at 1M RPS</a>
+    <a href="#q37"><span class="toc-num">37</span>Fraud Detection in Real-Time</a>
+    <a href="#q38"><span class="toc-num">38</span>Log Pipeline Drowning</a>
+  </nav>
+
+  <!-- MAIN CONTENT -->
+  <main class="main">
+    <div class="expand-row">
+      <button class="btn primary" onclick="expandAll()">Expand All</button>
+      <button class="btn" onclick="collapseAll()">Collapse All</button>
+    </div>
+
+    <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+
+    <!-- ══════════════════════════════════════════════════ -->
+    <!-- Q1 -->
+    <div class="q-card" id="q1">
+      <div class="q-header" onclick="toggle(this)">
+        <span class="q-num">01</span>
+        <div class="q-title-block">
+          <div class="q-title">URL Shortener Suddenly Crashes During IPL Finals</div>
+          <div class="q-tags">
+            <span class="q-tag">CDN</span><span class="q-tag">Redis</span><span class="q-tag">Hot Keys</span><span class="q-tag">Horizontal Scaling</span>
+          </div>
+        </div>
+        <span class="q-toggle">⌄</span>
+      </div>
+      <div class="q-body">
+        <div class="scenario-box">
+          <span class="scenario-label">// scenario</span>
+          Your URL shortener normally handles traffic well. During IPL finals, a celebrity shares a shortened URL and the redirect service starts failing. Traffic goes from 1K req/s to 500K req/s in under a minute.
+        </div>
+
+        <span class="section-label">// interview answer</span>
+        <p class="answer-text">
+          "Let me think through this systematically. The root cause is almost certainly a combination of a <strong>hot key problem</strong> in our cache, database saturation, and servers running out of capacity — all at once."
+        </p>
+
+        <div class="diagram">
+          <div class="diagram-title">// architecture — before vs after fix</div>
+          <svg viewBox="0 0 700 280" xmlns="http://www.w3.org/2000/svg" font-family="JetBrains Mono, monospace">
+            <!-- BEFORE -->
+            <text x="10" y="22" fill="#4a5270" font-size="10" letter-spacing="1">BEFORE (broken)</text>
+            <rect x="10" y="32" width="80" height="32" rx="5" fill="#1e2335" stroke="#f87171" stroke-width="1.2"/>
+            <text x="50" y="53" fill="#f87171" font-size="10" text-anchor="middle">Users</text>
+            <line x1="90" y1="48" x2="130" y2="48" stroke="#333a55" stroke-width="1.2" marker-end="url(#arr)"/>
+            <rect x="130" y="32" width="90" height="32" rx="5" fill="#1e2335" stroke="#6c8bff" stroke-width="1.2"/>
+            <text x="175" y="53" fill="#6c8bff" font-size="10" text-anchor="middle">App Server</text>
+            <line x1="220" y1="48" x2="260" y2="48" stroke="#333a55" stroke-width="1.2" marker-end="url(#arr)"/>
+            <rect x="260" y="32" width="80" height="32" rx="5" fill="#1e2335" stroke="#f59e0b" stroke-width="1.2"/>
+            <text x="300" y="49" fill="#f59e0b" font-size="10" text-anchor="middle">Redis</text>
+            <text x="300" y="61" fill="#f59e0b" font-size="8" text-anchor="middle">(hot key 🔥)</text>
+            <line x1="340" y1="48" x2="380" y2="48" stroke="#333a55" stroke-width="1.2" marker-end="url(#arr)"/>
+            <rect x="380" y="32" width="80" height="32" rx="5" fill="#1e2335" stroke="#f87171" stroke-width="1.2"/>
+            <text x="420" y="49" fill="#f87171" font-size="10" text-anchor="middle">MySQL</text>
+            <text x="420" y="61" fill="#f87171" font-size="8" text-anchor="middle">(overloaded)</text>
+
+            <!-- AFTER -->
+            <text x="10" y="130" fill="#4a5270" font-size="10" letter-spacing="1">AFTER (fixed)</text>
+            <rect x="10" y="140" width="70" height="28" rx="5" fill="#1e2335" stroke="#34d399" stroke-width="1.2"/>
+            <text x="45" y="159" fill="#34d399" font-size="10" text-anchor="middle">Users</text>
+            <line x1="80" y1="154" x2="110" y2="154" stroke="#333a55" stroke-width="1.2" marker-end="url(#arr)"/>
+            <rect x="110" y="140" width="70" height="28" rx="5" fill="#1e2335" stroke="#a78bfa" stroke-width="1.2"/>
+            <text x="145" y="158" fill="#a78bfa" font-size="10" text-anchor="middle">CDN</text>
+            <text x="145" y="168" fill="#a78bfa" font-size="7" text-anchor="middle">edge cache</text>
+            <line x1="180" y1="154" x2="210" y2="154" stroke="#333a55" stroke-width="1.2" marker-end="url(#arr)"/>
+            <rect x="210" y="118" width="80" height="28" rx="5" fill="#1e2335" stroke="#6c8bff" stroke-width="1.2"/>
+            <rect x="210" y="150" width="80" height="28" rx="5" fill="#1e2335" stroke="#6c8bff" stroke-width="1.2"/>
+            <rect x="210" y="182" width="80" height="28" rx="5" fill="#1e2335" stroke="#6c8bff" stroke-width="1.2"/>
+            <text x="250" y="133" fill="#6c8bff" font-size="9" text-anchor="middle">App ×N</text>
+            <text x="250" y="165" fill="#6c8bff" font-size="9" text-anchor="middle">App ×N</text>
+            <text x="250" y="197" fill="#6c8bff" font-size="9" text-anchor="middle">App ×N</text>
+            <line x1="290" y1="132" x2="330" y2="154" stroke="#333a55" stroke-width="1" marker-end="url(#arr)"/>
+            <line x1="290" y1="154" x2="330" y2="154" stroke="#333a55" stroke-width="1" marker-end="url(#arr)"/>
+            <line x1="290" y1="196" x2="330" y2="154" stroke="#333a55" stroke-width="1" marker-end="url(#arr)"/>
+            <rect x="330" y="140" width="90" height="28" rx="5" fill="#1e2335" stroke="#34d399" stroke-width="1.2"/>
+            <text x="375" y="158" fill="#34d399" font-size="9" text-anchor="middle">Redis Cluster</text>
+            <text x="375" y="168" fill="#34d399" font-size="7" text-anchor="middle">local replica</text>
+            <line x1="420" y1="154" x2="455" y2="154" stroke="#333a55" stroke-width="1.2" marker-end="url(#arr)"/>
+            <rect x="455" y="140" width="75" height="28" rx="5" fill="#1e2335" stroke="#f59e0b" stroke-width="1.2"/>
+            <text x="492" y="158" fill="#f59e0b" font-size="9" text-anchor="middle">Read Replica</text>
+            <defs>
+              <marker id="arr" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+                <path d="M0,0 L0,6 L6,3 z" fill="#4a5270"/>
+              </marker>
+            </defs>
+          </svg>
+        </div>
+
+        <span class="section-label">// root causes & fixes</span>
+        <ul class="step-list">
+          <li><span class="step-num">01</span><div><strong>Hot key in Redis:</strong> One single cache key (the celebrity's shortened URL) is being hit 500K times/sec. Redis becomes a bottleneck. Fix: Local in-memory cache (Guava/Caffeine) on each app server instance. If key is in local cache, we never hit Redis. Add Redis read replicas and route reads to them.</div></li>
+          <li><span class="step-num">02</span><div><strong>App server saturation:</strong> Single server can't handle 500K req/s. Fix: Auto-scaling group with horizontal scaling. Put a load balancer in front. Target CPU ~60%.</div></li>
+          <li><span class="step-num">03</span><div><strong>CDN for redirects:</strong> A URL redirect response is deterministic — the same short URL always maps to the same long URL. Push redirect responses to CDN edge nodes globally. 95%+ of traffic never reaches our servers.</div></li>
+          <li><span class="step-num">04</span><div><strong>Database bottleneck:</strong> If cache misses spike, DB gets hammered. Fix: Read replicas, connection pooling, and a write-through cache strategy.</div></li>
+        </ul>
+
+        <div class="callout tip">
+          <span class="callout-icon">💡</span>
+          <span><strong>Key interview point:</strong> Always mention the tradeoff — local cache can serve stale data if the long URL is updated. For URL shorteners, that's acceptable since URLs rarely change. State this explicitly.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Q2 -->
+    <div class="q-card" id="q2">
+      <div class="q-header" onclick="toggle(this)">
+        <span class="q-num">02</span>
+        <div class="q-title-block">
+          <div class="q-title">WhatsApp Users Receive Duplicate Messages</div>
+          <div class="q-tags"><span class="q-tag">Idempotency</span><span class="q-tag">At-Least-Once</span><span class="q-tag">Deduplication</span></div>
+        </div>
+        <span class="q-toggle">⌄</span>
+      </div>
+      <div class="q-body">
+        <div class="scenario-box">
+          <span class="scenario-label">// scenario</span>
+          Users are receiving the same WhatsApp message twice. This started after a recent deployment. Support tickets are pouring in.
+        </div>
+
+        <p class="answer-text">"This is a classic distributed systems problem rooted in <strong>at-least-once delivery semantics</strong>. When a sender's client doesn't get an ACK, it retries — and if the server already processed the original message, the user gets a duplicate."</p>
+
+        <div class="diagram">
+          <div class="diagram-title">// message delivery flow with deduplication</div>
+          <svg viewBox="0 0 680 220" xmlns="http://www.w3.org/2000/svg" font-family="JetBrains Mono, monospace">
+            <defs>
+              <marker id="arr2" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+                <path d="M0,0 L0,6 L6,3 z" fill="#4a5270"/>
+              </marker>
+            </defs>
+            <!-- Sender -->
+            <rect x="10" y="80" width="70" height="60" rx="6" fill="#1e2335" stroke="#6c8bff" stroke-width="1.2"/>
+            <text x="45" y="107" fill="#6c8bff" font-size="10" text-anchor="middle">Sender</text>
+            <text x="45" y="120" fill="#4a5270" font-size="8" text-anchor="middle">msg_id:</text>
+            <text x="45" y="131" fill="#f59e0b" font-size="8" text-anchor="middle">uuid-abc</text>
+            <!-- arrows to server -->
+            <line x1="80" y1="100" x2="140" y2="100" stroke="#6c8bff" stroke-width="1" stroke-dasharray="4,2" marker-end="url(#arr2)"/>
+            <text x="110" y="94" fill="#4a5270" font-size="8" text-anchor="middle">attempt 1</text>
+            <line x1="80" y1="130" x2="140" y2="130" stroke="#f87171" stroke-width="1" stroke-dasharray="4,2" marker-end="url(#arr2)"/>
+            <text x="110" y="124" fill="#f87171" font-size="8" text-anchor="middle">retry (timeout)</text>
+            <!-- Server -->
+            <rect x="140" y="70" width="100" height="80" rx="6" fill="#1e2335" stroke="#a78bfa" stroke-width="1.2"/>
+            <text x="190" y="100" fill="#a78bfa" font-size="10" text-anchor="middle">Message</text>
+            <text x="190" y="113" fill="#a78bfa" font-size="10" text-anchor="middle">Server</text>
+            <text x="190" y="130" fill="#4a5270" font-size="8" text-anchor="middle">dedup check</text>
+            <text x="190" y="141" fill="#34d399" font-size="8" text-anchor="middle">↓ Redis/DB</text>
+            <!-- Dedup store -->
+            <rect x="280" y="70" width="100" height="60" rx="6" fill="#1e2335" stroke="#f59e0b" stroke-width="1.2"/>
+            <text x="330" y="98" fill="#f59e0b" font-size="10" text-anchor="middle">Dedup Store</text>
+            <text x="330" y="110" fill="#4a5270" font-size="8" text-anchor="middle">seen_ids SET</text>
+            <text x="330" y="121" fill="#4a5270" font-size="8" text-anchor="middle">TTL 24h</text>
+            <line x1="240" y1="100" x2="280" y2="100" stroke="#4a5270" stroke-width="1" marker-end="url(#arr2)"/>
+            <!-- Decision -->
+            <polygon points="420,90 460,110 420,130 380,110" fill="#1e2335" stroke="#34d399" stroke-width="1.2"/>
+            <text x="420" y="106" fill="#34d399" font-size="9" text-anchor="middle">seen</text>
+            <text x="420" y="117" fill="#34d399" font-size="9" text-anchor="middle">before?</text>
+            <line x1="340" y1="100" x2="380" y2="110" stroke="#4a5270" stroke-width="1" marker-end="url(#arr2)"/>
+            <!-- YES path -->
+            <line x1="460" y1="110" x2="520" y2="80" stroke="#f87171" stroke-width="1" marker-end="url(#arr2)"/>
+            <text x="495" y="76" fill="#f87171" font-size="8">YES → drop</text>
+            <!-- NO path -->
+            <line x1="460" y1="110" x2="520" y2="140" stroke="#34d399" stroke-width="1" marker-end="url(#arr2)"/>
+            <text x="493" y="155" fill="#34d399" font-size="8">NO → deliver</text>
+            <rect x="520" y="125" width="80" height="30" rx="5" fill="#1e2335" stroke="#34d399" stroke-width="1.2"/>
+            <text x="560" y="144" fill="#34d399" font-size="8" text-anchor="middle">→ Receiver</text>
+          </svg>
+        </div>
+
+        <span class="section-label">// solution layers</span>
+        <ul class="step-list">
+          <li><span class="step-num">01</span><div><strong>Idempotency Key (msg_id):</strong> The sender generates a UUID per message before sending. On retry, it sends the same UUID. The server uses this UUID as a deduplication key.</div></li>
+          <li><span class="step-num">02</span><div><strong>Dedup Store:</strong> A Redis SET or a DB table stores processed msg_ids with a TTL (24–48h is enough since retries happen in seconds/minutes). Before processing, check if msg_id exists. If yes, return 200 OK but don't process again.</div></li>
+          <li><span class="step-num">03</span><div><strong>Client-side dedup:</strong> Receiver client also tracks recently seen msg_ids and suppresses rendering duplicates. Defense in depth.</div></li>
+          <li><span class="step-num">04</span><div><strong>ACK mechanism:</strong> Server sends ACK with sequence number. Client only retries if no ACK received within a timeout window.</div></li>
+        </ul>
+
+        <div class="code-block"><span class="cm">// Pseudocode — server-side dedup</span>
+<span class="kw">function</span> <span class="fn">handleMessage</span>(msg):
+  <span class="kw">if</span> redis.SISMEMBER(<span class="str">"seen_msgs"</span>, msg.id):
+    <span class="kw">return</span> <span class="str">"OK"</span>  <span class="cm">// Already processed, silent ack</span>
+  
+  redis.SADD(<span class="str">"seen_msgs"</span>, msg.id)
+  redis.EXPIRE(msg.id, <span class="num">86400</span>)  <span class="cm">// 24h TTL</span>
+  deliverToRecipient(msg)
+  <span class="kw">return</span> <span class="str">"OK"</span></div>
+
+        <div class="callout warn">
+          <span class="callout-icon">⚠️</span>
+          <span>Exactly-once delivery is <em>impossible</em> in distributed systems — you can only get at-least-once or at-most-once. The dedup layer gives us the <em>effect</em> of exactly-once from the user's perspective.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Q3 -->
+    <div class="q-card" id="q3">
+      <div class="q-header" onclick="toggle(this)">
+        <span class="q-num">03</span>
+        <div class="q-title-block">
+          <div class="q-title">Swiggy Shows Wrong Rider Location</div>
+          <div class="q-tags"><span class="q-tag">WebSockets</span><span class="q-tag">GPS Polling</span><span class="q-tag">Eventual Consistency</span></div>
+        </div>
+        <span class="q-toggle">⌄</span>
+      </div>
+      <div class="q-body">
+        <div class="scenario-box">
+          <span class="scenario-label">// scenario</span>
+          The delivery partner is 3 km away according to GPS, but the customer app shows him standing at their door. There's a location lag of several minutes.
+        </div>
+
+        <p class="answer-text">"This is a <strong>real-time data freshness</strong> problem. Location data needs to flow from the rider's device to our servers to the customer's screen in near real-time, but something in that pipeline is stale or broken."</p>
+
+        <div class="diagram">
+          <div class="diagram-title">// real-time location pipeline</div>
+          <svg viewBox="0 0 680 160" xmlns="http://www.w3.org/2000/svg" font-family="JetBrains Mono, monospace">
+            <defs><marker id="arr3" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L6,3 z" fill="#4a5270"/></marker></defs>
+            <rect x="10" y="60" width="80" height="40" rx="5" fill="#1e2335" stroke="#34d399" stroke-width="1.2"/>
+            <text x="50" y="78" fill="#34d399" font-size="9" text-anchor="middle">Rider App</text>
+            <text x="50" y="90" fill="#4a5270" font-size="8" text-anchor="middle">GPS every 3s</text>
+            <line x1="90" y1="80" x2="120" y2="80" stroke="#4a5270" stroke-width="1" marker-end="url(#arr3)"/>
+            <rect x="120" y="60" width="90" height="40" rx="5" fill="#1e2335" stroke="#6c8bff" stroke-width="1.2"/>
+            <text x="165" y="78" fill="#6c8bff" font-size="9" text-anchor="middle">Location API</text>
+            <text x="165" y="90" fill="#4a5270" font-size="8" text-anchor="middle">REST / gRPC</text>
+            <line x1="210" y1="80" x2="240" y2="80" stroke="#4a5270" stroke-width="1" marker-end="url(#arr3)"/>
+            <rect x="240" y="60" width="90" height="40" rx="5" fill="#1e2335" stroke="#f59e0b" stroke-width="1.2"/>
+            <text x="285" y="78" fill="#f59e0b" font-size="9" text-anchor="middle">Kafka Topic</text>
+            <text x="285" y="90" fill="#4a5270" font-size="8" text-anchor="middle">location-events</text>
+            <line x1="330" y1="80" x2="360" y2="80" stroke="#4a5270" stroke-width="1" marker-end="url(#arr3)"/>
+            <rect x="360" y="60" width="90" height="40" rx="5" fill="#1e2335" stroke="#a78bfa" stroke-width="1.2"/>
+            <text x="405" y="78" fill="#a78bfa" font-size="9" text-anchor="middle">Location</text>
+            <text x="405" y="90" fill="#a78bfa" font-size="9" text-anchor="middle">Service</text>
+            <line x1="450" y1="80" x2="480" y2="80" stroke="#4a5270" stroke-width="1" marker-end="url(#arr3)"/>
+            <rect x="480" y="50" width="80" height="30" rx="5" fill="#1e2335" stroke="#34d399" stroke-width="1.2"/>
+            <rect x="480" y="90" width="80" height="30" rx="5" fill="#1e2335" stroke="#34d399" stroke-width="1.2"/>
+            <text x="520" y="69" fill="#34d399" font-size="8" text-anchor="middle">WebSocket</text>
+            <text x="520" y="79" fill="#34d399" font-size="8" text-anchor="middle">→ Customer</text>
+            <text x="520" y="109" fill="#34d399" font-size="8" text-anchor="middle">Redis Geo</text>
+            <text x="520" y="119" fill="#34d399" font-size="8" text-anchor="middle">Store</text>
+            <line x1="450" y1="75" x2="480" y2="65" stroke="#4a5270" stroke-width="1" marker-end="url(#arr3)"/>
+            <line x1="450" y1="85" x2="480" y2="105" stroke="#4a5270" stroke-width="1" marker-end="url(#arr3)"/>
+          </svg>
+        </div>
+
+        <ul class="step-list">
+          <li><span class="step-num">01</span><div><strong>GPS polling interval:</strong> Rider app should push location every 3–5 seconds (when in motion). If battery saver kicks in, interval becomes 30s. Fix: Adaptive polling — frequent when speed > 0, slower when stationary.</div></li>
+          <li><span class="step-num">02</span><div><strong>WebSocket over polling:</strong> Customer app should use WebSocket connection to receive location pushes, not HTTP polling. Polling every 5s means up to 5s lag + network latency. WebSocket = sub-second push latency.</div></li>
+          <li><span class="step-num">03</span><div><strong>Redis GEO commands:</strong> Store current rider positions using Redis GEOADD. O(log N) inserts, fast nearest-neighbor queries. Pub/Sub for pushing updates to WebSocket servers.</div></li>
+          <li><span class="step-num">04</span><div><strong>Eventual consistency acknowledgement:</strong> Show "last updated X seconds ago" in UI. If no update in 15s, show "Location unavailable" rather than stale data.</div></li>
+        </ul>
+
+        <div class="callout info">
+          <span class="callout-icon">ℹ️</span>
+          <span>The old location being shown at the destination could be a <strong>stale cache</strong> issue — if the system cached the last known position and that cache wasn't invalidated when the order was delivered. Always set TTLs on location data.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Q4 -->
+    <div class="q-card" id="q4">
+      <div class="q-header" onclick="toggle(this)">
+        <span class="q-num">04</span>
+        <div class="q-title-block">
+          <div class="q-title">BookMyShow Accidentally Sells the Same Seat Twice</div>
+          <div class="q-tags"><span class="q-tag">Race Conditions</span><span class="q-tag">Distributed Locking</span><span class="q-tag">Optimistic vs Pessimistic</span></div>
+        </div>
+        <span class="q-toggle">⌄</span>
+      </div>
+      <div class="q-body">
+        <div class="scenario-box">
+          <span class="scenario-label">// scenario</span>
+          Two users — User A and User B — both select seat 12C in a Friday night show. Both get confirmation emails. Both show up at the theater.
+        </div>
+
+        <p class="answer-text">"This is a <strong>race condition</strong> — a classic concurrency bug. Two transactions read the seat as 'available', both proceed to book, both succeed. The read and the write weren't atomic. Let me walk through the solutions."</p>
+
+        <span class="section-label">// the race condition visualized</span>
+        <div class="code-block"><span class="cm">-- BROKEN: Both transactions read AVAILABLE at the same time</span>
+
+T1: SELECT status FROM seats WHERE id='12C'  → 'AVAILABLE' ✓
+T2: SELECT status FROM seats WHERE id='12C'  → 'AVAILABLE' ✓  (race!)
+T1: UPDATE seats SET status='BOOKED', user='A' WHERE id='12C'  ← overwrites
+T2: UPDATE seats SET status='BOOKED', user='B' WHERE id='12C'  ← both succeed!</div>
+
+        <span class="section-label">// solution 1 — pessimistic locking</span>
+        <div class="code-block"><span class="cm">-- SELECT FOR UPDATE acquires a row-level lock</span>
+<span class="kw">BEGIN</span>;
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> seats
+  <span class="kw">WHERE</span> id = <span class="str">'12C'</span> <span class="kw">AND</span> status = <span class="str">'AVAILABLE'</span>
+  <span class="kw">FOR UPDATE</span>;  <span class="cm">-- T2 will BLOCK here until T1 commits/rollbacks</span>
+
+<span class="cm">-- If found: book it</span>
+<span class="kw">UPDATE</span> seats <span class="kw">SET</span> status=<span class="str">'BOOKED'</span>, user=<span class="str">'A'</span> <span class="kw">WHERE</span> id=<span class="str">'12C'</span>;
+<span class="kw">COMMIT</span>;</div>
+
+        <span class="section-label">// solution 2 — optimistic locking</span>
+        <div class="code-block"><span class="cm">-- Add a version column, check it on update</span>
+<span class="kw">SELECT</span> id, status, version <span class="kw">FROM</span> seats <span class="kw">WHERE</span> id=<span class="str">'12C'</span>;
+<span class="cm">-- Got: { status: 'AVAILABLE', version: 7 }</span>
+
+<span class="kw">UPDATE</span> seats
+  <span class="kw">SET</span> status=<span class="str">'BOOKED'</span>, version=<span class="num">8</span>
+  <span class="kw">WHERE</span> id=<span class="str">'12C'</span> <span class="kw">AND</span> version=<span class="num">7</span>;  <span class="cm">-- Only succeeds if nobody changed it</span>
+<span class="cm">-- If rows_affected = 0, someone else grabbed it → retry/fail</span></div>
+
+        <span class="section-label">// solution 3 — distributed lock for temporary hold</span>
+        <ul class="step-list">
+          <li><span class="step-num">01</span><div>User selects seat → acquire Redis lock: <code style="font-family:var(--mono);font-size:11px;color:#f59e0b">SET seat:12C:lock userA NX PX 300000</code> (5 min TTL)</div></li>
+          <li><span class="step-num">02</span><div>While locked: seat shows as "reserved" to all other users</div></li>
+          <li><span class="step-num">03</span><div>User completes payment → DB write → release lock</div></li>
+          <li><span class="step-num">04</span><div>If payment fails or times out → lock auto-expires → seat becomes available again</div></li>
+        </ul>
+
+        <table class="tradeoff-table">
+          <tr><th>Approach</th><th>Pro</th><th>Con</th></tr>
+          <tr><td>Pessimistic Lock</td><td class="td-pro">Simple, strong guarantee</td><td class="td-con">DB lock contention at scale</td></tr>
+          <tr><td>Optimistic Lock</td><td class="td-pro">High concurrency, no blocking</td><td class="td-con">Retry storms under high contention</td></tr>
+          <tr><td>Redis Distributed Lock</td><td class="td-pro">Scales, user experience (holds seat)</td><td class="td-con">Lock expiry edge cases, Redis SPOF</td></tr>
+        </table>
+
+        <div class="callout tip"><span class="callout-icon">💡</span><span>At BookMyShow scale: use a <strong>Redis temporary hold</strong> for UX (show timer to user), then an <strong>optimistic lock</strong> on final DB write. Belt and suspenders.</span></div>
+      </div>
+    </div>
+
+    <!-- Q5 -->
+    <div class="q-card" id="q5">
+      <div class="q-header" onclick="toggle(this)">
+        <span class="q-num">05</span>
+        <div class="q-title-block">
+          <div class="q-title">Netflix Starts Buffering Right After a New Season Release</div>
+          <div class="q-tags"><span class="q-tag">CDN</span><span class="q-tag">Cache Prewarming</span><span class="q-tag">Auto-scaling</span></div>
+        </div>
+        <span class="q-toggle">⌄</span>
+      </div>
+      <div class="q-body">
+        <div class="scenario-box">
+          <span class="scenario-label">// scenario</span>
+          Stranger Things Season 5 drops. 20 million users hit play in the first hour. CDN cache is cold. Origin servers are getting slammed.
+        </div>
+
+        <p class="answer-text">"Netflix actually <strong>pre-warms their CDN</strong> before a major release. The fact that we're buffering means we either skipped that, had a cache miss storm, or underestimated the auto-scaling lead time. Let me break down the full solution."</p>
+
+        <div class="diagram">
+          <div class="diagram-title">// netflix-style video delivery architecture</div>
+          <svg viewBox="0 0 680 200" xmlns="http://www.w3.org/2000/svg" font-family="JetBrains Mono, monospace">
+            <defs><marker id="arr5" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L6,3 z" fill="#4a5270"/></marker></defs>
+            <!-- User -->
+            <rect x="10" y="80" width="60" height="40" rx="5" fill="#1e2335" stroke="#6c8bff" stroke-width="1.2"/>
+            <text x="40" y="103" fill="#6c8bff" font-size="9" text-anchor="middle">20M Users</text>
+            <line x1="70" y1="100" x2="105" y2="100" stroke="#4a5270" stroke-width="1" marker-end="url(#arr5)"/>
+            <!-- CDN -->
+            <rect x="105" y="60" width="90" height="80" rx="5" fill="#1e2335" stroke="#34d399" stroke-width="1.2"/>
+            <text x="150" y="90" fill="#34d399" font-size="9" text-anchor="middle">CDN</text>
+            <text x="150" y="103" fill="#34d399" font-size="9" text-anchor="middle">Edge Nodes</text>
+            <text x="150" y="117" fill="#4a5270" font-size="8" text-anchor="middle">Pre-warmed ✓</text>
+            <text x="150" y="129" fill="#4a5270" font-size="8" text-anchor="middle">95% cache hit</text>
+            <!-- Cache hit arrow back -->
+            <path d="M105,85 Q80,60 70,90" stroke="#34d399" stroke-width="1" fill="none" stroke-dasharray="3,2" marker-end="url(#arr5)"/>
+            <text x="72" y="68" fill="#34d399" font-size="7">cache hit</text>
+            <!-- Arrow to LB -->
+            <line x1="195" y1="100" x2="235" y2="100" stroke="#4a5270" stroke-width="1" marker-end="url(#arr5)"/>
+            <text x="215" y="92" fill="#4a5270" font-size="7">miss ~5%</text>
+            <!-- LB -->
+            <rect x="235" y="75" width="75" height="50" rx="5" fill="#1e2335" stroke="#f59e0b" stroke-width="1.2"/>
+            <text x="272" y="98" fill="#f59e0b" font-size="9" text-anchor="middle">Load</text>
+            <text x="272" y="110" fill="#f59e0b" font-size="9" text-anchor="middle">Balancer</text>
+            <line x1="310" y1="100" x2="350" y2="80" stroke="#4a5270" stroke-width="1" marker-end="url(#arr5)"/>
+            <line x1="310" y1="100" x2="350" y2="100" stroke="#4a5270" stroke-width="1" marker-end="url(#arr5)"/>
+            <line x1="310" y1="100" x2="350" y2="120" stroke="#4a5270" stroke-width="1" marker-end="url(#arr5)"/>
+            <!-- Streaming workers -->
+            <rect x="350" y="65" width="80" height="25" rx="4" fill="#1e2335" stroke="#a78bfa" stroke-width="1.2"/>
+            <rect x="350" y="95" width="80" height="25" rx="4" fill="#1e2335" stroke="#a78bfa" stroke-width="1.2"/>
+            <rect x="350" y="125" width="80" height="25" rx="4" fill="#1e2335" stroke="#a78bfa" stroke-width="1.2"/>
+            <text x="390" y="82" fill="#a78bfa" font-size="8" text-anchor="middle">Stream Worker</text>
+            <text x="390" y="112" fill="#a78bfa" font-size="8" text-anchor="middle">Stream Worker</text>
+            <text x="390" y="142" fill="#a78bfa" font-size="8" text-anchor="middle">Stream Worker</text>
+            <text x="390" y="160" fill="#4a5270" font-size="7" text-anchor="middle">auto-scaled</text>
+            <!-- S3 -->
+            <line x1="430" y1="105" x2="470" y2="105" stroke="#4a5270" stroke-width="1" marker-end="url(#arr5)"/>
+            <rect x="470" y="80" width="80" height="50" rx="5" fill="#1e2335" stroke="#f59e0b" stroke-width="1.2"/>
+            <text x="510" y="103" fill="#f59e0b" font-size="9" text-anchor="middle">S3 / Blob</text>
+            <text x="510" y="115" fill="#f59e0b" font-size="9" text-anchor="middle">Storage</text>
+            <text x="510" y="127" fill="#4a5270" font-size="8" text-anchor="middle">multi-region</text>
+          </svg>
+        </div>
+
+        <ul class="step-list">
+          <li><span class="step-num">01</span><div><strong>CDN Pre-warming:</strong> Before release, Netflix pushes video chunks (especially the first 2 minutes) to all CDN edge nodes globally. When users hit play, the CDN serves it — origin never gets touched. This is done via "cache seeding" scripts.</div></li>
+          <li><span class="step-num">02</span><div><strong>Adaptive Bitrate (ABR):</strong> Serve multiple quality levels (240p → 4K). Client player starts at lower quality immediately and upgrades as bandwidth allows. User perceives no buffer.</div></li>
+          <li><span class="step-num">03</span><div><strong>Auto-scaling with lead time:</strong> Set CloudWatch alarms to trigger scale-out 15 minutes before scheduled release. Don't wait for CPU to spike — you'll be too late.</div></li>
+          <li><span class="step-num">04</span><div><strong>Regional traffic shaping:</strong> If one region's CDN is overwhelmed, route overflow to the next-closest region. Geo-DNS based routing.</div></li>
+        </ul>
+
+        <div class="callout tip"><span class="callout-icon">💡</span><span>Netflix Open Connect — their custom CDN — places physical servers inside ISPs. When you stream, you're often hitting a box in your ISP's data center, not a cloud server. That's how they handle 500Gbps+ of traffic.</span></div>
+      </div>
+    </div>
+
+    <!-- Q6 -->
+    <div class="q-card" id="q6">
+      <div class="q-header" onclick="toggle(this)">
+        <span class="q-num">06</span>
+        <div class="q-title-block">
+          <div class="q-title">Uber Surge Pricing During Rain</div>
+          <div class="q-tags"><span class="q-tag">Stream Processing</span><span class="q-tag">Kafka</span><span class="q-tag">Real-time Analytics</span></div>
+        </div>
+        <span class="q-toggle">⌄</span>
+      </div>
+      <div class="q-body">
+        <div class="scenario-box">
+          <span class="scenario-label">// scenario</span>
+          It starts raining in Mumbai. Within seconds, ride requests spike 10x. Uber needs to compute surge pricing dynamically and reflect it in the app instantly.
+        </div>
+
+        <p class="answer-text">"Surge pricing is a <strong>real-time supply-demand matching problem</strong>. We need a streaming pipeline that continuously computes demand vs. supply per geo-cell and emits a multiplier. Latency needs to be sub-second."</p>
+
+        <div class="diagram">
+          <div class="diagram-title">// surge pricing pipeline</div>
+          <svg viewBox="0 0 680 180" xmlns="http://www.w3.org/2000/svg" font-family="JetBrains Mono, monospace">
+            <defs><marker id="arr6" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L6,3 z" fill="#4a5270"/></marker></defs>
+            <rect x="10" y="70" width="75" height="40" rx="5" fill="#1e2335" stroke="#6c8bff" stroke-width="1.2"/>
+            <text x="47" y="88" fill="#6c8bff" font-size="9" text-anchor="middle">Ride</text>
+            <text x="47" y="100" fill="#6c8bff" font-size="9" text-anchor="middle">Requests</text>
+            <rect x="10" y="120" width="75" height="40" rx="5" fill="#1e2335" stroke="#34d399" stroke-width="1.2"/>
+            <text x="47" y="138" fill="#34d399" font-size="9" text-anchor="middle">Driver</text>
+            <text x="47" y="150" fill="#34d399" font-size="9" text-anchor="middle">Locations</text>
+            <line x1="85" y1="90" x2="120" y2="110" stroke="#4a5270" stroke-width="1" marker-end="url(#arr6)"/>
+            <line x1="85" y1="140" x2="120" y2="115" stroke="#4a5270" stroke-width="1" marker-end="url(#arr6)"/>
+            <rect x="120" y="95" width="80" height="40" rx="5" fill="#1e2335" stroke="#f59e0b" stroke-width="1.2"/>
+            <text x="160" y="113" fill="#f59e0b" font-size="9" text-anchor="middle">Kafka</text>
+            <text x="160" y="125" fill="#f59e0b" font-size="9" text-anchor="middle">Topics</text>
+            <line x1="200" y1="115" x2="235" y2="115" stroke="#4a5270" stroke-width="1" marker-end="url(#arr6)"/>
+            <rect x="235" y="95" width="100" height="40" rx="5" fill="#1e2335" stroke="#a78bfa" stroke-width="1.2"/>
+            <text x="285" y="113" fill="#a78bfa" font-size="9" text-anchor="middle">Flink / Spark</text>
+            <text x="285" y="125" fill="#a78bfa" font-size="9" text-anchor="middle">Streaming</text>
+            <line x1="335" y1="115" x2="370" y2="115" stroke="#4a5270" stroke-width="1" marker-end="url(#arr6)"/>
+            <rect x="370" y="85" width="110" height="60" rx="5" fill="#1e2335" stroke="#f87171" stroke-width="1.2"/>
+            <text x="425" y="108" fill="#f87171" font-size="9" text-anchor="middle">Surge Computer</text>
+            <text x="425" y="120" fill="#4a5270" font-size="8" text-anchor="middle">demand/supply ratio</text>
+            <text x="425" y="132" fill="#4a5270" font-size="8" text-anchor="middle">per h3 geo-cell</text>
+            <line x1="480" y1="115" x2="515" y2="115" stroke="#4a5270" stroke-width="1" marker-end="url(#arr6)"/>
+            <rect x="515" y="95" width="90" height="40" rx="5" fill="#1e2335" stroke="#34d399" stroke-width="1.2"/>
+            <text x="560" y="113" fill="#34d399" font-size="9" text-anchor="middle">Redis / App</text>
+            <text x="560" y="125" fill="#34d399" font-size="9" text-anchor="middle">→ User App</text>
+          </svg>
+        </div>
+
+        <ul class="step-list">
+          <li><span class="step-num">01</span><div><strong>H3 Geo-indexing:</strong> Divide the city into hexagonal cells (Uber's H3 library). Each cell tracks its own demand/supply independently. Mumbai cell 8f2830... sees 50 requests, 3 available drivers → surge.</div></li>
+          <li><span class="step-num">02</span><div><strong>Kafka as event backbone:</strong> Every ride request and every driver location update is a Kafka event. Topics: <code style="font-family:var(--mono);color:#f59e0b;font-size:11px">ride.requests</code> and <code style="font-family:var(--mono);color:#f59e0b;font-size:11px">driver.locations</code>.</div></li>
+          <li><span class="step-num">03</span><div><strong>Flink sliding window:</strong> 5-minute sliding window, compute demand/supply ratio per cell. Ratio > 2 → 1.5x surge. Ratio > 5 → 2.5x surge. Emit to Redis.</div></li>
+          <li><span class="step-num">04</span><div><strong>App reads surge from Redis:</strong> Sub-millisecond reads. Price shown in app reflects current surge. Updates every 30s to user.</div></li>
+        </ul>
+
+        <div class="callout info"><span class="callout-icon">ℹ️</span><span>Also factor in <strong>supply signals</strong>: dispatching idle drivers in nearby cells, incentivizing drivers with bonuses (a business logic layer on top of the compute pipeline).</span></div>
+      </div>
+    </div>
+
+    <!-- Q7 -->
+    <div class="q-card" id="q7">
+      <div class="q-header" onclick="toggle(this)">
+        <span class="q-num">07</span>
+        <div class="q-title-block">
+          <div class="q-title">Amazon Cart Shows Old Data</div>
+          <div class="q-tags"><span class="q-tag">Cache Invalidation</span><span class="q-tag">Eventual Consistency</span><span class="q-tag">Event-Driven</span></div>
+        </div>
+        <span class="q-toggle">⌄</span>
+      </div>
+      <div class="q-body">
+        <div class="scenario-box">
+          <span class="scenario-label">// scenario</span>
+          A user removes shoes from their cart on mobile. Refreshes on laptop — shoes still there. 3 minutes later, laptop finally shows the correct cart.
+        </div>
+
+        <p class="answer-text">"This is the <strong>cache invalidation problem</strong> — infamously one of the hardest problems in CS. The mobile client removed the item from the DB, but the laptop is reading from a stale cache. Let me walk through how to fix this correctly."</p>
+
+        <ul class="step-list">
+          <li><span class="step-num">01</span><div><strong>Write-through cache:</strong> When item is removed via mobile → write to DB AND invalidate (delete) the cart cache key simultaneously in the same transaction. Next read will be a cache miss → fetch fresh from DB → repopulate cache.</div></li>
+          <li><span class="step-num">02</span><div><strong>Event-driven invalidation:</strong> Cart update event published to Kafka. Cache invalidation service consumes the event and deletes the stale key from Redis across all regions.</div></li>
+          <li><span class="step-num">03</span><div><strong>Cache key per session vs per user:</strong> If each device has its own session cache, invalidating one doesn't help the other. Use user-level cache keys: <code style="font-family:var(--mono);color:#f59e0b;font-size:11px">cart:userId:12345</code> — same key for all devices.</div></li>
+          <li><span class="step-num">04</span><div><strong>Short TTL:</strong> Set TTL of 60–120s on cart cache. Even without explicit invalidation, stale data self-corrects within 2 minutes. For cart, that's acceptable.</div></li>
+          <li><span class="step-num">05</span><div><strong>Version/ETag in response:</strong> Return a cart version number. Client sends current version in next request. If server version is newer, return fresh data; otherwise 304 Not Modified.</div></li>
+        </ul>
+
+        <div class="callout warn"><span class="callout-icon">⚠️</span><span>Phil Karlton: "There are only two hard things in Computer Science: cache invalidation and naming things." — Amazon cart is the canonical example. Mention trade-offs: strict consistency (always fresh, slower) vs eventual consistency (possibly stale, faster).</span></div>
+      </div>
+    </div>
+
+    <!-- Q8 -->
+    <div class="q-card" id="q8">
+      <div class="q-header" onclick="toggle(this)">
+        <span class="q-num">08</span>
+        <div class="q-title-block">
+          <div class="q-title">Instagram Notification Storm</div>
+          <div class="q-tags"><span class="q-tag">Fan-out</span><span class="q-tag">Async Processing</span><span class="q-tag">Backpressure</span></div>
+        </div>
+        <span class="q-toggle">⌄</span>
+      </div>
+      <div class="q-body">
+        <div class="scenario-box">
+          <span class="scenario-label">// scenario</span>
+          Virat Kohli uploads a post. He has 260 million followers. All of them should get a push notification "Virat posted something." That's 260M notifications to deliver instantly.
+        </div>
+
+        <p class="answer-text">"This is a classic <strong>fan-out on write vs read</strong> problem. 260 million notifications cannot be sent synchronously. We need an async, queued, batched, prioritized delivery pipeline."</p>
+
+        <div class="diagram">
+          <div class="diagram-title">// fanout architecture — celebrity post</div>
+          <svg viewBox="0 0 680 200" xmlns="http://www.w3.org/2000/svg" font-family="JetBrains Mono, monospace">
+            <defs><marker id="arr8" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L6,3 z" fill="#4a5270"/></marker></defs>
+            <rect x="10" y="80" width="80" height="40" rx="5" fill="#1e2335" stroke="#6c8bff" stroke-width="1.2"/>
+            <text x="50" y="98" fill="#6c8bff" font-size="9" text-anchor="middle">Virat Posts</text>
+            <text x="50" y="110" fill="#4a5270" font-size="8" text-anchor="middle">260M followers</text>
+            <line x1="90" y1="100" x2="130" y2="100" stroke="#4a5270" stroke-width="1" marker-end="url(#arr8)"/>
+            <rect x="130" y="80" width="80" height="40" rx="5" fill="#1e2335" stroke="#f59e0b" stroke-width="1.2"/>
+            <text x="170" y="98" fill="#f59e0b" font-size="9" text-anchor="middle">Fan-out</text>
+            <text x="170" y="110" fill="#f59e0b" font-size="9" text-anchor="middle">Service</text>
+            <line x1="210" y1="100" x2="250" y2="60" stroke="#4a5270" stroke-width="1" marker-end="url(#arr8)"/>
+            <line x1="210" y1="100" x2="250" y2="100" stroke="#4a5270" stroke-width="1" marker-end="url(#arr8)"/>
+            <line x1="210" y1="100" x2="250" y2="140" stroke="#4a5270" stroke-width="1" marker-end="url(#arr8)"/>
+            <rect x="250" y="43" width="90" height="30" rx="5" fill="#1e2335" stroke="#a78bfa" stroke-width="1.2"/>
+            <rect x="250" y="83" width="90" height="30" rx="5" fill="#1e2335" stroke="#a78bfa" stroke-width="1.2"/>
+            <rect x="250" y="123" width="90" height="30" rx="5" fill="#1e2335" stroke="#a78bfa" stroke-width="1.2"/>
+            <text x="295" y="62" fill="#a78bfa" font-size="8" text-anchor="middle">Notif Queue A</text>
+            <text x="295" y="102" fill="#a78bfa" font-size="8" text-anchor="middle">Notif Queue B</text>
+            <text x="295" y="142" fill="#a78bfa" font-size="8" text-anchor="middle">Notif Queue C</text>
+            <text x="295" y="165" fill="#4a5270" font-size="7" text-anchor="middle">sharded by user_id</text>
+            <line x1="340" y1="58" x2="380" y2="75" stroke="#4a5270" stroke-width="1" marker-end="url(#arr8)"/>
+            <line x1="340" y1="98" x2="380" y2="98" stroke="#4a5270" stroke-width="1" marker-end="url(#arr8)"/>
+            <line x1="340" y1="138" x2="380" y2="120" stroke="#4a5270" stroke-width="1" marker-end="url(#arr8)"/>
+            <rect x="380" y="60" width="100" height="76" rx="5" fill="#1e2335" stroke="#34d399" stroke-width="1.2"/>
+            <text x="430" y="90" fill="#34d399" font-size="9" text-anchor="middle">Worker Pool</text>
+            <text x="430" y="103" fill="#4a5270" font-size="8" text-anchor="middle">APNs (iOS)</text>
+            <text x="430" y="115" fill="#4a5270" font-size="8" text-anchor="middle">FCM (Android)</text>
+            <text x="430" y="127" fill="#4a5270" font-size="8" text-anchor="middle">WebPush</text>
+            <line x1="480" y1="98" x2="515" y2="98" stroke="#4a5270" stroke-width="1" marker-end="url(#arr8)"/>
+            <rect x="515" y="80" width="80" height="36" rx="5" fill="#1e2335" stroke="#6c8bff" stroke-width="1.2"/>
+            <text x="555" y="101" fill="#6c8bff" font-size="9" text-anchor="middle">260M Users</text>
+          </svg>
+        </div>
+
+        <ul class="step-list">
+          <li><span class="step-num">01</span><div><strong>Async fan-out:</strong> Post event → Fan-out Service reads follower list in batches of 10K → enqueues notification jobs. Don't try to do 260M writes synchronously.</div></li>
+          <li><span class="step-num">02</span><div><strong>Queue sharding:</strong> Partition notification queues by user_id mod N. 100 queues → each handles 2.6M users. Workers process in parallel.</div></li>
+          <li><span class="step-num">03</span><div><strong>Priority tiers:</strong> Active users in the last hour → high priority queue (deliver in &lt;30s). Inactive users → low priority queue (deliver over minutes). This improves perceived performance.</div></li>
+          <li><span class="step-num">04</span><div><strong>Backpressure:</strong> If APNs rate limits us, use exponential backoff and put items back in queue. Don't drop — but also don't storm the downstream service.</div></li>
+          <li><span class="step-num">05</span><div><strong>For mega-celebrities:</strong> Consider fan-out on read — don't pre-compute individual notifications. Instead, when the user opens the app, check if they follow anyone who posted recently. Less write load, slightly higher read latency.</div></li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Q9 -->
+    <div class="q-card" id="q9">
+      <div class="q-header" onclick="toggle(this)">
+        <span class="q-num">09</span>
+        <div class="q-title-block">
+          <div class="q-title">Payment Deducted But Order Failed</div>
+          <div class="q-tags"><span class="q-tag">Saga Pattern</span><span class="q-tag">Distributed Transactions</span><span class="q-tag">Compensation</span></div>
+        </div>
+        <span class="q-toggle">⌄</span>
+      </div>
+      <div class="q-body">
+        <div class="scenario-box">
+          <span class="scenario-label">// scenario</span>
+          User checks out on Zomato. Payment goes through (₹450 deducted), but the order creation service crashes immediately after. User has no order, but money is gone.
+        </div>
+
+        <p class="answer-text">"This is the most important distributed systems problem in e-commerce. We can't use a traditional ACID transaction across two microservices — payment service and order service run different databases. The solution is the <strong>Saga pattern</strong>."</p>
+
+        <div class="diagram">
+          <div class="diagram-title">// saga pattern — choreography style</div>
+          <svg viewBox="0 0 680 220" xmlns="http://www.w3.org/2000/svg" font-family="JetBrains Mono, monospace">
+            <defs><marker id="arr9" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L6,3 z" fill="#4a5270"/></marker>
+            <marker id="arr9r" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L6,3 z" fill="#f87171"/></marker></defs>
+            <!-- HAPPY PATH -->
+            <text x="10" y="20" fill="#4a5270" font-size="9" letter-spacing="1">HAPPY PATH →</text>
+            <rect x="10" y="30" width="85" height="35" rx="5" fill="#1e2335" stroke="#6c8bff" stroke-width="1.2"/>
+            <text x="52" y="51" fill="#6c8bff" font-size="9" text-anchor="middle">Checkout</text>
+            <line x1="95" y1="47" x2="128" y2="47" stroke="#4a5270" stroke-width="1" marker-end="url(#arr9)"/>
+            <rect x="128" y="30" width="90" height="35" rx="5" fill="#1e2335" stroke="#f59e0b" stroke-width="1.2"/>
+            <text x="173" y="51" fill="#f59e0b" font-size="9" text-anchor="middle">Payment Svc</text>
+            <line x1="218" y1="47" x2="252" y2="47" stroke="#4a5270" stroke-width="1" marker-end="url(#arr9)"/>
+            <rect x="252" y="30" width="90" height="35" rx="5" fill="#1e2335" stroke="#a78bfa" stroke-width="1.2"/>
+            <text x="297" y="47" fill="#a78bfa" font-size="9" text-anchor="middle">Order Svc</text>
+            <text x="297" y="58" fill="#4a5270" font-size="7" text-anchor="middle">creates order</text>
+            <line x1="342" y1="47" x2="376" y2="47" stroke="#4a5270" stroke-width="1" marker-end="url(#arr9)"/>
+            <rect x="376" y="30" width="90" height="35" rx="5" fill="#1e2335" stroke="#34d399" stroke-width="1.2"/>
+            <text x="421" y="47" fill="#34d399" font-size="9" text-anchor="middle">Inventory</text>
+            <text x="421" y="58" fill="#4a5270" font-size="7" text-anchor="middle">reserve items</text>
+            <line x1="466" y1="47" x2="500" y2="47" stroke="#4a5270" stroke-width="1" marker-end="url(#arr9)"/>
+            <rect x="500" y="30" width="85" height="35" rx="5" fill="#1e2335" stroke="#34d399" stroke-width="1.2"/>
+            <text x="542" y="51" fill="#34d399" font-size="9" text-anchor="middle">✓ Confirmed</text>
+
+            <!-- FAILURE PATH -->
+            <text x="10" y="115" fill="#f87171" font-size="9" letter-spacing="1">FAILURE + ROLLBACK ←</text>
+            <rect x="10" y="125" width="85" height="35" rx="5" fill="#1e2335" stroke="#6c8bff" stroke-width="1.2"/>
+            <text x="52" y="146" fill="#6c8bff" font-size="9" text-anchor="middle">Checkout</text>
+            <line x1="128" y1="142" x2="95" y2="142" stroke="#f87171" stroke-width="1" marker-end="url(#arr9r)"/>
+            <text x="112" y="136" fill="#f87171" font-size="7">refund event</text>
+            <rect x="128" y="125" width="90" height="35" rx="5" fill="#1e2335" stroke="#f59e0b" stroke-width="1.2"/>
+            <text x="173" y="141" fill="#f59e0b" font-size="9" text-anchor="middle">Payment Svc</text>
+            <text x="173" y="152" fill="#f59e0b" font-size="7" text-anchor="middle">compensate: refund</text>
+            <line x1="252" y1="142" x2="218" y2="142" stroke="#f87171" stroke-width="1" marker-end="url(#arr9r)"/>
+            <text x="235" y="136" fill="#f87171" font-size="7">order.failed</text>
+            <rect x="252" y="125" width="90" height="35" rx="5" fill="#1e2335" stroke="#f87171" stroke-width="1.2"/>
+            <text x="297" y="141" fill="#f87171" font-size="9" text-anchor="middle">Order Svc</text>
+            <text x="297" y="153" fill="#f87171" font-size="7" text-anchor="middle">💥 CRASHES</text>
+            <line x1="342" y1="142" x2="376" y2="142" stroke="#4a5270" stroke-width="1" stroke-dasharray="3,2" marker-end="url(#arr9)"/>
+            <rect x="376" y="125" width="90" height="35" rx="5" fill="#1e2335" stroke="#4a5270" stroke-width="1.2" stroke-dasharray="4,2"/>
+            <text x="421" y="146" fill="#4a5270" font-size="9" text-anchor="middle">Inventory</text>
+            <text x="421" y="158" fill="#4a5270" font-size="7" text-anchor="middle">(never reached)</text>
+          </svg>
+        </div>
+
+        <span class="section-label">// idempotency key — the critical detail</span>
+        <div class="code-block"><span class="cm">// Payment request with idempotency key</span>
+{
+  <span class="str">"amount"</span>: <span class="num">450</span>,
+  <span class="str">"user_id"</span>: <span class="str">"u_123"</span>,
+  <span class="str">"idempotency_key"</span>: <span class="str">"checkout_session_abc_v1"</span>
+}
+
+<span class="cm">// If we retry, same key → same result, no double charge</span>
+<span class="cm">// Payment service stores: key → result for 24h</span></div>
+
+        <ul class="step-list">
+          <li><span class="step-num">01</span><div><strong>Saga choreography:</strong> Each service publishes events. Next service listens and acts. On failure, publish a failure event → previous services run compensation actions (refund, un-reserve, etc.)</div></li>
+          <li><span class="step-num">02</span><div><strong>Idempotency keys:</strong> Every payment request includes a unique key (order ID + attempt number). Payment service stores results for 24h. Retries return the cached result instead of charging again.</div></li>
+          <li><span class="step-num">03</span><div><strong>Outbox pattern:</strong> Payment service writes to its DB and to an outbox table in the same DB transaction. A separate process reads the outbox and publishes to Kafka. Guarantees the event is never lost even if the process crashes mid-way.</div></li>
+        </ul>
+
+        <div class="callout error"><span class="callout-icon">🚨</span><span>This is the most asked distributed systems question in senior backend interviews. Know the Saga pattern, know the Outbox pattern, and always mention idempotency keys.</span></div>
+      </div>
+    </div>
+
+    <!-- Q10 -->
+    <div class="q-card" id="q10">
+      <div class="q-header" onclick="toggle(this)">
+        <span class="q-num">10</span>
+        <div class="q-title-block">
+          <div class="q-title">YouTube Video Processing Pipeline</div>
+          <div class="q-tags"><span class="q-tag">Async Workers</span><span class="q-tag">Encoding Pipeline</span><span class="q-tag">Chunk Processing</span></div>
+        </div>
+        <span class="q-toggle">⌄</span>
+      </div>
+      <div class="q-body">
+        <div class="scenario-box">
+          <span class="scenario-label">// scenario</span>
+          A user uploads a 2GB 4K video. Within minutes, they expect it to stream in 360p, 720p, 1080p, and 4K with chapters, thumbnails, and captions.
+        </div>
+
+        <p class="answer-text">"This is a classic <strong>async processing pipeline</strong> problem. Video processing is CPU-intensive, time-consuming, and can fail at any stage. We must never do this synchronously in a web request."</p>
+
+        <div class="diagram">
+          <div class="diagram-title">// video processing pipeline</div>
+          <svg viewBox="0 0 680 170" xmlns="http://www.w3.org/2000/svg" font-family="JetBrains Mono, monospace">
+            <defs><marker id="arr10" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L6,3 z" fill="#4a5270"/></marker></defs>
+            <rect x="10" y="65" width="70" height="40" rx="5" fill="#1e2335" stroke="#6c8bff" stroke-width="1.2"/>
+            <text x="45" y="83" fill="#6c8bff" font-size="9" text-anchor="middle">Upload</text>
+            <text x="45" y="95" fill="#4a5270" font-size="8" text-anchor="middle">chunked</text>
+            <line x1="80" y1="85" x2="110" y2="85" stroke="#4a5270" stroke-width="1" marker-end="url(#arr10)"/>
+            <rect x="110" y="65" width="70" height="40" rx="5" fill="#1e2335" stroke="#f59e0b" stroke-width="1.2"/>
+            <text x="145" y="83" fill="#f59e0b" font-size="9" text-anchor="middle">Raw S3</text>
+            <text x="145" y="95" fill="#4a5270" font-size="8" text-anchor="middle">Bucket</text>
+            <line x1="180" y1="85" x2="210" y2="85" stroke="#4a5270" stroke-width="1" marker-end="url(#arr10)"/>
+            <rect x="210" y="65" width="80" height="40" rx="5" fill="#1e2335" stroke="#a78bfa" stroke-width="1.2"/>
+            <text x="250" y="83" fill="#a78bfa" font-size="9" text-anchor="middle">Job Queue</text>
+            <text x="250" y="95" fill="#4a5270" font-size="8" text-anchor="middle">SQS / Kafka</text>
+            <line x1="290" y1="85" x2="320" y2="60" stroke="#4a5270" stroke-width="1" marker-end="url(#arr10)"/>
+            <line x1="290" y1="85" x2="320" y2="85" stroke="#4a5270" stroke-width="1" marker-end="url(#arr10)"/>
+            <line x1="290" y1="85" x2="320" y2="110" stroke="#4a5270" stroke-width="1" marker-end="url(#arr10)"/>
+            <rect x="320" y="43" width="85" height="26" rx="4" fill="#1e2335" stroke="#34d399" stroke-width="1.2"/>
+            <rect x="320" y="73" width="85" height="26" rx="4" fill="#1e2335" stroke="#34d399" stroke-width="1.2"/>
+            <rect x="320" y="103" width="85" height="26" rx="4" fill="#1e2335" stroke="#34d399" stroke-width="1.2"/>
+            <text x="362" y="60" fill="#34d399" font-size="8" text-anchor="middle">ffmpeg: 360p</text>
+            <text x="362" y="90" fill="#34d399" font-size="8" text-anchor="middle">ffmpeg: 1080p</text>
+            <text x="362" y="120" fill="#34d399" font-size="8" text-anchor="middle">ffmpeg: 4K</text>
+            <line x1="405" y1="60" x2="435" y2="80" stroke="#4a5270" stroke-width="1" marker-end="url(#arr10)"/>
+            <line x1="405" y1="86" x2="435" y2="86" stroke="#4a5270" stroke-width="1" marker-end="url(#arr10)"/>
+            <line x1="405" y1="116" x2="435" y2="95" stroke="#4a5270" stroke-width="1" marker-end="url(#arr10)"/>
+            <rect x="435" y="65" width="80" height="40" rx="5" fill="#1e2335" stroke="#f59e0b" stroke-width="1.2"/>
+            <text x="475" y="83" fill="#f59e0b" font-size="9" text-anchor="middle">Processed</text>
+            <text x="475" y="95" fill="#f59e0b" font-size="9" text-anchor="middle">S3 Bucket</text>
+            <line x1="515" y1="85" x2="545" y2="85" stroke="#4a5270" stroke-width="1" marker-end="url(#arr10)"/>
+            <rect x="545" y="65" width="80" height="40" rx="5" fill="#1e2335" stroke="#6c8bff" stroke-width="1.2"/>
+            <text x="585" y="83" fill="#6c8bff" font-size="9" text-anchor="middle">CDN</text>
+            <text x="585" y="95" fill="#4a5270" font-size="8" text-anchor="middle">→ Streaming</text>
+          </svg>
+        </div>
+
+        <ul class="step-list">
+          <li><span class="step-num">01</span><div><strong>Chunked upload:</strong> Client splits video into 5MB chunks, uploads in parallel with resumability. Reassembled in S3 using multipart upload. Never fail a 2GB upload on a 1.9GB progress.</div></li>
+          <li><span class="step-num">02</span><div><strong>Parallel encoding workers:</strong> Multiple quality levels encoded in parallel across separate worker machines. 360p doesn't wait for 4K to finish — 360p is ready first, user can start watching.</div></li>
+          <li><span class="step-num">03</span><div><strong>Progressive availability:</strong> DB record for video shows status: PROCESSING. As each quality becomes available, update: <code style="font-family:var(--mono);color:#f59e0b;font-size:11px">qualities_ready: [360p, 720p]</code>. Video is viewable as soon as 360p is done.</div></li>
+          <li><span class="step-num">04</span><div><strong>Idempotent workers:</strong> If a worker crashes mid-encode, it restarts from beginning. To avoid re-encoding from scratch, use segment-based processing — encode 10s segments independently.</div></li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Q11 -->
+    <div class="q-card" id="q11">
+      <div class="q-header" onclick="toggle(this)">
+        <span class="q-num">11</span>
+        <div class="q-title-block">
+          <div class="q-title">Kafka Consumer Processes Same Event Twice</div>
+          <div class="q-tags"><span class="q-tag">Kafka Offsets</span><span class="q-tag">Exactly-Once</span><span class="q-tag">Idempotent Consumers</span></div>
+        </div>
+        <span class="q-toggle">⌄</span>
+      </div>
+      <div class="q-body">
+        <div class="scenario-box">
+          <span class="scenario-label">// scenario</span>
+          Your notification consumer processed a Kafka event and sent the notification — but crashed before committing the offset. On restart, it re-reads the same event and sends duplicate notification.
+        </div>
+
+        <p class="answer-text">"Kafka provides <strong>at-least-once delivery by default</strong>. If a consumer crashes after processing but before committing the offset, it will reprocess on restart. This is expected behavior — we need to design consumers to be <strong>idempotent</strong>."</p>
+
+        <div class="code-block"><span class="cm">// THE PROBLEM — crash between process and commit</span>
+consumer.poll() → gets event E1 at offset 42
+process(E1)      → sends notification ✓
+consumer.crash() → offset 42 never committed!
+
+<span class="cm">// On restart:</span>
+consumer.poll() → gets E1 AGAIN at offset 42
+process(E1)      → sends notification AGAIN 💥
+
+<span class="cm">// THE FIX — idempotent processing</span>
+<span class="kw">function</span> <span class="fn">process</span>(event):
+  <span class="kw">if</span> db.exists(<span class="str">`processed:${event.id}`</span>):
+    <span class="kw">return</span>  <span class="cm">// Already done, skip safely</span>
+  
+  <span class="kw">begin</span> transaction:
+    sendNotification(event)
+    db.insert(<span class="str">`processed:${event.id}`</span>)
+  <span class="kw">commit</span></div>
+
+        <ul class="step-list">
+          <li><span class="step-num">01</span><div><strong>Dedup table:</strong> Store processed event IDs in a DB table with a unique constraint. Before processing, check if ID exists. If yes, skip and commit offset.</div></li>
+          <li><span class="step-num">02</span><div><strong>Kafka's exactly-once semantics (EOS):</strong> Use <code style="font-family:var(--mono);color:#f59e0b;font-size:11px">enable.idempotence=true</code> + transactional producer. Works for Kafka-to-Kafka flows. For Kafka-to-DB, you still need the dedup approach above.</div></li>
+          <li><span class="step-num">03</span><div><strong>Manual offset commit:</strong> Only commit offset <em>after</em> successfully processing AND recording in DB. Use <code style="font-family:var(--mono);color:#f59e0b;font-size:11px">enable.auto.commit=false</code>.</div></li>
+          <li><span class="step-num">04</span><div><strong>Dead Letter Queue (DLQ):</strong> If an event fails after N retries, move it to a DLQ topic. Don't block the main consumer. Alert on DLQ size.</div></li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Q12 -->
+    <div class="q-card" id="q12">
+      <div class="q-header" onclick="toggle(this)">
+        <span class="q-num">12</span>
+        <div class="q-title-block">
+          <div class="q-title">Order Events Arrive Out of Sequence</div>
+          <div class="q-tags"><span class="q-tag">Event Ordering</span><span class="q-tag">Kafka Partitions</span><span class="q-tag">Sequence Numbers</span></div>
+        </div>
+        <span class="q-toggle">⌄</span>
+      </div>
+      <div class="q-body">
+        <div class="scenario-box">
+          <span class="scenario-label">// scenario</span>
+          Your order tracking service receives "Order Delivered" before it receives "Order Shipped." The UI shows delivered but then flips back to shipped when the late event arrives.
+        </div>
+
+        <p class="answer-text">"Event ordering is a fundamental distributed systems challenge. In Kafka, ordering is only guaranteed <strong>within a single partition</strong>. If order events land on different partitions, they can arrive out of order. Let me explain why and how to fix it."</p>
+
+        <ul class="step-list">
+          <li><span class="step-num">01</span><div><strong>Partition by order_id:</strong> Use <code style="font-family:var(--mono);color:#f59e0b;font-size:11px">order_id</code> as the Kafka message key. All events for the same order will always go to the same partition (consistent hashing). Same partition → strict ordering.</div></li>
+          <li><span class="step-num">02</span><div><strong>Sequence numbers:</strong> Each event carries a <code style="font-family:var(--mono);color:#f59e0b;font-size:11px">sequence_num</code>. Consumer applies events only in order: if current state is sequence 3, and you receive sequence 5, hold event 5 in a buffer until sequence 4 arrives.</div></li>
+          <li><span class="step-num">03</span><div><strong>State machine validation:</strong> Define valid state transitions: PLACED→CONFIRMED→SHIPPED→DELIVERED. If DELIVERED arrives when current state is PLACED, reject it as invalid. Emit alert for investigation.</div></li>
+          <li><span class="step-num">04</span><div><strong>Timestamp-based resolution:</strong> If two conflicting events arrive, take the one with the later event_timestamp, not the one that arrived later.</div></li>
+        </ul>
+
+        <div class="code-block"><span class="cm">// State machine — reject invalid transitions</span>
+VALID_TRANSITIONS = {
+  <span class="str">"PLACED"</span>: [<span class="str">"CONFIRMED"</span>, <span class="str">"CANCELLED"</span>],
+  <span class="str">"CONFIRMED"</span>: [<span class="str">"SHIPPED"</span>, <span class="str">"CANCELLED"</span>],
+  <span class="str">"SHIPPED"</span>: [<span class="str">"DELIVERED"</span>, <span class="str">"RETURNED"</span>],
+  <span class="str">"DELIVERED"</span>: [<span class="str">"RETURNED"</span>]
+}
+
+<span class="kw">if</span> newState <span class="kw">not in</span> VALID_TRANSITIONS[currentState]:
+  publishToDLQ(event)  <span class="cm">// Out-of-order — handle separately</span></div>
+      </div>
+    </div>
+
+    <!-- Q13 -->
+    <div class="q-card" id="q13">
+      <div class="q-header" onclick="toggle(this)">
+        <span class="q-num">13</span>
+        <div class="q-title-block">
+          <div class="q-title">Notification Service Crashes During Flash Sale</div>
+          <div class="q-tags"><span class="q-tag">Backpressure</span><span class="q-tag">Rate Limiting</span><span class="q-tag">Load Shedding</span></div>
+        </div>
+        <span class="q-toggle">⌄</span>
+      </div>
+      <div class="q-body">
+        <div class="scenario-box">
+          <span class="scenario-label">// scenario</span>
+          Big Billion Day begins. 5 million "sale started!" notifications need to go out. The notification service starts timing out. The queue grows. Eventually, OOM crash.
+        </div>
+        <p class="answer-text">"The notification service is a <strong>bounded resource</strong> being asked to do unbounded work. The solution is backpressure — slow down the producer, protect the consumer, and shed load gracefully."</p>
+
+        <ul class="step-list">
+          <li><span class="step-num">01</span><div><strong>Queue buffering:</strong> Never send directly — always go through a durable queue (SQS, Kafka). The queue absorbs burst traffic. Workers pull at a sustainable rate. If APNs allows 1000 req/s, consume from queue at exactly 1000/s.</div></li>
+          <li><span class="step-num">02</span><div><strong>Rate limiting at worker level:</strong> Token bucket per notification channel (APNs, FCM). Workers wait for tokens before sending. Smooth, predictable throughput.</div></li>
+          <li><span class="step-num">03</span><div><strong>Load shedding:</strong> If queue depth > 10M, prioritize active users. Drop notifications for users inactive > 30 days. They'll see it next time they open the app. Communicate tradeoff explicitly.</div></li>
+          <li><span class="step-num">04</span><div><strong>Horizontal scaling:</strong> Spin up more consumer workers (EC2 or Lambda). Lambda scales to thousands of concurrent invocations, each reading from SQS.</div></li>
+          <li><span class="step-num">05</span><div><strong>Pre-warm before sale:</strong> Scale up 30 minutes before the sale start time. Auto-scaling reacts to load; pre-warming anticipates it.</div></li>
+        </ul>
+
+        <div class="callout tip"><span class="callout-icon">💡</span><span>Backpressure rule: the system should push back against producers as fast as the consumers can consume — never let work pile up unboundedly in memory. The queue is your shock absorber.</span></div>
+      </div>
+    </div>
+
+    <!-- Q14 -->
+    <div class="q-card" id="q14">
+      <div class="q-header" onclick="toggle(this)">
+        <span class="q-num">14</span>
+        <div class="q-title-block">
+          <div class="q-title">Why Instagram Avoids JOINs at Scale</div>
+          <div class="q-tags"><span class="q-tag">Denormalization</span><span class="q-tag">NoSQL</span><span class="q-tag">Read Optimization</span></div>
+        </div>
+        <span class="q-toggle">⌄</span>
+      </div>
+      <div class="q-body">
+        <div class="scenario-box">
+          <span class="scenario-label">// scenario</span>
+          Why do companies like Instagram, Twitter, and Facebook avoid SQL JOINs in their main production queries, even though they use relational databases?
+        </div>
+        <p class="answer-text">"At Instagram's scale — 2 billion users — a JOIN that looks like O(n) in dev becomes O(n × m) across sharded databases on different machines. You can't JOIN across database servers. The answer is <strong>denormalization and data locality</strong>."</p>
+
+        <table class="tradeoff-table">
+          <tr><th>Normalized (JOIN)</th><th>Denormalized (no JOIN)</th></tr>
+          <tr><td>User table + Post table → JOIN on user_id</td><td>Post row stores: post_id, content, user_id, <strong>username, user_avatar</strong></td></tr>
+          <tr><td>Single source of truth</td><td>Data duplicated across tables</td></tr>
+          <tr><td>Update username once, everywhere consistent</td><td>Update username → update millions of post rows</td></tr>
+          <tr><td>Good for low-volume OLTP</td><td>Good for high-volume read-heavy social feeds</td></tr>
+        </table>
+
+        <ul class="step-list">
+          <li><span class="step-num">01</span><div><strong>Sharding kills JOINs:</strong> Instagram shards user data across ~1000 PostgreSQL shards. To JOIN users with posts, you'd need cross-shard queries — impossible efficiently. Instead, embed user data in post documents.</div></li>
+          <li><span class="step-num">02</span><div><strong>Read:write ratio:</strong> Instagram has 10,000:1 read-to-write ratio. Optimize for reads by denormalizing. Pay the cost at write time, not read time.</div></li>
+          <li><span class="step-num">03</span><div><strong>Application-level joins:</strong> Fetch post IDs from one service, fetch user data from user service, merge in application layer. Cache user data aggressively (user profiles rarely change).</div></li>
+          <li><span class="step-num">04</span><div><strong>Precomputed feeds:</strong> Don't compute the home feed on read. When someone posts, fan out to followers' precomputed feed lists (stored in Redis). Read is a single list fetch — no joins at all.</div></li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Q15 -->
+    <div class="q-card" id="q15">
+      <div class="q-header" onclick="toggle(this)">
+        <span class="q-num">15</span>
+        <div class="q-title-block">
+          <div class="q-title">DynamoDB Hot Partition Problem</div>
+          <div class="q-tags"><span class="q-tag">Partition Keys</span><span class="q-tag">Sharding</span><span class="q-tag">Hot Partitions</span></div>
+        </div>
+        <span class="q-toggle">⌄</span>
+      </div>
+      <div class="q-body">
+        <div class="scenario-box">
+          <span class="scenario-label">// scenario</span>
+          Your DynamoDB table uses celebrity user_id as the partition key for a fan activity table. When a celebrity does a live session, all 50M fans write activity records simultaneously → one partition explodes, ProvisionedThroughputExceededException everywhere.
+        </div>
+        <p class="answer-text">"DynamoDB distributes data across partitions based on the partition key. If one key receives disproportionate traffic, that physical partition becomes a bottleneck. The solution is to <strong>artificially distribute the hot key across multiple partitions</strong>."</p>
+
+        <div class="code-block"><span class="cm">// BAD: All activity for celebrity_123 goes to one partition</span>
+PK: <span class="str">"celebrity_123"</span>
+
+<span class="cm">// GOOD: Add random suffix to spread across 10 partitions</span>
+suffix = random.randint(<span class="num">0</span>, <span class="num">9</span>)
+PK: <span class="str">f"celebrity_123_{suffix}"</span>
+<span class="cm">// → celebrity_123_0, celebrity_123_1 ... celebrity_123_9</span>
+<span class="cm">// 10x write throughput immediately</span>
+
+<span class="cm">// To READ all activity: scatter-gather</span>
+results = []
+<span class="kw">for</span> suffix <span class="kw">in</span> range(<span class="num">0</span>, <span class="num">10</span>):
+  results += query(PK=<span class="str">f"celebrity_123_{suffix}"</span>)
+merge_and_sort(results)</div>
+
+        <ul class="step-list">
+          <li><span class="step-num">01</span><div><strong>Write sharding:</strong> Append random suffix 0–N to partition key. Writes spread across N partitions. N = expected peak writes / partition throughput limit.</div></li>
+          <li><span class="step-num">02</span><div><strong>Scatter-gather reads:</strong> To read all data for the entity, query all N partition variants in parallel and merge. Adds latency but enables scale.</div></li>
+          <li><span class="step-num">03</span><div><strong>DynamoDB DAX:</strong> Add a DAX (in-memory) cache layer in front of DynamoDB. Read-heavy workloads hit DAX (~microseconds) instead of DynamoDB (~milliseconds).</div></li>
+          <li><span class="step-num">04</span><div><strong>On-demand capacity:</strong> Switch to on-demand pricing during celebrity events. AWS auto-scales instantly. More expensive per-RCU but avoids throughput exceptions during unpredictable spikes.</div></li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Q16 -->
+    <div class="q-card" id="q16">
+      <div class="q-header" onclick="toggle(this)">
+        <span class="q-num">16</span>
+        <div class="q-title-block">
+          <div class="q-title">Redis Cache Causes Production Outage</div>
+          <div class="q-tags"><span class="q-tag">Cache Stampede</span><span class="q-tag">TTL Jitter</span><span class="q-tag">Request Coalescing</span></div>
+        </div>
+        <span class="q-toggle">⌄</span>
+      </div>
+      <div class="q-body">
+        <div class="scenario-box">
+          <span class="scenario-label">// scenario</span>
+          At 3 AM, your Redis cache has a scheduled TTL expiration for 10 million keys (all set at the same time during a data load 24h ago). All expire simultaneously. Every request becomes a cache miss. Database gets 10 million queries at once. Database dies.
+        </div>
+        <p class="answer-text">"This is called a <strong>Cache Stampede</strong> or Thundering Herd problem. Millions of simultaneous cache misses create a spike of database reads that the DB can't handle. The root cause was synchronized TTL expiration."</p>
+
+        <div class="code-block"><span class="cm">// BAD: All keys expire at exactly the same time</span>
+redis.SET(<span class="str">"product:1"</span>, data, EX=<span class="num">86400</span>)  <span class="cm">// 24h</span>
+redis.SET(<span class="str">"product:2"</span>, data, EX=<span class="num">86400</span>)  <span class="cm">// 24h</span>
+<span class="cm">// 10M keys, all expire at same instant 💥</span>
+
+<span class="cm">// GOOD: TTL jitter — spread expirations</span>
+base_ttl = <span class="num">86400</span>
+jitter = random.randint(<span class="num">0</span>, <span class="num">3600</span>)  <span class="cm">// ±1h random</span>
+redis.SET(key, data, EX=base_ttl + jitter)
+<span class="cm">// Expirations now spread over 1 hour, not 1 second</span></div>
+
+        <ul class="step-list">
+          <li><span class="step-num">01</span><div><strong>TTL Jitter:</strong> Add random offset to every TTL. If base TTL is 24h, set each key to 24h + random(0, 1h). Expirations spread across an hour instead of happening simultaneously.</div></li>
+          <li><span class="step-num">02</span><div><strong>Probabilistic early expiration:</strong> Before a key expires, proactively refresh it with a small probability. Key won't expire if it's refreshed before TTL hits.</div></li>
+          <li><span class="step-num">03</span><div><strong>Request coalescing (mutex lock):</strong> When a cache miss occurs, only ONE request goes to the DB. Others wait. Use Redis SETNX to acquire a "fetching" lock. When data is fetched, release lock and populate cache.</div></li>
+          <li><span class="step-num">04</span><div><strong>Multi-level caching:</strong> L1 = in-process memory (Caffeine/Guava), L2 = Redis, L3 = DB. Even if Redis is cold, L1 handles many requests. Stagger the warmup.</div></li>
+          <li><span class="step-num">05</span><div><strong>Circuit breaker on DB:</strong> If DB error rate > threshold, open circuit breaker, serve stale data or graceful degraded response. Better to serve slightly stale than return errors.</div></li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Q17 -->
+    <div class="q-card" id="q17">
+      <div class="q-header" onclick="toggle(this)">
+        <span class="q-num">17</span>
+        <div class="q-title-block">
+          <div class="q-title">AI Chatbot Gives Wrong Answers (Hallucinations)</div>
+          <div class="q-tags"><span class="q-tag">RAG</span><span class="q-tag">Vector DB</span><span class="q-tag">Prompt Engineering</span></div>
+        </div>
+        <span class="q-toggle">⌄</span>
+      </div>
+      <div class="q-body">
+        <div class="scenario-box">
+          <span class="scenario-label">// scenario</span>
+          Your customer service AI chatbot confidently tells users that a product has features it doesn't have, or quotes prices that are wrong, or makes up return policies.
+        </div>
+        <p class="answer-text">"This is the <strong>hallucination problem</strong>. LLMs generate plausible-sounding text based on patterns, but they don't know your company's internal data. The solution is <strong>Retrieval-Augmented Generation (RAG)</strong> — ground the LLM's answers in your actual data."</p>
+
+        <div class="diagram">
+          <div class="diagram-title">// RAG architecture</div>
+          <svg viewBox="0 0 680 190" xmlns="http://www.w3.org/2000/svg" font-family="JetBrains Mono, monospace">
+            <defs><marker id="arr17" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L6,3 z" fill="#4a5270"/></marker></defs>
+            <!-- User -->
+            <rect x="10" y="80" width="70" height="35" rx="5" fill="#1e2335" stroke="#6c8bff" stroke-width="1.2"/>
+            <text x="45" y="101" fill="#6c8bff" font-size="9" text-anchor="middle">User Query</text>
+            <line x1="80" y1="97" x2="110" y2="97" stroke="#4a5270" stroke-width="1" marker-end="url(#arr17)"/>
+            <!-- Embed -->
+            <rect x="110" y="80" width="90" height="35" rx="5" fill="#1e2335" stroke="#a78bfa" stroke-width="1.2"/>
+            <text x="155" y="96" fill="#a78bfa" font-size="9" text-anchor="middle">Embedding</text>
+            <text x="155" y="107" fill="#a78bfa" font-size="9" text-anchor="middle">Model</text>
+            <line x1="200" y1="97" x2="230" y2="97" stroke="#4a5270" stroke-width="1" marker-end="url(#arr17)"/>
+            <!-- Vector search -->
+            <rect x="230" y="65" width="95" height="65" rx="5" fill="#1e2335" stroke="#f59e0b" stroke-width="1.2"/>
+            <text x="277" y="92" fill="#f59e0b" font-size="9" text-anchor="middle">Vector DB</text>
+            <text x="277" y="104" fill="#4a5270" font-size="8" text-anchor="middle">Pinecone/</text>
+            <text x="277" y="114" fill="#4a5270" font-size="8" text-anchor="middle">Qdrant</text>
+            <text x="277" y="124" fill="#4a5270" font-size="8" text-anchor="middle">ANN search</text>
+            <!-- docs -->
+            <rect x="230" y="10" width="95" height="40" rx="5" fill="#1e2335" stroke="#34d399" stroke-width="1.2"/>
+            <text x="277" y="28" fill="#34d399" font-size="8" text-anchor="middle">Knowledge Base</text>
+            <text x="277" y="40" fill="#4a5270" font-size="7" text-anchor="middle">product docs, FAQs,</text>
+            <text x="277" y="50" fill="#4a5270" font-size="7" text-anchor="middle">return policy, prices</text>
+            <line x1="277" y1="50" x2="277" y2="65" stroke="#4a5270" stroke-width="1" stroke-dasharray="2,2" marker-end="url(#arr17)"/>
+            <!-- Context -->
+            <line x1="325" y1="97" x2="360" y2="97" stroke="#4a5270" stroke-width="1" marker-end="url(#arr17)"/>
+            <text x="342" y="89" fill="#4a5270" font-size="7">top-K docs</text>
+            <!-- LLM -->
+            <rect x="360" y="65" width="100" height="65" rx="5" fill="#1e2335" stroke="#f87171" stroke-width="1.2"/>
+            <text x="410" y="92" fill="#f87171" font-size="9" text-anchor="middle">LLM</text>
+            <text x="410" y="104" fill="#4a5270" font-size="8" text-anchor="middle">Prompt =</text>
+            <text x="410" y="114" fill="#4a5270" font-size="8" text-anchor="middle">query + context</text>
+            <text x="410" y="124" fill="#4a5270" font-size="8" text-anchor="middle">+ instructions</text>
+            <line x1="460" y1="97" x2="495" y2="97" stroke="#4a5270" stroke-width="1" marker-end="url(#arr17)"/>
+            <rect x="495" y="80" width="95" height="35" rx="5" fill="#1e2335" stroke="#34d399" stroke-width="1.2"/>
+            <text x="542" y="96" fill="#34d399" font-size="9" text-anchor="middle">Grounded</text>
+            <text x="542" y="107" fill="#34d399" font-size="9" text-anchor="middle">Answer ✓</text>
+          </svg>
+        </div>
+
+        <ul class="step-list">
+          <li><span class="step-num">01</span><div><strong>RAG pipeline:</strong> Embed all your product docs, FAQs, policies into a vector DB. When user asks a question, embed it, find top-5 similar documents, inject them into the prompt as context. LLM answers based on your data, not its training.</div></li>
+          <li><span class="step-num">02</span><div><strong>Prompt guardrails:</strong> Instruct the LLM: "Answer only based on the provided context. If you don't know, say 'I don't have information on this, please contact support.'" This is critical.</div></li>
+          <li><span class="step-num">03</span><div><strong>Confidence thresholds:</strong> If retrieved documents have low similarity score (&lt;0.7), don't answer with AI — fall back to human agent or FAQ links.</div></li>
+          <li><span class="step-num">04</span><div><strong>Answer verification layer:</strong> Post-generate, verify key facts (price, product name) against source of truth. If mismatch → don't show AI answer, show fact-checked answer.</div></li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Q18 -->
+    <div class="q-card" id="q18">
+      <div class="q-header" onclick="toggle(this)">
+        <span class="q-num">18</span>
+        <div class="q-title-block">
+          <div class="q-title">AI Platform Suddenly Becomes Very Expensive</div>
+          <div class="q-tags"><span class="q-tag">Prompt Optimization</span><span class="q-tag">Model Routing</span><span class="q-tag">Caching Responses</span></div>
+        </div>
+        <span class="q-toggle">⌄</span>
+      </div>
+      <div class="q-body">
+        <div class="scenario-box">
+          <span class="scenario-label">// scenario</span>
+          You built an AI feature using GPT-4. It's wildly popular. Your monthly LLM bill goes from $2,000 to $80,000 in 3 weeks. You need to cut costs without degrading quality.
+        </div>
+        <p class="answer-text">"LLM costs scale with tokens in + tokens out. The levers are: <strong>reduce tokens, cache results, route to cheaper models</strong>. Let me walk through each."</p>
+
+        <ul class="step-list">
+          <li><span class="step-num">01</span><div><strong>Semantic response caching:</strong> If 1000 users all ask "what are your business hours?" — that's 1000 identical LLM calls. Cache the response. Use the embedded query as the cache key. Exact match → instant cache hit. Semantic similarity > 0.95 → cache hit. Can eliminate 60–70% of LLM calls.</div></li>
+          <li><span class="step-num">02</span><div><strong>Model routing (cheap vs expensive):</strong> Simple questions → GPT-3.5 or Haiku (~10x cheaper). Complex reasoning → GPT-4. Use a classifier to route. You pay for GPT-4 only when you need it.</div></li>
+          <li><span class="step-num">03</span><div><strong>Prompt compression:</strong> Strip system prompts of redundancy. Use abbreviations for repeated terms. Remove whitespace. Every saved token = saved money. Use tools like LLMLingua.</div></li>
+          <li><span class="step-num">04</span><div><strong>Context window management:</strong> Don't send 50 messages of chat history for every turn. Summarize conversation history every 10 turns. Send summary + last 3 messages instead of full history.</div></li>
+          <li><span class="step-num">05</span><div><strong>Fine-tuned smaller model:</strong> Fine-tune GPT-3.5 or Mistral-7B on your specific domain. Domain-specific fine-tuned small model often beats generic GPT-4 at your task, at 1/20th the cost.</div></li>
+        </ul>
+
+        <div class="callout tip"><span class="callout-icon">💡</span><span>The 80/20 rule: usually 80% of your LLM traffic is simple, repetitive queries. Cache those. Spend your GPT-4 budget on the 20% of genuinely complex queries.</span></div>
+      </div>
+    </div>
+
+    <!-- Q19 -->
+    <div class="q-card" id="q19">
+      <div class="q-header" onclick="toggle(this)">
+        <span class="q-num">19</span>
+        <div class="q-title-block">
+          <div class="q-title">AI Search Feels Slow</div>
+          <div class="q-tags"><span class="q-tag">Vector Indexing</span><span class="q-tag">ANN Search</span><span class="q-tag">Recall vs Latency</span></div>
+        </div>
+        <span class="q-toggle">⌄</span>
+      </div>
+      <div class="q-body">
+        <div class="scenario-box">
+          <span class="scenario-label">// scenario</span>
+          Your semantic search feature (find similar products using embeddings) takes 3–4 seconds per query. Users expect sub-200ms results.
+        </div>
+        <p class="answer-text">"Exact nearest-neighbor search in high-dimensional space (768 dims) across 10M vectors is O(n × d) — impossibly slow at scale. The solution is <strong>Approximate Nearest Neighbor (ANN)</strong> search — accept tiny accuracy loss for massive speed gains."</p>
+
+        <table class="tradeoff-table">
+          <tr><th>Algorithm</th><th>Speed</th><th>Recall</th><th>Best For</th></tr>
+          <tr><td style="font-family:var(--mono);color:#f59e0b;font-size:12px">Exact KNN</td><td class="td-con">Slow (O(n))</td><td class="td-pro">100%</td><td>Small datasets &lt;100K</td></tr>
+          <tr><td style="font-family:var(--mono);color:#f59e0b;font-size:12px">HNSW</td><td class="td-pro">Fast (&lt;10ms)</td><td class="td-pro">~99%</td><td>General purpose, large scale</td></tr>
+          <tr><td style="font-family:var(--mono);color:#f59e0b;font-size:12px">IVF-PQ</td><td class="td-pro">Very Fast</td><td>~95%</td><td>Billion-scale, memory constrained</td></tr>
+          <tr><td style="font-family:var(--mono);color:#f59e0b;font-size:12px">LSH</td><td class="td-pro">Fast</td><td>~85%</td><td>Simple, low-maintenance</td></tr>
+        </table>
+
+        <ul class="step-list">
+          <li><span class="step-num">01</span><div><strong>HNSW index (Hierarchical Navigable Small World):</strong> Build a multi-layer graph structure. Query traverses the graph in O(log n) instead of O(n). Qdrant, Pinecone, Weaviate all use HNSW. Goes from 3s to &lt;10ms at 10M vectors.</div></li>
+          <li><span class="step-num">02</span><div><strong>Pre-filtering:</strong> First apply metadata filters (category, price range) to reduce candidate set from 10M → 50K, then run ANN on smaller set. Much faster.</div></li>
+          <li><span class="step-num">03</span><div><strong>Embedding caching:</strong> Embedding the query string is itself slow (100–200ms). Cache query embeddings: if the same query string is used again (popular searches), return cached embedding.</div></li>
+          <li><span class="step-num">04</span><div><strong>Smaller embedding dimensions:</strong> Use 256-dim embeddings instead of 1536-dim (OpenAI). 6x fewer dimensions → 6x faster search. Recall drops slightly but often acceptable.</div></li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Q20 -->
+    <div class="q-card" id="q20">
+      <div class="q-header" onclick="toggle(this)">
+        <span class="q-num">20</span>
+        <div class="q-title-block">
+          <div class="q-title">OTP Service Fails During Peak Traffic</div>
+          <div class="q-tags"><span class="q-tag">Rate Limiting</span><span class="q-tag">Provider Failover</span><span class="q-tag">Queue Buffering</span></div>
+        </div>
+        <span class="q-toggle">⌄</span>
+      </div>
+      <div class="q-body">
+        <div class="scenario-box">
+          <span class="scenario-label">// scenario</span>
+          During a cricket match live ticket sale, 500K users try to log in simultaneously. OTP SMS delivery fails for 40% of users. SMS provider is rate-limited. Users can't log in.
+        </div>
+        <p class="answer-text">"OTP delivery is a critical path — if it fails, users can't access the product. We need <strong>multi-provider failover, queuing, and retry logic</strong>."</p>
+
+        <ul class="step-list">
+          <li><span class="step-num">01</span><div><strong>Multi-provider routing:</strong> Primary: Twilio. Secondary: AWS SNS. Tertiary: MSG91. If primary returns rate-limit error (429), immediately retry with secondary. Round-robin or weighted routing.</div></li>
+          <li><span class="step-num">02</span><div><strong>Queue + async delivery:</strong> OTP request → write to Redis (OTP code + expiry) → enqueue SMS job → return "OTP sent" to user immediately (optimistic). Worker sends SMS asynchronously. User sees "sent" while SMS is actually being delivered. Decouples web request from SMS provider latency.</div></li>
+          <li><span class="step-num">03</span><div><strong>Rate limiting per user:</strong> Max 5 OTP requests per phone per hour. Prevent users from hammering the service (and eating your SMS budget) by repeatedly requesting OTPs.</div></li>
+          <li><span class="step-num">04</span><div><strong>Retry storms protection:</strong> If user retries → reuse existing OTP if it's &lt;2 minutes old. Don't generate new OTP and re-send. Reduces provider calls by 30–40%.</div></li>
+          <li><span class="step-num">05</span><div><strong>Alternative channels:</strong> SMS fails → offer WhatsApp OTP (higher delivery rate, lower cost). Or email OTP as fallback. Give user choice.</div></li>
+        </ul>
+
+        <div class="callout warn"><span class="callout-icon">⚠️</span><span>OTP TTL in Redis should match what you tell the user. If you say "valid for 10 minutes", set Redis EXPIRE to 600. Never trust the SMS delivery time for security — validate against Redis, not delivery timestamp.</span></div>
+      </div>
+    </div>
+
+    <!-- Q21 -->
+    <div class="q-card" id="q21">
+      <div class="q-header" onclick="toggle(this)">
+        <span class="q-num">21</span>
+        <div class="q-title-block">
+          <div class="q-title">One Microservice Failure Takes Down Entire Platform</div>
+          <div class="q-tags"><span class="q-tag">Circuit Breaker</span><span class="q-tag">Bulkhead</span><span class="q-tag">Timeouts</span><span class="q-tag">Resilience</span></div>
+        </div>
+        <span class="q-toggle">⌄</span>
+      </div>
+      <div class="q-body">
+        <div class="scenario-box">
+          <span class="scenario-label">// scenario</span>
+          Your recommendation service starts responding in 30 seconds instead of 30ms (maybe a memory leak). Every API call to the homepage waits 30s for recommendations. Thread pool exhausts. The entire platform becomes unresponsive.
+        </div>
+        <p class="answer-text">"This is cascading failure — one slow service blocks threads in all upstream services. The slow microservice becomes a distributed system-wide denial of service. The patterns to prevent this are <strong>timeouts, circuit breakers, and bulkheads</strong>."</p>
+
+        <div class="diagram">
+          <div class="diagram-title">// circuit breaker state machine</div>
+          <svg viewBox="0 0 600 180" xmlns="http://www.w3.org/2000/svg" font-family="JetBrains Mono, monospace">
+            <defs><marker id="arr21" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L6,3 z" fill="#4a5270"/></marker></defs>
+            <rect x="50" y="70" width="110" height="50" rx="8" fill="#1e2335" stroke="#34d399" stroke-width="1.5"/>
+            <text x="105" y="93" fill="#34d399" font-size="11" text-anchor="middle" font-weight="600">CLOSED</text>
+            <text x="105" y="108" fill="#4a5270" font-size="8" text-anchor="middle">requests pass through</text>
+
+            <rect x="240" y="70" width="110" height="50" rx="8" fill="#1e2335" stroke="#f87171" stroke-width="1.5"/>
+            <text x="295" y="93" fill="#f87171" font-size="11" text-anchor="middle" font-weight="600">OPEN</text>
+            <text x="295" y="108" fill="#4a5270" font-size="8" text-anchor="middle">all requests fail fast</text>
+
+            <rect x="430" y="70" width="120" height="50" rx="8" fill="#1e2335" stroke="#f59e0b" stroke-width="1.5"/>
+            <text x="490" y="93" fill="#f59e0b" font-size="11" text-anchor="middle" font-weight="600">HALF-OPEN</text>
+            <text x="490" y="108" fill="#4a5270" font-size="8" text-anchor="middle">probe requests</text>
+
+            <!-- CLOSED → OPEN -->
+            <path d="M160,80 Q200,40 240,80" stroke="#f87171" stroke-width="1.2" fill="none" marker-end="url(#arr21)"/>
+            <text x="200" y="35" fill="#f87171" font-size="8" text-anchor="middle">failures > threshold</text>
+            <text x="200" y="46" fill="#4a5270" font-size="7" text-anchor="middle">(5 errors in 10s)</text>
+
+            <!-- OPEN → HALF-OPEN -->
+            <path d="M350,95 Q390,130 430,95" stroke="#f59e0b" stroke-width="1.2" fill="none" marker-end="url(#arr21)"/>
+            <text x="390" y="143" fill="#f59e0b" font-size="8" text-anchor="middle">timeout (30s)</text>
+
+            <!-- HALF-OPEN → CLOSED (success) -->
+            <path d="M430,80 Q300,20 160,80" stroke="#34d399" stroke-width="1.2" fill="none" stroke-dasharray="4,2" marker-end="url(#arr21)"/>
+            <text x="295" y="15" fill="#34d399" font-size="8" text-anchor="middle">probe succeeds → CLOSED</text>
+
+            <!-- HALF-OPEN → OPEN (fail) -->
+            <path d="M490,120 Q430,160 350,110" stroke="#f87171" stroke-width="1.2" fill="none" stroke-dasharray="4,2" marker-end="url(#arr21)"/>
+            <text x="415" y="168" fill="#f87171" font-size="8" text-anchor="middle">probe fails → OPEN again</text>
+          </svg>
+        </div>
+
+        <ul class="step-list">
+          <li><span class="step-num">01</span><div><strong>Timeout:</strong> Never wait more than N milliseconds for a downstream call. Set aggressive timeouts: recommendation service → 200ms max. After 200ms, return empty recommendations, don't wait. Use fallback (popular items, trending) instead.</div></li>
+          <li><span class="step-num">02</span><div><strong>Circuit Breaker:</strong> Track error rate per service. If &gt;50% of last 10 calls fail or timeout → open the circuit. For 30 seconds, don't even try to call the service — return fallback immediately. After 30s, probe once. If success → close circuit. If fail → stay open.</div></li>
+          <li><span class="step-num">03</span><div><strong>Bulkhead:</strong> Isolate thread pools per service. Recommendation service gets its own pool of 20 threads. Even if all 20 are stuck, the checkout service (in its own pool) is unaffected. Prevents one service from consuming all resources.</div></li>
+          <li><span class="step-num">04</span><div><strong>Graceful degradation:</strong> Homepage without recommendations is better than no homepage. Design every non-critical service to have a fallback. Ask: "What do we show if this service is down?"</div></li>
+        </ul>
+
+        <div class="callout error"><span class="callout-icon">🚨</span><span>Tools: Netflix Hystrix (deprecated but influential), Resilience4j (Java), Polly (.NET). The circuit breaker pattern was popularized by Michael Nygard's "Release It!" — worth reading if you're serious about resilience.</span></div>
+      </div>
+    </div>
+
+    <!-- Q22 -->
+    <div class="q-card" id="q22">
+      <div class="q-header" onclick="toggle(this)">
+        <span class="q-num">22</span>
+        <div class="q-title-block">
+          <div class="q-title">API Gateway Becomes a Bottleneck</div>
+          <div class="q-tags"><span class="q-tag">Auth Overhead</span><span class="q-tag">Gateway Scaling</span><span class="q-tag">Edge Caching</span></div>
+        </div>
+        <span class="q-toggle">⌄</span>
+      </div>
+      <div class="q-body">
+        <div class="scenario-box">
+          <span class="scenario-label">// scenario</span>
+          All 300 microservices route traffic through a single API gateway. At peak, the gateway becomes the bottleneck — high CPU, increasing latency. Scaling services doesn't help because the gateway is the chokepoint.
+        </div>
+        <p class="answer-text">"An API gateway that does too much becomes a distributed monolith. The fix is to <strong>minimize gateway responsibility</strong> and <strong>scale the gateway itself</strong> — or remove it from the hot path for cacheable content."</p>
+
+        <ul class="step-list">
+          <li><span class="step-num">01</span><div><strong>Identify what the gateway is doing:</strong> Auth/JWT validation, rate limiting, request transformation, logging, SSL termination, routing. Each adds latency. Question: does every request need all of these?</div></li>
+          <li><span class="step-num">02</span><div><strong>Move auth to edge / sidecars:</strong> Instead of gateway validating JWT for every request, validate JWT at service level using a shared auth library. Or use an Envoy sidecar. Gateway just routes — auth is handled by each service.</div></li>
+          <li><span class="step-num">03</span><div><strong>Cache at gateway:</strong> GET requests for public data (product listings, static content) can be cached at the gateway with a 60s TTL. Cache hit = no downstream call at all. Eliminates 40–60% of gateway processing.</div></li>
+          <li><span class="step-num">04</span><div><strong>Horizontal scale the gateway:</strong> API gateways should be stateless. Scale horizontally behind a load balancer. AWS API Gateway does this automatically; Kong, Nginx, Envoy support horizontal clustering.</div></li>
+          <li><span class="step-num">05</span><div><strong>Service mesh:</strong> Migrate from centralized gateway to a service mesh (Istio, Linkerd). mTLS, load balancing, and observability happen at the network layer between services — no central chokepoint. Gateway only handles ingress from external clients.</div></li>
+        </ul>
+
+        <div class="code-block"><span class="cm">// Gateway responsibility matrix</span>
+GATEWAY SHOULD DO:
+  ✓ SSL termination
+  ✓ Request routing
+  ✓ Rate limiting (with Redis)
+  ✓ API versioning
+
+GATEWAY SHOULD NOT DO:
+  ✗ Business logic
+  ✗ Heavy data transformation
+  ✗ Sequential service orchestration
+  ✗ Stateful session management</div>
+
+        <div class="callout tip"><span class="callout-icon">💡</span><span>If your API gateway is your single biggest scaling concern, you've accidentally built a distributed monolith. The gateway should be a thin, fast router — not an integration platform.</span></div>
+      </div>
+    </div>
+
+    <!-- Q23 -->
+    <div class="q-card" id="q23">
+      <div class="q-header" onclick="toggle(this)">
+        <span class="q-num">23</span>
+        <div class="q-title-block">
+          <div class="q-title">Dropbox: Same File Edited on Two Devices While Offline</div>
+          <div class="q-tags"><span class="q-tag">Conflict Resolution</span><span class="q-tag">CRDT</span><span class="q-tag">Vector Clocks</span><span class="q-tag">Last-Write-Wins</span></div>
+        </div>
+        <span class="q-toggle">⌄</span>
+      </div>
+      <div class="q-body">
+        <div class="scenario-box">
+          <span class="scenario-label">// scenario</span>
+          You edit report.docx on your laptop while offline. Your colleague edits the same file from the office. Both come back online. Dropbox has two conflicting versions. What should happen?
+        </div>
+        <p class="answer-text">"This is the <strong>distributed write conflict</strong> problem. Two writers, same object, no coordination. Resolution strategy depends on the data type — text files, structured data, and spreadsheets need different approaches."</p>
+        <ul class="step-list">
+          <li><span class="step-num">01</span><div><strong>Vector clocks for conflict detection:</strong> Each device maintains a vector clock <span class="inline-code">{device: version}</span>. If one clock dominates (all values ≥), take the higher version. If neither dominates, you have a genuine conflict.</div></li>
+          <li><span class="step-num">02</span><div><strong>3-way merge for text files:</strong> Find the last common ancestor. Compare both diverged versions against the ancestor. Merge non-overlapping changes automatically. Present overlapping changes to the user — identical to git merge conflicts.</div></li>
+          <li><span class="step-num">03</span><div><strong>Conflict file strategy (Dropbox default):</strong> Create "report (Alice's conflicted copy).docx." Both versions preserved. Simple, no data loss, user decides. Not ideal but never wrong.</div></li>
+          <li><span class="step-num">04</span><div><strong>CRDTs for conflict-free data structures:</strong> Conflict-free Replicated Data Types merge automatically. A CRDT counter can be incremented on two devices and merged without conflict. Google Docs uses Operational Transformation, a CRDT variant, for real-time collaboration.</div></li>
+        </ul>
+        <div class="callout tip"><span class="callout-icon">💡</span><span>Dropbox's actual approach: LWW (Last-Write-Wins) for binary files, conflict copy for text. Google Docs uses Operational Transformation for real-time collaboration. Both are right — depends on whether you can afford to lose concurrent changes.</span></div>
+      </div>
+    </div>
+
+    <!-- Q24 -->
+    <div class="q-card" id="q24">
+      <div class="q-header" onclick="toggle(this)">
+        <span class="q-num">24</span>
+        <div class="q-title-block">
+          <div class="q-title">Google Docs: Two People Editing the Same Line Simultaneously</div>
+          <div class="q-tags"><span class="q-tag">Operational Transformation</span><span class="q-tag">CRDT</span><span class="q-tag">WebSocket</span><span class="q-tag">Consistency</span></div>
+        </div>
+        <span class="q-toggle">⌄</span>
+      </div>
+      <div class="q-body">
+        <div class="scenario-box">
+          <span class="scenario-label">// scenario</span>
+          Alice types "Hello" and Bob simultaneously types "World" at position 0 of an empty document. Both are connected via WebSocket. How do both clients converge to the same document state without losing either edit?
+        </div>
+        <p class="answer-text">"This is the <strong>real-time collaborative editing</strong> problem. The naive last-write-wins approach loses changes. The solution: <strong>Operational Transformation (OT)</strong>, which transforms concurrent operations to account for each other."</p>
+        <div class="code-block"><span class="cm">// OT core idea</span>
+Alice: Insert(<span class="str">"Hello"</span>, position=<span class="num">0</span>)   <span class="cm">// document: ""</span>
+Bob:   Insert(<span class="str">"World"</span>, position=<span class="num">0</span>)   <span class="cm">// same position</span>
+
+<span class="cm">// Server receives Alice's op first, applies it → "Hello"</span>
+<span class="cm">// Bob's op arrives: Insert("World", position=0)</span>
+<span class="cm">// Server applies to "Hello" → "WorldHello"</span>
+<span class="cm">// Sends transformed op to Alice — she converges to "WorldHello" ✓</span></div>
+        <ul class="step-list">
+          <li><span class="step-num">01</span><div><strong>Operations, not states:</strong> Send operations (Insert, Delete) not full document snapshots. Operations are tiny, composable, and can be transformed against each other.</div></li>
+          <li><span class="step-num">02</span><div><strong>Server as arbiter:</strong> Server receives all operations, orders them, applies them to the canonical document, transforms concurrent ops, and broadcasts transformed ops to all other clients. Server is always the truth.</div></li>
+          <li><span class="step-num">03</span><div><strong>CRDTs as the modern alternative:</strong> OT requires a central server and is complex to implement correctly. Yjs (used by many open-source collaborative editors) implements sequence CRDTs that allow peer-to-peer collaboration with automatic conflict-free merging.</div></li>
+          <li><span class="step-num">04</span><div><strong>Presence and awareness:</strong> Beyond the document itself, real-time collab needs cursor positions, selection highlights, and active-user indicators. These are ephemeral — Redis pub/sub is sufficient, no persistence needed.</div></li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Q25 -->
+    <div class="q-card" id="q25">
+      <div class="q-header" onclick="toggle(this)">
+        <span class="q-num">25</span>
+        <div class="q-title-block">
+          <div class="q-title">Database Replication Lag Causes Stale Reads After Writes</div>
+          <div class="q-tags"><span class="q-tag">Read-Your-Writes</span><span class="q-tag">Replication Lag</span><span class="q-tag">Session Consistency</span><span class="q-tag">Monotonic Reads</span></div>
+        </div>
+        <span class="q-toggle">⌄</span>
+      </div>
+      <div class="q-body">
+        <div class="scenario-box">
+          <span class="scenario-label">// scenario</span>
+          User updates their profile picture. The update goes to the primary DB. Next request reads from a read replica that hasn't replicated the update yet — user sees their old profile picture immediately after updating it.
+        </div>
+        <p class="answer-text">"This violates <strong>read-your-writes consistency</strong>. Asynchronous replication means replicas lag the primary by 10ms to seconds. Users must always see their own changes."</p>
+        <ul class="step-list">
+          <li><span class="step-num">01</span><div><strong>Route user's reads to primary temporarily:</strong> After a write, set a session flag <span class="inline-code">last_write_at = now()</span>. For the next 5 seconds, route all this user's reads to primary. After 5s, go back to replicas.</div></li>
+          <li><span class="step-num">02</span><div><strong>Cache the user's own writes:</strong> When user updates profile photo, write to DB AND cache the new photo URL in Redis with TTL=30s. Next read checks Redis first. User sees their own change immediately.</div></li>
+          <li><span class="step-num">03</span><div><strong>Replication lag monitoring:</strong> Track replica lag as a metric. Alert if any replica is &gt;30s behind. At &gt;10s lag, remove lagging replica from the read pool. MySQL: <span class="inline-code">SHOW SLAVE STATUS</span>, PostgreSQL: <span class="inline-code">pg_stat_replication</span>.</div></li>
+          <li><span class="step-num">04</span><div><strong>Monotonic reads guarantee:</strong> If a user reads version 5 of a document, they should never see version 4 in a subsequent read. Route a user's reads to the same replica using session affinity (sticky sessions at load balancer level).</div></li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Q26 -->
+    <div class="q-card" id="q26">
+      <div class="q-header" onclick="toggle(this)">
+        <span class="q-num">26</span>
+        <div class="q-title-block">
+          <div class="q-title">Scheduled Job Runs Twice Because of Leader Election Race</div>
+          <div class="q-tags"><span class="q-tag">Distributed Cron</span><span class="q-tag">Leader Election</span><span class="q-tag">Idempotency</span><span class="q-tag">Fencing Tokens</span></div>
+        </div>
+        <span class="q-toggle">⌄</span>
+      </div>
+      <div class="q-body">
+        <div class="scenario-box">
+          <span class="scenario-label">// scenario</span>
+          You have 10 app servers. The "send daily email digest" cron job runs on every server at midnight. 10 million users each receive 10 emails. Support is flooded.
+        </div>
+        <p class="answer-text">"Running the same cron on multiple servers without coordination causes duplicate execution. Three solutions: distributed locking, external schedulers, and idempotent job design."</p>
+        <div class="code-block"><span class="cm">// Redis distributed lock for cron</span>
+<span class="kw">function</span> <span class="fn">runDailyDigest</span>():
+  lock_key = <span class="str">"cron:daily_digest:2024-01-15"</span>  <span class="cm">// date in key!</span>
+  acquired = redis.SET(lock_key, <span class="str">"server_3"</span>, NX=True, PX=<span class="num">3600000</span>)
+  <span class="kw">if not</span> acquired:
+    <span class="kw">return</span>  <span class="cm">// Another server is running this. Skip.</span>
+  <span class="kw">try</span>:
+    sendDigestEmails()
+  <span class="kw">finally</span>:
+    redis.DEL(lock_key)</div>
+        <ul class="step-list">
+          <li><span class="step-num">01</span><div><strong>Distributed lock with date-scoped key:</strong> Include the job's run date in the lock key. Even if the lock expires and a server retries, a re-run within the same day is blocked.</div></li>
+          <li><span class="step-num">02</span><div><strong>External job scheduler:</strong> Move cron jobs out of app servers. Use AWS EventBridge Scheduler, Kubernetes CronJob, or Celery Beat with a dedicated scheduler instance. The scheduler triggers exactly once, sends the job to a queue, workers process it.</div></li>
+          <li><span class="step-num">03</span><div><strong>Idempotent job execution as backstop:</strong> Store <span class="inline-code">digest_sent:userId:2024-01-15</span> in DB. Before sending, check if already sent. If yes, skip. Catches edge cases where the lock fails.</div></li>
+          <li><span class="step-num">04</span><div><strong>Fencing tokens for long-running jobs:</strong> If the lock expires while the job runs, another server might start. Use fencing tokens — a monotonically increasing token returned on lock acquisition. DB writes include the token. A stale writer (lower token) is rejected by the DB.</div></li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Q27 -->
+    <div class="q-card" id="q27">
+      <div class="q-header" onclick="toggle(this)">
+        <span class="q-num">27</span>
+        <div class="q-title-block">
+          <div class="q-title">Paytm Wallet Balance Goes Negative</div>
+          <div class="q-tags"><span class="q-tag">Ledger Design</span><span class="q-tag">Event Sourcing</span><span class="q-tag">Atomic Balance Update</span><span class="q-tag">Double-Entry Accounting</span></div>
+        </div>
+        <span class="q-toggle">⌄</span>
+      </div>
+      <div class="q-body">
+        <div class="scenario-box">
+          <span class="scenario-label">// scenario</span>
+          A user has ₹100 in their Paytm wallet. They initiate two simultaneous payments — ₹80 to merchant A and ₹70 to merchant B. Both payments succeed. Wallet shows ₹-50. Money was created from thin air.
+        </div>
+        <p class="answer-text">"This is the classic <strong>distributed double-spend problem</strong>. Two concurrent transactions both read balance=100, both decide 100 &gt; amount, both proceed. Fix: atomic check-and-deduct with database-level constraints."</p>
+        <div class="code-block"><span class="cm">// BROKEN: read-then-write (race condition)</span>
+balance = SELECT balance FROM wallets WHERE user_id=<span class="num">123</span>
+<span class="kw">if</span> balance &gt;= amount:
+  UPDATE wallets SET balance = balance - amount ...  <span class="cm">// two txns both pass! 💥</span>
+
+<span class="cm">// FIXED: atomic conditional update</span>
+UPDATE wallets
+  SET balance = balance - <span class="num">80</span>
+  WHERE user_id = <span class="num">123</span>
+    AND balance &gt;= <span class="num">80</span>   <span class="cm">-- CHECK in the UPDATE itself</span>
+    AND version = <span class="num">5</span>      <span class="cm">-- optimistic lock</span>
+<span class="cm">-- rows_affected = 0 means insufficient funds OR concurrent update</span>
+
+<span class="cm">// DB CONSTRAINT as last resort guardian</span>
+ALTER TABLE wallets ADD CONSTRAINT balance_non_negative CHECK (balance &gt;= 0);
+<span class="cm">-- Even if application logic fails, DB refuses to go negative</span>
+
+<span class="cm">// EVENT SOURCING — never store balance, compute it</span>
+SELECT SUM(CASE WHEN type=<span class="str">'CREDIT'</span> THEN amount ELSE -amount END)
+FROM ledger_entries WHERE wallet_id = <span class="num">123</span></div>
+        <ul class="step-list">
+          <li><span class="step-num">01</span><div><strong>Atomic conditional UPDATE:</strong> Move the balance check into the UPDATE WHERE clause. The check and the deduct happen atomically in one SQL statement. Zero gap for a race condition to slip through.</div></li>
+          <li><span class="step-num">02</span><div><strong>Optimistic locking with version:</strong> Include <span class="inline-code">AND version = ?</span> in the WHERE clause. On conflict (<span class="inline-code">rows_affected = 0</span>), retry or return "concurrent modification" error. One of the two payments will fail and can be retried.</div></li>
+          <li><span class="step-num">03</span><div><strong>Double-entry ledger (accounting approach):</strong> Never store a mutable balance. Store immutable debit/credit entries in an append-only ledger table. Balance = SUM(credits) - SUM(debits). Auditable, tamper-proof, correct by construction. Financial systems (Stripe, banks) all use this.</div></li>
+          <li><span class="step-num">04</span><div><strong>Reserve-then-capture pattern:</strong> On payment initiation, atomically create a "hold" ledger entry (reduces available balance). On payment success, convert the hold to a debit. On failure, release the hold. This mirrors how credit card authorization works.</div></li>
+        </ul>
+        <div class="callout warn"><span class="callout-icon">⚠️</span><span>Never rely solely on application-level balance checks. A DB CHECK constraint is your last line of defense — it's cheap, always enforced, and catches bugs in application logic. Financial systems must have this.</span></div>
+      </div>
+    </div>
+
+    <!-- Q28 -->
+    <div class="q-card" id="q28">
+      <div class="q-header" onclick="toggle(this)">
+        <span class="q-num">28</span>
+        <div class="q-title-block">
+          <div class="q-title">WhatsApp "Last Seen" Shows Wrong Timestamp</div>
+          <div class="q-tags"><span class="q-tag">Presence System</span><span class="q-tag">Heartbeat</span><span class="q-tag">Redis TTL</span><span class="q-tag">Fan-out</span></div>
+        </div>
+        <span class="q-toggle">⌄</span>
+      </div>
+      <div class="q-body">
+        <div class="scenario-box">
+          <span class="scenario-label">// scenario</span>
+          A user's "last seen" on WhatsApp shows 3 hours ago, but they were active 5 minutes ago. Or conversely, it shows "Online" for a user whose phone died. The presence system is out of sync.
+        </div>
+        <p class="answer-text">"Presence is a <strong>heartbeat-driven system with aggressive TTL-based expiry</strong>. The challenge: 1 billion+ users, frequent state changes, and the need to fan-out status to all of a user's contacts in real time."</p>
+        <ul class="step-list">
+          <li><span class="step-num">01</span><div><strong>Heartbeat-based presence:</strong> Every active client sends a heartbeat ping every 5 seconds. Server updates <span class="inline-code">user:{id}:last_seen</span> in Redis with the current timestamp. If no heartbeat arrives, the key expires after 30s (5s × 6 missed heartbeats) — user is considered offline.</div></li>
+          <li><span class="step-num">02</span><div><strong>TTL-based expiry over explicit disconnect:</strong> Network disconnects (phone died, tunnel) don't send an explicit "going offline" event. TTL expiry is the only reliable signal. Design around the assumption that explicit disconnects may never arrive.</div></li>
+          <li><span class="step-num">03</span><div><strong>Presence fan-out on status change:</strong> When a user goes online or offline, fan out the status change to all their contacts who are currently online. Use a Kafka topic <span class="inline-code">presence.events</span> with contact fan-out workers. Only send to contacts whose client is connected — skip offline users.</div></li>
+          <li><span class="step-num">04</span><div><strong>Privacy controls complicate the system:</strong> WhatsApp has "nobody / my contacts / everyone" last seen privacy settings. Don't store one global last_seen — store per-relationship visibility flags. A user who sets "nobody" must return null for all presence queries except their own.</div></li>
+          <li><span class="step-num">05</span><div><strong>Batching fan-out for popular users:</strong> A user with 1,000 contacts going online triggers 1,000 WebSocket pushes. Batch the fan-out — group by WebSocket server, send one message per server, let the server fan out locally. Reduces cross-network messages by 10-100x.</div></li>
+        </ul>
+        <div class="callout info"><span class="callout-icon">ℹ️</span><span>At WhatsApp scale (~2 billion users, ~500M daily active), even storing last_seen timestamps is non-trivial. They use Mnesia (Erlang's distributed DB) for presence, co-located with the chat servers in the same process — sub-millisecond lookups.</span></div>
+      </div>
+    </div>
+
+    <!-- Q29 -->
+    <div class="q-card" id="q29">
+      <div class="q-header" onclick="toggle(this)">
+        <span class="q-num">29</span>
+        <div class="q-title-block">
+          <div class="q-title">Real-Time Leaderboard for 10 Million Players</div>
+          <div class="q-tags"><span class="q-tag">Redis ZSET</span><span class="q-tag">Percentile Rank</span><span class="q-tag">Sharded Counters</span><span class="q-tag">Score Aggregation</span></div>
+        </div>
+        <span class="q-toggle">⌄</span>
+      </div>
+      <div class="q-body">
+        <div class="scenario-box">
+          <span class="scenario-label">// scenario</span>
+          A mobile game has 10 million concurrent players during a tournament. Every kill or score update needs to update the leaderboard in real time. Players see their rank and the top 100. The SQL-based leaderboard collapses under 50K updates per second.
+        </div>
+        <p class="answer-text">"The SQL leaderboard runs a <span class="inline-code">SELECT COUNT(*) WHERE score &gt; ?</span> for every rank query — O(n) per query. Redis Sorted Sets (ZSET) give O(log n) rank queries and O(log n) score updates — exactly what we need."</p>
+        <div class="code-block"><span class="cm">// Redis Sorted Set leaderboard — O(log N) for all ops</span>
+
+<span class="cm">// Update score (kills, points)</span>
+redis.ZADD(<span class="str">"leaderboard:tournament:2024"</span>, score, player_id)
+<span class="cm">// or increment</span>
+redis.ZINCRBY(<span class="str">"leaderboard:tournament:2024"</span>, <span class="num">10</span>, player_id)
+
+<span class="cm">// Get top 100</span>
+redis.ZREVRANGE(<span class="str">"leaderboard:tournament:2024"</span>, <span class="num">0</span>, <span class="num">99</span>, WITHSCORES=True)
+
+<span class="cm">// Get player's rank (0-indexed, so +1)</span>
+rank = redis.ZREVRANK(<span class="str">"leaderboard:tournament:2024"</span>, player_id) + <span class="num">1</span>
+
+<span class="cm">// Get players around you (rank 48-52)</span>
+redis.ZREVRANGE(<span class="str">"leaderboard:tournament:2024"</span>, rank-<span class="num">3</span>, rank+<span class="num">1</span>, WITHSCORES=True)</div>
+        <ul class="step-list">
+          <li><span class="step-num">01</span><div><strong>Redis Sorted Set (ZSET):</strong> ZADD is O(log N). ZREVRANK (get rank) is O(log N). ZREVRANGE (get top K) is O(K log N). For 10M players, that's ~23 operations to find a rank — versus a full table scan in SQL. This is the canonical solution for real-time leaderboards.</div></li>
+          <li><span class="step-num">02</span><div><strong>Windowed leaderboards:</strong> Use separate Redis keys for different time windows: <span class="inline-code">leaderboard:daily:2024-01-15</span>, <span class="inline-code">leaderboard:weekly:2024-W03</span>, <span class="inline-code">leaderboard:all-time</span>. Each ZADD updates all relevant windows. Set TTL on daily/weekly keys for auto-cleanup.</div></li>
+          <li><span class="step-num">03</span><div><strong>Sharding for write scale:</strong> If 50K updates/sec exceeds single Redis instance, shard by player_id modulo N shards. Each shard holds 1/N of players. For global rank, scatter-gather across all shards — binary search to merge N sorted lists. Adds complexity but linearly scales write throughput.</div></li>
+          <li><span class="step-num">04</span><div><strong>Score tie-breaking:</strong> If two players have the same score, ZSET returns arbitrary ordering. Use a compound score: <span class="inline-code">actual_score * 1e9 + (1e9 - timestamp)</span>. Earlier achievers of the same score rank higher. All within a single float64 (Redis score is a float64).</div></li>
+        </ul>
+        <div class="callout tip"><span class="callout-icon">💡</span><span>Redis ZSET with 10M members uses ~600MB RAM. At 1 billion players, you'd need ~60GB — partition across multiple Redis instances. Alternatively, use approximate rank: maintain percentile buckets (top 1%, top 5%, etc.) as aggregated counters, which is far cheaper and good enough for most game UX.</span></div>
+      </div>
+    </div>
+
+    <!-- Q30 -->
+    <div class="q-card" id="q30">
+      <div class="q-header" onclick="toggle(this)">
+        <span class="q-num">30</span>
+        <div class="q-title-block">
+          <div class="q-title">S3 Upload Speeds Are Painfully Slow for Users in India</div>
+          <div class="q-tags"><span class="q-tag">Multipart Upload</span><span class="q-tag">Transfer Acceleration</span><span class="q-tag">Regional Endpoints</span><span class="q-tag">Presigned URLs</span></div>
+        </div>
+        <span class="q-toggle">⌄</span>
+      </div>
+      <div class="q-body">
+        <div class="scenario-box">
+          <span class="scenario-label">// scenario</span>
+          Your S3 bucket is in us-east-1. Users in Mumbai uploading 50MB files experience 30-45 second upload times. Latency from India to Virginia is ~200ms per RTT × hundreds of TCP slow-start rounds = slow uploads.
+        </div>
+        <p class="answer-text">"S3 upload latency from India to us-east-1 is dominated by <strong>TCP slow start over high-latency links</strong>. Three solutions: regional buckets, S3 Transfer Acceleration, and multipart parallel upload."</p>
+        <ul class="step-list">
+          <li><span class="step-num">01</span><div><strong>Regional bucket in ap-south-1 (Mumbai):</strong> Create an S3 bucket in the Mumbai region. India → Mumbai latency is 5-20ms vs 200ms to Virginia. For a 50MB upload, this is the single biggest win — 10x improvement. If you need a single storage location, replicate to us-east-1 after upload using S3 Cross-Region Replication.</div></li>
+          <li><span class="step-num">02</span><div><strong>S3 Transfer Acceleration:</strong> Routes uploads through AWS's private backbone network via the nearest CloudFront edge. From India, the upload goes to the Singapore or Mumbai CloudFront edge (5ms away), then over AWS's private fiber to us-east-1. Typically 2-5x faster than direct upload. Enable per-bucket, add <span class="inline-code">.s3-accelerate.amazonaws.com</span> to the endpoint.</div></li>
+          <li><span class="step-num">03</span><div><strong>Presigned URLs for direct upload:</strong> Never proxy the file through your server. Generate a presigned S3 URL on your backend and return it to the client. Client uploads directly to S3. Your server handles zero bytes of upload traffic — scales infinitely.</div></li>
+          <li><span class="step-num">04</span><div><strong>Multipart parallel upload:</strong> Split 50MB into 5MB chunks (10 chunks). Upload all 10 chunks in parallel (8 concurrent connections). Total upload time ≈ time for one 5MB chunk. For large files, this is a 5-10x improvement over sequential single-part upload, especially on high-latency links where each RTT is expensive.</div></li>
+        </ul>
+        <div class="callout info"><span class="callout-icon">ℹ️</span><span>S3 multipart upload requires a minimum chunk size of 5MB (except the last chunk). Use <span class="inline-code">CreateMultipartUpload</span>, then <span class="inline-code">UploadPart</span> in parallel, then <span class="inline-code">CompleteMultipartUpload</span>. AWS SDKs handle this transparently with the <span class="inline-code">transfer_config</span> option.</span></div>
+      </div>
+    </div>
+
+    <!-- Q31 -->
+    <div class="q-card" id="q31">
+      <div class="q-header" onclick="toggle(this)">
+        <span class="q-num">31</span>
+        <div class="q-title-block">
+          <div class="q-title">Service Discovery Failure Causes Total Outage</div>
+          <div class="q-tags"><span class="q-tag">Consul</span><span class="q-tag">DNS-based Discovery</span><span class="q-tag">Health Checks</span><span class="q-tag">Client-side LB</span></div>
+        </div>
+        <span class="q-toggle">⌄</span>
+      </div>
+      <div class="q-body">
+        <div class="scenario-box">
+          <span class="scenario-label">// scenario</span>
+          Your microservices use Consul for service discovery. Consul cluster loses quorum during a network partition. All services report "unable to resolve service endpoints." Every service that makes an internal call goes down. The entire platform is offline because of a 3-node Consul cluster.
+        </div>
+        <p class="answer-text">"Making <strong>service discovery a synchronous hard dependency</strong> means its failure takes everything down. The fix is client-side caching of discovery results, multiple fallback mechanisms, and treating service discovery as eventually consistent."</p>
+        <ul class="step-list">
+          <li><span class="step-num">01</span><div><strong>Client-side endpoint caching:</strong> Every service client caches the resolved endpoints of its dependencies. When Consul is healthy, refresh the cache every 30s. When Consul is down, continue using stale cached endpoints. Stale endpoints from 60s ago are almost certainly still valid — service IP addresses don't change that frequently.</div></li>
+          <li><span class="step-num">02</span><div><strong>DNS-based fallback:</strong> Register services under a DNS name (e.g., <span class="inline-code">payment-service.internal</span>). DNS resolves to current healthy IPs. DNS has its own TTL-based caching layer — clients will continue to resolve even if the DNS update pipeline is slow. Much more resilient than direct Consul API calls.</div></li>
+          <li><span class="step-num">03</span><div><strong>Increase Consul cluster size:</strong> 3-node Consul cluster requires 2 nodes for quorum. One node failure = 1 failure away from losing quorum. Run 5-node clusters: requires 3 for quorum. Can tolerate 2 simultaneous failures. For critical infrastructure, 7 nodes (tolerates 3 failures) is standard.</div></li>
+          <li><span class="step-num">04</span><div><strong>Hard-coded fallbacks for critical services:</strong> For the most critical internal dependencies (auth, DB, config service), maintain a hard-coded list of known good IP addresses as an emergency fallback. These are updated manually and rarely, but they ensure that even a complete service discovery outage doesn't take down auth.</div></li>
+        </ul>
+        <div class="callout warn"><span class="callout-icon">⚠️</span><span>Service discovery is infrastructure — treat it like a database. It needs its own SLA (99.99%), its own monitoring, and failure modes that don't cascade. If your service discovery is a single point of failure, your entire microservice architecture has a single point of failure.</span></div>
+      </div>
+    </div>
+
+    <!-- Q32 -->
+    <div class="q-card" id="q32">
+      <div class="q-header" onclick="toggle(this)">
+        <span class="q-num">32</span>
+        <div class="q-title-block">
+          <div class="q-title">Multi-Region Data Sync Causes Split-Brain</div>
+          <div class="q-tags"><span class="q-tag">Active-Active</span><span class="q-tag">Active-Passive</span><span class="q-tag">CAP Theorem</span><span class="q-tag">Conflict Resolution</span></div>
+        </div>
+        <span class="q-toggle">⌄</span>
+      </div>
+      <div class="q-body">
+        <div class="scenario-box">
+          <span class="scenario-label">// scenario</span>
+          You run active-active deployments in us-east-1 and ap-south-1 for low latency. A user updates their email in Mumbai. The same user's request hits Virginia before replication completes. Virginia uses the old email for a password reset. The user is now locked out.
+        </div>
+        <p class="answer-text">"This is <strong>CAP theorem in action</strong>. You cannot have perfect Consistency, Availability, and Partition tolerance simultaneously. Active-active sacrifices strong consistency. The fix is knowing which data requires strong consistency and handling it differently."</p>
+        <ul class="step-list">
+          <li><span class="step-num">01</span><div><strong>Classify data by consistency requirement:</strong> Not all data needs strong consistency. User preferences (dark mode) → eventual consistency is fine. Financial transactions, authentication credentials → require strong consistency. Design your data model around this classification.</div></li>
+          <li><span class="step-num">02</span><div><strong>Route auth-critical operations to a single region:</strong> All login, password reset, and email-change operations route to a single "authority" region (us-east-1). Other regions replicate from there. Adds ~150ms latency for auth operations but eliminates split-brain for credentials.</div></li>
+          <li><span class="step-num">03</span><div><strong>Global Tables with last-write-wins (DynamoDB pattern):</strong> DynamoDB Global Tables use a deterministic conflict resolution: last-write-wins based on wall-clock time. Acceptable for user preferences, not for financial data. AWS's CRR (Cross-Region Replication) in RDS uses asynchronous replication — typically 1-2 second lag.</div></li>
+          <li><span class="step-num">04</span><div><strong>Active-passive for simplicity:</strong> For most startups, active-active adds enormous complexity with marginal latency benefit. Active-passive (primary in us-east-1, standby in ap-south-1 for DR) eliminates split-brain entirely. Use a CDN for read latency, active-passive for write correctness.</div></li>
+        </ul>
+        <div class="callout info"><span class="callout-icon">ℹ️</span><span><strong>CAP reminder:</strong> In the presence of network partition (P) — which always happens in distributed systems — you must choose between Consistency (C) and Availability (A). Most modern systems choose AP (high availability, eventual consistency) for non-critical data, and CP (strong consistency, possible unavailability) for financial/auth data.</span></div>
+      </div>
+    </div>
+
+    <!-- Q33 -->
+    <div class="q-card" id="q33">
+      <div class="q-header" onclick="toggle(this)">
+        <span class="q-num">33</span>
+        <div class="q-title-block">
+          <div class="q-title">Dark Mode Feature Flag Rollout Crashes 5% of Users</div>
+          <div class="q-tags"><span class="q-tag">Feature Flags</span><span class="q-tag">Canary Releases</span><span class="q-tag">Kill Switch</span><span class="q-tag">A/B Testing</span></div>
+        </div>
+        <span class="q-toggle">⌄</span>
+      </div>
+      <div class="q-body">
+        <div class="scenario-box">
+          <span class="scenario-label">// scenario</span>
+          You roll out dark mode to 100% of users at once. A bug in the dark mode CSS crashes the app for users running iOS 14. 5% of your user base is on iOS 14. 5 million crash reports. Rollback requires a full app store re-submission — 24-hour review process.
+        </div>
+        <p class="answer-text">"<strong>Big-bang releases are high-risk</strong>. The fix: feature flags that let you control exposure at runtime without deploying code, combined with progressive rollout and automatic kill switches."</p>
+        <div class="code-block"><span class="cm">// Feature flag evaluation — server-side, runtime-controlled</span>
+<span class="kw">function</span> <span class="fn">isFeatureEnabled</span>(user_id, feature_name):
+  flag = featureFlags.get(feature_name)
+  <span class="kw">if not</span> flag.<span class="fn">enabled</span>:
+    <span class="kw">return</span> False
+  
+  <span class="cm">// Percentage rollout: hash(user_id) % 100 &lt; rollout_percent</span>
+  user_bucket = hash(user_id) % <span class="num">100</span>
+  <span class="kw">if</span> user_bucket &gt;= flag.rollout_percent:
+    <span class="kw">return</span> False
+  
+  <span class="cm">// Targeting rules: exclude iOS 14</span>
+  <span class="kw">if</span> user.os_version == <span class="str">"iOS 14"</span> <span class="kw">and</span> flag.exclude_ios14:
+    <span class="kw">return</span> False
+  
+  <span class="kw">return</span> True</div>
+        <ul class="step-list">
+          <li><span class="step-num">01</span><div><strong>Progressive rollout with hash bucketing:</strong> Use <span class="inline-code">hash(user_id) % 100</span> to assign users to stable buckets. Start at 1%, monitor crash rate and error rate. If healthy, increase to 5%, 20%, 50%, 100% over days — not hours. Users stay in their bucket consistently (no flickering).</div></li>
+          <li><span class="step-num">02</span><div><strong>Kill switch via feature flag:</strong> The flag is stored in Redis/LaunchDarkly, not in app code. To disable a broken feature, flip the flag — takes effect in under 1 second for all users. No app store submission required. This is the most valuable property of server-side feature flags.</div></li>
+          <li><span class="step-num">03</span><div><strong>Targeting rules:</strong> Feature flags support targeting: enable only for internal employees first, then Android, then iOS 15+, then iOS 14. Exclude device types, OS versions, or geographic regions. The iOS 14 crash would have been caught at the internal testing stage.</div></li>
+          <li><span class="step-num">04</span><div><strong>Automatic rollback on error spike:</strong> Integrate your feature flag system with your error monitoring (Sentry, Datadog). If crash rate for flag-enabled users exceeds 1% (vs 0.1% baseline), automatically disable the flag and page on-call. No human decision required during 3 AM incidents.</div></li>
+        </ul>
+        <div class="callout tip"><span class="callout-icon">💡</span><span>LaunchDarkly, Split.io, Unleash (open-source), and Growthbook are popular feature flag platforms. For most teams, a simple Redis hash with flag name → {enabled, rollout_percent, exclusions} is sufficient and free. Don't over-engineer this.</span></div>
+      </div>
+    </div>
+
+    <!-- Q34 -->
+    <div class="q-card" id="q34">
+      <div class="q-header" onclick="toggle(this)">
+        <span class="q-num">34</span>
+        <div class="q-title-block">
+          <div class="q-title">Elasticsearch Cluster Goes OOM and Falls Over</div>
+          <div class="q-tags"><span class="q-tag">Heap Tuning</span><span class="q-tag">Shard Sizing</span><span class="q-tag">Index Lifecycle</span><span class="q-tag">Circuit Breaker</span></div>
+        </div>
+        <span class="q-toggle">⌄</span>
+      </div>
+      <div class="q-body">
+        <div class="scenario-box">
+          <span class="scenario-label">// scenario</span>
+          Your Elasticsearch cluster runs 3 nodes × 32GB RAM. Search traffic doubles over 3 weeks. Then a heavy aggregation query (faceted search across 500M documents) triggers OOM on two data nodes. Cluster goes red. Search is down for 45 minutes while shards are reallocated.
+        </div>
+        <p class="answer-text">"Elasticsearch is memory-hungry by design — it caches field data in JVM heap. The OOM was caused by a combination of <strong>under-sized heap, over-sized shards, and an expensive aggregation query</strong> loading massive field data into RAM."</p>
+        <ul class="step-list">
+          <li><span class="step-num">01</span><div><strong>Shard sizing — the #1 Elasticsearch mistake:</strong> Never exceed 50GB per shard. 500M documents × avg 1KB = 500GB index. Should be split into at least 10 shards. Too many small shards wastes overhead; too few large shards cause OOM during rebalancing. Rule of thumb: aim for 20-40GB per shard.</div></li>
+          <li><span class="step-num">02</span><div><strong>JVM heap sizing:</strong> Set heap to 50% of RAM, max 31GB (the JVM compressed pointer threshold — going above 31GB disables compressed pointers and wastes memory). On a 32GB node: set <span class="inline-code">-Xmx15g -Xms15g</span>. The other 16GB is used by Lucene's file system cache (just as important as heap).</div></li>
+          <li><span class="step-num">03</span><div><strong>Index Lifecycle Management (ILM):</strong> Move old indices through hot → warm → cold → delete phases. Hot: fast NVMe SSDs with replicas. Warm: slower HDDs, reduced replica count. Cold: frozen (stored on S3, loaded on demand). Delete: after 365 days. This keeps your hot tier sized correctly as data grows.</div></li>
+          <li><span class="step-num">04</span><div><strong>Elasticsearch circuit breakers:</strong> Elasticsearch has built-in circuit breakers that reject queries before they cause OOM. Set <span class="inline-code">indices.breaker.total.limit: 70%</span> (reject when field data + request cache would exceed 70% of heap). Queries get a 429 instead of causing OOM. Enable this before it becomes a production incident.</div></li>
+        </ul>
+        <div class="callout warn"><span class="callout-icon">⚠️</span><span>Aggregations on high-cardinality string fields (like user IDs) load all field values into heap as field data. This is the most common OOM cause. Use <span class="inline-code">fielddata: false</span> (default) for analyzed text fields, and <span class="inline-code">keyword</span> sub-fields with doc_values for aggregatable fields — doc_values are stored on disk, not heap.</span></div>
+      </div>
+    </div>
+
+    <!-- Q35 -->
+    <div class="q-card" id="q35">
+      <div class="q-header" onclick="toggle(this)">
+        <span class="q-num">35</span>
+        <div class="q-title-block">
+          <div class="q-title">Zero-Downtime Deployment for a Database Schema Change</div>
+          <div class="q-tags"><span class="q-tag">Expand-Contract</span><span class="q-tag">Blue-Green</span><span class="q-tag">Backward Compatibility</span><span class="q-tag">Rolling Deploy</span></div>
+        </div>
+        <span class="q-toggle">⌄</span>
+      </div>
+      <div class="q-body">
+        <div class="scenario-box">
+          <span class="scenario-label">// scenario</span>
+          You need to rename a database column from <span class="inline-code">user_name</span> to <span class="inline-code">username</span>. The naive approach: add an ALTER TABLE, deploy new code. But during the deploy, old code instances are still running and reading <span class="inline-code">user_name</span> — which no longer exists. 503s for 2 minutes during rollout.
+        </div>
+        <p class="answer-text">"Schema changes and code changes must be decoupled. The <strong>Expand-Contract pattern</strong> deploys database changes and application changes in separate, independent phases, ensuring zero downtime."</p>
+        <div class="code-block"><span class="cm">// EXPAND-CONTRACT PATTERN — 3 phases</span>
+
+<span class="cm">// PHASE 1: EXPAND (backward compatible — old code still works)</span>
+ALTER TABLE users ADD COLUMN username VARCHAR(255);
+UPDATE users SET username = user_name;  <span class="cm">// backfill</span>
+<span class="cm">// Deploy new code that reads BOTH columns (falls back to user_name if username is null)</span>
+
+<span class="cm">// PHASE 2: MIGRATE (all code uses new column)</span>
+<span class="cm">// New code only writes to 'username'. Trigger/app keeps both columns in sync.</span>
+<span class="cm">// Verify old column is no longer read by any deployed instance.</span>
+
+<span class="cm">// PHASE 3: CONTRACT (remove old column — now safe)</span>
+ALTER TABLE users DROP COLUMN user_name;
+<span class="cm">// Deploy code that references only 'username'</span></div>
+        <ul class="step-list">
+          <li><span class="step-num">01</span><div><strong>Expand-Contract (parallel-change pattern):</strong> Phase 1 adds the new column alongside the old (backward compatible). Phase 2 migrates all writes to the new column while reads support both. Phase 3 removes the old column after all instances are updated. Three separate deploys, zero downtime.</div></li>
+          <li><span class="step-num">02</span><div><strong>Online schema migration tools:</strong> <span class="inline-code">ALTER TABLE</span> on a large table locks the table for minutes (MySQL) or is safe but slow (PostgreSQL). Use pt-online-schema-change (Percona) or gh-ost (GitHub) — they create a shadow table, copy data in batches, and swap atomically. Zero lock on production table.</div></li>
+          <li><span class="step-num">03</span><div><strong>Blue-Green deployment:</strong> Maintain two identical environments (Blue = live, Green = new version). After testing Green, switch DNS from Blue to Green. Rollback = switch DNS back to Blue. Works for code deploys; requires careful handling for schema changes (Green's schema must be backward compatible with Blue traffic during cutover).</div></li>
+          <li><span class="step-num">04</span><div><strong>Feature flags for schema-tied features:</strong> If a new feature requires the new column, keep it behind a feature flag. Roll out the schema, then gradually enable the feature flag. Decouple schema migration timing from feature availability.</div></li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Q36 -->
+    <div class="q-card" id="q36">
+      <div class="q-header" onclick="toggle(this)">
+        <span class="q-num">36</span>
+        <div class="q-title-block">
+          <div class="q-title">Autocomplete Search Needs to Handle 1 Million RPS</div>
+          <div class="q-tags"><span class="q-tag">Trie</span><span class="q-tag">Redis ZSET</span><span class="q-tag">Prefix Cache</span><span class="q-tag">Top-K</span></div>
+        </div>
+        <span class="q-toggle">⌄</span>
+      </div>
+      <div class="q-body">
+        <div class="scenario-box">
+          <span class="scenario-label">// scenario</span>
+          Your search bar sends a request on every keystroke. With 100K concurrent users typing at ~2 keystrokes/second, that's 200K RPS just for autocomplete. The naïve SQL <span class="inline-code">LIKE 'query%'</span> with a full-text index can't keep up — P99 latency is 800ms.
+        </div>
+        <p class="answer-text">"Autocomplete is a <strong>prefix search problem on a Top-K query set</strong>. Precompute the top suggestions for every prefix and serve from in-memory structures. LIKE queries on large tables can never achieve &lt;20ms at 200K RPS."</p>
+        <div class="code-block"><span class="cm">// Redis ZSET autocomplete — top suggestions per prefix</span>
+
+<span class="cm">// On query popularity update (after a successful search)</span>
+<span class="kw">for</span> prefix <span class="kw">in</span> all_prefixes(<span class="str">"iphone"</span>):  <span class="cm">// "i","ip","iph","ipho","iphon","iphone"</span>
+  redis.ZINCRBY(<span class="str">f"auto:{prefix}"</span>, <span class="num">1</span>, <span class="str">"iphone"</span>)
+
+<span class="cm">// On user keystroke (query time)</span>
+<span class="kw">function</span> <span class="fn">autocomplete</span>(prefix):
+  <span class="kw">return</span> redis.ZREVRANGE(<span class="str">f"auto:{prefix}"</span>, <span class="num">0</span>, <span class="num">9</span>)  <span class="cm">// top 10</span>
+<span class="cm">// O(log N) per request. 1M RPS = 1M Redis ops/sec. Cluster handles it.</span></div>
+        <ul class="step-list">
+          <li><span class="step-num">01</span><div><strong>Precomputed prefix sets in Redis ZSET:</strong> For every popular search term, write the term to all of its prefix sets scored by search frequency. "iphone" goes into sets "i", "ip", "iph", etc. Autocomplete = single ZREVRANGE on <span class="inline-code">auto:{prefix}</span>. Sub-millisecond reads.</div></li>
+          <li><span class="step-num">02</span><div><strong>Limit prefix fan-out:</strong> A term with 20 characters has 20 prefixes. Writing to 20 Redis keys per popular query is fine. But with millions of tail queries, the number of keys explodes. Set a minimum prefix length of 2 characters and only maintain Top-1000 queries per prefix — prune the long tail.</div></li>
+          <li><span class="step-num">03</span><div><strong>Trie for exact prefix matching (alternative):</strong> An in-memory trie data structure enables O(prefix_length) lookup. For a service with &lt;10M unique terms, fit the entire trie in RAM (one app server, 8GB). For larger vocab, distribute by prefix hash — requests for "i*" go to shard 1, "a*" go to shard 2.</div></li>
+          <li><span class="step-num">04</span><div><strong>Client-side debouncing:</strong> Instead of firing on every keystroke, fire 150-300ms after the last keystroke. Reduces RPS by 60-70% for typical typing speeds with zero user-visible quality degradation. The easiest optimization that requires no backend changes.</div></li>
+        </ul>
+        <div class="callout tip"><span class="callout-icon">💡</span><span>Google's search-as-you-type uses a combination: a trie for prefix matching, a large language model for fuzzy matching and intent detection, and a huge CDN cache for the most popular prefix queries. But for most products, Redis ZSET + client debouncing covers 99% of the use case.</span></div>
+      </div>
+    </div>
+
+    <!-- Q37 -->
+    <div class="q-card" id="q37">
+      <div class="q-header" onclick="toggle(this)">
+        <span class="q-num">37</span>
+        <div class="q-title-block">
+          <div class="q-title">Real-Time Fraud Detection Must Decide in 50ms</div>
+          <div class="q-tags"><span class="q-tag">Stream Processing</span><span class="q-tag">Feature Store</span><span class="q-tag">ML Inference</span><span class="q-tag">Risk Scoring</span></div>
+        </div>
+        <span class="q-toggle">⌄</span>
+      </div>
+      <div class="q-body">
+        <div class="scenario-box">
+          <span class="scenario-label">// scenario</span>
+          A payment is submitted. You have 50ms to decide: approve or flag for review. The fraud model needs 40+ features: user transaction history, device fingerprint, location, merchant category, spending velocity in last 1 hour. The DB queries to compute these take 800ms.
+        </div>
+        <p class="answer-text">"The 800ms query time means you're computing features at inference time from cold storage. The fix is a <strong>Feature Store</strong> — precompute and maintain features in low-latency storage, so inference time is just a lookup."</p>
+        <div class="diagram">
+          <div class="diagram-title">// fraud detection pipeline: feature store + ML inference</div>
+          <svg viewBox="0 0 700 170" xmlns="http://www.w3.org/2000/svg" font-family="JetBrains Mono, monospace" font-size="9">
+            <defs><marker id="a39" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L6,3 z" fill="#4a5270"/></marker></defs>
+            <!-- Online path -->
+            <rect x="10" y="60" width="80" height="36" rx="4" fill="#1e2335" stroke="#6c8bff" stroke-width="1.2"/>
+            <text x="50" y="76" fill="#6c8bff" text-anchor="middle">Payment</text>
+            <text x="50" y="87" fill="#4a5270" text-anchor="middle">submitted</text>
+            <line x1="90" y1="78" x2="120" y2="78" stroke="#4a5270" stroke-width="1" marker-end="url(#a39)"/>
+            <rect x="120" y="55" width="110" height="46" rx="4" fill="#1e2335" stroke="#a78bfa" stroke-width="1.2"/>
+            <text x="175" y="72" fill="#a78bfa" text-anchor="middle">Feature Lookup</text>
+            <text x="175" y="83" fill="#4a5270" text-anchor="middle">Redis: user features</text>
+            <text x="175" y="94" fill="#34d399" text-anchor="middle">&lt;5ms total</text>
+            <line x1="230" y1="78" x2="260" y2="78" stroke="#4a5270" stroke-width="1" marker-end="url(#a39)"/>
+            <rect x="260" y="55" width="110" height="46" rx="4" fill="#1e2335" stroke="#f59e0b" stroke-width="1.2"/>
+            <text x="315" y="72" fill="#f59e0b" text-anchor="middle">ML Model</text>
+            <text x="315" y="83" fill="#4a5270" text-anchor="middle">gradient boost</text>
+            <text x="315" y="94" fill="#34d399" text-anchor="middle">&lt;10ms inference</text>
+            <line x1="370" y1="68" x2="400" y2="55" stroke="#34d399" stroke-width="1" marker-end="url(#a39)"/>
+            <line x1="370" y1="88" x2="400" y2="100" stroke="#f87171" stroke-width="1" marker-end="url(#a39)"/>
+            <rect x="400" y="40" width="100" height="28" rx="4" fill="#1e2335" stroke="#34d399" stroke-width="1.2"/>
+            <rect x="400" y="86" width="100" height="28" rx="4" fill="#1e2335" stroke="#f87171" stroke-width="1.2"/>
+            <text x="450" y="57" fill="#34d399" text-anchor="middle">APPROVE ✓</text>
+            <text x="450" y="70" fill="#4a5270" text-anchor="middle">risk &lt; 0.3</text>
+            <text x="450" y="103" fill="#f87171" text-anchor="middle">FLAG / BLOCK</text>
+            <text x="450" y="116" fill="#4a5270" text-anchor="middle">risk &gt;= 0.3</text>
+            <!-- Feature store update -->
+            <rect x="10" y="128" width="600" height="36" rx="4" fill="#1e2335" stroke="#6c8bff" stroke-width="1"/>
+            <text x="20" y="144" fill="#6c8bff" font-size="9" letter-spacing="1">OFFLINE: FEATURE COMPUTATION (Flink / Spark):</text>
+            <text x="330" y="144" fill="#8892aa">Computes velocity, history, geo-anomaly every 60s → writes to Redis Feature Store</text>
+            <text x="20" y="157" fill="#4a5270">Users never wait for feature computation — it's always precomputed and ready in Redis. Payment gets a feature vector in &lt;5ms.</text>
+          </svg>
+        </div>
+        <ul class="step-list">
+          <li><span class="step-num">01</span><div><strong>Feature Store with precomputed features:</strong> Maintain a Redis hash per user: <span class="inline-code">fraud_features:{user_id}</span> → {tx_count_1h: 3, tx_amount_1h: 450, unique_merchants_24h: 7, ...}. A Flink streaming job continuously updates these features as transactions arrive. At inference time, one Redis HGETALL = all 40 features in under 5ms.</div></li>
+          <li><span class="step-num">02</span><div><strong>Sliding window velocity features:</strong> "Transactions in the last 1 hour" is expensive to compute on demand (requires scanning all txns). Precompute with a Flink sliding window: on every transaction, update <span class="inline-code">ZADD tx_history:{user_id} timestamp tx_id</span>, then count with ZCOUNT in the last 3600s. Maintained incrementally — O(log n) per update.</div></li>
+          <li><span class="step-num">03</span><div><strong>Lightweight ML model for inference latency:</strong> Gradient Boosted Trees (XGBoost/LightGBM) infer in &lt;5ms with 40 features — far faster than neural networks. Neural networks excel at raw data (images, text); tabular fraud features are the ideal case for gradient boosting. Don't reach for deep learning when GBT is sufficient.</div></li>
+          <li><span class="step-num">04</span><div><strong>Risk tier routing:</strong> Low risk (&lt;0.1) → auto-approve. Medium risk (0.1-0.5) → approve + async review. High risk (0.5-0.8) → SMS/OTP verification step. Very high (&gt;0.8) → block + notify user. This handles edge cases without binary approve/block creating too many false positives.</div></li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Q38 -->
+    <div class="q-card" id="q38">
+      <div class="q-header" onclick="toggle(this)">
+        <span class="q-num">38</span>
+        <div class="q-title-block">
+          <div class="q-title">Log Pipeline Is Drowning in 10TB Per Day</div>
+          <div class="q-tags"><span class="q-tag">Sampling</span><span class="q-tag">Log Aggregation</span><span class="q-tag">Structured Logging</span><span class="q-tag">Tiered Storage</span></div>
+        </div>
+        <span class="q-toggle">⌄</span>
+      </div>
+      <div class="q-body">
+        <div class="scenario-box">
+          <span class="scenario-label">// scenario</span>
+          Your platform generates 10TB of logs per day. Elasticsearch ingestion is falling behind. Log search latency is 45 seconds. Storage bill is $50K/month. Engineers stopped looking at logs because they're too slow and too expensive.
+        </div>
+        <p class="answer-text">"Logging everything at DEBUG level without a retention strategy is a common mistake. The fix is <strong>log tiering, structured logging, and intelligent sampling</strong> — not more Elasticsearch capacity."</p>
+        <ul class="step-list">
+          <li><span class="step-num">01</span><div><strong>Log level discipline:</strong> DEBUG logs should never reach production Elasticsearch. Route DEBUG to a short-lived local buffer (30 minutes). INFO logs go to Elasticsearch with 7-day retention. WARN/ERROR go to Elasticsearch with 30-day retention and PagerDuty integration. This single change typically reduces log volume by 80%.</div></li>
+          <li><span class="step-num">02</span><div><strong>Structured logging (JSON):</strong> Replace unstructured messages like <span class="inline-code">"Payment processed for user 123 in 45ms"</span> with JSON: <span class="inline-code">{"event": "payment_processed", "user_id": 123, "duration_ms": 45}</span>. Structured logs are indexable, filterable, and parseable. You can search <span class="inline-code">user_id:123</span> instead of regex-parsing freetext.</div></li>
+          <li><span class="step-num">03</span><div><strong>Tiered storage:</strong> Hot tier (Elasticsearch, &lt;7 days) for fast search. Warm tier (S3 + Athena, 7-90 days) for ad-hoc SQL queries at $5/TB scanned. Cold tier (S3 Glacier, &gt;90 days) for compliance at $0.004/GB/month. 90% of log queries are about the last 3 days — match your storage cost to your access patterns.</div></li>
+          <li><span class="step-num">04</span><div><strong>Tail-based sampling for traces:</strong> Don't trace every request. Sample 1% of successful requests, 100% of errors, 100% of slow requests (&gt;1s). Tail-based sampling (Jaeger, OpenTelemetry) makes the sampling decision after the full trace is collected — you always capture errors even if they started as "normal" requests.</div></li>
+        </ul>
+        <div class="callout info"><span class="callout-icon">ℹ️</span><span><strong>Alternatives to Elasticsearch:</strong> ClickHouse handles 10TB/day at a fraction of the cost and is 10-100x faster for aggregation queries over large time ranges. Loki (Grafana) stores log metadata in Prometheus and raw text in S3 — much cheaper than indexing everything in Elasticsearch. Evaluate these before scaling your ES cluster.</span></div>
+      </div>
+    </div>
+
+    <!-- END NOTE -->
+    <div style="margin-top:40px; padding:28px; background:var(--surface); border:1px solid var(--border); border-radius:10px; border-left:3px solid var(--accent);">
+      <div style="font-family:var(--mono);font-size:10px;color:var(--accent);letter-spacing:.14em;margin-bottom:10px;">// final thought</div>
+      <p style="font-size:14px;color:var(--text);line-height:1.75;margin:0;">The engineers who advance to Staff and Principal levels aren't the ones who know the most frameworks. They're the ones who can <strong style="color:var(--accent)">reason under uncertainty</strong> — who ask "what breaks here?" before the system breaks in production. These 38 scenarios are a starting point. The real skill is building the <em>mental model</em> that generates new answers to new failures you've never seen before.</p>
+    </div>
+
+  </main>
+</div>
+
+<script>
+  function toggle(header) {
+    const card = header.parentElement;
+    card.classList.toggle('open');
+    updateProgress();
+  }
+
+  function expandAll() {
+    document.querySelectorAll('.q-card').forEach(c => c.classList.add('open'));
+    updateProgress();
+  }
+
+  function collapseAll() {
+    document.querySelectorAll('.q-card').forEach(c => c.classList.remove('open'));
+    updateProgress();
+  }
+
+  function updateProgress() {
+    const total = document.querySelectorAll('.q-card').length;
+    const open = document.querySelectorAll('.q-card.open').length;
+    document.getElementById('progressFill').style.width = (open / total * 100) + '%';
+  }
+
+  // Open first card by default
+  document.querySelector('.q-card').classList.add('open');
+  updateProgress();
+
+  // Smooth scroll offset for sticky sidebar
+  document.querySelectorAll('.toc a').forEach(link => {
+    link.addEventListener('click', e => {
+      e.preventDefault();
+      const target = document.querySelector(link.getAttribute('href'));
+      if (target) {
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        // Open the card
+        target.classList.add('open');
+        updateProgress();
+      }
+    });
+  });
+
+  // Highlight active TOC item on scroll
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        document.querySelectorAll('.toc a').forEach(a => a.style.color = '');
+        const active = document.querySelector(`.toc a[href="#${entry.target.id}"]`);
+        if (active) active.style.color = 'var(--accent)';
+      }
+    });
+  }, { threshold: 0.3 });
+
+  document.querySelectorAll('.q-card').forEach(card => observer.observe(card));
+</script>
+</body>
+</html>
