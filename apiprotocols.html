@@ -1,0 +1,2647 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>GraphQL &amp; gRPC — The Complete Guide | Dev Notes</title>
+    <meta name="description"
+        content="A complete, system-design-grade reference on GraphQL and gRPC: concepts, architecture, schemas, protobufs, streaming, best practices, diagrams, and 50+ senior interview Q&amp;A.">
+    <style>
+        :root {
+            --bg: #0b0e14;
+            --bg-elev: #11151d;
+            --bg-card: #141925;
+            --border: #222a38;
+            --border-soft: #1a212e;
+            --text: #dde3ee;
+            --text-dim: #8c96a8;
+            --text-faint: #5c6577;
+            --accent-gql: #e535ab;
+            --accent-grpc: #3fa7ff;
+            --accent-good: #33d6a6;
+            --accent-warn: #ffb347;
+            --accent-bad: #ff5d6c;
+            --mono: "JetBrains Mono", "Fira Code", ui-monospace, SFMono-Regular, Consolas, monospace;
+            --sans: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+            --radius: 10px;
+            --maxw: 920px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            margin: 0;
+            background:
+                radial-gradient(900px 500px at 15% -5%, rgba(229, 53, 171, .08), transparent 60%),
+                radial-gradient(900px 500px at 85% 0%, rgba(63, 167, 255, .08), transparent 60%),
+                var(--bg);
+            color: var(--text);
+            font-family: var(--sans);
+            line-height: 1.65;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        a {
+            color: var(--accent-grpc);
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        code,
+        pre,
+        .mono {
+            font-family: var(--mono);
+        }
+
+        code {
+            background: rgba(255, 255, 255, .06);
+            padding: .15em .45em;
+            border-radius: 5px;
+            font-size: .86em;
+            color: #ffd479;
+        }
+
+        pre {
+            background: #0a0d13;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 18px 20px;
+            overflow-x: auto;
+            font-size: .84rem;
+            line-height: 1.55;
+            margin: 18px 0;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            color: #cdd6e4;
+        }
+
+        .tok-kw {
+            color: #ff79c6;
+        }
+
+        .tok-type {
+            color: #8be9fd;
+        }
+
+        .tok-str {
+            color: #f1fa8c;
+        }
+
+        .tok-com {
+            color: #6272a4;
+        }
+
+        .tok-fn {
+            color: #50fa7b;
+        }
+
+        .tok-num {
+            color: #bd93f9;
+        }
+
+        /* layout shell */
+        .topbar {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            background: rgba(11, 14, 20, .85);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border-soft);
+        }
+
+        .topbar-inner {
+            max-width: 1180px;
+            margin: 0 auto;
+            padding: 14px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+            color: var(--text);
+            font-size: .95rem;
+        }
+
+        .brand .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-gql), var(--accent-grpc));
+        }
+
+        .brand-sub {
+            color: var(--text-faint);
+            font-weight: 500;
+        }
+
+        .topbar a.home {
+            color: var(--text-dim);
+            font-size: .85rem;
+        }
+
+        .progress {
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-gql), var(--accent-grpc));
+            width: 0%;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 60;
+            transition: width .1s;
+        }
+
+        .shell {
+            max-width: 1180px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 240px minmax(0, 1fr);
+            gap: 44px;
+            padding: 36px 24px 120px;
+        }
+
+        .toc {
+            position: sticky;
+            top: 64px;
+            align-self: start;
+            max-height: calc(100vh - 90px);
+            overflow-y: auto;
+            padding-right: 8px;
+        }
+
+        .toc::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        .toc::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 5px;
+        }
+
+        .toc-title {
+            font-size: .7rem;
+            letter-spacing: .12em;
+            text-transform: uppercase;
+            color: var(--text-faint);
+            margin: 0 0 10px;
+            font-weight: 700;
+        }
+
+        .toc nav a {
+            display: block;
+            font-size: .83rem;
+            color: var(--text-dim);
+            padding: 5px 0 5px 12px;
+            border-left: 2px solid var(--border-soft);
+            margin-bottom: 1px;
+        }
+
+        .toc nav a:hover {
+            color: var(--text);
+            text-decoration: none;
+            border-left-color: var(--accent-grpc);
+        }
+
+        .toc nav a.sub {
+            padding-left: 24px;
+            font-size: .78rem;
+            color: var(--text-faint);
+        }
+
+        .toc nav a.qsec {
+            border-left-color: var(--accent-warn);
+        }
+
+        .toc nav a.active {
+            color: #fff;
+            border-left-color: var(--accent-gql);
+        }
+
+        main {
+            min-width: 0;
+        }
+
+        /* hero */
+        .hero {
+            padding: 8px 0 40px;
+            border-bottom: 1px solid var(--border-soft);
+            margin-bottom: 48px;
+        }
+
+        .hero .eyebrow {
+            font-family: var(--mono);
+            font-size: .78rem;
+            color: var(--accent-warn);
+            letter-spacing: .06em;
+            margin-bottom: 14px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .hero .eyebrow::before {
+            content: "$";
+            color: var(--text-faint);
+        }
+
+        .hero h1 {
+            font-size: 2.6rem;
+            line-height: 1.12;
+            margin: 0 0 16px;
+            font-weight: 800;
+            letter-spacing: -.02em;
+            background: linear-gradient(120deg, #fff 30%, var(--accent-gql) 65%, var(--accent-grpc) 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .hero p.lede {
+            font-size: 1.08rem;
+            color: var(--text-dim);
+            max-width: 640px;
+            margin: 0 0 22px;
+        }
+
+        .hero .stats {
+            display: flex;
+            gap: 28px;
+            flex-wrap: wrap;
+            margin-top: 18px;
+        }
+
+        .hero .stat b {
+            display: block;
+            font-size: 1.5rem;
+            font-family: var(--mono);
+            color: var(--text);
+        }
+
+        .hero .stat span {
+            font-size: .75rem;
+            color: var(--text-faint);
+            text-transform: uppercase;
+            letter-spacing: .06em;
+        }
+
+        /* sections */
+        section.block {
+            margin-bottom: 56px;
+            scroll-margin-top: 80px;
+        }
+
+        .section-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-family: var(--mono);
+            font-size: .72rem;
+            color: var(--text-faint);
+            text-transform: uppercase;
+            letter-spacing: .1em;
+            margin-bottom: 8px;
+        }
+
+        .section-tag.gql {
+            color: var(--accent-gql);
+        }
+
+        .section-tag.grpc {
+            color: var(--accent-grpc);
+        }
+
+        h2 {
+            font-size: 1.7rem;
+            margin: 0 0 6px;
+            letter-spacing: -.01em;
+            color: #fff;
+        }
+
+        h2.gql-h {
+            border-left: 3px solid var(--accent-gql);
+            padding-left: 14px;
+        }
+
+        h2.grpc-h {
+            border-left: 3px solid var(--accent-grpc);
+            padding-left: 14px;
+        }
+
+        h3 {
+            font-size: 1.2rem;
+            margin: 30px 0 10px;
+            color: #f1f4fa;
+        }
+
+        h4 {
+            font-size: 1rem;
+            margin: 20px 0 8px;
+            color: var(--text);
+        }
+
+        p {
+            color: #c4cbda;
+            margin: 10px 0;
+        }
+
+        .lead-p {
+            font-size: 1.02rem;
+            color: var(--text-dim);
+        }
+
+        ul,
+        ol {
+            color: #c4cbda;
+            padding-left: 22px;
+        }
+
+        li {
+            margin: 6px 0;
+        }
+
+        strong {
+            color: #f3f6fb;
+        }
+
+        .callout {
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--accent-warn);
+            background: var(--bg-card);
+            border-radius: 0 var(--radius) var(--radius) 0;
+            padding: 14px 18px;
+            margin: 18px 0;
+            font-size: .92rem;
+        }
+
+        .callout.tip {
+            border-left-color: var(--accent-good);
+        }
+
+        .callout.danger {
+            border-left-color: var(--accent-bad);
+        }
+
+        .callout-label {
+            font-family: var(--mono);
+            font-size: .7rem;
+            text-transform: uppercase;
+            letter-spacing: .08em;
+            color: var(--accent-warn);
+            margin-bottom: 6px;
+            font-weight: 700;
+        }
+
+        .callout.tip .callout-label {
+            color: var(--accent-good);
+        }
+
+        .callout.danger .callout-label {
+            color: var(--accent-bad);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 18px 0;
+            font-size: .88rem;
+        }
+
+        th,
+        td {
+            border: 1px solid var(--border);
+            padding: 10px 14px;
+            text-align: left;
+            vertical-align: top;
+        }
+
+        th {
+            background: var(--bg-elev);
+            color: var(--text);
+            font-size: .78rem;
+            text-transform: uppercase;
+            letter-spacing: .05em;
+        }
+
+        td {
+            color: var(--text-dim);
+        }
+
+        tr:nth-child(even) td {
+            background: rgba(255, 255, 255, .015);
+        }
+
+        .card-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px;
+            margin: 20px 0;
+        }
+
+        @media(max-width:720px) {
+            .card-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 18px 20px;
+        }
+
+        .card h4 {
+            margin-top: 0;
+        }
+
+        .card.gql {
+            border-top: 2px solid var(--accent-gql);
+        }
+
+        .card.grpc {
+            border-top: 2px solid var(--accent-grpc);
+        }
+
+        .diagram-wrap {
+            background: var(--bg-elev);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            margin: 20px 0;
+            overflow-x: auto;
+        }
+
+        .diagram-cap {
+            font-size: .78rem;
+            color: var(--text-faint);
+            text-align: center;
+            margin-top: 10px;
+            font-family: var(--mono);
+        }
+
+        svg text {
+            font-family: var(--mono);
+        }
+
+        .pill {
+            display: inline-block;
+            font-family: var(--mono);
+            font-size: .72rem;
+            padding: 2px 9px;
+            border-radius: 99px;
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            margin: 2px 4px 2px 0;
+        }
+
+        .pill.good {
+            color: var(--accent-good);
+            border-color: rgba(51, 214, 166, .4);
+        }
+
+        .pill.warn {
+            color: var(--accent-warn);
+            border-color: rgba(255, 179, 71, .4);
+        }
+
+        .pill.bad {
+            color: var(--accent-bad);
+            border-color: rgba(255, 93, 108, .4);
+        }
+
+        /* FAQ */
+        #faqList details {
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            background: var(--bg-card);
+            margin-bottom: 10px;
+            overflow: hidden;
+        }
+
+        #faqList summary {
+            padding: 14px 18px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 14px;
+            font-weight: 600;
+            color: #eef1f8;
+            font-size: .94rem;
+            list-style: none;
+        }
+
+        #faqList summary::-webkit-details-marker {
+            display: none;
+        }
+
+        #faqList summary::after {
+            content: '▼';
+            color: var(--text-faint);
+            transition: transform .2s;
+            flex: none;
+            font-family: var(--mono);
+            font-size: .75rem;
+        }
+
+        #faqList details[open] summary {
+            border-bottom: 1px solid var(--border-soft);
+        }
+
+        #faqList details[open] summary::after {
+            transform: rotate(180deg);
+        }
+
+        #faqList details p, #faqList details pre {
+            margin: 0;
+            padding: 16px 18px;
+            color: var(--text-dim);
+            font-size: .9rem;
+            line-height: 1.6;
+        }
+
+        .faq-cat {
+            font-family: var(--mono);
+            font-size: .7rem;
+            color: var(--accent-warn);
+            text-transform: uppercase;
+            letter-spacing: .08em;
+            margin: 34px 0 14px;
+            padding-top: 10px;
+            border-top: 1px dashed var(--border);
+        }
+
+        footer {
+            max-width: 1180px;
+            margin: 0 auto;
+            padding: 40px 24px 60px;
+            color: var(--text-faint);
+            font-size: .82rem;
+            border-top: 1px solid var(--border-soft);
+            text-align: center;
+        }
+
+        footer a {
+            color: var(--text-dim);
+        }
+
+        .backtotop {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-dim);
+            font-family: var(--mono);
+            text-decoration: none;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity .2s;
+            z-index: 40;
+        }
+
+        .backtotop.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        @media(max-width:900px) {
+            .shell {
+                grid-template-columns: 1fr;
+            }
+
+            .toc {
+                position: static;
+                max-height: none;
+                margin-bottom: 24px;
+                border: 1px solid var(--border);
+                border-radius: var(--radius);
+                padding: 16px;
+                background: var(--bg-card);
+            }
+
+            .hero h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="progress" id="progressBar"></div>
+
+    <div class="topbar">
+        <div class="topbar-inner">
+            <div class="brand"><span class="dot"></span>Dev Notes <span class="brand-sub">/ GraphQL &amp; gRPC</span>
+            </div>
+            <a class="home" href="http://skillhiveonline.com/index.html">&larr; All notes</a>
+        </div>
+    </div>
+
+    <div class="shell">
+        <aside class="toc">
+            <p class="toc-title">Contents</p>
+            <nav id="tocNav">
+                <a href="#intro">Introduction</a>
+                <a href="#apis-101">API Styles Compared</a>
+                <a href="#graphql" class="sub">— GraphQL —</a>
+                <a href="#gql-what" class="sub">What &amp; Why</a>
+                <a href="#gql-schema" class="sub">Schema &amp; Types</a>
+                <a href="#gql-ops" class="sub">Queries / Mutations / Subs</a>
+                <a href="#gql-resolvers" class="sub">Resolvers &amp; Execution</a>
+                <a href="#gql-nplus1" class="sub">N+1 &amp; DataLoader</a>
+                <a href="#gql-arch" class="sub">Architecture Patterns</a>
+                <a href="#gql-best" class="sub">Best Practices</a>
+                <a href="#gql-pitfalls" class="sub">Pitfalls &amp; Security</a>
+                <a href="#grpc" class="sub">— gRPC —</a>
+                <a href="#grpc-what" class="sub">What &amp; Why</a>
+                <a href="#protobuf" class="sub">Protocol Buffers</a>
+                <a href="#grpc-rpc" class="sub">RPC Types</a>
+                <a href="#http2" class="sub">HTTP/2 Internals</a>
+                <a href="#grpc-arch" class="sub">Architecture Patterns</a>
+                <a href="#grpc-best" class="sub">Best Practices</a>
+                <a href="#grpc-pitfalls" class="sub">Pitfalls</a>
+                <a href="#perf">Performance &amp; Benchmarks</a>
+                <a href="#sysdesign">System Design Diagrams</a>
+                <a href="#choosing">Choosing the Right Tool</a>
+                <a href="#faq" class="qsec">Interview Q&amp;A (90+)</a>
+                <a href="#cheat">Quick Cheat Sheet</a>
+            </nav>
+        </aside>
+
+        <main>
+
+            <section class="hero">
+                <div class="eyebrow">man graphql-grpc</div>
+                <h1>GraphQL &amp; gRPC, end to end</h1>
+                <p class="lede">A single reference covering both protocols from first principles to production
+                    architecture — schemas, protobufs, streaming, N+1 problems, security, system design diagrams, and
+                    50+ senior-level interview questions with answers.</p>
+                <div class="stats">
+                    <div class="stat"><b>3</b><span>Protocols</span></div>
+                    <div class="stat"><b>11</b><span>Diagrams</span></div>
+                    <div class="stat"><b>90+</b><span>Interview Q&amp;A</span></div>
+                    <div class="stat"><b>7</b><span>Topic Categories</span></div>
+                </div>
+            </section>
+
+            <section class="block" id="intro">
+                <div class="section-tag">00 / overview</div>
+                <h2>Introduction</h2>
+                <p class="lead-p">GraphQL and gRPC are both <strong>alternatives to plain REST</strong>, built to solve
+                    different pain points. GraphQL was created at Facebook (2012, open-sourced 2015) to solve
+                    <strong>over-fetching and under-fetching</strong> of data for client applications with diverse,
+                    fast-changing UI needs. gRPC was created at Google (2015, based on their internal "Stubby" system)
+                    to solve <strong>fast, strongly-typed, low-latency communication between backend services</strong>.
+                </p>
+                <p>They are not really competitors — in most real systems they coexist: gRPC is used for
+                    <strong>internal service-to-service (east-west)</strong> traffic, while GraphQL (or REST) is used
+                    for the <strong>external, client-facing (north-south)</strong> edge. Understanding both deeply, and
+                    where each one fits, is exactly what senior engineering interviews probe for.
+                </p>
+                <div class="callout">
+                    <div class="callout-label">How to read this doc</div>
+                    The doc is split into a GraphQL half, a gRPC half, a combined system design section, and a 50+
+                    question interview bank at the end. Read top to bottom once, then use the sidebar + cheat sheet for
+                    revision.
+                </div>
+            </section>
+
+            <section class="block" id="apis-101">
+                <div class="section-tag">01 / foundations</div>
+                <h2>API Styles Compared: REST vs GraphQL vs gRPC</h2>
+                <p>Before comparing GraphQL and gRPC to each other, it helps to place both against the baseline most
+                    engineers already know: REST.</p>
+                <table>
+                    <tr>
+                        <th>Dimension</th>
+                        <th>REST</th>
+                        <th>GraphQL</th>
+                        <th>gRPC</th>
+                    </tr>
+                    <tr>
+                        <td>Transport</td>
+                        <td>HTTP/1.1 (or 2)</td>
+                        <td>HTTP/1.1 or 2 (usually POST to one endpoint)</td>
+                        <td>HTTP/2 only</td>
+                    </tr>
+                    <tr>
+                        <td>Payload format</td>
+                        <td>JSON (usually)</td>
+                        <td>JSON</td>
+                        <td>Protocol Buffers (binary)</td>
+                    </tr>
+                    <tr>
+                        <td>Schema / contract</td>
+                        <td>Optional (OpenAPI)</td>
+                        <td>Mandatory, strongly typed (SDL)</td>
+                        <td>Mandatory, strongly typed (.proto)</td>
+                    </tr>
+                    <tr>
+                        <td>Endpoints</td>
+                        <td>Many (resource-based URLs)</td>
+                        <td>Single endpoint (<code>/graphql</code>)</td>
+                        <td>Many RPC methods, single connection</td>
+                    </tr>
+                    <tr>
+                        <td>Over/under-fetching</td>
+                        <td>Common problem</td>
+                        <td>Solved by design (client picks fields)</td>
+                        <td>N/A — request shape is fixed by contract</td>
+                    </tr>
+                    <tr>
+                        <td>Streaming</td>
+                        <td>No (native)</td>
+                        <td>Subscriptions (via WS/SSE)</td>
+                        <td>Native: client, server &amp; bidi streaming</td>
+                    </tr>
+                    <tr>
+                        <td>Browser support</td>
+                        <td>Native</td>
+                        <td>Native (it's just HTTP+JSON)</td>
+                        <td>Needs grpc-web + proxy</td>
+                    </tr>
+                    <tr>
+                        <td>Caching</td>
+                        <td>Easy (HTTP caching, CDNs)</td>
+                        <td>Hard (single endpoint, POST)</td>
+                        <td>Hard (binary, no URL semantics)</td>
+                    </tr>
+                    <tr>
+                        <td>Typical use</td>
+                        <td>Public APIs, simple CRUD</td>
+                        <td>Client-facing aggregation layer (BFF)</td>
+                        <td>Internal microservice-to-microservice</td>
+                    </tr>
+                    <tr>
+                        <td>Performance</td>
+                        <td>Medium</td>
+                        <td>Medium (resolver overhead)</td>
+                        <td>High (binary + HTTP/2 multiplexing)</td>
+                    </tr>
+                    <tr>
+                        <td>Codegen</td>
+                        <td>Optional (via OpenAPI)</td>
+                        <td>Yes (typed clients from schema)</td>
+                        <td>Yes, first-class — stubs in 10+ languages</td>
+                    </tr>
+                </table>
+                <div class="callout tip">
+                    <div class="callout-label">Mental model</div>
+                    REST = resources over URLs. GraphQL = a query language over a typed graph of data, optimized for
+                    flexible client reads. gRPC = typed remote procedure calls over a fast binary wire, optimized for
+                    service-to-service speed and contracts.
+                </div>
+            </section>
+
+            <section class="block" id="graphql">
+                <div class="section-tag gql">02 / graphql</div>
+                <h2 class="gql-h">GraphQL</h2>
+                <p class="lead-p">A query language for APIs and a runtime for executing those queries against a typed
+                    schema, giving clients the power to ask for exactly the data they need — nothing more, nothing less.
+                </p>
+            </section>
+
+            <section class="block" id="gql-what">
+                <h3>What it is, and why it exists</h3>
+                <p>Classic REST APIs expose fixed-shape resources. A mobile screen that needs a user's name, their last
+                    3 orders, and each order's shipping status either has to call multiple endpoints
+                    (<strong>under-fetching</strong>, more round trips) or call one heavy endpoint that returns far more
+                    than it needs (<strong>over-fetching</strong>, wasted bandwidth). GraphQL fixes this by exposing
+                    your data as a <strong>graph of types</strong> and letting the client send a query describing the
+                    exact shape of the response it wants.</p>
+                <div class="card-grid">
+                    <div class="card gql">
+                        <h4>Problems it solves</h4>
+                        <ul>
+                            <li>Over-fetching / under-fetching</li>
+                            <li>API versioning sprawl (v1, v2, v3...)</li>
+                            <li>Multiple round trips for nested data</li>
+                            <li>Frontend teams blocked on backend changes</li>
+                        </ul>
+                    </div>
+                    <div class="card gql">
+                        <h4>What it's good at</h4>
+                        <ul>
+                            <li>Client-facing APIs with varied consumers (web, iOS, Android)</li>
+                            <li>Aggregating multiple backend services (BFF pattern)</li>
+                            <li>Rapidly evolving frontends</li>
+                            <li>Strongly typed, self-documenting contracts</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <section class="block" id="gql-schema">
+                <h3>Schema &amp; Type System (SDL)</h3>
+                <p>Every GraphQL API is described by a <strong>Schema Definition Language (SDL)</strong> document. This
+                    schema is the contract — the single source of truth for what can be queried.</p>
+                <pre><code><span class="tok-com"># Scalar & object types</span>
+<span class="tok-kw">type</span> <span class="tok-type">User</span> {
+  id: <span class="tok-type">ID!</span>
+  name: <span class="tok-type">String!</span>
+  email: <span class="tok-type">String!</span>
+  orders(limit: <span class="tok-type">Int</span> = <span class="tok-num">10</span>): [<span class="tok-type">Order!</span>]!
+}
+
+<span class="tok-kw">type</span> <span class="tok-type">Order</span> {
+  id: <span class="tok-type">ID!</span>
+  status: <span class="tok-type">OrderStatus!</span>
+  total: <span class="tok-type">Float!</span>
+  items: [<span class="tok-type">OrderItem!</span>]!
+}
+
+<span class="tok-kw">enum</span> <span class="tok-type">OrderStatus</span> { <span class="tok-type">PENDING</span> <span class="tok-type">SHIPPED</span> <span class="tok-type">DELIVERED</span> <span class="tok-type">CANCELLED</span> }
+
+<span class="tok-kw">type</span> <span class="tok-type">Query</span> {
+  user(id: <span class="tok-type">ID!</span>): <span class="tok-type">User</span>
+  searchUsers(query: <span class="tok-type">String!</span>): [<span class="tok-type">User!</span>]!
+}
+
+<span class="tok-kw">type</span> <span class="tok-type">Mutation</span> {
+  createOrder(input: <span class="tok-type">CreateOrderInput!</span>): <span class="tok-type">Order!</span>
+}
+
+<span class="tok-kw">type</span> <span class="tok-type">Subscription</span> {
+  orderStatusChanged(orderId: <span class="tok-type">ID!</span>): <span class="tok-type">Order!</span>
+}</code></pre>
+                <p>Key type-system rules: <code>!</code> means non-nullable, <code>[Type!]!</code> means a non-null list
+                    of non-null items, and every operation root (<code>Query</code>, <code>Mutation</code>,
+                    <code>Subscription</code>) is itself just a regular object type. GraphQL ships scalar types
+                    <code>Int</code>, <code>Float</code>, <code>String</code>, <code>Boolean</code>, <code>ID</code> —
+                    anything else (dates, JSON, etc.) needs a <strong>custom scalar</strong>.
+                </p>
+                <h4>Interfaces &amp; Unions</h4>
+                <p>GraphQL supports polymorphism so a field can return one of several possible types:</p>
+                <pre><code><span class="tok-kw">interface</span> <span class="tok-type">Node</span> { id: <span class="tok-type">ID!</span> }
+<span class="tok-kw">type</span> <span class="tok-type">Article</span> <span class="tok-kw">implements</span> <span class="tok-type">Node</span> { id: <span class="tok-type">ID!</span> title: <span class="tok-type">String!</span> }
+<span class="tok-kw">type</span> <span class="tok-type">Video</span> <span class="tok-kw">implements</span> <span class="tok-type">Node</span> { id: <span class="tok-type">ID!</span> durationSec: <span class="tok-type">Int!</span> }
+
+<span class="tok-kw">union</span> <span class="tok-type">SearchResult</span> = <span class="tok-type">Article</span> | <span class="tok-type">Video</span> | <span class="tok-type">User</span></code></pre>
+            </section>
+
+            <section class="block" id="gql-ops">
+                <h3>Queries, Mutations &amp; Subscriptions</h3>
+                <p>GraphQL has exactly three operation types — this is one of its core best-practice constraints:
+                    <strong>reads, writes, and live updates are distinct and explicit.</strong>
+                </p>
+                <table>
+                    <tr>
+                        <th>Operation</th>
+                        <th>Purpose</th>
+                        <th>Semantics</th>
+                    </tr>
+                    <tr>
+                        <td><strong>Query</strong></td>
+                        <td>Read data</td>
+                        <td>Side-effect free; fields resolve in parallel</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Mutation</strong></td>
+                        <td>Write / mutate data</td>
+                        <td>Top-level fields resolve <em>serially</em>, in order</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Subscription</strong></td>
+                        <td>Live/streaming updates</td>
+                        <td>Long-lived connection (typically WebSocket), event-driven</td>
+                    </tr>
+                </table>
+                <pre><code><span class="tok-com">// Query: client asks for exactly these fields, nested</span>
+<span class="tok-kw">query</span> GetUserOrders($userId: <span class="tok-type">ID!</span>) {
+  user(id: $userId) {
+    name
+    orders(limit: <span class="tok-num">5</span>) {
+      id
+      status
+      total
+    }
+  }
+}
+
+<span class="tok-com">// Mutation: write + select back the result shape</span>
+<span class="tok-kw">mutation</span> PlaceOrder($input: <span class="tok-type">CreateOrderInput!</span>) {
+  createOrder(input: $input) {
+    id
+    status
+  }
+}
+
+<span class="tok-com">// Subscription: stays open, pushes events</span>
+<span class="tok-kw">subscription</span> WatchOrder($orderId: <span class="tok-type">ID!</span>) {
+  orderStatusChanged(orderId: $orderId) {
+    status
+  }
+}</code></pre>
+                <div class="callout">
+                    <div class="callout-label">Fragments</div>
+                    Reusable field selections: <code>fragment OrderFields on Order { id status total }</code> then
+                    spread with <code>...OrderFields</code>. Keeps large client queries DRY and is heavily used by
+                    codegen tools like Apollo Client / Relay.
+                </div>
+            </section>
+
+            <section class="block" id="gql-resolvers">
+                <h3>Resolvers &amp; Execution Model</h3>
+                <p>Every field in the schema is backed by a <strong>resolver function</strong> —
+                    <code>(parent, args, context, info) =&gt; value</code>. When a query arrives, the GraphQL engine
+                    walks the selection set and calls a resolver per field, passing the parent field's resolved value
+                    down. If a field has no custom resolver, a sensible default (read the property off the parent
+                    object) is used.
+                </p>
+                <pre><code><span class="tok-kw">const</span> resolvers = {
+  <span class="tok-type">Query</span>: {
+    user: <span class="tok-kw">async</span> (_parent, { id }, ctx) =&gt; ctx.db.users.findById(id),
+  },
+  <span class="tok-type">User</span>: {
+    orders: <span class="tok-kw">async</span> (user, { limit }, ctx) =&gt;
+      ctx.db.orders.findByUserId(user.id, { limit }),
+  },
+};</code></pre>
+                <p>Execution is a tree walk: GraphQL resolves the <strong>root field first</strong> (e.g.
+                    <code>user</code>), then recursively resolves each child field of the result <strong>in
+                        parallel</strong> (for queries) before moving deeper. This is exactly why naive resolver
+                    implementations cause the N+1 problem below.
+                </p>
+            </section>
+
+            <section class="block" id="gql-nplus1">
+                <h3>The N+1 Problem &amp; DataLoader</h3>
+                <p>This is one of the most-asked GraphQL interview topics. If you query 10 users and each user resolver
+                    triggers a separate DB query for its orders, you get <strong>1 query for users + N queries for
+                        orders</strong> — the N+1 problem.</p>
+                <div class="diagram-wrap">
+                    <svg viewBox="0 0 760 230" xmlns="http://www.w3.org/2000/svg">
+                        <style>
+                            .lbl {
+                                fill: #c4cbda;
+                                font-size: 12px;
+                            }
+
+                            .hd {
+                                fill: #fff;
+                                font-size: 13px;
+                                font-weight: 700;
+                            }
+
+                            .box {
+                                fill: #141925;
+                                stroke: #222a38;
+                                rx: 8;
+                            }
+
+                            .bad {
+                                stroke: #ff5d6c;
+                            }
+
+                            .good {
+                                stroke: #33d6a6;
+                            }
+
+                            .arrow {
+                                stroke: #5c6577;
+                                stroke-width: 1.4;
+                                marker-end: url(#ah);
+                                fill: none;
+                            }
+                        </style>
+                        <defs>
+                            <marker id="ah" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+                                <path d="M0,0 L6,3 L0,6 Z" fill="#5c6577" />
+                            </marker>
+                        </defs>
+
+                        <text x="20" y="24" class="hd">Without DataLoader (N+1)</text>
+                        <rect x="20" y="40" width="140" height="34" class="box bad" rx="8" /><text x="35" y="61"
+                            class="lbl">resolve users()</text>
+                        <rect x="200" y="40" width="150" height="34" class="box bad" rx="8" /><text x="212" y="61"
+                            class="lbl">1 query → 10 users</text>
+                        <rect x="20" y="100" width="330" height="34" class="box bad" rx="8" /><text x="35" y="121"
+                            class="lbl">resolve orders() per user → 10 separate queries</text>
+                        <path class="arrow" d="M160,57 L195,57" />
+                        <path class="arrow" d="M270,74 L185,100" />
+                        <text x="20" y="160" class="lbl" fill="#ff5d6c">Total: 11 round trips to the database</text>
+
+                        <text x="420" y="24" class="hd">With DataLoader (batched)</text>
+                        <rect x="420" y="40" width="140" height="34" class="box good" rx="8" /><text x="435" y="61"
+                            class="lbl">resolve users()</text>
+                        <rect x="600" y="40" width="140" height="34" class="box good" rx="8" /><text x="612" y="61"
+                            class="lbl">1 query → users</text>
+                        <rect x="420" y="100" width="320" height="34" class="box good" rx="8" /><text x="435" y="121"
+                            class="lbl">.load(userId) calls queued in event loop tick</text>
+                        <rect x="420" y="160" width="320" height="34" class="box good" rx="8" /><text x="435" y="181"
+                            class="lbl">1 batched query → WHERE user_id IN (...)</text>
+                        <path class="arrow" d="M560,57 L595,57" />
+                        <path class="arrow" d="M580,74 L580,100" />
+                        <path class="arrow" d="M580,134 L580,160" />
+                    </svg>
+                    <p class="diagram-cap">N+1 fan-out vs DataLoader request batching + caching</p>
+                </div>
+                <p><strong>DataLoader</strong> (Facebook's reference implementation, ported to most languages) fixes
+                    this with two techniques per request:</p>
+                <ul>
+                    <li><strong>Batching</strong> — collects all <code>.load(id)</code> calls made within a single tick
+                        of the event loop and issues one <code>batchLoadFn(ids)</code> call, typically translating to
+                        <code>WHERE id IN (...)</code>.
+                    </li>
+                    <li><strong>Caching</strong> — memoizes results per request so the same ID is never fetched twice
+                        within one GraphQL operation.</li>
+                </ul>
+                <pre><code><span class="tok-kw">const</span> orderLoader = <span class="tok-kw">new</span> DataLoader(<span class="tok-kw">async</span> (userIds) =&gt; {
+  <span class="tok-kw">const</span> rows = <span class="tok-kw">await</span> db.orders.findByUserIds(userIds);
+  <span class="tok-kw">return</span> userIds.map(id =&gt; rows.filter(r =&gt; r.userId === id));
+});
+
+<span class="tok-com">// resolver becomes a single batched call</span>
+<span class="tok-type">User</span>: { orders: (user, _args, ctx) =&gt; ctx.orderLoader.load(user.id) }</code></pre>
+                <div class="callout danger">
+                    <div class="callout-label">Interview trap</div>
+                    DataLoader must be instantiated <strong>per request</strong>, never as a singleton — otherwise its
+                    cache leaks data across different users' requests.
+                </div>
+            </section>
+
+            <section class="block" id="gql-arch">
+                <h3>Architecture Patterns</h3>
+                <p>GraphQL is most often deployed as a <strong>gateway / Backend-for-Frontend (BFF)</strong> layer in
+                    front of several underlying services — REST APIs, gRPC services, databases.</p>
+                <div class="diagram-wrap">
+                    <svg viewBox="0 0 760 290" xmlns="http://www.w3.org/2000/svg">
+                        <style>
+                            .lbl {
+                                fill: #c4cbda;
+                                font-size: 12px;
+                            }
+
+                            .hd {
+                                fill: #fff;
+                                font-size: 13px;
+                                font-weight: 700;
+                            }
+
+                            .box {
+                                fill: #141925;
+                                stroke: #222a38;
+                                rx: 8;
+                            }
+
+                            .client {
+                                stroke: #e535ab;
+                            }
+
+                            .gw {
+                                stroke: #e535ab;
+                                stroke-width: 2;
+                            }
+
+                            .svc {
+                                stroke: #3fa7ff;
+                            }
+
+                            .arrow {
+                                stroke: #5c6577;
+                                stroke-width: 1.4;
+                                marker-end: url(#ah2);
+                                fill: none;
+                            }
+                        </style>
+                        <defs>
+                            <marker id="ah2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+                                <path d="M0,0 L6,3 L0,6 Z" fill="#5c6577" />
+                            </marker>
+                        </defs>
+
+                        <rect x="40" y="20" width="120" height="36" class="box client" rx="8" /><text x="58" y="43"
+                            class="lbl">Web Client</text>
+                        <rect x="40" y="80" width="120" height="36" class="box client" rx="8" /><text x="58" y="103"
+                            class="lbl">Mobile Client</text>
+
+                        <rect x="260" y="50" width="200" height="56" class="box gw" rx="10" />
+                        <text x="280" y="72" class="hd">GraphQL Gateway</text>
+                        <text x="280" y="92" class="lbl">schema · resolvers · DataLoader</text>
+
+                        <rect x="560" y="10" width="170" height="36" class="box svc" rx="8" /><text x="578" y="33"
+                            class="lbl">Users gRPC svc</text>
+                        <rect x="560" y="60" width="170" height="36" class="box svc" rx="8" /><text x="578" y="83"
+                            class="lbl">Orders REST svc</text>
+                        <rect x="560" y="110" width="170" height="36" class="box svc" rx="8" /><text x="578" y="133"
+                            class="lbl">Inventory DB</text>
+
+                        <path class="arrow" d="M160,38 L255,68" />
+                        <path class="arrow" d="M160,98 L255,90" />
+                        <path class="arrow" d="M460,68 L555,28" />
+                        <path class="arrow" d="M460,78 L555,78" />
+                        <path class="arrow" d="M460,90 L555,118" />
+
+                        <rect x="40" y="190" width="690" height="80" class="box" rx="10" stroke="#222a38" />
+                        <text x="60" y="212" class="hd">One client request →</text>
+                        <text x="60" y="232" class="lbl">1. Gateway parses query against schema, builds execution
+                            plan</text>
+                        <text x="60" y="250" class="lbl">2. Resolvers fan out to gRPC / REST / DB calls (batched via
+                            DataLoader)</text>
+                        <text x="60" y="268" class="lbl">3. Results merged into exact shape client requested, returned
+                            as one JSON payload</text>
+                    </svg>
+                    <p class="diagram-cap">GraphQL as an API gateway aggregating heterogeneous backends</p>
+                </div>
+                <h4>Common deployment patterns</h4>
+                <table>
+                    <tr>
+                        <th>Pattern</th>
+                        <th>Description</th>
+                        <th>When to use</th>
+                    </tr>
+                    <tr>
+                        <td>Monolithic GraphQL server</td>
+                        <td>One server, schema + resolvers + direct DB access</td>
+                        <td>Small/medium apps, single team</td>
+                    </tr>
+                    <tr>
+                        <td>GraphQL as BFF</td>
+                        <td>Gateway aggregates multiple internal services (often gRPC)</td>
+                        <td>Microservices with one client-facing API</td>
+                    </tr>
+                    <tr>
+                        <td>Schema stitching</td>
+                        <td>Merge multiple independent GraphQL schemas at runtime</td>
+                        <td>Legacy approach, mostly superseded by federation</td>
+                    </tr>
+                    <tr>
+                        <td>Apollo Federation / GraphQL Federation</td>
+                        <td>Each service owns a subgraph; a router composes a supergraph</td>
+                        <td>Large orgs, many teams owning different domains</td>
+                    </tr>
+                </table>
+            </section>
+
+            <section class="block" id="gql-best">
+                <h3>Best Practices</h3>
+                <ul>
+                    <li><strong>Design schema around use cases, not your database.</strong> The schema is a product
+                        surface, not a 1:1 mirror of tables.</li>
+                    <li><strong>Always use DataLoader (or equivalent batching) for any field that triggers a DB/network
+                            call.</strong></li>
+                    <li><strong>Paginate every list field</strong> — prefer cursor-based <em>Relay-style
+                            connections</em> (<code>edges</code>, <code>node</code>, <code>pageInfo</code>) over offset
+                        pagination for stability under concurrent writes.</li>
+                    <li><strong>Set query complexity / depth limits</strong> to prevent malicious or accidental
+                        deeply-nested queries from overwhelming the server.</li>
+                    <li><strong>Version by deprecation, not by URL.</strong> Use <code>@deprecated(reason: "...")</code>
+                        on fields instead of <code>/v2/graphql</code>.</li>
+                    <li><strong>Use persisted queries</strong> in production to avoid sending full query text over the
+                        wire and to allow allow-listing.</li>
+                    <li><strong>Return nullable types for fields that can fail</strong> so one failing field doesn't
+                        null out the entire response (avoid over-using <code>!</code>).</li>
+                    <li><strong>Centralize error handling</strong> using structured error extensions (<code>code</code>,
+                        not just message strings).</li>
+                    <li><strong>Cache at the field/resolver level</strong> (e.g. with response cache directives) since
+                        HTTP caching doesn't work out of the box.</li>
+                    <li><strong>Keep resolvers thin</strong> — push business logic into services; resolvers should just
+                        orchestrate.</li>
+                </ul>
+            </section>
+
+            <section class="block" id="gql-pitfalls">
+                <h3>Pitfalls &amp; Security</h3>
+                <div class="card-grid">
+                    <div class="card">
+                        <h4>Common pitfalls</h4>
+                        <ul>
+                            <li>N+1 queries from un-batched resolvers</li>
+                            <li>No pagination → unbounded list responses</li>
+                            <li>Schema mirrors DB schema 1:1 (leaky abstraction)</li>
+                            <li>Overly permissive introspection in production</li>
+                            <li>No request timeout / complexity limit → DoS risk</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h4>Security checklist</h4>
+                        <ul>
+                            <li>Query depth limiting &amp; cost analysis</li>
+                            <li>Disable introspection (or restrict) in production</li>
+                            <li>Authorization at the <em>field</em> level, not just at the gateway</li>
+                            <li>Rate limit by query cost, not just request count</li>
+                            <li>Sanitize/validate all input types server-side</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="callout danger">
+                    <div class="callout-label">Classic attack: nested query DoS</div>
+                    A single malicious query like <code>user { friends { friends { friends { ... } } } }</code> can be
+                    exponential in cost. Mitigate with max query depth, query cost/complexity scoring, and request
+                    timeouts.
+                </div>
+            </section>
+
+            <section class="block" id="grpc">
+                <div class="section-tag grpc">03 / grpc</div>
+                <h2 class="grpc-h">gRPC</h2>
+                <p class="lead-p">A high-performance, open-source RPC framework built on HTTP/2 and Protocol Buffers,
+                    designed for fast, strongly-typed communication between services — first-class support for
+                    streaming, code generation, and pluggable load balancing/auth.</p>
+            </section>
+
+            <section class="block" id="grpc-what">
+                <h3>What it is, and why it exists</h3>
+                <p>Where GraphQL optimizes the client-facing read path, gRPC optimizes the internal call path between
+                    backend services. Instead of hand-rolling JSON REST clients per language, a team defines a service
+                    contract once in a <code>.proto</code> file, then generates strongly-typed client and server stubs
+                    in dozens of languages. Calls look like local function calls but execute over the network, using a
+                    compact binary wire format instead of text-based JSON.</p>
+                <div class="card-grid">
+                    <div class="card grpc">
+                        <h4>Problems it solves</h4>
+                        <ul>
+                            <li>Slow, verbose JSON serialization between services</li>
+                            <li>Manually written, drifting client SDKs per language</li>
+                            <li>No native support for streaming RPCs</li>
+                            <li>Head-of-line blocking on HTTP/1.1 connections</li>
+                        </ul>
+                    </div>
+                    <div class="card grpc">
+                        <h4>What it's good at</h4>
+                        <ul>
+                            <li>Low-latency service-to-service calls</li>
+                            <li>Polyglot microservices (codegen in 10+ languages)</li>
+                            <li>Streaming workloads (telemetry, chat, file transfer)</li>
+                            <li>Strict contracts with backward-compatible evolution</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <section class="block" id="protobuf">
+                <h3>Protocol Buffers (protobuf)</h3>
+                <p>Protobuf is the <strong>interface definition language (IDL) and binary serialization format</strong>
+                    gRPC uses by default. A <code>.proto</code> file declares messages (data) and services (RPC
+                    methods), which the <code>protoc</code> compiler turns into native classes/structs plus
+                    client+server stubs.</p>
+                <pre><code><span class="tok-com">// user.proto</span>
+<span class="tok-kw">syntax</span> = <span class="tok-str">"proto3"</span>;
+<span class="tok-kw">package</span> shop.v1;
+
+<span class="tok-kw">message</span> <span class="tok-type">User</span> {
+  <span class="tok-type">string</span> id = <span class="tok-num">1</span>;
+  <span class="tok-type">string</span> name = <span class="tok-num">2</span>;
+  <span class="tok-type">string</span> email = <span class="tok-num">3</span>;
+  <span class="tok-type">repeated</span> <span class="tok-type">Order</span> recent_orders = <span class="tok-num">4</span>;
+}
+
+<span class="tok-kw">message</span> <span class="tok-type">Order</span> {
+  <span class="tok-type">string</span> id = <span class="tok-num">1</span>;
+  <span class="tok-type">OrderStatus</span> status = <span class="tok-num">2</span>;
+  <span class="tok-type">double</span> total = <span class="tok-num">3</span>;
+}
+
+<span class="tok-kw">enum</span> <span class="tok-type">OrderStatus</span> {
+  <span class="tok-type">ORDER_STATUS_UNSPECIFIED</span> = <span class="tok-num">0</span>;
+  <span class="tok-type">ORDER_STATUS_PENDING</span> = <span class="tok-num">1</span>;
+  <span class="tok-type">ORDER_STATUS_SHIPPED</span> = <span class="tok-num">2</span>;
+}
+
+<span class="tok-kw">service</span> <span class="tok-type">UserService</span> {
+  <span class="tok-kw">rpc</span> GetUser(<span class="tok-type">GetUserRequest</span>) <span class="tok-kw">returns</span> (<span class="tok-type">User</span>);
+  <span class="tok-kw">rpc</span> WatchOrders(<span class="tok-type">WatchOrdersRequest</span>) <span class="tok-kw">returns</span> (<span class="tok-kw">stream</span> <span class="tok-type">Order</span>);
+}
+
+<span class="tok-kw">message</span> <span class="tok-type">GetUserRequest</span> { <span class="tok-type">string</span> id = <span class="tok-num">1</span>; }
+<span class="tok-kw">message</span> <span class="tok-type">WatchOrdersRequest</span> { <span class="tok-type">string</span> user_id = <span class="tok-num">1</span>; }</code></pre>
+                <p>The integer after each field (<code>= 1</code>, <code>= 2</code>...) is the <strong>field
+                        tag</strong> — it, not the field name, is what's actually encoded on the wire. This is the key
+                    to protobuf's backward/forward compatibility model.</p>
+                <h4>Schema evolution rules</h4>
+                <table>
+                    <tr>
+                        <th>Safe change</th>
+                        <th>Breaking change</th>
+                    </tr>
+                    <tr>
+                        <td>Adding a new field with a new tag number</td>
+                        <td>Reusing a tag number for a different field</td>
+                    </tr>
+                    <tr>
+                        <td>Removing a field (reserve its tag/name)</td>
+                        <td>Changing a field's tag number</td>
+                    </tr>
+                    <tr>
+                        <td>Renaming a field (tag stays the same)</td>
+                        <td>Changing a field's type incompatibly (e.g. string → int)</td>
+                    </tr>
+                    <tr>
+                        <td>Adding new enum values</td>
+                        <td>Changing the meaning of an existing enum value</td>
+                    </tr>
+                    <tr>
+                        <td>Adding a new RPC method</td>
+                        <td>Changing an RPC method's request/response type</td>
+                    </tr>
+                </table>
+                <div class="callout danger">
+                    <div class="callout-label">Interview trap</div>
+                    Always <code>reserve</code> removed field tags/names so a future field can never accidentally reuse
+                    them and silently corrupt old clients reading new data:
+                    <code>reserved 4, 7; reserved "old_field";</code>
+                </div>
+                <p>On the wire, protobuf uses <strong>varint encoding</strong> for small integers and a tag-length-value
+                    (or tag-value for varints) layout, which is why payloads are typically <strong>3–10x
+                        smaller</strong> than the equivalent JSON, with much cheaper parsing.</p>
+            </section>
+
+            <section class="block" id="grpc-rpc">
+                <h3>The 4 RPC Types</h3>
+                <p>This is the single most-tested gRPC concept in interviews — gRPC supports four call shapes, all
+                    defined just by where the <code>stream</code> keyword appears in the <code>.proto</code> service
+                    definition.</p>
+                <div class="diagram-wrap">
+                    <svg viewBox="0 0 760 360" xmlns="http://www.w3.org/2000/svg">
+                        <style>
+                            .lbl {
+                                fill: #c4cbda;
+                                font-size: 11.5px;
+                            }
+
+                            .hd {
+                                fill: #fff;
+                                font-size: 13px;
+                                font-weight: 700;
+                            }
+
+                            .box {
+                                fill: #141925;
+                                stroke: #3fa7ff;
+                                rx: 7;
+                            }
+
+                            .arrow {
+                                stroke: #3fa7ff;
+                                stroke-width: 1.6;
+                                marker-end: url(#ah3);
+                                fill: none;
+                            }
+
+                            .arrowback {
+                                stroke: #33d6a6;
+                                stroke-width: 1.6;
+                                marker-end: url(#ah4);
+                                fill: none;
+                            }
+                        </style>
+                        <defs>
+                            <marker id="ah3" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+                                <path d="M0,0 L6,3 L0,6 Z" fill="#3fa7ff" />
+                            </marker>
+                            <marker id="ah4" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+                                <path d="M0,0 L6,3 L0,6 Z" fill="#33d6a6" />
+                            </marker>
+                        </defs>
+
+                        <text x="20" y="22" class="hd">1. Unary</text>
+                        <rect x="20" y="36" width="90" height="32" class="box" rx="7" /><text x="35" y="56"
+                            class="lbl">Client</text>
+                        <rect x="220" y="36" width="90" height="32" class="box" rx="7" /><text x="235" y="56"
+                            class="lbl">Server</text>
+                        <path class="arrow" d="M110,46 L215,46" />
+                        <path class="arrowback" d="M215,58 L110,58" />
+                        <text x="20" y="92" class="lbl">One request → one response. Like a normal function call.</text>
+
+                        <text x="420" y="22" class="hd">2. Server streaming</text>
+                        <rect x="420" y="36" width="90" height="32" class="box" rx="7" /><text x="435" y="56"
+                            class="lbl">Client</text>
+                        <rect x="620" y="36" width="90" height="32" class="box" rx="7" /><text x="635" y="56"
+                            class="lbl">Server</text>
+                        <path class="arrow" d="M510,46 L615,46" />
+                        <path class="arrowback" d="M615,56 L510,56" />
+                        <path class="arrowback" d="M615,64 L510,64" />
+                        <path class="arrowback" d="M615,72 L510,72" />
+                        <text x="420" y="92" class="lbl">One request → stream of responses (e.g. live order
+                            updates).</text>
+
+                        <text x="20" y="142" class="hd">3. Client streaming</text>
+                        <rect x="20" y="156" width="90" height="32" class="box" rx="7" /><text x="35" y="176"
+                            class="lbl">Client</text>
+                        <rect x="220" y="156" width="90" height="32" class="box" rx="7" /><text x="235" y="176"
+                            class="lbl">Server</text>
+                        <path class="arrow" d="M110,166 L215,166" />
+                        <path class="arrow" d="M110,174 L215,174" />
+                        <path class="arrow" d="M110,182 L215,182" />
+                        <path class="arrowback" d="M215,194 L110,194" />
+                        <text x="20" y="216" class="lbl">Stream of requests → one response (e.g. file upload).</text>
+
+                        <text x="420" y="142" class="hd">4. Bidirectional streaming</text>
+                        <rect x="420" y="156" width="90" height="32" class="box" rx="7" /><text x="435" y="176"
+                            class="lbl">Client</text>
+                        <rect x="620" y="156" width="90" height="32" class="box" rx="7" /><text x="635" y="176"
+                            class="lbl">Server</text>
+                        <path class="arrow" d="M510,166 L615,166" />
+                        <path class="arrowback" d="M615,178 L510,178" />
+                        <path class="arrow" d="M510,190 L615,190" />
+                        <path class="arrowback" d="M615,202 L510,202" />
+                        <text x="420" y="222" class="lbl">Independent streams both ways over one connection (e.g.
+                            chat).</text>
+
+                        <rect x="20" y="250" width="690" height="90" class="box" rx="9" stroke="#222a38" />
+                        <text x="40" y="274" class="hd">.proto declarations for each</text>
+                        <text x="40" y="296" class="lbl">rpc GetUser(Req) returns (User); // unary</text>
+                        <text x="40" y="312" class="lbl">rpc WatchOrders(Req) returns (stream Order); // server
+                            streaming</text>
+                        <text x="40" y="328" class="lbl">rpc UploadChunks(stream Chunk) returns (UploadResult); //
+                            client streaming</text>
+                    </svg>
+                    <p class="diagram-cap">The four gRPC call shapes — all multiplexed over a single HTTP/2 connection
+                    </p>
+                </div>
+                <table>
+                    <tr>
+                        <th>Type</th>
+                        <th>Shape</th>
+                        <th>Typical use case</th>
+                    </tr>
+                    <tr>
+                        <td>Unary</td>
+                        <td>1 request → 1 response</td>
+                        <td>Standard CRUD-style calls (<code>GetUser</code>)</td>
+                    </tr>
+                    <tr>
+                        <td>Server streaming</td>
+                        <td>1 request → N responses</td>
+                        <td>Live feeds, large result sets paged over the wire</td>
+                    </tr>
+                    <tr>
+                        <td>Client streaming</td>
+                        <td>N requests → 1 response</td>
+                        <td>File/chunk upload, batched telemetry ingestion</td>
+                    </tr>
+                    <tr>
+                        <td>Bidirectional streaming</td>
+                        <td>N requests ↔ N responses</td>
+                        <td>Chat, collaborative editing, real-time gaming state</td>
+                    </tr>
+                </table>
+            </section>
+
+            <section class="block" id="http2">
+                <h3>HTTP/2 Internals That Make gRPC Fast</h3>
+                <p>gRPC requires HTTP/2, and most of its performance characteristics come directly from features
+                    HTTP/1.1 doesn't have:</p>
+                <ul>
+                    <li><strong>Multiplexing</strong> — many concurrent RPCs share <em>one</em> TCP connection as
+                        independent streams, eliminating head-of-line blocking at the connection level and the cost of
+                        opening new connections per call.</li>
+                    <li><strong>Binary framing</strong> — HTTP/2 frames (not text headers) are cheaper to parse than
+                        HTTP/1.1's textual request lines.</li>
+                    <li><strong>Header compression (HPACK)</strong> — repeated headers (auth tokens, content-type)
+                        across calls on the same connection are compressed via a shared dynamic table instead of resent
+                        in full.</li>
+                    <li><strong>Native, long-lived streaming</strong> — a single HTTP/2 stream can carry an open-ended
+                        sequence of length-prefixed protobuf messages in either direction, which is what powers the four
+                        RPC types above.</li>
+                    <li><strong>Flow control</strong> — per-stream and per-connection windows prevent a fast sender from
+                        overwhelming a slow receiver.</li>
+                </ul>
+                <div class="callout">
+                    <div class="callout-label">Why browsers can't speak gRPC directly</div>
+                    Browsers don't expose low-level HTTP/2 trailer and framing control to JavaScript, so a browser can't
+                    originate a true gRPC call. <strong>grpc-web</strong> solves this with a JS client that talks a
+                    constrained gRPC-over-HTTP/1.1-or-2 variant to an <strong>Envoy (or similar) proxy</strong>, which
+                    translates to real gRPC for the backend.
+                </div>
+            </section>
+
+            <section class="block" id="grpc-arch">
+                <h3>Architecture Patterns</h3>
+                <p>gRPC's natural home is the <strong>service mesh / internal microservices layer</strong>, often paired
+                    with a GraphQL or REST edge for clients and a sidecar proxy (e.g. Envoy) per service for
+                    cross-cutting concerns.</p>
+                <div class="diagram-wrap">
+                    <svg viewBox="0 0 760 300" xmlns="http://www.w3.org/2000/svg">
+                        <style>
+                            .lbl {
+                                fill: #c4cbda;
+                                font-size: 12px;
+                            }
+
+                            .hd {
+                                fill: #fff;
+                                font-size: 13px;
+                                font-weight: 700;
+                            }
+
+                            .box {
+                                fill: #141925;
+                                stroke: #222a38;
+                                rx: 8;
+                            }
+
+                            .edge {
+                                stroke: #e535ab;
+                            }
+
+                            .svc {
+                                stroke: #3fa7ff;
+                                stroke-width: 2;
+                            }
+
+                            .side {
+                                stroke: #ffb347;
+                                stroke-dasharray: 3 3;
+                            }
+
+                            .arrow {
+                                stroke: #5c6577;
+                                stroke-width: 1.4;
+                                marker-end: url(#ah5);
+                                fill: none;
+                            }
+                        </style>
+                        <defs>
+                            <marker id="ah5" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+                                <path d="M0,0 L6,3 L0,6 Z" fill="#5c6577" />
+                            </marker>
+                        </defs>
+
+                        <rect x="30" y="30" width="140" height="40" class="box edge" rx="8" /><text x="48" y="55"
+                            class="hd">Edge / BFF</text>
+                        <text x="48" y="0" class="lbl"></text>
+
+                        <rect x="260" y="20" width="150" height="56" class="box svc" rx="10" />
+                        <text x="278" y="42" class="hd">Orders svc</text>
+                        <rect x="276" y="52" width="118" height="16" class="box side" rx="4" /><text x="284" y="64"
+                            class="lbl" font-size="9.5px">sidecar proxy</text>
+
+                        <rect x="260" y="110" width="150" height="56" class="box svc" rx="10" />
+                        <text x="278" y="132" class="hd">Inventory svc</text>
+                        <rect x="276" y="142" width="118" height="16" class="box side" rx="4" /><text x="284" y="154"
+                            class="lbl" font-size="9.5px">sidecar proxy</text>
+
+                        <rect x="260" y="200" width="150" height="56" class="box svc" rx="10" />
+                        <text x="278" y="222" class="hd">Payments svc</text>
+                        <rect x="276" y="232" width="118" height="16" class="box side" rx="4" /><text x="284" y="244"
+                            class="lbl" font-size="9.5px">sidecar proxy</text>
+
+                        <rect x="540" y="20" width="180" height="236" class="box" rx="10" stroke="#222a38" />
+                        <text x="558" y="44" class="hd">Service mesh control plane</text>
+                        <text x="558" y="68" class="lbl">· service discovery</text>
+                        <text x="558" y="86" class="lbl">· mTLS between sidecars</text>
+                        <text x="558" y="104" class="lbl">· load balancing (round robin,</text>
+                        <text x="558" y="120" class="lbl"> least-request)</text>
+                        <text x="558" y="138" class="lbl">· retries, timeouts, circuit</text>
+                        <text x="558" y="154" class="lbl"> breaking per route</text>
+                        <text x="558" y="172" class="lbl">· distributed tracing</text>
+                        <text x="558" y="190" class="lbl"> (request spans across calls)</text>
+                        <text x="558" y="208" class="lbl">· deadline propagation</text>
+                        <text x="558" y="226" class="lbl"> across the whole call chain</text>
+
+                        <path class="arrow" d="M170,50 L255,48" />
+                        <path class="arrow" d="M335,76 L335,105" />
+                        <path class="arrow" d="M335,166 L335,195" />
+                        <path class="arrow" d="M410,48 L535,48" />
+                        <path class="arrow" d="M410,138 L535,138" />
+                        <path class="arrow" d="M410,228 L535,228" />
+                    </svg>
+                    <p class="diagram-cap">gRPC microservices behind sidecars in a service mesh, fronted by an edge
+                        gateway</p>
+                </div>
+                <h4>Common deployment patterns</h4>
+                <table>
+                    <tr>
+                        <th>Pattern</th>
+                        <th>Description</th>
+                        <th>When to use</th>
+                    </tr>
+                    <tr>
+                        <td>Direct service-to-service gRPC</td>
+                        <td>Services call each other's gRPC stubs directly</td>
+                        <td>Small/medium service counts, simple topology</td>
+                    </tr>
+                    <tr>
+                        <td>Service mesh (Envoy/Istio/Linkerd)</td>
+                        <td>Sidecar proxies handle mTLS, retries, LB, tracing</td>
+                        <td>Large microservice fleets needing uniform policy</td>
+                    </tr>
+                    <tr>
+                        <td>gRPC gateway / transcoding</td>
+                        <td>Reverse proxy exposes gRPC services as REST/JSON for external callers</td>
+                        <td>Need both internal gRPC and a public REST API from one service</td>
+                    </tr>
+                    <tr>
+                        <td>grpc-web + Envoy</td>
+                        <td>Browser clients talk gRPC indirectly via a translating proxy</td>
+                        <td>Browser apps that need gRPC's typed contracts</td>
+                    </tr>
+                </table>
+            </section>
+
+            <section class="block" id="grpc-best">
+                <h3>Best Practices</h3>
+                <ul>
+                    <li><strong>Always set deadlines/timeouts</strong> on every call and propagate them downstream —
+                        without this, a slow dependency cascades into resource exhaustion across the whole call chain.
+                    </li>
+                    <li><strong>Never reuse or reassign protobuf field tag numbers.</strong> Reserve removed ones.</li>
+                    <li><strong>Design idempotent unary RPCs where possible</strong> so client-side retries are safe;
+                        use retry budgets / exponential backoff with jitter.</li>
+                    <li><strong>Use streaming only when you need it</strong> — unary is simpler to reason about, load
+                        balance, and retry than long-lived streams.</li>
+                    <li><strong>Version services at the package level</strong> (<code>package shop.v1;</code> →
+                        <code>shop.v2;</code>) rather than per-message ad hoc versioning.
+                    </li>
+                    <li><strong>Use interceptors</strong> (gRPC's middleware) for cross-cutting concerns: auth, logging,
+                        metrics, tracing — keep them out of business logic.</li>
+                    <li><strong>Enable mTLS between services</strong> in production; never trust the network layer alone
+                        for service identity.</li>
+                    <li><strong>Keep messages reasonably small</strong>; for large payloads (files, blobs) use
+                        client/server streaming with chunking rather than one giant message.</li>
+                    <li><strong>Use well-known status codes</strong> (<code>NOT_FOUND</code>, <code>UNAVAILABLE</code>,
+                        <code>DEADLINE_EXCEEDED</code>...) consistently so clients can branch on them instead of parsing
+                        error strings.
+                    </li>
+                    <li><strong>Load test with realistic concurrency</strong> — HTTP/2 multiplexing means a single
+                        misbehaving stream can still affect others on a shared connection under certain flow-control
+                        conditions.</li>
+                </ul>
+            </section>
+
+            <section class="block" id="grpc-pitfalls">
+                <h3>Pitfalls</h3>
+                <div class="card-grid">
+                    <div class="card">
+                        <h4>Common pitfalls</h4>
+                        <ul>
+                            <li>No deadlines set → cascading slow-call failures</li>
+                            <li>Treating streaming RPCs as a default rather than an exception</li>
+                            <li>Load balancing at L4 (TCP) instead of L7 for long-lived HTTP/2 connections, causing
+                                uneven traffic distribution</li>
+                            <li>Reassigning a protobuf field tag → silent data corruption</li>
+                            <li>No browser support assumed without grpc-web + proxy</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h4>Operational checklist</h4>
+                        <ul>
+                            <li>Client-side and server-side deadlines configured</li>
+                            <li>Retries are idempotency-aware, with backoff + jitter</li>
+                            <li>mTLS / auth interceptors on every service boundary</li>
+                            <li>L7-aware load balancing (e.g. via mesh or client-side LB)</li>
+                            <li>Reserved tags/fields documented in every <code>.proto</code></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="callout danger">
+                    <div class="callout-label">Interview trap: connection-level load balancing</div>
+                    Because HTTP/2 multiplexes many calls over one long-lived TCP connection, a naive L4 load balancer
+                    pins all of a client's calls to a single backend instance once the connection is established —
+                    defeating load balancing entirely. Fix with client-side load balancing, an L7-aware proxy, or a
+                    service mesh.
+                </div>
+            </section>
+
+            <section class="block" id="perf">
+                <div class="section-tag">03.5 / performance</div>
+                <h2>Performance &amp; Benchmarks</h2>
+                <p class="lead-p">Raw performance numbers vary by workload, but the <strong>fundamental
+                        characteristics</strong> of each protocol determine where overhead lives and how to mitigate it.
+                </p>
+
+                <h3>Where Each Protocol Spends Its Time</h3>
+                <table>
+                    <tr>
+                        <th>Phase</th>
+                        <th>REST</th>
+                        <th>GraphQL</th>
+                        <th>gRPC</th>
+                    </tr>
+                    <tr>
+                        <td>Serialization</td>
+                        <td>JSON encode/decode (~medium)</td>
+                        <td>JSON encode/decode + query parse (~medium-high)</td>
+                        <td>Protobuf encode/decode (~3–10× faster than JSON)</td>
+                    </tr>
+                    <tr>
+                        <td>Wire payload size</td>
+                        <td>Medium (full resource)</td>
+                        <td>Medium (only requested fields)</td>
+                        <td>Small (binary, field-tag only, no names on wire)</td>
+                    </tr>
+                    <tr>
+                        <td>Connection overhead</td>
+                        <td>HTTP/1.1: new TCP+TLS per req (or keep-alive pool)</td>
+                        <td>Same as REST</td>
+                        <td>One persistent HTTP/2 connection, many streams</td>
+                    </tr>
+                    <tr>
+                        <td>Server-side parsing</td>
+                        <td>URL routing + JSON decode</td>
+                        <td>SDL query parse + validation + resolver plan</td>
+                        <td>Stub dispatch + protobuf decode</td>
+                    </tr>
+                    <tr>
+                        <td>Caching</td>
+                        <td>Easy (GET + URL = cache key)</td>
+                        <td>Hard (POST + dynamic body)</td>
+                        <td>Hard (binary, no URL semantics)</td>
+                    </tr>
+                    <tr>
+                        <td>Latency (p50 internal)</td>
+                        <td>~1–5 ms (JSON)</td>
+                        <td>~2–8 ms (resolver overhead)</td>
+                        <td>~0.3–1 ms (binary+multiplexing)</td>
+                    </tr>
+                </table>
+                <div class="callout tip">
+                    <div class="callout-label">Benchmark caveat</div>
+                    Micro-benchmarks showing gRPC at 5–10× REST are often measuring serialization in isolation. In real
+                    systems, DB/network I/O dominates; gRPC's advantage is most pronounced in <strong>high-fanout
+                        internal call chains</strong> where many small fast calls accumulate.
+                </div>
+
+                <h3>Payload Size Comparison (same logical data)</h3>
+                <div class="diagram-wrap">
+                    <svg viewBox="0 0 760 200" xmlns="http://www.w3.org/2000/svg">
+                        <style>
+                            .lbl {
+                                fill: #c4cbda;
+                                font-size: 12px;
+                            }
+
+                            .hd {
+                                fill: #fff;
+                                font-size: 13px;
+                                font-weight: 700;
+                            }
+
+                            .bar-rest {
+                                fill: #6272a4;
+                            }
+
+                            .bar-gql {
+                                fill: #e535ab;
+                                opacity: .8;
+                            }
+
+                            .bar-grpc {
+                                fill: #3fa7ff;
+                                opacity: .9;
+                            }
+
+                            .axis {
+                                stroke: #222a38;
+                                stroke-width: 1;
+                            }
+                        </style>
+                        <!-- Y axis -->
+                        <line class="axis" x1="80" y1="20" x2="80" y2="155" />
+                        <line class="axis" x1="80" y1="155" x2="740" y2="155" />
+                        <!-- REST bar -->
+                        <rect class="bar-rest" x="110" y="55" width="140" height="100" rx="4" />
+                        <text x="180" y="48" class="lbl" text-anchor="middle">REST/JSON</text>
+                        <text x="180" y="170" class="lbl" text-anchor="middle">~420 bytes</text>
+                        <!-- GraphQL bar -->
+                        <rect class="bar-gql" x="310" y="75" width="140" height="80" rx="4" />
+                        <text x="380" y="68" class="lbl" text-anchor="middle">GraphQL</text>
+                        <text x="380" y="170" class="lbl" text-anchor="middle">~320 bytes</text>
+                        <!-- gRPC bar -->
+                        <rect class="bar-grpc" x="510" y="118" width="140" height="37" rx="4" />
+                        <text x="580" y="111" class="lbl" text-anchor="middle">gRPC/protobuf</text>
+                        <text x="580" y="170" class="lbl" text-anchor="middle">~62 bytes</text>
+                        <!-- Axis labels -->
+                        <text x="40" y="160" class="lbl" fill="#5c6577">0</text>
+                        <text x="20" y="58" class="lbl" fill="#5c6577">large</text>
+                        <text x="400" y="195" class="hd" fill="#5c6577" text-anchor="middle" font-size="11">Wire payload
+                            for equivalent user + 5 order records</text>
+                    </svg>
+                    <p class="diagram-cap">Illustrative payload comparison — protobuf is typically 3–7× smaller than
+                        equivalent JSON for the same data</p>
+                </div>
+
+                <h3>Throughput Under Load (Relative)</h3>
+                <table>
+                    <tr>
+                        <th>Metric</th>
+                        <th>REST (HTTP/1.1)</th>
+                        <th>GraphQL</th>
+                        <th>gRPC (HTTP/2)</th>
+                    </tr>
+                    <tr>
+                        <td>Concurrent connections</td>
+                        <td>Many (connection pool)</td>
+                        <td>Many (same as REST)</td>
+                        <td>Few TCP conns (multiplexed)</td>
+                    </tr>
+                    <tr>
+                        <td>Throughput (small msgs)</td>
+                        <td>Baseline</td>
+                        <td>~0.8× (resolver overhead)</td>
+                        <td>~5–10× (binary + multiplexing)</td>
+                    </tr>
+                    <tr>
+                        <td>Streaming throughput</td>
+                        <td>N/A natively</td>
+                        <td>~good (SSE/WS)</td>
+                        <td>Excellent (native HTTP/2 streams)</td>
+                    </tr>
+                    <tr>
+                        <td>Head-of-line blocking</td>
+                        <td>Yes (HTTP/1.1)</td>
+                        <td>Yes (unless HTTP/2)</td>
+                        <td>No (HTTP/2 stream isolation)</td>
+                    </tr>
+                    <tr>
+                        <td>CPU for serialization</td>
+                        <td>Medium (JSON)</td>
+                        <td>Medium-high (JSON + parse)</td>
+                        <td>Low (protobuf)</td>
+                    </tr>
+                </table>
+
+                <h3>Real-world Optimization Tactics</h3>
+                <div class="card-grid">
+                    <div class="card gql">
+                        <h4>GraphQL performance levers</h4>
+                        <ul>
+                            <li><strong>DataLoader</strong> — eliminates N+1, single biggest win</li>
+                            <li><strong>Persisted queries</strong> — skip full query parse, enable GET caching</li>
+                            <li><strong>Response caching</strong> — cache at resolver or whole-operation level</li>
+                            <li><strong>Query complexity limits</strong> — prevent runaway resolver trees</li>
+                            <li><strong>Deferred queries</strong> (<code>@defer</code>) — stream critical fields first
+                            </li>
+                            <li><strong>CDN edge caching</strong> — via persisted query GET requests</li>
+                        </ul>
+                    </div>
+                    <div class="card grpc">
+                        <h4>gRPC performance levers</h4>
+                        <ul>
+                            <li><strong>Connection pooling</strong> — reuse HTTP/2 connections across calls</li>
+                            <li><strong>Keepalive tuning</strong> — prevent idle connection teardown</li>
+                            <li><strong>Client-side load balancing</strong> — spread load before a single conn pins</li>
+                            <li><strong>Message size limits</strong> — chunk large payloads via streaming</li>
+                            <li><strong>Compression</strong> — gzip/zstd per call for large text payloads</li>
+                            <li><strong>Flow control tuning</strong> — adjust HTTP/2 window sizes for throughput</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <section class="block" id="sysdesign">
+                <div class="section-tag">04 / system design</div>
+                <h2>Putting It Together: A Combined System Design</h2>
+                <p class="lead-p">A realistic system uses both protocols in the layer each is best at — GraphQL at the
+                    edge for flexible client reads, gRPC internally for fast, typed service calls.</p>
+                <div class="diagram-wrap">
+                    <svg viewBox="0 0 780 340" xmlns="http://www.w3.org/2000/svg">
+                        <style>
+                            .lbl {
+                                fill: #c4cbda;
+                                font-size: 11.5px;
+                            }
+
+                            .hd {
+                                fill: #fff;
+                                font-size: 13px;
+                                font-weight: 700;
+                            }
+
+                            .box {
+                                fill: #141925;
+                                stroke: #222a38;
+                                rx: 8;
+                            }
+
+                            .client {
+                                stroke: #e535ab;
+                            }
+
+                            .gw {
+                                stroke: #e535ab;
+                                stroke-width: 2;
+                            }
+
+                            .svc {
+                                stroke: #3fa7ff;
+                            }
+
+                            .db {
+                                stroke: #33d6a6;
+                            }
+
+                            .arrow {
+                                stroke: #5c6577;
+                                stroke-width: 1.4;
+                                marker-end: url(#ah6);
+                                fill: none;
+                            }
+
+                            .lbl2 {
+                                fill: #5c6577;
+                                font-size: 10px;
+                                font-style: italic;
+                            }
+                        </style>
+                        <defs>
+                            <marker id="ah6" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+                                <path d="M0,0 L6,3 L0,6 Z" fill="#5c6577" />
+                            </marker>
+                        </defs>
+
+                        <rect x="20" y="20" width="130" height="36" class="box client" rx="8" /><text x="36" y="43"
+                            class="lbl">Web / Mobile</text>
+                        <rect x="20" y="70" width="130" height="36" class="box client" rx="8" /><text x="36" y="93"
+                            class="lbl">3rd-party dev</text>
+
+                        <rect x="230" y="20" width="170" height="86" class="box gw" rx="10" />
+                        <text x="248" y="44" class="hd">GraphQL Gateway</text>
+                        <text x="248" y="64" class="lbl">north-south edge</text>
+                        <text x="248" y="80" class="lbl">auth, rate limit, BFF</text>
+                        <text x="248" y="96" class="lbl">aggregation</text>
+
+                        <rect x="480" y="0" width="150" height="40" class="box svc" rx="8" /><text x="498" y="24"
+                            class="lbl">Users svc (gRPC)</text>
+                        <rect x="480" y="50" width="150" height="40" class="box svc" rx="8" /><text x="498" y="74"
+                            class="lbl">Orders svc (gRPC)</text>
+                        <rect x="480" y="100" width="150" height="40" class="box svc" rx="8" /><text x="498" y="124"
+                            class="lbl">Inventory svc (gRPC)</text>
+                        <rect x="480" y="150" width="150" height="40" class="box svc" rx="8" /><text x="498" y="174"
+                            class="lbl">Payments svc (gRPC)</text>
+
+                        <rect x="680" y="0" width="90" height="40" class="box db" rx="8" /><text x="694" y="24"
+                            class="lbl">DB</text>
+                        <rect x="680" y="50" width="90" height="40" class="box db" rx="8" /><text x="694" y="74"
+                            class="lbl">DB</text>
+                        <rect x="680" y="100" width="90" height="40" class="box db" rx="8" /><text x="694" y="124"
+                            class="lbl">DB</text>
+                        <rect x="680" y="150" width="90" height="40" class="box db" rx="8" /><text x="694" y="174"
+                            class="lbl">DB</text>
+
+                        <path class="arrow" d="M150,38 L225,55" />
+                        <path class="arrow" d="M150,88 L225,80" />
+                        <path class="arrow" d="M400,40 L475,20" />
+                        <path class="arrow" d="M400,55 L475,70" />
+                        <path class="arrow" d="M400,75 L475,120" />
+                        <path class="arrow" d="M400,90 L475,170" />
+                        <path class="arrow" d="M630,20 L675,20" />
+                        <path class="arrow" d="M630,70 L675,70" />
+                        <path class="arrow" d="M630,120 L675,120" />
+                        <path class="arrow" d="M630,170 L675,170" />
+
+                        <rect x="230" y="160" width="400" height="36" class="box svc" rx="8" stroke="#ffb347" />
+                        <text x="248" y="183" class="lbl">Orders svc → Payments svc: gRPC client streaming (chunked
+                            refund batch)</text>
+
+                        <rect x="230" y="210" width="400" height="36" class="box svc" rx="8" stroke="#ffb347" />
+                        <text x="248" y="233" class="lbl">GraphQL subscription ← Orders svc: gRPC server stream → WS
+                            push to client</text>
+
+                        <rect x="20" y="270" width="740" height="56" class="box" rx="10" stroke="#222a38" />
+                        <text x="40" y="292" class="hd">Why this split works</text>
+                        <text x="40" y="312" class="lbl">GraphQL solves the client's "what shape of data do I need"
+                            problem at the edge; gRPC solves the backend's "how fast and reliably can services talk"
+                            problem internally — different bottlenecks, different tools.</text>
+                    </svg>
+                    <p class="diagram-cap">A typical production topology: GraphQL edge gateway over a gRPC service mesh
+                    </p>
+                </div>
+                <p>Note the bridging pattern in the diagram: a GraphQL <strong>subscription</strong> field is commonly
+                    implemented by having the gateway resolver subscribe to a backend gRPC
+                    <strong>server-streaming</strong> RPC, then re-publish each event to the client over a WebSocket —
+                    gRPC streaming powers the GraphQL subscription internally without the client ever knowing gRPC is
+                    involved.
+                </p>
+            </section>
+
+            <section class="block" id="choosing">
+                <div class="section-tag">05 / decision guide</div>
+                <h2>Choosing the Right Tool</h2>
+                <table>
+                    <tr>
+                        <th>Scenario</th>
+                        <th>Best fit</th>
+                        <th>Why</th>
+                    </tr>
+                    <tr>
+                        <td>Public API consumed by many third parties</td>
+                        <td>REST or GraphQL</td>
+                        <td>Browser-native, cacheable, broad tooling support</td>
+                    </tr>
+                    <tr>
+                        <td>Mobile app with varied screens / bandwidth constraints</td>
+                        <td>GraphQL</td>
+                        <td>Client controls exact payload shape, fewer round trips</td>
+                    </tr>
+                    <tr>
+                        <td>Internal call between two backend microservices</td>
+                        <td>gRPC</td>
+                        <td>Binary + HTTP/2, lowest latency, typed contracts, codegen</td>
+                    </tr>
+                    <tr>
+                        <td>Real-time bidirectional data (chat, collab editing)</td>
+                        <td>gRPC (internally) / GraphQL subscriptions (at edge)</td>
+                        <td>gRPC bidi streaming is the most efficient transport; GraphQL exposes it simply to clients
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Polyglot microservice fleet (Go, Java, Python, etc.)</td>
+                        <td>gRPC</td>
+                        <td>First-class codegen keeps every language's client in sync with the contract</td>
+                    </tr>
+                    <tr>
+                        <td>Simple CRUD service, single consumer, fast to ship</td>
+                        <td>REST</td>
+                        <td>Lowest ceremony, no schema tooling required</td>
+                    </tr>
+                    <tr>
+                        <td>Aggregating data across many existing services for one app</td>
+                        <td>GraphQL (as BFF)</td>
+                        <td>Purpose-built for combining heterogeneous sources into one response</td>
+                    </tr>
+                </table>
+                <div class="callout tip">
+                    <div class="callout-label">Rule of thumb</div>
+                    If the consumer is a browser or a varied set of external clients, lean GraphQL (or REST). If the
+                    consumer is another backend service you control, lean gRPC. Most non-trivial systems eventually use
+                    both, each at the layer it's strongest in.
+                </div>
+            </section>
+
+            <section class="block" id="faq">
+                <div class="section-tag">07 / interview bank</div>
+                <h2>Interview Q&amp;A — 30 Questions</h2>
+                <p class="lead-p">Organized by topic. Click any question to reveal the answer. All questions are
+                    senior-engineer / system-design level.</p>
+
+                <p class="faq-cat">List 1</p>
+                <div id="faqList">
+                    <details>
+                        <summary>1. Why is GraphQL susceptible to the N+1 problem, and how does DataLoader solve it
+                            internally?</summary>
+                        <p>
+                            Every GraphQL field has its own resolver. When querying a list of users and their posts, the
+                            users resolver may execute one SQL query, but each user's posts resolver executes another
+                            query, leading to N additional database calls. DataLoader batches all pending requests
+                            during the same event loop tick, groups identical keys, performs a single batched query like
+                            <code>SELECT * FROM posts WHERE user_id IN (...)</code>, and caches the result for the
+                            remainder of the request. This reduces N+1 queries into a constant number of database calls
+                            without changing resolver code.
+                        </p>
+                    </details>
+
+                    <details>
+                        <summary>2. How does GraphQL execute nested queries internally?</summary>
+                        <p>
+                            GraphQL first parses the incoming query into an Abstract Syntax Tree (AST), validates it
+                            against the schema, and creates an execution plan. It starts from the root Query resolver
+                            and recursively invokes child resolvers for every requested field. Parent resolvers return
+                            objects that become the source parameter for child resolvers. Since sibling resolvers are
+                            independent, many GraphQL implementations execute them concurrently, improving overall
+                            performance.
+                        </p>
+                    </details>
+
+                    <details>
+                        <summary>3. Why can GraphQL APIs become vulnerable to denial-of-service attacks?</summary>
+                        <p>
+                            Clients can construct deeply nested or highly expensive queries that recursively traverse
+                            relationships, forcing the server to execute thousands of resolver calls and database
+                            queries. Unlike REST where endpoints are predefined, GraphQL allows arbitrary query
+                            composition. Production systems therefore implement query depth limits, complexity scoring,
+                            persisted queries, authentication, and rate limiting to prevent abuse.
+                        </p>
+                    </details>
+
+                    <details>
+                        <summary>4. What are persisted queries, and why do large companies use them?</summary>
+                        <p>
+                            Instead of sending the complete GraphQL query each time, clients send only a hash. The
+                            server maps the hash to a previously stored query. This reduces request size, improves CDN
+                            caching, prevents arbitrary query execution, and blocks malicious clients from sending
+                            expensive ad-hoc queries. Facebook, Shopify, and Apollo commonly use persisted queries in
+                            production.
+                        </p>
+                    </details>
+
+                    <details>
+                        <summary>5. Explain GraphQL schema stitching versus federation.</summary>
+                        <p>
+                            Schema stitching merges multiple GraphQL schemas inside a gateway by manually combining
+                            resolvers. Federation allows independent teams to own separate subgraphs while a gateway
+                            automatically composes them into one unified schema. Federation scales significantly better
+                            for large organizations because each service evolves independently without requiring a
+                            centralized schema owner.
+                        </p>
+                    </details>
+
+                    <details>
+                        <summary>6. Why does gRPC achieve lower latency than REST?</summary>
+                        <p>
+                            gRPC uses HTTP/2 with persistent multiplexed connections, binary Protocol Buffer
+                            serialization, HPACK header compression, and generated code instead of reflection-heavy JSON
+                            parsing. Binary serialization is smaller and faster to encode/decode than JSON, while
+                            multiplexing eliminates head-of-line blocking caused by multiple HTTP/1.1 connections.
+                        </p>
+                    </details>
+
+                    <details>
+                        <summary>7. What happens internally when a gRPC client makes a request?</summary>
+                        <p>
+                            The client serializes the request object into Protocol Buffers, frames it using HTTP/2, and
+                            sends it over an existing TCP connection. The server receives the frame, deserializes the
+                            protobuf message, invokes the generated service handler, serializes the response, and
+                            streams it back over the same multiplexed connection. The connection usually remains open
+                            for future RPCs.
+                        </p>
+                    </details>
+
+                    <details>
+                        <summary>8. How does HTTP/2 multiplexing improve gRPC performance?</summary>
+                        <p>
+                            HTTP/2 allows multiple independent streams over a single TCP connection. Unlike HTTP/1.1
+                            where requests often wait for previous ones or require multiple TCP connections,
+                            multiplexing lets many RPCs execute simultaneously. This reduces TCP handshakes, TLS
+                            negotiations, connection overhead, and latency while improving throughput.
+                        </p>
+                    </details>
+
+                    <details>
+                        <summary>9. What are gRPC interceptors, and where are they commonly used?</summary>
+                        <p>
+                            Interceptors are middleware that execute before and after RPC handlers. They are commonly
+                            used for authentication, authorization, distributed tracing, logging, metrics collection,
+                            retries, request validation, and panic recovery. They provide centralized cross-cutting
+                            functionality similar to middleware in REST frameworks.
+                        </p>
+                    </details>
+
+                    <details>
+                        <summary>10. Explain flow control in HTTP/2 and why it matters for gRPC streaming.</summary>
+                        <p>
+                            HTTP/2 implements flow control by assigning a window size to every stream and connection.
+                            The sender cannot transmit more data once the window is exhausted until the receiver
+                            acknowledges consumed bytes by sending WINDOW_UPDATE frames. This prevents fast producers
+                            from overwhelming slower consumers and avoids excessive memory usage during streaming.
+                        </p>
+                    </details>
+
+                    <details>
+                        <summary>11. Why is Protocol Buffers backward compatible?</summary>
+                        <p>
+                            Every field has a unique numeric tag. Unknown fields are ignored during deserialization,
+                            allowing newer messages to be consumed by older services. Developers should never reuse
+                            deleted field numbers because older clients may interpret reused tags as different fields,
+                            causing corrupted data.
+                        </p>
+                    </details>
+
+                    <details>
+                        <summary>12. Why isn't gRPC commonly exposed directly to browsers?</summary>
+                        <p>
+                            Standard browsers do not expose all HTTP/2 features required by native gRPC, such as
+                            low-level framing and trailers. gRPC-Web introduces a proxy that translates browser requests
+                            into native gRPC requests understood by backend services.
+                        </p>
+                    </details>
+
+                    <details>
+                        <summary>13. Why is REST generally easier to cache than GraphQL?</summary>
+                        <p>
+                            REST resources have stable URLs that map directly to cache entries, making HTTP caching via
+                            CDNs straightforward. GraphQL commonly uses a single endpoint where different request bodies
+                            represent different queries, making caching significantly more complex. Client-side
+                            normalized caches such as Apollo Cache are often required.
+                        </p>
+                    </details>
+
+                    <details>
+                        <summary>14. In a microservice architecture, when would you choose REST over gRPC?</summary>
+                        <p>
+                            REST is preferred for public APIs because it is human-readable, browser-friendly, cacheable,
+                            and widely supported across languages and tools. gRPC is typically used for internal
+                            service-to-service communication where performance, streaming, strict contracts, and low
+                            latency are higher priorities than interoperability.
+                        </p>
+                    </details>
+
+                    <details>
+                        <summary>15. Why do many companies expose GraphQL externally while using gRPC internally?
+                        </summary>
+                        <p>
+                            GraphQL provides frontend developers with flexible data fetching and minimizes client
+                            requests. Backend services communicate using gRPC because binary serialization, HTTP/2
+                            multiplexing, and strongly typed contracts provide much higher efficiency. The GraphQL
+                            gateway simply orchestrates multiple gRPC calls before returning a unified response.
+                        </p>
+                    </details>
+
+                    <details>
+                        <summary>16. How would you optimize a GraphQL API serving millions of requests per day?
+                        </summary>
+                        <p>
+                            Use DataLoader batching, Redis caching, persisted queries, query complexity analysis, CDN
+                            caching for persisted queries, resolver-level metrics, database indexing, connection
+                            pooling, response compression, horizontal scaling, and distributed tracing to identify
+                            bottlenecks.
+                        </p>
+                    </details>
+
+                    <details>
+                        <summary>17. A gRPC streaming service starts consuming excessive memory. What could be the
+                            cause?</summary>
+                        <p>
+                            The producer may be sending messages faster than consumers can process them, leading to
+                            buffered messages in memory. Missing flow-control handling, large message sizes,
+                            insufficient backpressure, or slow downstream services can all contribute. Monitoring stream
+                            window sizes and limiting outstanding messages are common solutions.
+                        </p>
+                    </details>
+
+                    <details>
+                        <summary>18. Why is GraphQL introspection often disabled in production?</summary>
+                        <p>
+                            Introspection exposes the complete schema, including available queries, mutations, object
+                            relationships, and field documentation. Attackers can use this information to understand the
+                            API surface and craft expensive or malicious queries. Many production environments disable
+                            introspection for unauthenticated users while keeping it enabled for internal tooling.
+                        </p>
+                    </details>
+
+                    <details>
+                        <summary>19. How would you version APIs in GraphQL and gRPC?</summary>
+                        <p>
+                            GraphQL generally avoids explicit versioning by adding new fields and deprecating old ones
+                            while maintaining backward compatibility. gRPC versions APIs through protobuf evolution,
+                            package namespaces, or entirely new service definitions when breaking changes become
+                            unavoidable.
+                        </p>
+                    </details>
+
+                    <details>
+                        <summary>20. During a system design interview, how would you justify choosing GraphQL, REST, or
+                            gRPC?</summary>
+                        <p>
+                            The choice depends on consumers and requirements. GraphQL is ideal when clients require
+                            flexible data retrieval and multiple frontend applications consume the same backend. REST is
+                            preferable for public APIs requiring simplicity, caching, and broad ecosystem support. gRPC
+                            is the best choice for internal microservices that demand low latency, streaming, and high
+                            throughput. Large-scale systems like Netflix or Uber often combine all three, using GraphQL
+                            as an API gateway, REST for third-party integrations, and gRPC for internal service
+                            communication.
+                        </p>
+                    </details>
+                </div>
+
+                <p class="faq-cat">List 2</p>
+                <div id="faqList">
+                    <details>
+                        <summary>21. How does GraphQL resolve fields in parallel, and are there situations where
+                            resolvers execute sequentially?</summary>
+                        <p>
+                            GraphQL executes a query by traversing its Abstract Syntax Tree (AST). Starting from the
+                            root Query resolver, it invokes the resolver for each requested field. Once a parent
+                            resolver has returned an object, all of that object's child field resolvers become eligible
+                            for execution. Since sibling fields do not depend on one another, GraphQL implementations
+                            commonly execute them concurrently using asynchronous execution (Promises in Node.js,
+                            goroutines in Go, async tasks in Java, etc.).
+                            <br><br>
+                            However, parent-child relationships remain sequential because child resolvers require the
+                            parent object as input. For example, GraphQL cannot resolve <code>user.posts.comments</code>
+                            until the <code>user</code> resolver returns, followed by the <code>posts</code> resolver.
+                            Only after posts are available can comment resolvers begin.
+                            <br><br>
+                            This execution model means GraphQL achieves parallelism only where dependencies do not
+                            exist. Excessive nesting can therefore create long dependency chains even if sibling fields
+                            execute concurrently. Senior engineers often combine DataLoader, asynchronous database
+                            calls, caching, and resolver batching to maximize concurrency without overwhelming
+                            downstream services.
+                        </p>
+                    </details>
+
+                    <details>
+                        <summary>22. Why doesn't GraphQL automatically solve performance problems despite allowing
+                            clients to fetch exactly what they need?</summary>
+                        <p>
+                            GraphQL solves network efficiency, not backend efficiency. It prevents over-fetching and
+                            under-fetching by allowing clients to request only the required fields, but it does not
+                            dictate how those fields are retrieved internally.
+                            <br><br>
+                            If each resolver independently queries the database, a single GraphQL request may generate
+                            hundreds or even thousands of SQL queries. Deeply nested relationships amplify this problem,
+                            producing the classic N+1 issue.
+                            <br><br>
+                            Furthermore, GraphQL introduces additional CPU overhead for parsing, validation,
+                            authorization, query planning, resolver execution, and response serialization. Complex
+                            nested queries may consume far more CPU than equivalent REST endpoints.
+                            <br><br>
+                            Production GraphQL systems therefore require resolver optimization, batching, caching,
+                            database indexing, persisted queries, query complexity analysis, rate limiting, distributed
+                            tracing, and careful schema design. Without these optimizations, GraphQL can become slower
+                            than REST despite sending fewer bytes across the network.
+                        </p>
+                    </details>
+
+                    <details>
+                        <summary>23. How does gRPC streaming differ from repeatedly making unary RPC calls?</summary>
+                        <p>
+                            Unary RPC follows the traditional request-response model where each request creates an
+                            independent HTTP/2 stream. Although HTTP/2 keeps the TCP connection alive, every request
+                            still incurs metadata exchange, message framing, serialization, scheduling, and response
+                            processing.
+                            <br><br>
+                            Streaming establishes a long-lived logical communication channel. Once the stream is
+                            created, multiple messages can flow in one or both directions without reopening new RPCs.
+                            This significantly reduces protocol overhead while allowing messages to arrive immediately
+                            instead of waiting for complete request-response cycles.
+                            <br><br>
+                            Streaming is particularly useful for chat applications, live dashboards, financial market
+                            feeds, multiplayer games, telemetry pipelines, video analytics, IoT devices, and log
+                            aggregation systems.
+                            <br><br>
+                            However, streaming introduces additional complexity including flow control, connection
+                            management, heartbeats, retries, reconnection logic, message ordering, and backpressure
+                            handling. Long-lived streams also consume server resources, making proper lifecycle
+                            management essential.
+                        </p>
+                    </details>
+
+                    <details>
+                        <summary>24. Explain backpressure in gRPC streaming and why it is important.</summary>
+                        <p>
+                            Backpressure is the mechanism by which a slow consumer tells a fast producer to temporarily
+                            reduce or stop sending data. Without backpressure, producers can continuously generate
+                            messages until server memory becomes exhausted.
+                            <br><br>
+                            HTTP/2 implements flow control using window sizes at both the stream level and connection
+                            level. Each receiver advertises how many bytes it is currently willing to accept. As data is
+                            processed, WINDOW_UPDATE frames increase the available window, allowing additional data to
+                            be transmitted.
+                            <br><br>
+                            Imagine a telemetry service sending one million sensor updates per second while the
+                            downstream analytics service processes only one hundred thousand. Without flow control,
+                            buffered messages would accumulate indefinitely, eventually causing excessive memory
+                            consumption and service crashes.
+                            <br><br>
+                            Production systems therefore combine HTTP/2 flow control with bounded queues, worker pools,
+                            adaptive batching, rate limiting, and monitoring to maintain stable throughput even under
+                            heavy load.
+                        </p>
+                    </details>
+
+                    <details>
+                        <summary>25. How would you design a GraphQL API gateway sitting in front of hundreds of
+                            microservices?</summary>
+                        <p>
+                            The GraphQL gateway should not contain business logic. Instead, it acts as an orchestration
+                            layer responsible for authentication, authorization, query validation, query planning,
+                            response aggregation, caching, and request routing.
+                            <br><br>
+                            Each domain should own its own schema through GraphQL Federation or a similar architecture.
+                            The gateway composes these schemas into one unified API while delegating execution to the
+                            owning services.
+                            <br><br>
+                            Communication between the gateway and backend services is often performed using gRPC for
+                            efficiency. Frequently requested entities should be cached using Redis or in-memory caches,
+                            while DataLoader batches identical requests to downstream services.
+                            <br><br>
+                            Observability is equally important. Every GraphQL request should generate distributed traces
+                            that record resolver execution time, downstream service latency, cache hit ratios, database
+                            performance, and request complexity. This enables engineers to quickly identify bottlenecks
+                            when latency increases.
+                        </p>
+                    </details>
+
+                    <details>
+                        <summary>26. Why is HTTP/2 multiplexing not a complete solution to the Head-of-Line Blocking
+                            problem?</summary>
+                        <p>
+                            HTTP/2 eliminates application-level Head-of-Line Blocking by allowing multiple independent
+                            streams over a single TCP connection. Requests no longer wait for previous requests to
+                            complete before being transmitted.
+                            <br><br>
+                            However, HTTP/2 still relies on TCP. TCP guarantees ordered delivery, meaning if one packet
+                            is lost, subsequent packets cannot be delivered until the missing packet is retransmitted.
+                            Consequently, all HTTP/2 streams sharing that TCP connection temporarily stall.
+                            <br><br>
+                            HTTP/3 addresses this limitation by replacing TCP with QUIC, which operates over UDP. QUIC
+                            maintains independent streams that can continue progressing even when packets belonging to
+                            another stream are lost.
+                            <br><br>
+                            This distinction frequently appears in senior networking interviews because many engineers
+                            incorrectly assume HTTP/2 completely removes Head-of-Line Blocking.
+                        </p>
+                    </details>
+
+                    <details>
+                        <summary>27. How would you monitor and troubleshoot a slow GraphQL production API?</summary>
+                        <p>
+                            Monitoring begins at multiple layers. At the API level, collect request latency, throughput,
+                            error rates, query depth, query complexity, cache hit ratio, and resolver execution time.
+                            <br><br>
+                            Each resolver should emit metrics so that engineers can determine which field contributes
+                            the most latency. Distributed tracing tools such as OpenTelemetry allow requests to be
+                            traced across GraphQL, downstream services, databases, caches, and message queues.
+                            <br><br>
+                            Database performance should be analyzed using execution plans, slow query logs, connection
+                            pool statistics, and index utilization. Frequently requested objects should be cached, while
+                            expensive joins may need denormalization or precomputation.
+                            <br><br>
+                            Rather than treating GraphQL as a single API request, production teams view every resolver
+                            as an independent performance unit with its own latency and failure metrics.
+                        </p>
+                    </details>
+
+                    <details>
+                        <summary>28. Why do many organizations prefer gRPC for internal microservices but REST for
+                            external APIs?</summary>
+                        <p>
+                            Internal services are usually controlled by the same engineering organization. Since both
+                            client and server are known, they can safely share Protocol Buffer definitions, generated
+                            client libraries, and HTTP/2 infrastructure.
+                            <br><br>
+                            Binary serialization reduces bandwidth, generated code improves type safety, streaming
+                            enables real-time communication, and persistent connections reduce latency. These advantages
+                            become significant when thousands of services communicate continuously.
+                            <br><br>
+                            External APIs have different requirements. Third-party developers expect browser
+                            compatibility, human-readable JSON, simple debugging with curl or Postman, CDN caching, and
+                            broad language support. REST satisfies these expectations much better.
+                            <br><br>
+                            Consequently, many companies expose REST or GraphQL publicly while using gRPC internally for
+                            service-to-service communication.
+                        </p>
+                    </details>
+
+                    <details>
+                        <summary>29. Suppose one GraphQL query triggers requests to ten downstream microservices. How
+                            would you ensure reliability?</summary>
+                        <p>
+                            A GraphQL gateway should treat every downstream service as potentially unreliable. Each
+                            outbound request should have deadlines, timeouts, retries with exponential backoff (only for
+                            idempotent operations), circuit breakers, and bulkheads to prevent cascading failures.
+                            <br><br>
+                            Independent resolvers should execute concurrently wherever possible. Partial failures should
+                            return GraphQL's built-in partial response format, allowing successfully resolved fields to
+                            be returned while failed fields appear in the <code>errors</code> section.
+                            <br><br>
+                            Frequently requested reference data should be cached, while distributed tracing should
+                            capture every downstream dependency involved in fulfilling the query.
+                            <br><br>
+                            Designing GraphQL gateways therefore becomes less about GraphQL itself and more about
+                            applying distributed systems principles such as resilience, fault isolation, graceful
+                            degradation, and observability.
+                        </p>
+                    </details>
+
+                    <details>
+                        <summary>30. Compare GraphQL, REST, and gRPC from the perspective of scalability,
+                            maintainability, observability, and operational complexity.</summary>
+                        <p>
+                            REST offers the simplest operational model. Individual endpoints map naturally to business
+                            resources, integrate well with HTTP infrastructure, and leverage browser support and CDN
+                            caching. Its simplicity makes debugging and monitoring relatively straightforward.
+                            <br><br>
+                            GraphQL greatly improves frontend flexibility by allowing clients to request exactly the
+                            required data through a single endpoint. However, this flexibility shifts complexity to the
+                            server, requiring resolver optimization, schema governance, batching, query complexity
+                            analysis, caching strategies, and sophisticated observability. Large GraphQL deployments
+                            often require dedicated platform teams.
+                            <br><br>
+                            gRPC delivers the highest performance for service-to-service communication through Protocol
+                            Buffers, HTTP/2 multiplexing, streaming, and generated contracts. It excels in low-latency
+                            distributed systems but introduces operational challenges such as protobuf versioning,
+                            stream management, flow control, observability of binary traffic, and browser compatibility.
+                            <br><br>
+                            In modern large-scale architectures, these technologies are rarely competitors. Instead,
+                            they complement one another: GraphQL often serves as the client-facing API gateway, REST
+                            powers public integrations, and gRPC forms the high-performance communication layer between
+                            internal microservices.
+                        </p>
+                    </details>
+                </div>
+            </section>
+
+            <section class="block" id="cheat">
+                <div class="section-tag">08 / reference</div>
+                <h2>Quick Cheat Sheet</h2>
+                <div class="card-grid">
+                    <div class="card gql">
+                        <h4>GraphQL at a glance</h4>
+                        <p><span class="pill">SDL schema</span><span class="pill">single endpoint</span><span
+                                class="pill">JSON</span><span class="pill">resolvers</span><span
+                                class="pill good">DataLoader</span><span class="pill warn">depth limit</span><span
+                                class="pill bad">N+1</span></p>
+                        <p>Query = read (parallel) · Mutation = write (serial) · Subscription = live (WS). Best as a
+                            client-facing BFF aggregating multiple backends.</p>
+                    </div>
+                    <div class="card grpc">
+                        <h4>gRPC at a glance</h4>
+                        <p><span class="pill">.proto IDL</span><span class="pill">protobuf binary</span><span
+                                class="pill">HTTP/2</span><span class="pill good">codegen</span><span
+                                class="pill warn">deadlines</span><span class="pill bad">L4 LB pinning</span></p>
+                        <p>Unary · server-stream · client-stream · bidi-stream. Best for internal, polyglot, low-latency
+                            service-to-service calls.</p>
+                    </div>
+                </div>
+                <table>
+                    <tr>
+                        <th>Need</th>
+                        <th>GraphQL</th>
+                        <th>gRPC</th>
+                    </tr>
+                    <tr>
+                        <td>Avoid over/under-fetching</td>
+                        <td>✅ core feature</td>
+                        <td>➖ not its job</td>
+                    </tr>
+                    <tr>
+                        <td>Lowest possible latency</td>
+                        <td>➖ JSON + resolver overhead</td>
+                        <td>✅ binary + HTTP/2</td>
+                    </tr>
+                    <tr>
+                        <td>Browser-native calls</td>
+                        <td>✅</td>
+                        <td>➖ needs grpc-web + proxy</td>
+                    </tr>
+                    <tr>
+                        <td>Streaming</td>
+                        <td>➖ subscriptions only (WS)</td>
+                        <td>✅ 4 native RPC shapes</td>
+                    </tr>
+                    <tr>
+                        <td>HTTP caching / CDN</td>
+                        <td>➖ hard</td>
+                        <td>➖ hard</td>
+                    </tr>
+                    <tr>
+                        <td>Polyglot client codegen</td>
+                        <td>✅ via schema</td>
+                        <td>✅ first-class, many languages</td>
+                    </tr>
+                </table>
+            </section>
+
+        </main>
+    </div>
+
+    <footer>
+        Dev Notes — GraphQL &amp; gRPC reference. For study and revision purposes; verify against current official docs
+        before relying on specifics in production.
+    </footer>
+
+    <a href="#intro" class="backtotop" id="backToTop">↑</a>
+
+    <script>
+        (function () {
+            // scroll progress bar
+            var bar = document.getElementById('progressBar');
+            var backBtn = document.getElementById('backToTop');
+            function onScroll() {
+                var h = document.documentElement;
+                var scrolled = (h.scrollTop) / (h.scrollHeight - h.clientHeight) * 100;
+                bar.style.width = scrolled + '%';
+                if (h.scrollTop > 600) backBtn.classList.add('show'); else backBtn.classList.remove('show');
+            }
+            document.addEventListener('scroll', onScroll);
+            onScroll();
+
+            // TOC active link highlighting
+            var sections = Array.prototype.slice.call(document.querySelectorAll('section.block[id]'));
+            var links = Array.prototype.slice.call(document.querySelectorAll('#tocNav a'));
+            function onScrollToc() {
+                var pos = window.scrollY + 100;
+                var current = sections[0] && sections[0].id;
+                sections.forEach(function (s) { if (s.offsetTop <= pos) current = s.id; });
+                links.forEach(function (l) {
+                    l.classList.remove('active');
+                    if (l.getAttribute('href') === '#' + current) l.classList.add('active');
+                });
+            }
+            document.addEventListener('scroll', onScrollToc);
+            onScrollToc();
+        })();
+    </script>
+
+</body>
+
+</html>
