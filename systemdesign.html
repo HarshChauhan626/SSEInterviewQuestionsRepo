@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Top System Design Problems — Dev Notes</title>
+    <meta name="description"
+        content="Curated system design breakdowns — hotel booking, video streaming, payments, notifications, social feeds, rate limiting, ticket booking, ride sharing, URL shortener.">
+    <style>
+        :root {
+            --bg: #0b0e14;
+            --bg-raised: #11151d;
+            --bg-card: #141925;
+            --line: #222a38;
+            --text: #dde3ee;
+            --text-dim: #8c96a8;
+            --text-faint: #5c6577;
+            --accent: #3fa7ff;
+            --accent-dim: #1a65a3;
+            --accent-alt: #e535ab;
+            --mono: "JetBrains Mono", "SF Mono", ui-monospace, Consolas, monospace;
+            --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background:
+                radial-gradient(900px 500px at 15% -5%, rgba(229, 53, 171, .08), transparent 60%),
+                radial-gradient(900px 500px at 85% 0%, rgba(63, 167, 255, .08), transparent 60%),
+                var(--bg);
+            color: var(--text);
+            font-family: var(--sans);
+            line-height: 1.5;
+            min-height: 100vh;
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        /* ---------- topbar ---------- */
+        header.topbar {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            background: rgba(11, 14, 20, 0.85);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--line);
+        }
+
+        .topbar-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 16px 28px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .brand {
+            font-family: var(--mono);
+            font-weight: 700;
+            font-size: 15px;
+            letter-spacing: 0.02em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .brand .dot {
+            color: var(--accent-alt);
+        }
+
+        .topbar nav {
+            display: flex;
+            gap: 26px;
+            font-size: 13px;
+            color: var(--text-dim);
+            font-family: var(--mono);
+        }
+
+        .topbar nav a:hover {
+            color: var(--accent);
+        }
+
+        /* ---------- hero ---------- */
+        .hero {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 64px 28px 40px;
+        }
+
+        .eyebrow {
+            font-family: var(--mono);
+            font-size: 12px;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .eyebrow::before {
+            content: "//";
+            color: var(--text-faint);
+        }
+
+        h1 {
+            font-size: clamp(30px, 4.2vw, 50px);
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            max-width: 16ch;
+            margin-bottom: 16px;
+            background: linear-gradient(120deg, #fff 30%, var(--accent-alt) 65%, var(--accent) 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        h1 em {
+            font-style: normal;
+        }
+
+        .hero p {
+            color: var(--text-dim);
+            max-width: 56ch;
+            font-size: 15.5px;
+        }
+
+        .hero-meta {
+            display: flex;
+            gap: 22px;
+            margin-top: 28px;
+            font-family: var(--mono);
+            font-size: 12.5px;
+            color: var(--text-faint);
+        }
+
+        .hero-meta b {
+            color: var(--text);
+        }
+
+        /* ---------- layout ---------- */
+        .shell {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 28px 100px;
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 32px;
+        }
+
+        @media (max-width:900px) {
+            .shell {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ---------- sidebar list ---------- */
+        .picker {
+            position: sticky;
+            top: 76px;
+            align-self: start;
+            background: var(--bg-raised);
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 8px;
+            max-height: calc(100vh - 100px);
+            overflow-y: auto;
+        }
+
+        .picker-label {
+            font-family: var(--mono);
+            font-size: 11px;
+            color: var(--text-faint);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            padding: 12px 14px 8px;
+        }
+
+        .item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background .15s, transform .1s;
+            border: 1px solid transparent;
+        }
+
+        .item:hover {
+            background: var(--bg-card);
+        }
+
+        .item.active {
+            background: rgba(63, 167, 255, 0.08);
+            border-color: rgba(63, 167, 255, 0.25);
+        }
+
+        .item .num {
+            font-family: var(--mono);
+            font-size: 11px;
+            color: var(--text-faint);
+            width: 20px;
+            flex-shrink: 0;
+        }
+
+        .item.active .num {
+            color: var(--accent);
+        }
+
+        .item .name {
+            font-size: 13.5px;
+            font-weight: 500;
+        }
+
+        .item .tag {
+            font-family: var(--mono);
+            font-size: 10px;
+            color: var(--text-faint);
+            display: block;
+            margin-top: 2px;
+        }
+
+        /* ---------- content panel ---------- */
+        .panel {
+            background: var(--bg-raised);
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 32px;
+            min-height: 600px;
+        }
+
+        .panel-head {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+            border-bottom: 1px solid var(--line);
+            padding-bottom: 20px;
+            margin-bottom: 24px;
+        }
+
+        .panel-head h2 {
+            font-size: 24px;
+            font-weight: 800;
+            letter-spacing: -0.01em;
+        }
+
+        .panel-head .like {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-family: var(--mono);
+            font-size: 12px;
+            color: var(--accent);
+            background: rgba(63, 167, 255, 0.08);
+            border: 1px solid rgba(63, 167, 255, 0.25);
+            padding: 5px 11px;
+            border-radius: 20px;
+        }
+
+        .goals {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 26px;
+        }
+
+        .goal-chip {
+            font-family: var(--mono);
+            font-size: 11px;
+            color: var(--text-dim);
+            border: 1px solid var(--line);
+            padding: 5px 10px;
+            border-radius: 6px;
+        }
+
+        .diagram-wrap {
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            overflow: hidden;
+            background: #fff;
+            margin-bottom: 28px;
+        }
+
+        .diagram-wrap img {
+            display: block;
+            width: 100%;
+            height: auto;
+        }
+
+        .brief-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width:640px) {
+            .brief-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .brief-card {
+            background: var(--bg-card);
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            padding: 18px 20px;
+        }
+
+        .brief-card h3 {
+            font-family: var(--mono);
+            font-size: 12px;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 10px;
+        }
+
+        .brief-card p,
+        .brief-card li {
+            font-size: 13.5px;
+            color: var(--text-dim);
+            line-height: 1.65;
+        }
+
+        .brief-card ul {
+            padding-left: 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .brief-card.flow-card {
+            grid-column: 1 / -1;
+        }
+
+        .flow-steps {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .flow-step {
+            font-family: var(--mono);
+            font-size: 12px;
+            color: var(--text);
+            background: var(--bg-raised);
+            border: 1px solid var(--line);
+            padding: 6px 10px;
+            border-radius: 6px;
+            white-space: nowrap;
+        }
+
+        .flow-arrow {
+            color: var(--accent-dim);
+            font-size: 14px;
+        }
+
+        footer {
+            text-align: center;
+            padding: 40px 20px 60px;
+            font-family: var(--mono);
+            font-size: 12px;
+            color: var(--text-faint);
+            border-top: 1px solid var(--line);
+        }
+
+        footer a {
+            color: var(--accent);
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--line);
+            border-radius: 8px;
+        }
+        @media (max-width: 640px) {
+            .shell {
+                padding: 0 16px 80px;
+                gap: 20px;
+            }
+            .panel {
+                padding: 20px;
+            }
+            .panel-head h2 {
+                font-size: 20px;
+            }
+            .topbar-inner {
+                padding: 16px;
+                flex-direction: column;
+                gap: 12px;
+            }
+            .hero {
+                padding: 40px 16px 20px;
+            }
+            .picker {
+                position: relative;
+                top: 0;
+                max-height: 250px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <header class="topbar">
+        <div class="topbar-inner">
+            <div class="brand"><span class="dot">&gt;</span> Dev Notes</div>
+            <nav>
+                <a href="https://skillhiveonline.com/">Home</a>
+            </nav>
+        </div>
+    </header>
+
+    <div class="hero">
+        <div class="eyebrow">system design · interview prep</div>
+        <h1>Top 10 System Design <em>Problems</em>, Broken Down</h1>
+        <p>Nine high-frequency interview systems, each with a full architecture diagram and a plain-English walkthrough
+            of what's actually happening — no fluff, just the flow.</p>
+        <div class="hero-meta">
+            <span><b>9</b> diagrams</span>
+            <span><b>Client → Edge → Services → Data</b> pattern</span>
+            <span>Click a system on the left to load it</span>
+        </div>
+    </div>
+
+    <div class="shell">
+        <aside class="picker" id="picker">
+            <div class="picker-label">Select a system</div>
+            <!-- items injected by JS -->
+        </aside>
+
+        <main class="panel" id="panel">
+            <!-- content injected by JS -->
+        </main>
+    </div>
+
+    <footer>
+        built for <a href="https://skillhiveonline.com/">skillhiveonline.com</a> — study notes, not production advice
+    </footer>
+
+    <script>
+
+        const SYSTEMS = [
+            {
+                id: "hotel",
+                name: "Hotel Booking Platform",
+                tag: "like Agoda",
+                img: "images/HotelBookingSystemDesign.png",
+                goals: ["Highly Available", "Scalable", "Low Latency", "Global Reach", "Real-time Inventory & Pricing"],
+                overview: "A booking platform is really an inventory-locking problem wearing a travel-app costume. The hard part isn't showing hotels — it's making sure two people don't book the last room at the same time, while prices and availability keep changing from supplier feeds.",
+                dataFlow: "When a user performs a search, the request is intercepted by the CDN which routes it to the API Gateway. The API Gateway forwards the query to the Search Service. Because raw database queries for geospatial data and complex text matches are too slow, the Search Service queries Elasticsearch directly, which is constantly updated via Kafka CDC (Change Data Capture) from the primary databases. <br><br>Once the user selects a hotel, the client polls the Availability & Pricing Service. This service checks a hot Redis cache for the latest rates and room availability. If the cache misses, it falls back to querying internal inventory databases or third-party supplier APIs asynchronously. <br><br>Finally, during checkout, the Booking Service coordinates a Distributed Saga. It first asks the Inventory Service to place a TTL (Time-To-Live) lock on the room in Redis. With the room locked, the Payment Service takes over. If the payment succeeds, the lock is committed and transformed into a permanent booking in the PostgreSQL database. If it fails or times out, the Redis lock expires automatically, returning the room to the available pool.",
+                keyIdea: "During booking, inventory is locked (held) before payment runs, and only released or committed once payment succeeds — this avoids double-booking a room while a card is being charged.",
+                flow: ["User searches", "Elasticsearch", "Availability + Pricing", "Select room", "Lock inventory (hold)", "Payment", "Confirm booking", "Release lock / update inventory"],
+                components: [
+                    "<b>CDN & Edge Nodes:</b> Caches static assets (images, CSS) and terminates SSL connections globally to reduce latency.",
+                    "<b>API Gateway:</b> Handles rate limiting, authentication, and routing requests to internal microservices.",
+                    "<b>Search Service (Elasticsearch):</b> A highly optimized search engine storing denormalized hotel and location data for sub-50ms queries.",
+                    "<b>Inventory & Booking Services:</b> The core business logic handlers that manage state transitions and coordinate the booking saga.",
+                    "<b>Payment Service:</b> Integrates with external PSPs (Stripe, PayPal) and ensures idempotency for all transactions.",
+                    "<b>Redis (Cache & Locks):</b> Stores hot pricing data and manages short-lived distributed locks for room inventory.",
+                    "<b>PostgreSQL/Cassandra:</b> The source-of-truth databases. PostgreSQL handles relational booking data with ACID guarantees, while Cassandra might store massive user activity logs."
+                ],
+                keyConsiderations: [
+                    "Inventory & pricing sync in real-time with suppliers",
+                    "Caching for search results, hotel details, and static content",
+                    "Strong consistency for booking & payments; eventual consistency acceptable for inventory sync",
+                    "Idempotent payment processing & booking confirmation",
+                    "Multi-currency, multi-language & multi-country support",
+                    "Fraud detection & risk scoring for payments",
+                    "Partition databases by region / hotel / time",
+                    "Global CDN for images, static content & hotel media",
+                    "Full observability: logs, metrics, tracing, alerts"
+                ],
+                metrics: ["Search QPS / Latency", "Booking Success Rate", "Payment Success Rate", "Inventory Sync Lag", "Average Response Time", "Conversion Rate", "Cancellation Rate", "Refund Success Rate", "System Error Rate", "Availability (SLA)"],
+                guesstimates: ["10M Daily Active Users (DAU)", "1M bookings per day", "Read:Write ratio 100:1", "Peak Search QPS: ~10,000", "Storage: ~5TB/year for booking records"]
+            },
+            {
+                id: "video",
+                name: "Video Streaming Platform",
+                tag: "like Netflix / Hotstar",
+                img: "images/VideoStreamingPlatformSystemDesign.png",
+                goals: ["Highly Available", "Scalable", "Low Latency", "Personalization", "High Quality Streaming"],
+                overview: "Two very different jobs happen here: getting a video ready to stream (ingest + transcode, can be slow) and actually streaming it to millions of devices (playback, must be instant). The design keeps these paths separate.",
+                dataFlow: "The data flow is split into the Write Path (Ingestion) and Read Path (Playback). <br><br><b>Write Path:</b> A content creator uploads a raw video file directly to cloud Object Storage (like AWS S3) via pre-signed URLs to bypass API bottlenecks. Once the upload finishes, an event is published to Kafka. Transcoding Workers consume this event, pull the raw video, and convert it into multiple resolutions (240p to 4K) and formats (HLS, DASH). The transcoded chunks are saved back to Object Storage, and the video's metadata is marked as 'Ready' in the database. <br><br><b>Read Path:</b> When a user clicks play, the client contacts the Playback Service. This service verifies DRM licenses, checks user subscription status, and returns a manifest file (M3U8/MPD). The manifest contains URLs pointing to a CDN (Content Delivery Network). The user's device then streams the actual video chunks directly from the nearest CDN Edge Node, completely bypassing the backend servers to ensure zero buffering and high scalability.",
+                keyIdea: "Everything is decoupled through Kafka events (video ingested, transcode complete, playback events), so ingestion, recommendations, and analytics can all scale and fail independently of each other.",
+                flow: ["Upload video", "Kafka: video ingested", "Transcode to multiple resolutions", "Store in S3/GCS", "User requests playback", "Manifest + license (DRM)", "Stream from CDN edge"],
+                components: [
+                    "<b>Object Storage (S3/GCS):</b> Stores the massive raw video files and the segmented transcoded video chunks.",
+                    "<b>Transcoding Workers:</b> Heavy compute nodes (often leveraging GPUs) that encode videos using FFmpeg or similar tools.",
+                    "<b>CDN (Akamai/Cloudflare):</b> A distributed network of servers caching video chunks as close to the end users as possible.",
+                    "<b>Playback & Metadata Services:</b> Lightweight APIs that serve video titles, descriptions, and the streaming manifests.",
+                    "<b>Kafka (Event Bus):</b> Decouples the slow transcoding process from the fast API layer and feeds user viewing data to analytics.",
+                    "<b>NoSQL DB (Cassandra):</b> Stores the user viewing history and personalized recommendation data."
+                ],
+                keyConsiderations: [
+                    "Store videos in multiple qualities using Adaptive Bitrate Streaming (HLS/DASH)",
+                    "CDN for low latency & high availability across regions",
+                    "All events flow via Kafka for decoupling & high throughput",
+                    "Microservices scale independently (ingestion vs. playback load very differently)",
+                    "Cache metadata, sessions, and hot data in Redis",
+                    "DRM (Widevine/PlayReady) for content protection",
+                    "Multi-region deployment for global availability",
+                    "Strong consistency for account/subscription data; eventual consistency elsewhere",
+                    "Idempotent processing for ingestion & event consumers",
+                    "Full observability: logs, metrics, tracing, alerts"
+                ],
+                metrics: ["Startup Time / Time to First Frame", "Buffering Ratio", "Rebuffering Frequency", "Playback Success Rate", "Concurrent Streams", "Average Watch Time", "Error Rate", "CDN Hit Ratio", "Transcoding Latency", "API Latency (P95/P99)"],
+                guesstimates: ["50M DAU, 1B video views/day", "500 hours of video uploaded/min", "Storage: Petabytes for raw & transcoded video", "Egress Bandwidth: Multi-Terabit/sec", "High Cache Hit Ratio (90%+)"]
+            },
+            {
+                id: "payment",
+                name: "Payment System",
+                tag: "highly scalable",
+                img: "images/PaymentSystemsDesign.png",
+                goals: ["Highly Available", "PCI-DSS Secure", "ACID Transactions", "Idempotent", "Auditable"],
+                overview: "Payments prioritize correctness over speed. The whole design exists to guarantee a transaction happens exactly once, is fully traceable, and can survive retries without double-charging anyone.",
+                dataFlow: "A client initiates a payment by sending a request containing a unique 'Idempotency Key' to the API Gateway. The Gateway forwards this to the Payment Orchestrator. <br><br>First, the Orchestrator checks Redis using the Idempotency Key. If the key exists, it means this is a duplicate retry, and the system instantly returns the previous result without processing the charge again. If it's a new key, it locks the key in Redis and proceeds. <br><br>The Orchestrator then calls the Fraud Detection Service synchronously. If flagged as safe, it delegates the actual money movement to the Ledger/Wallet Service. This service opens a strict ACID transaction in a Relational Database, debiting the sender and crediting the receiver in a single atomic commit. <br><br>Finally, the Orchestrator updates the transaction state to 'SUCCESS', unlocks the Redis key, and fires an asynchronous event into Kafka. Downstream consumers pick up this event to send push notifications, generate receipts, and update analytical dashboards. <br><br><b>Idempotency & Retry Logic:</b> Client generates the idempotency_key → Gateway checks Redis for it → on a hit, the cached result is replayed instantly; on a miss, the Gateway locks the key and processes with database-level locks → wallet is updated → response is sent and the key result cached. Failed downstream calls (e.g. bank/notification) are retried with exponential backoff, and requests that exhaust retries fall into a queue for reconciliation rather than being silently dropped.",
+                keyIdea: "Idempotency keys are the core trick: the client generates a unique key per attempt, and the gateway checks Redis for that key before processing — so retrying a failed request never results in a double charge.",
+                flow: ["Client initiates payment", "Auth + 3DS", "Fraud check", "Idempotency key check (Redis)", "Lock & process transaction", "Wallet updated", "Result + audit log"],
+                components: [
+                    "<b>Payment Orchestrator:</b> The central brain that acts as a state machine, orchestrating fraud checks, processing, and post-payment actions.",
+                    "<b>Fraud Detection Service:</b> Runs real-time ML inference against user historical data and velocity rules.",
+                    "<b>Ledger / Wallet Services:</b> The services responsible for the actual double-entry accounting and ledger updates.",
+                    "<b>Redis (Idempotency Keys):</b> A lightning-fast key-value store used to deduplicate requests across distributed backend nodes.",
+                    "<b>Relational DB (PostgreSQL/MySQL):</b> The strict ACID-compliant database ensuring that partial money transfers never occur.",
+                    "<b>Kafka:</b> Handles the reliable delivery of post-payment events like sending email receipts."
+                ],
+                keyConsiderations: [
+                    "PCI-DSS compliance across the entire card-data path",
+                    "Transactional integrity via ACID guarantees (double-entry ledger, no partial transfers)",
+                    "Robust idempotency to prevent double charges on retries",
+                    "Real-time fraud detection & prevention before funds move",
+                    "High availability (target 99.999%) since this is the critical revenue path",
+                    "Auditing & traceability — every state transition is logged for compliance",
+                    "Settlement & reconciliation between internal ledger and bank/PSP records"
+                ],
+                metrics: ["Peak TPS", "Payment Success Rate", "Fraud Detection Rate", "P99 Latency (<1s target)", "Idempotency Hit Rate", "Reconciliation Mismatch Rate", "Availability (99.999%)"],
+                guesstimates: ["10M transactions per day", "Peak 500 TPS", "Strictly < 1s latency target", "99.999% Availability", "Storage: ~2TB/year for ledger logs"]
+            },
+            {
+                id: "notification",
+                name: "Notification System",
+                tag: "highly scalable",
+                img: "images/NotificationSystemDesign.png",
+                goals: ["Highly Available", "High Throughput", "Fault Tolerant", "Channel-Agnostic", "Idempotent"],
+                overview: "This system's job is to take one event (like 'order shipped') and reliably deliver it across email, SMS, and push — without spamming the user twice if the same event arrives more than once.",
+                dataFlow: "When an upstream service (like a Shipping Service) wants to alert a user, it sends a raw payload to the Event Collector API. The Collector immediately acknowledges the request and pushes the event onto a Kafka topic to decouple ingestion from processing. <br><br>A routing worker consumes the event and queries the User Preferences DB to check if the user has opted out, and which channels (SMS, Email, Push) they prefer. It then fetches the localized message string from a Template Service. <br><br>The customized message is then pushed into channel-specific priority queues (e.g., an SMS queue, an Email queue). Channel Dispatcher Workers read from these queues. Before sending, the worker checks Redis for an idempotency key to ensure this exact notification hasn't been sent in the last 24 hours. It then calls the 3rd-party provider (Twilio, SES, APNS). If the provider is down, the message goes into a Dead Letter Queue (DLQ) for exponential backoff retries.",
+                keyIdea: "Idempotency is checked via Redis using the event's unique ID before anything is sent, and failed sends use exponential backoff retries — so a flaky SMS provider doesn't mean a lost notification or a duplicate one.",
+                flow: ["Event received", "Queued (Kafka)", "Fetch template + preferences", "Idempotency check (Redis)", "Prioritize & queue by channel", "Send via Email/SMS/Push", "Retry on failure"],
+                components: [
+                    "<b>Event Collector API:</b> A high-throughput ingest layer that immediately drops incoming requests into a Kafka queue.",
+                    "<b>Kafka (Message Queueing):</b> Acts as the buffer to absorb massive traffic spikes without dropping notifications.",
+                    "<b>Notification Workers (Dispatchers):</b> Microservices dedicated to formatting and executing the final API calls to external providers.",
+                    "<b>Redis:</b> Used for real-time rate limiting (to avoid spamming a user) and idempotency checks.",
+                    "<b>User Preferences DB:</b> Stores opt-in/opt-out status, quiet hours, and channel priorities.",
+                    "<b>3rd-Party Integrations:</b> AWS SES (Emails), Twilio (SMS), FCM/APNS (Push Notifications)."
+                ],
+                keyConsiderations: [
+                    "Globally unique, non-guessable Event ID for every notification",
+                    "Robust idempotency check via Redis (dedupe within a 24h window)",
+                    "Priority queueing for time-sensitive notifications (e.g. OTPs vs. marketing)",
+                    "Multi-channel delivery engines (Email, SMS, Push) kept fully decoupled",
+                    "Horizontal scaling at every layer (collector, workers, queues)",
+                    "Decoupling via multiple messaging queues so one slow channel doesn't block others",
+                    "Real-time delivery status tracking and logging",
+                    "Adaptive rate limiting and A/B testing of templates"
+                ],
+                metrics: ["Peak QPS", "Delivery Latency (<1 min target)", "Delivery Success Rate per Channel", "Retry/DLQ Rate", "Idempotency Hit Rate", "Opt-out Rate"],
+                guesstimates: ["100M notifications per day", "Peak QPS: ~5,000", "Delivery Latency: < 1 min", "Retries max out at 3-5 times", "Storage: ~500GB/month for delivery logs"]
+            },
+            {
+                id: "social",
+                name: "Social Media Feed",
+                tag: "like Instagram / X",
+                img: "images/SocialMediaFeedDesign.png",
+                goals: ["Highly Available", "Low Latency", "Scalable", "Consistent", "Fault Tolerant"],
+                overview: "The feed problem is really a fanout problem: when someone posts, how do you get that post in front of thousands of followers fast, without recomputing everyone's feed from scratch on every read?",
+                dataFlow: "There are two primary operations: publishing a post, and viewing a feed. <br><br><b>Publishing (Write Path):</b> When a user posts a photo, the Post Service saves the metadata to a database and publishes a 'New Post' event to Kafka. The Fanout Worker picks this up. It queries the Graph DB to find all active followers of the author. It then takes the Post ID and appends it to the in-memory timeline array for every single follower in Redis. This 'Fanout-on-Write' approach means doing heavy work upfront. (Note: For celebrities with millions of followers, a hybrid approach is used where their posts are pulled on-demand rather than fanned out). <br><br><b>Viewing (Read Path):</b> When a follower opens their app, the Feed Service simply does an O(1) fetch against their personal timeline list in Redis. It retrieves the Post IDs, hydrates them with the actual content from the Post Cache, and returns the fully assembled feed in milliseconds.",
+                keyIdea: "This is 'fanout-on-write' — the expensive work of pushing a post to followers happens once at post time, so reading a feed later is cheap and fast, which is the trade-off that makes feeds scale.",
+                flow: ["User posts", "Kafka: post event", "Fanout worker", "Write to followers' feed cache", "User opens app", "Read from Redis feed cache", "Cache miss → fetch from Cassandra"],
+                components: [
+                    "<b>API Gateway:</b> Routes write requests to the Post Service and read requests to the Feed Service.",
+                    "<b>Fanout Workers:</b> A fleet of background consumers that iterate through follower lists to update caches.",
+                    "<b>Redis (Timeline Cache):</b> Stores a list of recent Post IDs for every active user's feed, enabling sub-millisecond reads.",
+                    "<b>Cassandra / DynamoDB:</b> The massive, highly-available NoSQL store for historical post data and older feed history.",
+                    "<b>Graph DB (Neo4j/TAO):</b> Optimized specifically for querying highly connected follower/following relationships."
+                ],
+                keyConsiderations: [
+                    "Feed is fanout-on-write, powered by Kafka + background workers",
+                    "Hybrid storage: Redis cache backed by a persistent store (Cassandra/DynamoDB)",
+                    "Use cursor-based pagination (next_page_token), not offset pagination",
+                    "Timeline items ranked by a score (recency, engagement, relationship), not pure chronology",
+                    "Media stored in S3/GCS and delivered via CDN",
+                    "Search powered by OpenSearch with denormalized data",
+                    "Strong consistency for writes; eventual consistency acceptable for feed visibility",
+                    "Multi-AZ deployment for all critical services",
+                    "Idempotent consumers for all Kafka events",
+                    "Rate limiting, abuse detection & content moderation on the write path"
+                ],
+                metrics: ["Feed Read QPS", "Feed Read Latency (P50/P99)", "Cache Hit Ratio", "Post Creation QPS", "Fanout Lag", "Notification Delivery Rate", "DAU / MAU", "Error Rate", "Storage Growth", "Service Availability (SLA)"],
+                guesstimates: ["100M DAU", "10M posts/day", "1B feed views/day", "Read:Write ratio 100:1", "Peak Fanout: Millions of writes/sec (for celebrities)"]
+            },
+            {
+                id: "ratelimiter",
+                name: "API Rate Limiter",
+                tag: "highly scalable",
+                img: "images/APIRateLimiter.png",
+                goals: ["Extremely Low Latency", "Highly Available", "Distributed", "Cost-Efficient"],
+                overview: "A rate limiter has to answer 'allow or block?' in microseconds, for every single request, across many servers — while all those servers agree on the same count for a given user.",
+                dataFlow: "A client request hits the edge router or API Gateway. Before doing any actual business logic, the Gateway pauses the request and calls the internal Rate Limiter Service. <br><br>The Rate Limiter Service identifies the user (usually by API key, IP address, or user ID) and looks up the applicable rate-limit rule from a local, in-memory cache (to avoid a network hop for the rule definition). <br><br>It then executes a Lua script on the Redis cluster. Using a Lua script ensures that fetching the current counter, checking if it exceeds the limit, and incrementing it all happen atomically without race conditions. Redis runs the chosen algorithm (e.g., Token Bucket or Sliding Window Log). If the script returns 'Allowed', the API Gateway forwards the request to the backend. If it returns 'Blocked', the Gateway immediately drops the request and returns an HTTP 429 Too Many Requests response to the client.",
+                keyIdea: "Two common algorithms shown are Token Bucket (allows short bursts of traffic) and Leaky Bucket (smooths traffic to a constant rate) — the choice depends on whether bursts should be tolerated or not.",
+                flow: ["Request hits API Gateway", "Rate Limiter checks Redis quota", "Under limit → forward request", "Over limit → 429 response", "Redis counter updated"],
+                components: [
+                    "<b>API Gateway:</b> The entry point that intercepts all traffic and enforces the block/allow decisions.",
+                    "<b>Rate Limiter Rules Service:</b> A control plane where admins define quotas (e.g., 'Free tier gets 100 req/min').",
+                    "<b>Redis Cluster:</b> The high-speed centralized storage that holds the real-time counters and timestamps for every user.",
+                    "<b>Local Rules Cache:</b> Worker nodes cache the rules locally so they only have to talk to Redis for the counter itself.",
+                    "<b>Metrics / Alerting System:</b> Logs throttled requests to Grafana/Prometheus for observability."
+                ],
+                algorithms: [
+                    "<b>Token Bucket:</b> Tokens drip into a bucket at a fixed rate; a request consumes a token. Allows short bursts of traffic as long as tokens are available.",
+                    "<b>Leaky Bucket:</b> Requests are added to a bucket and 'leak' out at a constant rate. Smooths bursty traffic into an even, predictable outflow."
+                ],
+                keyConsiderations: [
+                    "Algorithm selection: Token Bucket (bursty traffic) vs. Leaky Bucket (even traffic)",
+                    "Distributed counting scalability across many Redis/gateway nodes",
+                    "Handling clock drift when synchronizing counters across nodes",
+                    "Fault tolerance — Redis cluster failover shouldn't fail-open or fail-closed unpredictably",
+                    "Adaptive vs. global vs. per-node local limits, and the trade-offs of each",
+                    "Latency of quota checks — must stay in-memory (Redis) to hit sub-millisecond targets",
+                    "Authentication & key derivation for identifying a unique user/client",
+                    "Preventing the rate limiter itself from becoming an overloaded bottleneck"
+                ],
+                metrics: ["Target Latency (<2ms)", "QPS per Redis Node (10,000+)", "Throttled Request Rate (429s)", "Redis Cluster Failover Time", "Rule Cache Hit Ratio"],
+                guesstimates: ["1B requests per day", "Target Latency < 2ms", "10,000+ QPS per Redis Node", "Negligible storage (keys expire)", "High network throughput"]
+            },
+            {
+                id: "ticket",
+                name: "Ticket Booking Platform",
+                tag: "like BookMyShow",
+                img: "images/TicketBookingPlatformSystemDesign.png",
+                goals: ["High Availability", "Low Latency", "Consistency", "Fault Tolerance"],
+                overview: "Very similar shape to hotel booking, but the concurrency problem is sharper: thousands of people can try to grab the same 200 seats for a popular show at the exact same second.",
+                dataFlow: "Users browse for movies or concerts, hitting an Elasticsearch cluster via the Search Service. Because seating layouts are static, venue maps are heavily cached in a CDN. <br><br>The critical path begins when a user clicks 'Book' on specific seats. The request goes to the Seat Inventory Service. This service attempts to execute an atomic SETNX (Set if Not Exists) command in Redis for those specific seat IDs, appending a 5-minute TTL (Time To Live). If the seats are already locked by someone else, the request fails, and the user is told the seats are unavailable. <br><br>If the Redis lock succeeds, a 'Pending' booking is written to the primary SQL Database, and the user is redirected to the Payment Gateway. If payment succeeds within 5 minutes, the SQL DB state is updated to 'Confirmed', and the temporary Redis lock is deleted. If the payment fails or times out, the 5-minute TTL expires, naturally returning the seats to the available pool without requiring complex rollback scripts.",
+                keyIdea: "The TTL seat lock is the key mechanism — it reserves seats just long enough for the user to pay. If payment doesn't complete in time, the lock expires automatically and the seats go back on sale, so seats never get stuck in limbo.",
+                flow: ["Search shows", "Select seats", "Lock seats (Redis, TTL)", "Create booking (PENDING)", "Payment", "Confirm booking + generate ticket", "Lock expires if payment fails"],
+                components: [
+                    "<b>Search Service (Elasticsearch):</b> Handles complex spatial and temporal queries (e.g., 'Action movies tonight near me').",
+                    "<b>Seat Inventory Service:</b> The highly concurrent engine responsible for locking specific spatial entities (seats).",
+                    "<b>Redis (Distributed Locks):</b> The fast, single-threaded store perfect for atomic SETNX locks and automatic TTL expiration.",
+                    "<b>Booking & Payment Services:</b> Orchestrates the final financial transaction and ticket generation.",
+                    "<b>Relational DB (MySQL/PostgreSQL):</b> Ensures ACID properties so that double-booking at the DB level is mathematically impossible.",
+                    "<b>CDN:</b> Serves the heavy graphical assets for venue seating charts."
+                ],
+                keyConsiderations: [
+                    "High-concurrency seat locking using Redis with TTL",
+                    "Idempotent APIs for booking & payment to survive retries",
+                    "Event-driven architecture (Kafka) for scalability under spiky demand",
+                    "DB read replicas for high read throughput on browse/search",
+                    "Aggressive caching for shows, venues, seat layouts, and offers",
+                    "Elasticsearch for fast, relevant show/movie/venue search",
+                    "Partitioning large tables (bookings, seats) for scale",
+                    "Multi-AZ & multi-region for high availability",
+                    "Secure payments & data encryption",
+                    "Observability: logs, metrics, tracing, alerts"
+                ],
+                metrics: ["Requests per Second (RPS)", "P95/P99 Latency", "Seat Lock Success Rate", "Booking Success Rate", "Payment Success Rate", "Cancellation Rate", "Queue Lag (Kafka)", "Active Users", "System Error Rate", "Infrastructure Health"],
+                guesstimates: ["5M DAU", "Spike Traffic: 100k requests/sec (for popular shows)", "Heavy Read, Spiky Write", "Booking flow completion ~ 5 mins", "Storage: 1TB/year"]
+            },
+            {
+                id: "ride",
+                name: "Ride Sharing Application",
+                tag: "highly scalable",
+                img: "images/ridesharingsystemdesign.png",
+                goals: ["Highly Available", "Low Latency", "Scalable", "Fault Tolerant", "Secure"],
+                overview: "Ride sharing is a real-time geospatial matching problem: constantly track where drivers are, find the nearest one to a rider, and keep both apps updated live for the whole trip.",
+                dataFlow: "<b>Location Tracking:</b> Active drivers send GPS updates every 3-5 seconds. These flow through a WebSockets Gateway into Kafka. A Location Service consumes these events and updates a Redis Geospatial Index (using Geohashes or QuadTrees). <br><br><b>Matching:</b> When a rider requests a ride, the Matching Service queries the Redis Geo-Index to find available drivers within a 3-mile radius. It ranks them by ETA, pings the top driver via WebSockets, and gives them 10 seconds to accept. If they decline, it pings the next driver. <br><br><b>The Trip:</b> Once a driver accepts, a trip is created in PostgreSQL. For the duration of the ride, both the driver and rider maintain an open WebSocket connection with the API Gateway. The driver's location updates are pushed directly over this WebSocket to the rider's app, creating the live car animation on the map. Finally, upon arrival, the Trip Service triggers the Payment Service to execute the charge.",
+                keyIdea: "Location updates and trip events are decoupled through Kafka, so the high-frequency GPS stream (many updates per second) doesn't overload the same path that handles trip state, payments, or notifications.",
+                flow: ["Rider requests ride", "Matching Service geo search (Redis)", "Driver accepts", "Trip started", "Live location via WebSocket", "Trip completed", "Payment + payout"],
+                components: [
+                    "<b>WebSockets Gateway:</b> Maintains persistent, bi-directional connections with millions of driver and rider apps for live updates.",
+                    "<b>Location Tracking Service:</b> Ingests massive streams of GPS coordinates and filters out noisy/invalid data.",
+                    "<b>Driver Matching Service:</b> A complex algorithmic service that balances proximity, ETA, and routing.",
+                    "<b>Redis (Geospatial Index):</b> Utilizes Redis' native GEO commands to store and rapidly query driver coordinates.",
+                    "<b>Kafka (Event Bus):</b> Buffers high-velocity location pings so backend databases don't get overwhelmed.",
+                    "<b>PostgreSQL (Trip Data):</b> Stores the persistent state of the ride, billing details, and user profiles."
+                ],
+                keyConsiderations: [
+                    "Microservices with independent scaling per domain (matching, trip, payment)",
+                    "Event-driven architecture using Kafka/Pulsar for location & trip events",
+                    "Geo-indexing (Redis GEO / Geohash) for fast nearby-driver search",
+                    "Real-time updates via WebSockets for both rider and driver apps",
+                    "Caching with Redis for low-latency session/config data",
+                    "Database sharding & read replicas to handle trip volume",
+                    "Idempotent APIs & exactly-once processing for payments and trip state",
+                    "Fault tolerance with retries & circuit breakers on external calls",
+                    "Rate limiting & WAF for abuse protection",
+                    "Secure payments & data encryption",
+                    "Multi-region deployment & backup for disaster recovery"
+                ],
+                metrics: ["Request Latency (P50/P95/P99)", "Error Rate", "Active Rides", "Driver Utilization", "Cancellation Rate", "Payment Success Rate"],
+                guesstimates: ["2M DAU, 1M rides/day", "Location Updates: 10k/sec", "Sub-second matching latency", "High throughput event ingestion", "Storage: Petabytes (Historical GPS tracks)"]
+            },
+            {
+                id: "url",
+                name: "URL Shortener Service",
+                tag: "highly scalable",
+                img: "images/URLShortenerSeviceSystemDesign.png",
+                goals: ["Highly Available", "Low Latency", "Scalable", "Fault Tolerant"],
+                overview: "Deceptively simple on the surface — the real design challenge is generating short codes that are unique at massive scale, and making redirects (the read path) as fast as physically possible since it's used far more than creation.",
+                dataFlow: "<b>Write Path (Shortening):</b> A user submits a long URL. To ensure extreme uniqueness without database collisions, the URL Generator Service uses a distributed ID generator (like Twitter Snowflake) to create a unique 64-bit integer. This integer is then Base62-encoded (using characters a-z, A-Z, 0-9) to produce a 7-character string. The long URL and its new short code are saved in a Relational DB. <br><br><b>Read Path (Redirecting):</b> When a user clicks the short link, the request hits the Redirect Service. Because the read-to-write ratio is 100:1, this service aggressively queries a Redis cache first. If the long URL is in the cache, it instantly returns an HTTP 301 (Permanent) or 302 (Temporary) redirect. If there is a cache miss, it reads from a database Read Replica, updates the cache, and then redirects the user. Simultaneously, a background event is sent to an Analytics worker to increment the click counter.",
+                keyIdea: "Reads (redirects) vastly outnumber writes (new short URLs), so the whole design is cache-first for reads, with an idempotency check on writes to stop the same long URL from generating duplicate short codes.",
+                flow: ["Create short URL", "Generate ID (Snowflake)", "Base62 encode", "Save to DB", "User visits short link", "Check Redis cache", "Cache hit → redirect", "Cache miss → DB read replica"],
+                components: [
+                    "<b>API Gateway / Load Balancer:</b> Distributes the massive volume of incoming redirect requests across the stateless Redirect Services.",
+                    "<b>URL Generator Service (Snowflake ID):</b> An offline or distributed component that guarantees collision-free ID generation without relying on a slow DB auto-increment.",
+                    "<b>Redirect Service:</b> A lightweight, ultra-fast API purely dedicated to translating short codes to long URLs.",
+                    "<b>Redis (Heavy Caching):</b> Stores the most frequently accessed short-to-long URL mappings in memory.",
+                    "<b>RDBMS / NoSQL DB:</b> Persists the URL mappings. RDBMS is often preferred to prevent duplicate insertions of the same long URL.",
+                    "<b>Analytics Service:</b> Consumes click streams via Kafka to provide users with geographic and temporal link data."
+                ],
+                idGeneration: [
+                    "<b>Snowflake ID:</b> 41 bits timestamp + 10 bits machine ID + 12 bits sequence ID → globally unique, k-sortable 64-bit integer generated without a DB round-trip.",
+                    "<b>Base62 Encoding:</b> Encodes the integer using [0-9, a-z, A-Z] to produce a short, URL-safe 7-character code."
+                ],
+                keyConsiderations: [
+                    "Globally unique, k-sortable ID generation (Snowflake) for scale",
+                    "Base62 encoding for short & URL-safe codes",
+                    "Cache-first strategy for redirects (Redis)",
+                    "DB read replicas for high read throughput",
+                    "CDN for global low-latency access",
+                    "Async analytics pipeline for click tracking (doesn't block the redirect)",
+                    "Rate limiting & WAF for abuse protection",
+                    "Idempotency to prevent duplicate URL creation for the same long URL",
+                    "Horizontal scaling at every layer",
+                    "High availability with multi-AZ deployment"
+                ],
+                metrics: ["Redirect Latency", "Cache Hit Ratio (>95% target)", "Read:Write Ratio", "301/302 Redirect Rate", "Click Analytics Throughput"],
+                guesstimates: ["10M URLs generated/month", "1B redirects/month", "Read:Write ratio 100:1", "Cache Hit Ratio target > 95%", "Storage: ~5TB for 5 years"]
+            }
+        ];
+        const picker = document.getElementById('picker');
+        const panel = document.getElementById('panel');
+
+        function renderPicker(activeId) {
+            let html = '<div class="picker-label">Select a system</div>';
+            SYSTEMS.forEach((s, i) => {
+                html += `<div class="item ${s.id === activeId ? 'active' : ''}" data-id="${s.id}">
+      <span class="num">${String(i + 1).padStart(2, '0')}</span>
+      <span>
+        <span class="name">${s.name}</span>
+        <span class="tag">${s.tag}</span>
+      </span>
+    </div>`;
+            });
+            picker.innerHTML = html;
+            picker.querySelectorAll('.item').forEach(el => {
+                el.addEventListener('click', () => loadSystem(el.dataset.id));
+            });
+        }
+
+        function renderPanel(s) {
+            panel.innerHTML = `
+    <div class="panel-head">
+      <h2>${s.name} <span style="color:var(--text-faint);font-weight:500;font-size:16px;">— ${s.tag}</span></h2>
+      <span class="like">design goals below</span>
+    </div>
+    <div class="goals">
+      ${s.goals.map(g => `<span class="goal-chip">${g}</span>`).join('')}
+    </div>
+    <div class="diagram-wrap">
+      <img src="${s.img}" alt="${s.name} system design diagram" loading="lazy">
+    </div>
+    <div class="brief-grid">
+      <div class="brief-card">
+        <h3>What's going on</h3>
+        <p>${s.overview}</p>
+      </div>
+      <div class="brief-card">
+        <h3>How data flows</h3>
+        <p>${s.dataFlow}</p>
+      </div>
+      <div class="brief-card flow-card">
+        <h3>Request flow, simplified</h3>
+        <div class="flow-steps">
+          ${s.flow.map((f, i) => (i > 0 ? '<span class="flow-arrow">→</span>' : '') + `<span class="flow-step">${f}</span>`).join('')}
+        </div>
+      </div>
+      <div class="brief-card flow-card">
+        <h3>Key idea to remember</h3>
+        <p>${s.keyIdea}</p>
+      </div>
+      <div class="brief-card">
+        <h3>System Components</h3>
+        <ul>
+          ${s.components.map(c => `<li>${c}</li>`).join('')}
+        </ul>
+      </div>
+      <div class="brief-card">
+        <h3>Back-of-the-envelope / Guesstimates</h3>
+        <ul>
+          ${s.guesstimates.map(c => `<li>${c}</li>`).join('')}
+        </ul>
+      </div>
+    </div>
+  `;
+        }
+
+        function loadSystem(id) {
+            const s = SYSTEMS.find(x => x.id === id) || SYSTEMS[0];
+            renderPicker(id);
+            renderPanel(s);
+            window.scrollTo({ top: panel.offsetTop - 90, behavior: 'smooth' });
+        }
+
+        loadSystem(SYSTEMS[0].id);
+    </script>
+
+</body>
+
+</html>

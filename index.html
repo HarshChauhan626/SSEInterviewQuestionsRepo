@@ -671,7 +671,7 @@
         <span class="section-badge note" style="background: rgba(167,139,250,0.1); border: 1px solid rgba(167,139,250,0.25); color: #a78bfa;">Misc</span>
         <h2 class="section-title">Scenario-Based Questions</h2>
         <div class="section-divider"></div>
-        <span class="section-count">2 available</span>
+        <span class="section-count">3 available</span>
       </div>
       <div class="tools-grid" id="miscGrid">
       </div>
@@ -936,6 +936,17 @@
     const miscGrid = document.getElementById('miscGrid');
     if (miscGrid) {
       miscGrid.innerHTML = `
+        <a class="tool-card" href="systemdesign.html">
+          <div class="tool-card-icon">📐</div>
+          <div class="tool-card-body">
+            <div class="tool-card-title">System Design Examples</div>
+            <div class="tool-card-desc">Visual diagrams, architecture, components, and in-depth data flows for popular system design problems.</div>
+          </div>
+          <div class="tool-card-footer">
+            <span class="tool-pill" style="background: rgba(167,139,250,0.1); color: #a78bfa;">Examples</span>
+            <span class="tool-arrow">${arrowSvg}</span>
+          </div>
+        </a>
         <a class="tool-card" href="scenariobasedsystemdesignquestions.html">
           <div class="tool-card-icon">🏗️</div>
           <div class="tool-card-body">
