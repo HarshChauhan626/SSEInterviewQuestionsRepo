@@ -395,25 +395,31 @@
             background: var(--line);
             border-radius: 8px;
         }
+
         @media (max-width: 640px) {
             .shell {
                 padding: 0 16px 80px;
                 gap: 20px;
             }
+
             .panel {
                 padding: 20px;
             }
+
             .panel-head h2 {
                 font-size: 20px;
             }
+
             .topbar-inner {
                 padding: 16px;
                 flex-direction: column;
                 gap: 12px;
             }
+
             .hero {
                 padding: 40px 16px 20px;
             }
+
             .picker {
                 position: relative;
                 top: 0;
@@ -483,6 +489,58 @@
                     "<b>Redis (Cache & Locks):</b> Stores hot pricing data and manages short-lived distributed locks for room inventory.",
                     "<b>PostgreSQL/Cassandra:</b> The source-of-truth databases. PostgreSQL handles relational booking data with ACID guarantees, while Cassandra might store massive user activity logs."
                 ],
+                serviceFlow: [
+                    { step: 1, from: "Client (App/Web)", to: "CDN / Edge Layer", detail: "Static assets served from edge; dynamic search request passed through to origin." },
+                    { step: 2, from: "Edge Layer", to: "API Gateway", detail: "TLS termination done, request authenticated (JWT/session) and rate-limited before hitting any internal service." },
+                    { step: 3, from: "API Gateway", to: "Search Service", detail: "Gateway routes GET /search?location&dates&guests to the stateless Search Service fleet." },
+                    { step: 4, from: "Search Service", to: "Elasticsearch Cluster", detail: "Query hits a denormalized hotel index (geo + text + facet fields) instead of the relational DB, returning ranked hotel IDs in <50ms." },
+                    { step: 5, from: "Search Service", to: "Filter Service", detail: "Post-processes results by price band, rating, amenities before returning to client." },
+                    { step: 6, from: "Client", to: "Availability & Pricing Service", detail: "On hotel selection, client polls for live rates; service checks Redis first (hot cache of rates)." },
+                    { step: 7, from: "Availability Service", to: "Inventory Service / Supplier Extranet", detail: "On a cache miss, falls back to internal inventory DB or calls third-party supplier APIs asynchronously, then repopulates Redis." },
+                    { step: 8, from: "Client", to: "Booking Service", detail: "User confirms room; Booking Service begins the distributed saga." },
+                    { step: 9, from: "Booking Service", to: "Inventory Service (Redis Lock)", detail: "Places an atomic TTL hold (e.g. 5-10 min) on the specific room so no other booking saga can claim it concurrently." },
+                    { step: 10, from: "Booking Service", to: "Payment Service", detail: "Only invoked once the lock is confirmed; payment runs against the held inventory, never before." },
+                    { step: 11, from: "Payment Service", to: "Payment Gateway (Adyen/Stripe/PayPal)", detail: "External charge attempt; idempotency key attached so retries from the client never double-charge." },
+                    { step: 12, from: "Booking Service", to: "Booking DB (PostgreSQL)", detail: "On payment success, the saga commits: booking row inserted with status CONFIRMED, and the Redis lock is deleted (converted, not just released)." },
+                    { step: 13, from: "Booking Service", to: "Notification Service", detail: "Fires an async event (Kafka) so Email/SMS/Push confirmations go out without blocking the booking response." },
+                    { step: 14, from: "Inventory Sync Worker", to: "Elasticsearch / Cache", detail: "Background worker propagates the new booking back into search/availability indexes so the room disappears from other users' search results." }
+                ],
+                componentImportance: [
+                    { name: "CDN / Edge Layer", why: "Removes ~80% of static traffic from origin servers and cuts round-trip latency for globally distributed users.", ifMissing: "Every image/asset request would hit origin servers directly, multiplying load and latency, especially for users far from the primary region." },
+                    { name: "Elasticsearch (Search Service)", why: "Relational databases are poor at geospatial + fuzzy text search at scale; Elasticsearch is purpose-built for this and stays fresh via Kafka CDC.", ifMissing: "Search queries would hammer the primary DB with expensive LIKE/geo queries, causing search latency to spike and potentially starving the booking path of DB capacity." },
+                    { name: "Redis TTL Lock on Inventory", why: "This is the linchpin that prevents double-booking — it reserves a room just long enough for payment to complete, without needing pessimistic DB locks that would hurt throughput.", ifMissing: "Two users could both pass availability checks for the same room and both attempt payment, leading to overbooking and costly manual reconciliation." },
+                    { name: "Distributed Saga (Booking Service)", why: "Coordinates multiple services (inventory, payment, notification) as a single logical transaction without a distributed 2PC lock across services.", ifMissing: "Partial failures (e.g. payment succeeds but booking write fails) would leave the system in an inconsistent state with no defined recovery path." },
+                    { name: "PostgreSQL (Booking DB)", why: "ACID guarantees are non-negotiable for money-and-inventory state — a booking must never be 'half committed'.", ifMissing: "A NoSQL-only approach without transactions risks lost or duplicated bookings under concurrent writes." },
+                    { name: "Kafka CDC", why: "Keeps Elasticsearch, caches, and analytics all eventually consistent with the source of truth without tightly coupling every service to the DB.", ifMissing: "Every consumer of hotel/inventory data would need to poll the DB directly, creating tight coupling and read pressure on the primary database." }
+                ],
+                dbSchema: [
+                    { table: "users", fields: "user_id (PK), name, email, phone, country, created_at" },
+                    { table: "hotels", fields: "hotel_id (PK), name, address, city, country, rating" },
+                    { table: "rooms", fields: "room_id (PK), hotel_id (FK), name, capacity, amenities" },
+                    { table: "rates", fields: "rate_id (PK), room_id (FK), date, price, currency" },
+                    { table: "inventory", fields: "inventory_id (PK), room_id (FK), date, available_count" },
+                    { table: "bookings", fields: "booking_id (PK), user_id (FK), hotel_id (FK), room_id (FK), check_in, check_out, status, total_price" },
+                    { table: "payments", fields: "payment_id (PK), booking_id (FK), amount, currency, status, paid_at" },
+                    { table: "reviews", fields: "review_id (PK), hotel_id (FK), user_id (FK), rating, comment" }
+                ],
+                scalingStrategy: [
+                    "Partition operational databases by region/hotel to keep write hot-spots local and reduce cross-region latency.",
+                    "Read replicas absorb the heavy read:write skew from search and availability polling.",
+                    "Multi-region active-active deployment (Region 1 & 2) with a dedicated DR region (Region 3) holding standby/read-replica copies.",
+                    "Kubernetes + HPA (Horizontal Pod Autoscaler) scales stateless services (Search, Availability, Booking) independently based on load.",
+                    "Global load balancer (Anycast) routes users to the nearest healthy region."
+                ],
+                failureScenarios: [
+                    { scenario: "Payment succeeds but the Booking DB write fails (network blip).", mitigation: "Saga pattern retries the commit step with the same idempotency key; if it can't recover, a compensating refund is triggered and the room lock is released." },
+                    { scenario: "Redis cluster holding inventory locks goes down mid-transaction.", mitigation: "Locks are short-lived (TTL-based) so a Redis failover simply means a room briefly reappears as available; worst case is a rare double-attempt, not silent data loss, and the DB-level booking write still enforces the final constraint." },
+                    { scenario: "Supplier API (for third-party inventory) times out.", mitigation: "Availability Service falls back to last-known-good cached data with a 'may be unavailable' flag rather than blocking the whole search/booking flow." },
+                    { scenario: "Elasticsearch index falls behind the source DB.", mitigation: "Kafka CDC lag is monitored (Inventory Sync Lag metric); on large lag, search results are marked as potentially stale and availability is re-verified at booking time regardless of what search showed." }
+                ],
+                tradeoffs: [
+                    "Strong consistency is enforced only where it matters (booking + payment commit); search and pricing tolerate eventual consistency in exchange for speed.",
+                    "TTL locks trade a small window of 'wasted' inventory (held but unpaid) for dramatically simpler concurrency control than distributed locking across services.",
+                    "Denormalizing hotel data into Elasticsearch duplicates data and adds sync complexity, but is necessary because relational geo/text search doesn't scale to the required QPS."
+                ],
                 keyConsiderations: [
                     "Inventory & pricing sync in real-time with suppliers",
                     "Caching for search results, hotel details, and static content",
@@ -495,7 +553,39 @@
                     "Full observability: logs, metrics, tracing, alerts"
                 ],
                 metrics: ["Search QPS / Latency", "Booking Success Rate", "Payment Success Rate", "Inventory Sync Lag", "Average Response Time", "Conversion Rate", "Cancellation Rate", "Refund Success Rate", "System Error Rate", "Availability (SLA)"],
-                guesstimates: ["10M Daily Active Users (DAU)", "1M bookings per day", "Read:Write ratio 100:1", "Peak Search QPS: ~10,000", "Storage: ~5TB/year for booking records"]
+                interviewTips: [
+                    "Be ready to explain WHY a TTL lock beats a plain database row lock here: it avoids holding a DB transaction open across a slow external payment call.",
+                    "Mention the celebrity-hotel-chain equivalent problem doesn't really exist here (unlike social feeds), but very popular destinations (e.g. holiday season) create similar hot-key pressure on specific hotel/date combinations — worth calling out sharding by hotel_id + date.",
+                    "Discuss the trade-off of 301 vs. soft holds: a hard TTL is simple but can create false 'sold out' states if the TTL is set too long."
+                ],
+                guesstimates: ["10M Daily Active Users (DAU)", "1M bookings per day", "Read:Write ratio 100:1", "Peak Search QPS: ~10,000", "Storage: ~5TB/year for booking records"],
+                securityConsiderations: [
+                    "Encrypt payment card data in transit and at rest; never store raw card numbers — tokenize via the PSP (Stripe/Adyen/PayPal).",
+                    "Enforce OAuth2/JWT-based auth at the API Gateway before any request reaches internal services.",
+                    "Rate limit search and booking endpoints per user/IP to prevent scraping of hotel inventory and pricing.",
+                    "Validate and sanitize all supplier extranet feeds — third-party inventory data should never be trusted blindly into the pricing pipeline.",
+                    "Apply row-level access control so partner/B2B accounts only see their own contracted rates, not global pricing.",
+                    "Log every state change on a booking (created, locked, paid, confirmed, cancelled) for fraud investigation and dispute resolution."
+                ],
+                costOptimization: [
+                    "Cache aggressively at the CDN and Redis layers — hotel detail pages and search results change far less often than they're viewed.",
+                    "Use read replicas instead of scaling the primary DB vertically for the heavy read:write skew (100:1).",
+                    "Auto-scale search/availability services based on QPS rather than provisioning for peak 24/7.",
+                    "Archive old booking records to cold/object storage (S3 Glacier) after the retention window instead of keeping them in the hot operational DB.",
+                    "Batch supplier rate-sync calls instead of polling every supplier per search request."
+                ],
+                commonMistakes: [
+                    "Checking availability and creating the booking as two separate, unlocked operations — this is exactly what causes double-booking under concurrency.",
+                    "Setting the inventory hold TTL too short (users get bumped mid-payment) or too long (inventory sits idle, hurting sell-through).",
+                    "Treating search index (Elasticsearch) as the source of truth for availability instead of always re-verifying against the authoritative inventory service at booking time.",
+                    "Forgetting to handle partial saga failures — e.g. payment succeeds but booking confirmation write fails, with no compensating action defined."
+                ],
+                capTheoremNotes: "The booking + payment path favors Consistency over Availability (CP) — it's better to briefly reject a booking than to risk double-booking a room. The search + browse path favors Availability over Consistency (AP) — showing a slightly stale price is acceptable, but the search service being down is not.",
+                alternativeApproaches: [
+                    "Pessimistic DB row locks instead of Redis TTL locks — simpler mentally, but holds DB transactions open across slow external payment calls, hurting throughput.",
+                    "Optimistic concurrency (version numbers on inventory rows) — avoids locking entirely but requires retry logic on conflict, which can frustrate users during high-demand periods.",
+                    "Fully synchronous booking saga instead of async Kafka events for confirmations — simpler to reason about, but couples booking latency to notification/email provider latency."
+                ]
             },
             {
                 id: "video",
@@ -515,6 +605,53 @@
                     "<b>Kafka (Event Bus):</b> Decouples the slow transcoding process from the fast API layer and feeds user viewing data to analytics.",
                     "<b>NoSQL DB (Cassandra):</b> Stores the user viewing history and personalized recommendation data."
                 ],
+                serviceFlow: [
+                    { step: 1, from: "Content Provider", to: "Ingestion Service", detail: "Uploads raw file via a pre-signed URL directly to Object Storage — the API layer never touches the large binary payload." },
+                    { step: 2, from: "Ingestion Service", to: "Metadata Extractor", detail: "Pulls title, duration, codec info, thumbnails from the raw file and stores them provisionally." },
+                    { step: 3, from: "Ingestion Service", to: "Kafka (Video Ingested)", detail: "Publishes an event once the raw upload is confirmed stored, decoupling ingestion from transcoding." },
+                    { step: 4, from: "Transcoding Worker", to: "Object Storage", detail: "Consumes the ingested event, pulls the raw video, and encodes it into 240p/360p/480p/720p/1080p/4K renditions in parallel." },
+                    { step: 5, from: "Transcoding Worker", to: "Kafka (Transcode Complete)", detail: "Publishes completion event per rendition; Catalog Service marks the video 'Ready' only once all required renditions exist." },
+                    { step: 6, from: "User", to: "Playback Service", detail: "Requests playback; service performs Authentication & Authorization first (subscription tier, region licensing)." },
+                    { step: 7, from: "Playback Service", to: "DRM / License Service", detail: "Issues a short-lived decryption license (Widevine/PlayReady/FairPlay) tied to the user session and device." },
+                    { step: 8, from: "Playback Service", to: "Manifest Service", detail: "Builds and returns the M3U8/MPD manifest listing all available bitrate variants and their CDN edge URLs." },
+                    { step: 9, from: "Client Device", to: "CDN Edge Node", detail: "Device requests video chunks directly from the nearest edge node, adapting bitrate in real time based on network conditions — this path never touches backend app servers." },
+                    { step: 10, from: "Client Device", to: "Kafka (Playback Events)", detail: "Play/pause/seek/buffering events streamed back asynchronously for analytics and personalization, not on the playback critical path." },
+                    { step: 11, from: "Analytics Worker", to: "Recommendation Service", detail: "Aggregated watch behavior feeds the recommendation model, which later personalizes each user's home feed/rows." }
+                ],
+                componentImportance: [
+                    { name: "Pre-signed URL Upload", why: "Lets the client upload multi-GB files straight to Object Storage, so the API/app servers never become a bandwidth bottleneck.", ifMissing: "Every upload would be proxied through application servers, consuming huge amounts of compute and memory just moving bytes." },
+                    { name: "Transcoding Workers", why: "Devices vary wildly in screen size and network quality; multiple renditions let adaptive bitrate streaming pick the best quality that won't buffer.", ifMissing: "Users on poor connections would either buffer constantly (single high-quality file) or everyone would get poor quality (single low-quality file)." },
+                    { name: "CDN Edge Nodes", why: "Streaming is bandwidth-heavy and latency-sensitive; serving from the nearest edge, not the origin, is the only way to support millions of concurrent streams.", ifMissing: "Origin servers and backbone bandwidth would be overwhelmed instantly, and playback start times would spike for distant users." },
+                    { name: "Kafka Event Bus", why: "Ingestion (slow, bursty) and playback (fast, constant) have completely different scaling profiles; Kafka lets them scale and fail independently.", ifMissing: "A slow transcoding pipeline could back-pressure and degrade the playback API, even though the two have nothing to do with each other operationally." },
+                    { name: "DRM / License Service", why: "Content licensing agreements require encrypted delivery; without DRM, studios won't license content to the platform at all.", ifMissing: "Video content could be trivially ripped and redistributed, likely voiding content licensing deals entirely." }
+                ],
+                dbSchema: [
+                    { table: "users", fields: "id (PK), name, email, password_hash, plan_type, created_at" },
+                    { table: "profiles", fields: "id (PK), user_id (FK), name, avatar, language, parental_control" },
+                    { table: "videos", fields: "id (PK), title, description, content_type, release_date, duration" },
+                    { table: "seasons", fields: "id (PK), video_id (FK), season_no, title" },
+                    { table: "episodes", fields: "id (PK), season_id (FK), episode_no, title, duration" },
+                    { table: "subscriptions", fields: "id (PK), user_id (FK), plan_id (FK), start_date, status" },
+                    { table: "watch_history", fields: "id (PK), user_id (FK), video_id (FK), watched_at, watch_duration" },
+                    { table: "ratings", fields: "id (PK), user_id (FK), video_id (FK), rating, created_at" }
+                ],
+                scalingStrategy: [
+                    "Transcoding is horizontally scaled by adding more GPU/CPU workers consuming from the same Kafka topic — throughput scales linearly with worker count.",
+                    "Playback path is stateless and cache-heavy (Redis for session/catalog), so it scales via simple pod autoscaling behind a load balancer.",
+                    "Multi-AZ/multi-region app pods with local caches and DB read replicas per AZ; a DR region holds a standby replica for failover.",
+                    "CDN handles the actual video-byte delivery, so backend scaling is really about metadata, auth, and manifest generation — a much smaller problem than raw bandwidth."
+                ],
+                failureScenarios: [
+                    { scenario: "A transcoding worker crashes mid-job.", mitigation: "Kafka consumer offsets aren't committed until the job fully succeeds, so another worker picks up the same 'video ingested' event and retries; idempotent writes to Object Storage prevent duplicate/corrupt renditions." },
+                    { scenario: "CDN edge node in a region goes down.", mitigation: "DNS/Anycast routing reroutes to the next-nearest healthy edge node automatically; client-side player retries with a fallback manifest URL." },
+                    { scenario: "DRM license service is temporarily unavailable.", mitigation: "Short-lived cached licenses on already-playing devices continue working; new playback attempts get a clear retryable error rather than silent failure." },
+                    { scenario: "Metadata DB (PostgreSQL) primary fails.", mitigation: "Automated failover to a replica; catalog reads keep serving from cache/read-replicas during the failover window so browsing isn't disrupted, only new metadata writes are briefly blocked." }
+                ],
+                tradeoffs: [
+                    "Storing every resolution (240p-4K) multiplies storage cost significantly, but is necessary for adaptive bitrate streaming — the alternative (transcode-on-demand) would add unacceptable startup latency.",
+                    "Kafka decoupling adds eventual-consistency lag between 'upload complete' and 'available to stream', but this is an acceptable trade since ingestion is not a real-time user-facing path.",
+                    "CDN costs scale with viewership, but building a private global edge network from scratch would be far more expensive and slower to bring to market."
+                ],
                 keyConsiderations: [
                     "Store videos in multiple qualities using Adaptive Bitrate Streaming (HLS/DASH)",
                     "CDN for low latency & high availability across regions",
@@ -528,7 +665,38 @@
                     "Full observability: logs, metrics, tracing, alerts"
                 ],
                 metrics: ["Startup Time / Time to First Frame", "Buffering Ratio", "Rebuffering Frequency", "Playback Success Rate", "Concurrent Streams", "Average Watch Time", "Error Rate", "CDN Hit Ratio", "Transcoding Latency", "API Latency (P95/P99)"],
-                guesstimates: ["50M DAU, 1B video views/day", "500 hours of video uploaded/min", "Storage: Petabytes for raw & transcoded video", "Egress Bandwidth: Multi-Terabit/sec", "High Cache Hit Ratio (90%+)"]
+                interviewTips: [
+                    "Distinguish clearly between the write path (ingest/transcode, tolerant of minutes of latency) and the read path (playback, must be sub-second) — interviewers look for this separation explicitly.",
+                    "Mention CDN cache hit ratio as the single most important cost/performance lever in this system — a 1% drop in cache hit ratio directly multiplies origin egress costs.",
+                    "Be ready to discuss why HLS/DASH chunk video into small segments (2-10s) rather than streaming one continuous file: it enables adaptive bitrate switching mid-playback."
+                ],
+                guesstimates: ["50M DAU, 1B video views/day", "500 hours of video uploaded/min", "Storage: Petabytes for raw & transcoded video", "Egress Bandwidth: Multi-Terabit/sec", "High Cache Hit Ratio (90%+)"],
+                securityConsiderations: [
+                    "DRM-encrypt all premium content; free/preview content may skip DRM but still uses signed, time-limited CDN URLs.",
+                    "Pre-signed upload URLs should be short-lived and scoped to a single object key to prevent abuse.",
+                    "Validate subscription/entitlement server-side on every playback request — never trust a client-side 'has access' flag.",
+                    "Watermark streams per-session for high-value live content to trace leaks back to a specific account.",
+                    "Rate limit and bot-detect on the playback API to prevent content scraping via automated downloaders."
+                ],
+                costOptimization: [
+                    "Transcode only the renditions actually needed for the content's expected audience (e.g. skip 4K for old catalog titles with low viewership).",
+                    "Use CDN tiered caching (regional mid-tier caches) to reduce origin egress costs, since origin bandwidth is far more expensive than edge bandwidth.",
+                    "Move cold/rarely-watched catalog content to cheaper storage tiers (S3 Glacier/Nearline) while keeping popular titles on hot storage.",
+                    "Right-size transcoding compute — GPU instances for heavy 4K jobs, cheaper CPU instances for lower-resolution renditions.",
+                    "Cache manifest files (M3U8/MPD) aggressively since they change far less often than they're requested."
+                ],
+                commonMistakes: [
+                    "Transcoding synchronously in the upload request path instead of decoupling via Kafka — this makes uploads feel slow and fragile.",
+                    "Not separating the ingest and playback data planes, causing a spike in uploads to degrade playback latency for unrelated viewers.",
+                    "Skipping adaptive bitrate entirely and serving a single fixed quality, causing poor experience on both very fast and very slow connections.",
+                    "Underestimating CDN cache invalidation complexity when content needs to be pulled for licensing/legal reasons."
+                ],
+                capTheoremNotes: "Playback favors Availability over Consistency (AP) — it's fine if a just-uploaded video takes a few minutes to appear everywhere, but the playback service being down for existing content is not acceptable. Subscription/entitlement checks favor Consistency (CP) — you don't want someone accessing paid content because a stale cache said they were still subscribed.",
+                alternativeApproaches: [
+                    "Transcode-on-demand (only encode a resolution the first time it's requested) — saves storage for rarely watched long-tail content, but adds latency on first play.",
+                    "P2P-assisted delivery (like some live-streaming platforms use) to reduce CDN costs at extreme scale, at the cost of much higher client-side complexity.",
+                    "Single monolithic quality with client-side downsampling — simpler pipeline, but wastes bandwidth for low-end devices and hurts UX on poor networks."
+                ]
             },
             {
                 id: "payment",
@@ -548,6 +716,52 @@
                     "<b>Relational DB (PostgreSQL/MySQL):</b> The strict ACID-compliant database ensuring that partial money transfers never occur.",
                     "<b>Kafka:</b> Handles the reliable delivery of post-payment events like sending email receipts."
                 ],
+                serviceFlow: [
+                    { step: 1, from: "Client", to: "Edge (WAF/DDoS + CDN)", detail: "Request passes through DDoS protection before ever reaching the API layer, since payment endpoints are a prime abuse target." },
+                    { step: 2, from: "Edge", to: "API Gateway", detail: "Handles authentication, 3DS flow initiation, and per-user/IP rate limiting (429 protected clients)." },
+                    { step: 3, from: "API Gateway", to: "Payment Gateway Orchestrator", detail: "Central state machine receives the request with its client-generated idempotency_key." },
+                    { step: 4, from: "Orchestrator", to: "Cache Cluster (Redis)", detail: "Checks for the idempotency_key; a hit means this is a retry and the cached prior result is returned immediately, bypassing all downstream calls." },
+                    { step: 5, from: "Orchestrator", to: "Fraud Detection & Risk Assessment Service", detail: "On a fresh key, synchronously scores the transaction using velocity rules and historical behavior before any money moves." },
+                    { step: 6, from: "Orchestrator", to: "Transaction Management Service", detail: "Coordinates the transaction lifecycle and hands off to the async job queue for payment-method-specific processing (UPI, card network, etc.)." },
+                    { step: 7, from: "Transaction Management", to: "Payment Method Service", detail: "Talks to the specific rail (card network, UPI, wallet) via the Bank API Connector." },
+                    { step: 8, from: "Orchestrator", to: "Wallet & Ledger Service", detail: "Executes the actual double-entry debit/credit inside a single ACID transaction against the Distributed Transaction DB." },
+                    { step: 9, from: "Wallet & Ledger Service", to: "Distributed Transaction DB (PostgreSQL)", detail: "Debits sender, credits receiver atomically; if either write fails, the whole transaction rolls back — no partial transfers possible." },
+                    { step: 10, from: "Orchestrator", to: "Settlement / Reconciliation Service", detail: "Marks the transaction for later settlement against the bank/PSP's own records to catch any silent mismatches." },
+                    { step: 11, from: "Orchestrator", to: "Messaging (Kafka/RabbitMQ)", detail: "Publishes Transaction Authorized / Wallet.Updated / Reconciliation.Required events asynchronously — the client response does not wait on these." },
+                    { step: 12, from: "Consumer Services", to: "Internal Notification Service", detail: "Subscribes to transaction events to trigger SMS/Push/Email receipts without adding latency to the payment critical path." },
+                    { step: 13, from: "Consumer Services", to: "Internal Auditing Service", detail: "Every state transition is appended to an immutable audit log for compliance and dispute resolution." },
+                    { step: 14, from: "Analytics Pipeline", to: "Fraud Analytics Pipeline / BI & Reporting", detail: "Stream processing (Flink/Spark) feeds fraud model retraining and business dashboards on success/fraud rates." }
+                ],
+                componentImportance: [
+                    { name: "Idempotency Key + Redis Check", why: "This single mechanism is what makes retries safe — clients WILL retry on timeouts, and without this check every timeout risks a duplicate charge.", ifMissing: "Network blips or client retries would routinely double-charge customers, an unacceptable and expensive failure mode for a payment system." },
+                    { name: "Fraud Detection Service (synchronous)", why: "Running fraud checks before money moves (not after) stops bad transactions at the door rather than requiring costly reversals.", ifMissing: "Fraudulent transactions would complete and require manual chargebacks/refunds, which are slower and often unrecoverable." },
+                    { name: "ACID Transaction DB for Ledger", why: "Double-entry accounting requires that debit and credit either both happen or neither does — this is the textbook case for ACID transactions.", ifMissing: "A crash between the debit and credit steps could leave money debited from one account but never credited to the other — silently destroying funds." },
+                    { name: "Async Kafka Events for Post-Payment Actions", why: "Receipts, notifications, and analytics are not on the critical path; making them synchronous would slow down every payment for non-essential side effects.", ifMissing: "The payment API would be as slow as its slowest downstream integration (e.g. email provider), directly hurting conversion and P99 latency." },
+                    { name: "Settlement / Reconciliation Service", why: "Internal ledger state and the bank/PSP's actual records can drift due to bugs or edge cases; reconciliation is the safety net that catches this before it becomes a financial discrepancy.", ifMissing: "Silent mismatches between what the platform thinks happened and what actually happened at the bank could go undetected indefinitely." }
+                ],
+                dbSchema: [
+                    { table: "transactions", fields: "id (PK), user_id (FK), amount, currency, source_method, destination, status, idempotency_key, created_at" },
+                    { table: "user_wallets", fields: "id (PK), user_id (FK), balance, currency, updated_at" },
+                    { table: "audit_logs", fields: "id (PK), transaction_id, action_type, user_id, timestamp" },
+                    { table: "reconciliation_results", fields: "id (PK), bank_id, date, status, details" }
+                ],
+                scalingStrategy: [
+                    "Payment Orchestrator instances are stateless — all state lives in Redis (idempotency) and PostgreSQL (ledger), so orchestrator pods scale horizontally without coordination.",
+                    "The ledger DB is the hard bottleneck: use a distributed/sharded PostgreSQL cluster keyed by account/user to spread write load while keeping per-account transactions strictly ordered.",
+                    "Fraud detection inference is offloaded to dedicated scoring services so heavy ML compute doesn't block the lightweight orchestration path.",
+                    "Kafka absorbs bursty post-payment fan-out (notifications, analytics, auditing) so those consumers can scale independently of transaction volume spikes."
+                ],
+                failureScenarios: [
+                    { scenario: "Client times out waiting for a response but the payment actually succeeded server-side.", mitigation: "Client retries with the SAME idempotency_key; Redis returns the cached SUCCESS result instead of reprocessing — no double charge." },
+                    { scenario: "Orchestrator crashes after debiting but before crediting.", mitigation: "The debit+credit happens inside a single DB transaction, so a crash mid-way rolls back entirely — the ledger never observes a half-completed transfer." },
+                    { scenario: "Downstream bank/PSP API is down.", mitigation: "Request is retried with exponential backoff; if it exhausts retries, the transaction is marked PENDING/FAILED and queued for manual or automated reconciliation rather than left ambiguous." },
+                    { scenario: "Fraud service is slow or unavailable.", mitigation: "A circuit breaker either fails closed (block the transaction) for high-risk categories or applies a conservative fallback rule set, rather than letting fraud checks silently pass through." }
+                ],
+                tradeoffs: [
+                    "Synchronous fraud checks add latency to every transaction, but the alternative (async/post-hoc fraud checks) allows bad transactions to complete before being caught.",
+                    "Strict ACID transactions on the ledger limit horizontal write scaling compared to eventually-consistent NoSQL, but correctness of money movement is non-negotiable here.",
+                    "Idempotency keys require client cooperation (they must reuse the same key on retry) — this pushes some responsibility to API consumers in exchange for system-wide safety."
+                ],
                 keyConsiderations: [
                     "PCI-DSS compliance across the entire card-data path",
                     "Transactional integrity via ACID guarantees (double-entry ledger, no partial transfers)",
@@ -558,7 +772,38 @@
                     "Settlement & reconciliation between internal ledger and bank/PSP records"
                 ],
                 metrics: ["Peak TPS", "Payment Success Rate", "Fraud Detection Rate", "P99 Latency (<1s target)", "Idempotency Hit Rate", "Reconciliation Mismatch Rate", "Availability (99.999%)"],
-                guesstimates: ["10M transactions per day", "Peak 500 TPS", "Strictly < 1s latency target", "99.999% Availability", "Storage: ~2TB/year for ledger logs"]
+                interviewTips: [
+                    "Always lead with idempotency when discussing payment systems — it's the single most commonly probed concept in payment system design interviews.",
+                    "Explain the difference between the orchestrator's Redis-based idempotency check (fast, request-level dedup) and the ledger's DB-level locking (slower, account-level correctness) — both are needed, for different reasons.",
+                    "Be ready to discuss the CAP trade-off: the ledger favors consistency over availability during a partition, since an available-but-wrong ledger is worse than a temporarily unavailable one."
+                ],
+                guesstimates: ["10M transactions per day", "Peak 500 TPS", "Strictly < 1s latency target", "99.999% Availability", "Storage: ~2TB/year for ledger logs"],
+                securityConsiderations: [
+                    "Full PCI-DSS scope segregation — card data touches as few services as possible, ideally only a dedicated tokenization boundary.",
+                    "Encrypt data at rest (ledger DB) and in transit (mTLS between internal services) end to end.",
+                    "Enforce strict least-privilege IAM — the notification/analytics consumers should never have write access to the ledger.",
+                    "Immutable, append-only audit logs (never updated or deleted) for every transaction state transition, required for compliance audits.",
+                    "Multi-factor step-up authentication (3DS) for high-risk or high-value transactions.",
+                    "Secrets (PSP API keys, DB credentials) managed via a vault (e.g. HashiCorp Vault/AWS Secrets Manager), never hardcoded."
+                ],
+                costOptimization: [
+                    "Batch non-critical downstream side effects (analytics, BI exports) instead of processing them one event at a time.",
+                    "Tier fraud-check compute — apply the expensive ML model only to transactions above a risk/amount threshold, use cheap rule-based checks for the rest.",
+                    "Archive settled/reconciled transactions older than the active dispute window to cheaper storage.",
+                    "Right-size the Redis idempotency-key cluster — keys only need to live as long as the client's realistic retry window, not forever."
+                ],
+                commonMistakes: [
+                    "Generating the idempotency key server-side instead of client-side — this defeats the purpose, since a lost response means the client can't know what key to retry with.",
+                    "Running fraud checks asynchronously after the money has already moved, instead of synchronously before.",
+                    "Not making the ledger update and audit log write part of the same atomic transaction, risking a ledger entry with no corresponding audit trail.",
+                    "Assuming the payment gateway callback/webhook is guaranteed to arrive exactly once — it must be treated as at-least-once and deduplicated too."
+                ],
+                capTheoremNotes: "The ledger is unapologetically CP (Consistency over Availability) — during a network partition, it's far better to reject a transaction than to risk an inconsistent balance. This is one of the few subsystems in typical system design interviews where sacrificing availability for correctness is clearly the right call.",
+                alternativeApproaches: [
+                    "Two-phase commit (2PC) across services instead of a Saga pattern — stronger consistency guarantees but much higher latency and tighter coupling between services.",
+                    "Event sourcing the ledger (store all transaction events, derive balance by replay) instead of a mutable balance column — better auditability, more complex to query current state quickly.",
+                    "Synchronous notification sending instead of async Kafka events — simpler code path, but couples payment latency to a third-party notification provider's uptime."
+                ]
             },
             {
                 id: "notification",
@@ -578,6 +823,49 @@
                     "<b>User Preferences DB:</b> Stores opt-in/opt-out status, quiet hours, and channel priorities.",
                     "<b>3rd-Party Integrations:</b> AWS SES (Emails), Twilio (SMS), FCM/APNS (Push Notifications)."
                 ],
+                serviceFlow: [
+                    { step: 1, from: "Upstream Service (e.g. Shipping Service)", to: "Event Collector API", detail: "Fires a raw event (e.g. 'order shipped', with a globally unique event_id) at the ingest layer." },
+                    { step: 2, from: "Event Collector API", to: "Client (upstream service)", detail: "Immediately returns 202 Accepted — the collector never blocks on downstream processing." },
+                    { step: 3, from: "Event Collector API", to: "Kafka", detail: "Publishes the event onto a topic, decoupling ingestion throughput from delivery throughput entirely." },
+                    { step: 4, from: "Kafka", to: "User / Preferences Service", detail: "A consumer reads the event and looks up the target user's opt-in/opt-out status and preferred channels." },
+                    { step: 5, from: "User / Preferences Service", to: "Template Service", detail: "Fetches the correct localized message template (language, region) for this notification type." },
+                    { step: 6, from: "Template Service", to: "Priority Queue Service", detail: "The rendered, channel-specific message is placed into a priority queue — OTPs and critical alerts jump ahead of marketing pushes." },
+                    { step: 7, from: "Priority Queue Service", to: "Channel Dispatcher Worker", detail: "Workers dedicated per channel (Email/SMS/Push) pull from their respective queues." },
+                    { step: 8, from: "Dispatcher Worker", to: "Idempotency Check Service (Redis)", detail: "Before sending, checks event_id in Redis; if already sent within the dedup window, the send is skipped entirely." },
+                    { step: 9, from: "Dispatcher Worker", to: "3rd-Party Provider (SES/Twilio/FCM/APNS)", detail: "Makes the actual delivery call; on success, marks the event_id in Redis to block future duplicates." },
+                    { step: 10, from: "Dispatcher Worker", to: "Dead Letter Queue", detail: "On provider failure, the message is retried with exponential backoff; after max retries it lands in the DLQ for investigation rather than being silently dropped." },
+                    { step: 11, from: "Dispatcher Worker", to: "Internal Logging / Analytics Pipeline", detail: "Every send attempt (success or failure) is logged for the delivery status dashboard and usage analytics." }
+                ],
+                componentImportance: [
+                    { name: "Event Collector API returning 202 immediately", why: "Upstream services (like Shipping) shouldn't have their own request latency held hostage by SMS provider slowness.", ifMissing: "A slow downstream provider could cascade and slow down completely unrelated upstream services calling into the notification system synchronously." },
+                    { name: "Kafka as the buffer", why: "Notification volume is extremely bursty (e.g. a flash sale triggers millions of events at once); Kafka absorbs the spike so dispatch workers can catch up at a sustainable rate.", ifMissing: "A traffic spike could overwhelm dispatcher workers directly, causing dropped notifications or a cascading service outage." },
+                    { name: "Idempotency Check via Redis", why: "Kafka consumers can occasionally reprocess a message (at-least-once delivery semantics); without a dedup check, that means duplicate SMS/emails to the same user.", ifMissing: "Users would occasionally receive the exact same notification 2-3 times, which erodes trust and can even trigger spam complaints with providers like Twilio." },
+                    { name: "Priority Queue per Channel", why: "A password-reset OTP is time-critical while a promotional push is not — treating all messages identically would delay critical ones behind a flood of low-priority ones.", ifMissing: "OTPs could get stuck behind a marketing blast, causing login/verification flows to fail from the user's perspective." },
+                    { name: "Dead Letter Queue + Backoff Retries", why: "Third-party providers (Twilio, SES) have transient outages; retrying blindly and immediately can worsen the outage (thundering herd), while giving up immediately loses messages.", ifMissing: "Either messages would be lost permanently on provider hiccups, or naive immediate retries would amplify load on an already-struggling provider." }
+                ],
+                dbSchema: [
+                    { table: "users_preferences", fields: "user_id (PK), notification_type, enabled_channels, frequency_cap" },
+                    { table: "device_tokens", fields: "token_id (PK), user_id (FK), token, device_type, last_seen" },
+                    { table: "notification_templates", fields: "template_id (PK), content_type, content" },
+                    { table: "notifications_history", fields: "notification_id (PK), user_id (FK), channel, sent_at, status (SENT, FAILED, RETRYING)" }
+                ],
+                scalingStrategy: [
+                    "Kafka partitioning by user_id or notification_type allows many dispatcher workers to consume in parallel while preserving per-user ordering where needed.",
+                    "Each channel (Email/SMS/Push) gets its own worker pool and queue so a slowdown in one provider doesn't starve the others.",
+                    "Preferences and templates are cached in Redis (hot path) to avoid a DB round-trip on every single event.",
+                    "Horizontal scaling at every layer — collector, workers, and queues — since none of them hold sticky state beyond what's in Redis/Kafka."
+                ],
+                failureScenarios: [
+                    { scenario: "Kafka consumer crashes mid-processing after fetching but before dispatching.", mitigation: "Kafka's at-least-once delivery means the event is redelivered to another consumer; the Redis idempotency check ensures this doesn't cause a duplicate send if the first attempt actually succeeded." },
+                    { scenario: "SMS provider (Twilio) has a regional outage.", mitigation: "Exponential backoff retries kick in; if the outage persists past max retries, messages land in the DLQ and can be replayed automatically once the provider recovers, or rerouted to a backup provider." },
+                    { scenario: "A malformed event floods the Template Service with lookups for a non-existent template.", mitigation: "Template Service returns a default fallback template and logs the anomaly rather than failing the entire notification pipeline for that event." },
+                    { scenario: "Preferences DB is temporarily unreachable.", mitigation: "Dispatcher falls back to the last cached preference snapshot in Redis; if no cache exists, the system defaults to the most conservative option (e.g. skip non-critical notifications) rather than guessing." }
+                ],
+                tradeoffs: [
+                    "At-least-once delivery (via Kafka) is simpler and more resilient than exactly-once, but requires the idempotency layer to absorb the resulting duplicates — added complexity for added reliability.",
+                    "Priority queues improve time-sensitive delivery but add scheduling complexity and can starve low-priority channels under sustained high load if not carefully rate-limited.",
+                    "Storing a 24-hour idempotency window in Redis is cheap and fast but means an extremely delayed duplicate (after the TTL expires) could technically slip through — an acceptable trade for the vast majority of real-world retry patterns."
+                ],
                 keyConsiderations: [
                     "Globally unique, non-guessable Event ID for every notification",
                     "Robust idempotency check via Redis (dedupe within a 24h window)",
@@ -589,7 +877,37 @@
                     "Adaptive rate limiting and A/B testing of templates"
                 ],
                 metrics: ["Peak QPS", "Delivery Latency (<1 min target)", "Delivery Success Rate per Channel", "Retry/DLQ Rate", "Idempotency Hit Rate", "Opt-out Rate"],
-                guesstimates: ["100M notifications per day", "Peak QPS: ~5,000", "Delivery Latency: < 1 min", "Retries max out at 3-5 times", "Storage: ~500GB/month for delivery logs"]
+                interviewTips: [
+                    "Emphasize the separation of ingestion (fast, always-accept) from delivery (slow, provider-dependent) — this pattern generalizes to almost any 'fire event, deliver later' system.",
+                    "Bring up fan-out: one event can become up to 3 messages (email+sms+push); make sure your idempotency key design accounts for per-channel dedup, not just per-event dedup.",
+                    "Discuss quiet hours / frequency capping as a product requirement that directly shapes the Preferences Service schema."
+                ],
+                guesstimates: ["100M notifications per day", "Peak QPS: ~5,000", "Delivery Latency: < 1 min", "Retries max out at 3-5 times", "Storage: ~500GB/month for delivery logs"],
+                securityConsiderations: [
+                    "Validate that the calling upstream service is authorized to notify a given user (prevent one service from spamming another team's users).",
+                    "Strip/redact PII from logs and analytics events where not strictly necessary.",
+                    "Respect opt-out/consent flags as a hard gate before any send, for legal compliance (CAN-SPAM/TCPA/GDPR).",
+                    "Sign or authenticate webhook callbacks from providers (Twilio/SES delivery receipts) to prevent spoofed delivery-status updates.",
+                    "Encrypt device push tokens at rest since they can be used to target a specific device if leaked."
+                ],
+                costOptimization: [
+                    "Batch low-priority notifications (e.g. weekly digest) instead of sending them as individual real-time events.",
+                    "Use the cheapest viable channel first where business rules allow (push before SMS, since SMS costs money per message).",
+                    "Right-size Kafka partition/consumer count to actual throughput rather than over-provisioning for worst-case guesses.",
+                    "Cache rendered templates instead of re-rendering the same localized string for every recipient of a broadcast notification."
+                ],
+                commonMistakes: [
+                    "Using the upstream event's own ID as the idempotency key without including the target channel — this can wrongly dedupe a needed email against a completed SMS send.",
+                    "Not setting a bounded max-retry count, letting a permanently-failing provider integration retry forever and clog the queue.",
+                    "Sending marketing and critical (OTP/security) notifications through the same undifferentiated queue with no priority separation.",
+                    "Forgetting quiet hours / user timezone when scheduling non-urgent notifications."
+                ],
+                capTheoremNotes: "This system is intentionally AP (Availability over Consistency) — it's built on Kafka's at-least-once delivery, meaning a notification might occasionally be processed twice (handled via idempotency) rather than risk losing it during a partition. Perfect exactly-once delivery is sacrificed in favor of never silently dropping a notification.",
+                alternativeApproaches: [
+                    "Exactly-once processing via a transactional outbox pattern — stronger delivery guarantees, but meaningfully more complex to implement correctly across services.",
+                    "Direct synchronous calls from upstream services to provider APIs (no queue) — simpler for very low volume, but doesn't survive traffic bursts or provider outages.",
+                    "A single unified queue for all channels instead of per-channel priority queues — simpler topology, but a slow SMS provider could then delay unrelated push notifications."
+                ]
             },
             {
                 id: "social",
@@ -608,6 +926,51 @@
                     "<b>Cassandra / DynamoDB:</b> The massive, highly-available NoSQL store for historical post data and older feed history.",
                     "<b>Graph DB (Neo4j/TAO):</b> Optimized specifically for querying highly connected follower/following relationships."
                 ],
+                serviceFlow: [
+                    { step: 1, from: "User", to: "Post Service", detail: "Uploads a photo/text post; media goes to Media Storage (S3) while text metadata is written to the Post Metadata DB." },
+                    { step: 2, from: "Post Service", to: "Kafka (Post Events)", detail: "Publishes a 'new post' event carrying post_id and author_id; the write request returns to the user immediately after this, not after fanout completes." },
+                    { step: 3, from: "Kafka", to: "Feed Generation Worker", detail: "Consumes the post event and calls the Timeline Service to resolve the author's follower list." },
+                    { step: 4, from: "Feed Generation Worker", to: "Social Graph Service / Graph Store", detail: "Queries the Graph DB (optimized for 'who follows X') to get the full follower list — this graph traversal is the expensive part of fanout." },
+                    { step: 5, from: "Feed Generation Worker", to: "Fanout Process", detail: "For each follower, appends the new post_id to their personal timeline list in Feed Cache (Redis). For celebrity accounts with huge follower counts, this step is skipped in favor of a pull model." },
+                    { step: 6, from: "User", to: "Feed Service", detail: "Opens the app; Feed Service reads directly from Feed Cache (Redis) for that user's timeline — an O(1) list fetch, no computation needed." },
+                    { step: 7, from: "Feed Service", to: "Timeline Store (Cassandra/DynamoDB)", detail: "On a cache miss (e.g. cold start, TTL expiry), fetches from the persistent timeline store and repopulates Redis." },
+                    { step: 8, from: "Feed Service", to: "Media Service / Post Cache", detail: "Hydrates the raw post_ids from the timeline with actual post content (caption, image URL, like/comment counts) before returning to the client." },
+                    { step: 9, from: "User", to: "Like/Comment/Share Service", detail: "Engagement actions publish events to Kafka; a Count Aggregator Worker updates denormalized counters in a fast Counters Store (Redis/Cassandra) rather than recalculating counts on every read." },
+                    { step: 10, from: "Notification Service", to: "Push Notification Worker", detail: "Triggered by like/comment/follow events, delivers real-time notifications via FCM/APNS independent of the main feed read/write path." }
+                ],
+                componentImportance: [
+                    { name: "Fanout Workers (Fanout-on-Write)", why: "Doing the expensive 'push to every follower' work once at post-time, rather than on every single feed read, is what makes reading a feed an O(1) operation instead of an expensive real-time aggregation.", ifMissing: "Every feed load would require live-querying all followed accounts' recent posts and merging/ranking them on the fly — far too slow at scale." },
+                    { name: "Graph DB for the Social Graph", why: "Follower/following relationships are a classic graph traversal problem; a relational DB doing recursive joins for 'all followers of X' does not scale to millions of edges.", ifMissing: "Follower list lookups would become slow, expensive joins that get worse as the platform grows, directly bottlenecking the fanout step." },
+                    { name: "Hybrid Fanout for Celebrities", why: "Fanning out a single post to 100M+ followers synchronously (or even asynchronously) would create a massive write spike hitting Redis all at once.", ifMissing: "A single celebrity post could effectively DoS the feed cache infrastructure — this is a well-known 'celebrity problem' in feed system design." },
+                    { name: "Redis Timeline Cache", why: "Feed reads happen orders of magnitude more often than writes (100:1); keeping the hot, recent timeline in memory is what delivers millisecond feed loads.", ifMissing: "Every feed load would hit the persistent Cassandra/DynamoDB store directly, and at the read volumes here, that store would become the bottleneck." },
+                    { name: "Count Aggregator Worker", why: "Like/comment counts are read far more often than they change; pre-aggregating them avoids a COUNT() query on every post render.", ifMissing: "Rendering a feed with accurate like/comment counts would require an expensive aggregation query per post per feed load." }
+                ],
+                dbSchema: [
+                    { table: "users", fields: "user_id (PK), username, email, phone, created_at" },
+                    { table: "posts", fields: "post_id (PK), user_id (FK), media_url / thumb, caption, created_at" },
+                    { table: "comments", fields: "comment_id (PK), post_id (FK), user_id (FK), parent_comment_id, text, created_at" },
+                    { table: "likes", fields: "like_id (PK), post_id (FK), user_id (FK), created_at" },
+                    { table: "follows", fields: "follower_id (FK), followee_id (FK), created_at" },
+                    { table: "feeds (timeline store)", fields: "user_id (FK), post_id (FK), score, created_at" },
+                    { table: "notifications", fields: "notification_id (PK), user_id (FK), type, actor_id, entity_id, created_at" }
+                ],
+                scalingStrategy: [
+                    "Feed is fanout-on-write for regular users, fanout-on-read (pull) for celebrity/high-follower accounts — a hybrid model that avoids both slow reads and fanout storms.",
+                    "Cursor-based pagination (next_page_token) instead of offset pagination avoids expensive OFFSET scans on huge timelines.",
+                    "Multi-AZ deployment for all critical services (Post, Feed, Fanout) with Redis and Cassandra both horizontally sharded by user_id.",
+                    "Idempotent Kafka consumers ensure that a redelivered 'new post' event doesn't cause duplicate fanout writes to a follower's timeline."
+                ],
+                failureScenarios: [
+                    { scenario: "A Fanout Worker crashes partway through fanning out a post to followers.", mitigation: "Kafka's consumer offset isn't committed until fanout completes, so the job restarts from the event on another worker; idempotent writes (e.g. Redis SET-based list dedup) prevent the same post_id being duplicated in a follower's timeline." },
+                    { scenario: "Redis Feed Cache node fails for a shard of users.", mitigation: "Those users' feed reads fall back to the persistent Timeline Store (Cassandra) with slightly higher latency until the cache node is replaced and repopulated — no data is lost since Redis is a cache, not the source of truth." },
+                    { scenario: "A celebrity account posts and naive fanout is attempted.", mitigation: "System detects follower count above a threshold and switches to the pull model for that post, merging it into followers' feeds at read time instead of write time." },
+                    { scenario: "Graph DB is temporarily slow under heavy write load (mass follow/unfollow event).", mitigation: "Fanout jobs queue up in Kafka rather than failing outright; consumers apply backpressure and catch up once the Graph DB recovers, so posts are delayed but not lost." }
+                ],
+                tradeoffs: [
+                    "Fanout-on-write trades write amplification (one post becomes thousands of cache writes) for extremely fast reads — the right trade given the 100:1 read:write ratio typical of social feeds.",
+                    "The hybrid celebrity model adds real branching complexity to the codebase, but is unavoidable — a pure push or pure pull model each fail badly at one extreme of the follower-count distribution.",
+                    "Eventual consistency on feed visibility (a new post might take a few seconds to appear in all followers' feeds) is accepted in exchange for not blocking the post-creation response on full fanout completion."
+                ],
                 keyConsiderations: [
                     "Feed is fanout-on-write, powered by Kafka + background workers",
                     "Hybrid storage: Redis cache backed by a persistent store (Cassandra/DynamoDB)",
@@ -621,7 +984,37 @@
                     "Rate limiting, abuse detection & content moderation on the write path"
                 ],
                 metrics: ["Feed Read QPS", "Feed Read Latency (P50/P99)", "Cache Hit Ratio", "Post Creation QPS", "Fanout Lag", "Notification Delivery Rate", "DAU / MAU", "Error Rate", "Storage Growth", "Service Availability (SLA)"],
-                guesstimates: ["100M DAU", "10M posts/day", "1B feed views/day", "Read:Write ratio 100:1", "Peak Fanout: Millions of writes/sec (for celebrities)"]
+                interviewTips: [
+                    "The 'celebrity problem' (Justin Bieber problem) is almost always brought up in feed design interviews — proactively mention the fanout-on-write vs. fanout-on-read hybrid.",
+                    "Discuss feed ranking briefly: real feeds aren't pure reverse-chronological; a scoring function blends recency, engagement, and relationship strength.",
+                    "Be ready to explain why Cassandra/DynamoDB (wide-column, high write throughput) is preferred over a relational DB for the timeline store specifically."
+                ],
+                guesstimates: ["100M DAU", "10M posts/day", "1B feed views/day", "Read:Write ratio 100:1", "Peak Fanout: Millions of writes/sec (for celebrities)"],
+                securityConsiderations: [
+                    "Enforce visibility/privacy rules (private accounts, blocked users) consistently at both fanout time and read time, not just one or the other.",
+                    "Run automated content moderation (AI/ML) on posts before or immediately after fanout to limit the spread of policy-violating content.",
+                    "Rate limit posting and engagement actions (likes/comments) per account to reduce spam and bot abuse.",
+                    "Signed, time-limited URLs for private/unlisted media stored in S3/GCS rather than permanently public object URLs.",
+                    "Audit and rate-limit the follow/unfollow graph mutation endpoints to prevent follower-count manipulation abuse."
+                ],
+                costOptimization: [
+                    "Skip full fanout for low-engagement or dormant followers (accounts inactive for 90+ days) and resolve their feed on-demand instead.",
+                    "Compress and tier older timeline history to cheaper storage once it ages out of the 'recent feed' window.",
+                    "Cache computed feed pages briefly (a few seconds) to absorb rapid repeated refresh requests from the same user.",
+                    "Use approximate/denormalized counters (likes, comments) updated in batches rather than exact real-time counts for very high-traffic posts."
+                ],
+                commonMistakes: [
+                    "Building fanout as purely synchronous within the post-creation request — this makes posting slow and fragile for popular accounts.",
+                    "Not special-casing celebrity/high-follower accounts, leading to fanout storms that degrade the whole platform's cache infrastructure.",
+                    "Using offset-based pagination on a fast-growing timeline, causing skipped or duplicated items as new posts are inserted mid-scroll.",
+                    "Coupling feed ranking logic tightly to the read path instead of precomputing/caching a ranked feed, causing every scroll to re-run expensive scoring."
+                ],
+                capTheoremNotes: "The feed read path is AP (Availability over Consistency) — it's completely acceptable for a user to see a post a few seconds late, or in slightly different order across two requests, in exchange for the feed always loading fast. Post creation itself (the write to the Post DB) is closer to CP, since losing or corrupting a user's own post is not acceptable.",
+                alternativeApproaches: [
+                    "Pure fanout-on-read (pull model) for everyone — much simpler system, but feed reads become expensive aggregation queries that don't scale well for accounts following thousands of people.",
+                    "Pure fanout-on-write for everyone including celebrities — simplest mental model, but creates catastrophic write amplification for very high-follower accounts.",
+                    "Materialized view refreshed periodically instead of real-time fanout — reduces write load further, but adds noticeable staleness to the feed that most social products won't accept."
+                ]
             },
             {
                 id: "ratelimiter",
@@ -644,6 +1037,44 @@
                     "<b>Token Bucket:</b> Tokens drip into a bucket at a fixed rate; a request consumes a token. Allows short bursts of traffic as long as tokens are available.",
                     "<b>Leaky Bucket:</b> Requests are added to a bucket and 'leak' out at a constant rate. Smooths bursty traffic into an even, predictable outflow."
                 ],
+                serviceFlow: [
+                    { step: 1, from: "Client", to: "Load Balancer / Edge (CDN)", detail: "Request enters through the edge network which applies coarse WAF/DDoS filtering before any per-user logic runs." },
+                    { step: 2, from: "Edge", to: "API Gateway", detail: "Gateway pauses the request pipeline and delegates the allow/block decision to the Rate Limiter Service before touching any protected backend service." },
+                    { step: 3, from: "API Gateway", to: "Rate Limiter Service", detail: "Passes an identifying key (API key, user_id, or IP address) for lookup." },
+                    { step: 4, from: "Rate Limiter Service", to: "Local Rules Cache", detail: "Checks its in-process cache first for the applicable quota rule (e.g. '100 req/min for free tier') to avoid a network hop for static rule data." },
+                    { step: 5, from: "Rate Limiter Service", to: "Redis Cluster (Lua script)", detail: "Executes an atomic Lua script that reads the current counter, checks it against the limit, and increments it — all in one atomic round-trip, eliminating race conditions between concurrent requests for the same key." },
+                    { step: 6, from: "Redis Cluster", to: "Rate Limiter Service", detail: "Returns Allowed or Denied based on the chosen algorithm's evaluation (Token Bucket / Leaky Bucket / Sliding Window)." },
+                    { step: 7, from: "Rate Limiter Service", to: "API Gateway", detail: "On Allowed, Gateway forwards the request to the actual protected backend service." },
+                    { step: 8, from: "API Gateway", to: "Client", detail: "On Denied, Gateway short-circuits and returns HTTP 429 Too Many Requests directly, never touching the backend at all." },
+                    { step: 9, from: "Rate Limiter Service", to: "Analytics Pipeline (Kafka)", detail: "Throttled request events are streamed asynchronously for abuse-pattern analysis and adaptive limit tuning — never on the hot path." }
+                ],
+                componentImportance: [
+                    { name: "Atomic Lua Script on Redis", why: "Rate limiting requires a read-check-increment sequence to be atomic; without it, two concurrent requests could both read the same counter value and both be allowed, exceeding the limit.", ifMissing: "Under concurrent load, race conditions would let more requests through than the configured limit — the entire point of the rate limiter would be undermined." },
+                    { name: "Local Rules Cache", why: "Rule definitions (quota per tier) rarely change but are checked on every single request; caching them locally avoids a network round-trip purely for static config.", ifMissing: "Every request would need an extra network call just to know what the limit even is, doubling the latency cost of rate limiting itself." },
+                    { name: "Redis as a Centralized Counter Store", why: "Multiple API Gateway/app instances need to agree on the SAME count for a given user — a local in-memory counter per instance would let users bypass limits by hitting different servers.", ifMissing: "A user could trivially exceed their quota by spreading requests across different backend instances, each with its own uncoordinated counter." },
+                    { name: "Fail-Open/Fail-Closed Policy on Redis Failure", why: "When the counter store itself is unavailable, the system must have an explicit decision: block everything (safe but hurts availability) or allow everything (available but unprotected).", ifMissing: "An undefined failure mode could silently disable rate limiting during exactly the kind of infrastructure stress event when abuse protection matters most." }
+                ],
+                dbSchema: [
+                    { table: "rule_configs", fields: "id (PK), user_id (FK), api_endpoint, rate_limit_count, time_window_seconds" },
+                    { table: "usage_logs", fields: "id (PK), rule_id (FK), timestamp, ip_address, request_id" },
+                    { table: "redis_keys (pattern)", fields: "user:quota:<rule_id> — per-user counter; client:ip:<ip_address>:window — per-IP sliding window bucket" }
+                ],
+                scalingStrategy: [
+                    "Redis Cluster is sharded by key (user_id/IP) so counter operations distribute across nodes rather than bottlenecking on a single instance.",
+                    "Rate limiter service instances are stateless and horizontally scaled behind the API Gateway — they only coordinate through Redis, never with each other directly.",
+                    "Rule/quota configuration changes propagate via a lightweight pub/sub or periodic cache refresh so gateway nodes don't need a hard dependency on the config DB for every request.",
+                    "Global limits (e.g. platform-wide quota) vs. local/per-node limits are a deliberate architectural choice — local limits are faster but less precise, global limits are precise but require the centralized Redis round-trip."
+                ],
+                failureScenarios: [
+                    { scenario: "Redis cluster node fails mid-request.", mitigation: "Redis Cluster failover promotes a replica automatically; a brief window of inconsistent counting is preferred over blocking all traffic, and the impact is bounded since counters reset each time window anyway." },
+                    { scenario: "Clock drift between distributed nodes affects sliding-window accuracy.", mitigation: "Using Redis's own server time (rather than each application node's local clock) for the Lua script's time calculations keeps the window calculation consistent regardless of client-side clock skew." },
+                    { scenario: "A sudden traffic spike threatens to overload the Rate Limiter Service itself.", mitigation: "The rate limiter's own endpoints are protected by coarse-grained, cheaper local checks (e.g. simple per-node connection limits) so the fine-grained Redis-backed limiter doesn't become the next bottleneck." }
+                ],
+                tradeoffs: [
+                    "Token Bucket allows bursts (good UX for legitimate spiky clients) but is more permissive to abuse during the burst window than Leaky Bucket.",
+                    "Leaky Bucket produces perfectly smooth outbound traffic but can feel unfair to a legitimate client that needs to send a quick burst (e.g. batch upload).",
+                    "Centralizing counters in Redis adds a network hop to every request for accuracy; a purely local/per-node counter would be faster but allow limit bypass via multiple nodes — most systems accept the Redis hop as the right trade."
+                ],
                 keyConsiderations: [
                     "Algorithm selection: Token Bucket (bursty traffic) vs. Leaky Bucket (even traffic)",
                     "Distributed counting scalability across many Redis/gateway nodes",
@@ -655,7 +1086,36 @@
                     "Preventing the rate limiter itself from becoming an overloaded bottleneck"
                 ],
                 metrics: ["Target Latency (<2ms)", "QPS per Redis Node (10,000+)", "Throttled Request Rate (429s)", "Redis Cluster Failover Time", "Rule Cache Hit Ratio"],
-                guesstimates: ["1B requests per day", "Target Latency < 2ms", "10,000+ QPS per Redis Node", "Negligible storage (keys expire)", "High network throughput"]
+                interviewTips: [
+                    "Always name-drop the atomicity requirement (Lua script / MULTI-EXEC) — this is the detail that separates a correct rate limiter design from a naive one with race conditions.",
+                    "Compare at least two algorithms (Token Bucket vs. Leaky Bucket vs. Sliding Window Log/Counter) and explain the traffic-shape trade-off between them.",
+                    "Discuss fail-open vs. fail-closed explicitly when Redis is unavailable — interviewers specifically probe this edge case."
+                ],
+                guesstimates: ["1B requests per day", "Target Latency < 2ms", "10,000+ QPS per Redis Node", "Negligible storage (keys expire)", "High network throughput"],
+                securityConsiderations: [
+                    "Rate limit by authenticated identity (API key/user ID) where possible, since raw IP-based limiting is trivially bypassed via proxies/VPNs.",
+                    "Protect the rate limiter's own admin/config endpoints (rule creation) with strict auth — an attacker who can rewrite rules can disable protection entirely.",
+                    "Apply a coarse, cheap network-layer rate limit (WAF/DDoS layer) before the fine-grained, more expensive Redis-backed check, as defense in depth.",
+                    "Avoid leaking exact quota/remaining-count details in error responses to unauthenticated callers, which can help attackers time abuse around limits."
+                ],
+                costOptimization: [
+                    "Use in-memory local caching of rule configs to cut down on redundant Redis round-trips for static data.",
+                    "Choose a Sliding Window Counter (approximate) over Sliding Window Log (exact, but stores every timestamp) for high-volume keys to save memory.",
+                    "Set aggressive TTLs on Redis counter keys so idle users don't accumulate stale keys indefinitely.",
+                    "Co-locate the rate limiter's Redis cluster in the same region/AZ as the API Gateway to minimize the added network latency per request."
+                ],
+                commonMistakes: [
+                    "Implementing the read-check-increment sequence as three separate Redis calls instead of one atomic Lua script — this reintroduces the exact race condition the rate limiter exists to prevent.",
+                    "Rate limiting only at a single layer (e.g. only the CDN) instead of defense-in-depth across edge, gateway, and service layers.",
+                    "Using wall-clock time from the application server instead of Redis's own time source, causing skew across nodes with unsynchronized clocks.",
+                    "Not defining an explicit fail-open vs. fail-closed policy for when the Redis cluster itself is unavailable."
+                ],
+                capTheoremNotes: "Rate limiters typically favor Availability (AP) — during a Redis partition, most systems choose to fail open (allow requests through) rather than fail closed (block all traffic), since blocking every user due to an infrastructure hiccup is usually worse than briefly under-enforcing quotas. Security-critical endpoints may instead choose to fail closed, accepting reduced availability for stronger protection.",
+                alternativeApproaches: [
+                    "Fully local, per-node counters (no centralized Redis) — near-zero latency overhead, but a user can trivially exceed the global limit by spreading requests across nodes.",
+                    "Sliding Window Log (store every request timestamp) — perfectly accurate but far more memory-intensive than Token Bucket or approximate Sliding Window Counter.",
+                    "Client-side rate limiting hints (e.g. Retry-After headers) combined with server-side enforcement — improves UX by letting well-behaved clients self-throttle, but can't be relied upon alone for protection."
+                ]
             },
             {
                 id: "ticket",
@@ -675,6 +1135,52 @@
                     "<b>Relational DB (MySQL/PostgreSQL):</b> Ensures ACID properties so that double-booking at the DB level is mathematically impossible.",
                     "<b>CDN:</b> Serves the heavy graphical assets for venue seating charts."
                 ],
+                serviceFlow: [
+                    { step: 1, from: "User", to: "Search Service", detail: "Browses shows/movies; query hits Elasticsearch which indexes Shows, Movies, Venues, and Events for fast spatial/temporal filtering." },
+                    { step: 2, from: "User", to: "Show Service", detail: "Selects a specific show/showtime; loads full details including the venue seat map (heavily cached via CDN since layouts rarely change)." },
+                    { step: 3, from: "User", to: "Seat Inventory Service", detail: "Selects specific seats and hits 'Book'; this is the critical concurrency-sensitive path." },
+                    { step: 4, from: "Seat Inventory Service", to: "Redis (Seat Locks)", detail: "Attempts an atomic SETNX (or equivalent) per seat_id with a TTL (e.g. 5-10 min); if ANY requested seat is already locked, the whole request fails fast and the user is shown updated availability." },
+                    { step: 5, from: "Seat Inventory Service", to: "Booking Service", detail: "On successful lock, hands off a Lock ID; Booking Service creates a booking row with status PENDING." },
+                    { step: 6, from: "Booking Service", to: "Booking DB", detail: "Persists the PENDING booking with references to the locked seats before the user even reaches the payment screen — ensures traceability even if payment is abandoned." },
+                    { step: 7, from: "User", to: "Payment Service", detail: "Redirected to complete payment against the held seats, exactly like the Hotel Booking saga." },
+                    { step: 8, from: "Payment Service", to: "Payment Gateway (Razorpay/Stripe/PayU)", detail: "Processes the charge; success or failure result flows back to the Booking Service." },
+                    { step: 9, from: "Booking Service", to: "Booking DB + Kafka (Booking Events)", detail: "On success, updates the booking to CONFIRMED, generates the ticket/QR code, and publishes an event for downstream consumers." },
+                    { step: 10, from: "Notification Service", to: "User", detail: "Sends the confirmation and QR ticket via Email/SMS/Push, and the ticket asset is stored in Object Storage (S3)." },
+                    { step: 11, from: "Redis TTL Expiry", to: "Seat Inventory Service", detail: "If payment fails or the user abandons checkout, the lock's TTL simply expires — no explicit rollback code needed, the seat becomes bookable again automatically." }
+                ],
+                componentImportance: [
+                    { name: "Redis SETNX Seat Lock with TTL", why: "This is the single mechanism preventing two users from both 'winning' the same seat during the flash-sale-like concurrency of popular show releases.", ifMissing: "Thousands of concurrent requests for the same seat would race past a naive availability check, and multiple users could be issued the same seat — a booking-system-breaking bug." },
+                    { name: "PENDING Booking State (written before payment)", why: "Creates an auditable record the moment a user commits to a seat, so even abandoned checkouts are traceable, and support/ops can see exactly what happened to any given seat.", ifMissing: "There'd be no record of 'in-flight' bookings, making it hard to diagnose disputes like 'I was charged but got no ticket'." },
+                    { name: "Elasticsearch for Search", why: "Show/venue/movie search involves combined text, location, and time-window filtering that relational databases handle poorly at high query volume.", ifMissing: "Search latency would degrade sharply during peak browsing hours (e.g. weekend evenings), directly hurting conversion." },
+                    { name: "TTL Expiry as Automatic Rollback", why: "Avoids writing complex compensating-transaction/rollback logic for the common case of abandoned or failed payments — the lock just disappears on its own.", ifMissing: "Engineers would need to build and maintain explicit cleanup jobs to reclaim seats stuck in limbo from abandoned carts, adding real operational risk." },
+                    { name: "Read Replicas for the Booking/Show DB", why: "Browsing and show detail views vastly outnumber actual booking writes; replicas keep read load off the primary that must stay fast for the booking write path.", ifMissing: "Heavy browsing traffic could compete with booking writes for the same DB resources, slowing down the critical seat-lock-to-payment path exactly when it matters most (peak demand)." }
+                ],
+                dbSchema: [
+                    { table: "users", fields: "user_id (PK), name, email, mobile" },
+                    { table: "shows", fields: "show_id (PK), movie_id, title, language" },
+                    { table: "venues", fields: "venue_id (PK), name, location" },
+                    { table: "showtimes", fields: "showtime_id (PK), show_id (FK), venue_id (FK), start_time" },
+                    { table: "seats", fields: "seat_id (PK), showtime_id (FK), seat_number, seat_type" },
+                    { table: "bookings", fields: "booking_id (PK), user_id (FK), showtime_id (FK), total_amount, status" },
+                    { table: "payments", fields: "payment_id (PK), booking_id (FK), amount, payment_status" }
+                ],
+                scalingStrategy: [
+                    "Seat locks are partitioned naturally by showtime_id, so hot-key contention is scoped to a single show's seats rather than the whole platform.",
+                    "Elasticsearch and CDN absorb the vast majority of browsing traffic, leaving the primary DB free to focus on the write-heavy booking path.",
+                    "Multi-AZ and multi-region deployment for high availability, with the Redis seat-lock cluster also multi-AZ to survive a single zone failure without losing in-flight locks.",
+                    "Kafka buffers booking/payment/notification events so downstream consumers (tickets, notifications, analytics) scale independently of booking throughput spikes."
+                ],
+                failureScenarios: [
+                    { scenario: "Thousands of users click 'Book' on the same 10 seats simultaneously (flash-sale scenario).", mitigation: "Redis's single-threaded atomic SETNX guarantees only the first request per seat_id succeeds; all others get an immediate, clear 'seat unavailable' response rather than a race condition." },
+                    { scenario: "Payment succeeds but the confirmation write to the Booking DB fails.", mitigation: "The event-driven booking flow retries the confirmation write using the booking_id as an idempotency key; if it still fails, the payment is flagged for automatic refund rather than leaving a paid-but-unconfirmed booking." },
+                    { scenario: "Redis cluster holding seat locks has a partial outage.", mitigation: "Because locks are short-TTL and non-authoritative (the DB booking record is authoritative), a Redis blip at worst causes some seats to become temporarily bookable again — a minor, self-healing inconvenience rather than data corruption." },
+                    { scenario: "User abandons checkout after locking seats but before paying.", mitigation: "No action needed — the TTL naturally expires and the seat returns to the available pool without any manual intervention or cleanup job." }
+                ],
+                tradeoffs: [
+                    "A 5-10 minute TTL balances giving users enough time to pay against holding inventory hostage too long during high-demand releases — this value is usually tuned based on real checkout-completion-time data.",
+                    "Writing a PENDING booking before payment completes adds a bit of write overhead per attempt, but is worth it for traceability and dispute resolution.",
+                    "Optimistic seat locking (fail fast on conflict) is chosen over pessimistic queuing (wait-in-line) because it gives clearer, faster feedback to users during high-contention releases, at the cost of more 'sorry, unavailable' messages."
+                ],
                 keyConsiderations: [
                     "High-concurrency seat locking using Redis with TTL",
                     "Idempotent APIs for booking & payment to survive retries",
@@ -688,7 +1194,37 @@
                     "Observability: logs, metrics, tracing, alerts"
                 ],
                 metrics: ["Requests per Second (RPS)", "P95/P99 Latency", "Seat Lock Success Rate", "Booking Success Rate", "Payment Success Rate", "Cancellation Rate", "Queue Lag (Kafka)", "Active Users", "System Error Rate", "Infrastructure Health"],
-                guesstimates: ["5M DAU", "Spike Traffic: 100k requests/sec (for popular shows)", "Heavy Read, Spiky Write", "Booking flow completion ~ 5 mins", "Storage: 1TB/year"]
+                interviewTips: [
+                    "This is one of the most common 'hot key contention' interview prompts — always lead with why a plain DB row lock is too slow here compared to Redis's in-memory atomic ops.",
+                    "Compare with the Hotel Booking system: same TTL-lock pattern, but ticket booking has much sharper contention on a single hot resource (200 seats, one showtime) vs. hotel's broader inventory.",
+                    "Mention queueing/virtual-waiting-room patterns as an alternative or complement to locking for extremely high-demand releases (e.g. a huge concert on-sale)."
+                ],
+                guesstimates: ["5M DAU", "Spike Traffic: 100k requests/sec (for popular shows)", "Heavy Read, Spiky Write", "Booking flow completion ~ 5 mins", "Storage: 1TB/year"],
+                securityConsiderations: [
+                    "Rate limit and CAPTCHA-gate the seat-selection endpoint during high-demand on-sales to deter bot-driven scalping.",
+                    "Never trust client-supplied seat prices — always re-price server-side against the authoritative Pricing/Offer Service at booking time.",
+                    "Encrypt and tokenize payment details; QR/ticket codes should be cryptographically signed to prevent forged tickets.",
+                    "Restrict bulk seat-lock attempts per user/session to prevent a single actor from locking out an entire section.",
+                    "Audit-log every seat lock, release, and booking state transition for fraud and chargeback investigation."
+                ],
+                costOptimization: [
+                    "Cache static venue seat-map layouts at the CDN since they almost never change per venue.",
+                    "Auto-scale the Seat Inventory Service specifically ahead of known on-sale times (scheduled scaling) rather than reactive-only scaling.",
+                    "Batch low-priority background jobs (report generation, analytics) away from peak on-sale windows.",
+                    "Use read replicas for the Show/Search services so the booking-critical primary DB isn't shared with high-volume browsing traffic."
+                ],
+                commonMistakes: [
+                    "Locking seats individually in a loop instead of atomically as a batch, which can leave a user holding some but not all of their selected seats.",
+                    "Setting the seat-lock TTL too generously during high-demand on-sales, artificially reducing available inventory for everyone else.",
+                    "Not re-validating seat availability at the final payment-confirmation step, trusting a lock made minutes earlier without a final check.",
+                    "Underestimating traffic spikes at the exact moment tickets go on sale, leading to thundering-herd load on the Seat Inventory Service."
+                ],
+                capTheoremNotes: "The seat-locking and booking-confirmation path is firmly CP (Consistency over Availability) — briefly rejecting a booking attempt is far preferable to letting two people 'win' the same seat. The show/venue browsing path is AP, favoring fast, always-available search even if venue details are a few minutes stale.",
+                alternativeApproaches: [
+                    "A virtual waiting room / queueing system in front of the booking flow for extreme-demand on-sales — smooths load but adds a UX step most systems only use for the biggest events.",
+                    "Pessimistic per-seat DB row locks instead of Redis SETNX — conceptually simpler but far slower under the concurrency levels a popular on-sale generates.",
+                    "Reservation-less 'first payment wins' model (no seat lock at all) — avoids lock-management complexity entirely, but risks charging multiple users for the same seat and needing refunds, which is a worse user experience."
+                ]
             },
             {
                 id: "ride",
@@ -708,6 +1244,51 @@
                     "<b>Kafka (Event Bus):</b> Buffers high-velocity location pings so backend databases don't get overwhelmed.",
                     "<b>PostgreSQL (Trip Data):</b> Stores the persistent state of the ride, billing details, and user profiles."
                 ],
+                serviceFlow: [
+                    { step: 1, from: "Driver App", to: "WebSocket Gateway", detail: "Sends a GPS ping every 3-5 seconds over a persistent connection — far cheaper than repeated HTTP requests." },
+                    { step: 2, from: "WebSocket Gateway", to: "Kafka (Location Updates)", detail: "Every ping is published to a topic rather than written directly to a database, decoupling the extremely high-frequency stream from any single downstream consumer." },
+                    { step: 3, from: "Location Service", to: "Redis (Geospatial Index)", detail: "Consumes the Kafka stream and updates each driver's position in a geohash/quadtree-indexed structure, enabling fast radius queries." },
+                    { step: 4, from: "Rider App", to: "Trip Service / Matching Service", detail: "Rider requests a ride; Matching Service queries the Redis Geo-Index for available drivers within ~3 miles." },
+                    { step: 5, from: "Matching Service", to: "Redis / ETA Service", detail: "Ranks candidate drivers by proximity and estimated ETA (factoring in traffic/routing), not just raw distance." },
+                    { step: 6, from: "Matching Service", to: "Driver App (via WebSocket)", detail: "Pings the top-ranked driver with a 10-second accept window; on timeout or decline, automatically moves to the next candidate." },
+                    { step: 7, from: "Trip Service", to: "PostgreSQL (Trip DB)", detail: "On acceptance, creates the trip record as the durable source of truth for the ride's lifecycle (Started → Ongoing → Completed)." },
+                    { step: 8, from: "Driver App", to: "Rider App (via WebSocket Gateway)", detail: "For the trip duration, the driver's location updates are pushed directly to the rider's open WebSocket connection, powering the live car animation — this bypasses the database read path entirely for real-time UX." },
+                    { step: 9, from: "Trip Service", to: "Payment Service", detail: "On trip completion, triggers a charge against the rider and schedules an async payout to the driver." },
+                    { step: 10, from: "Payment Service", to: "Kafka (Payment Events) / Accounting & Reconciliation", detail: "Publishes payment events for receipt generation (stored in S3) and downstream reconciliation." },
+                    { step: 11, from: "Notification Service", to: "Rider & Driver Apps", detail: "Trip status changes (matched, arriving, completed) trigger push/SMS notifications via a dedicated worker, decoupled from the real-time WebSocket path." }
+                ],
+                componentImportance: [
+                    { name: "WebSocket Gateway (persistent connections)", why: "Polling via repeated HTTP requests for both GPS updates and live trip tracking would be far too slow and resource-heavy at this update frequency and connection count.", ifMissing: "Millions of drivers/riders re-establishing HTTP connections every few seconds would overwhelm load balancers and add noticeable lag to the 'live car on map' experience." },
+                    { name: "Kafka Buffer for Location Updates", why: "GPS pings arrive at extremely high, bursty volume; writing each one synchronously to a database would create an unsustainable write bottleneck.", ifMissing: "The location database (or Redis directly) would need to absorb the full raw write throughput of every active driver's GPS stream, with no buffer to smooth spikes or allow consumer backpressure." },
+                    { name: "Redis Geospatial Index", why: "Finding 'all drivers within 3 miles' is a spatial query that relational databases handle poorly at this frequency and volume; Redis GEO commands are purpose-built and extremely fast for this.", ifMissing: "Nearby-driver lookups (the core of the matching algorithm) would be slow, directly increasing rider wait times for a match." },
+                    { name: "Decoupling Location Stream from Trip State", why: "A driver's location updates constantly (many times a minute) while trip state changes rarely (a handful of times per trip) — mixing these paths would mean high-frequency, low-value data competing for the same resources as low-frequency, high-value data.", ifMissing: "The trip-state critical path (matching, payment) could get bogged down by an unrelated flood of raw GPS pings sharing the same infrastructure." },
+                    { name: "PostgreSQL as Trip Source of Truth", why: "Trip lifecycle and billing details need ACID guarantees — a trip must never be double-billed or lost mid-state.", ifMissing: "Using only a cache/NoSQL store for trip state risks losing or corrupting the record of an in-progress (and possibly already-charged) ride." }
+                ],
+                dbSchema: [
+                    { table: "users (riders)", fields: "user_id (PK), name, phone, email" },
+                    { table: "drivers", fields: "driver_id (PK), name, phone, vehicle_info, rating" },
+                    { table: "trips", fields: "trip_id (PK), rider_id (FK), driver_id (FK), status, start_time, end_time, fare" },
+                    { table: "locations (geospatial, Redis)", fields: "driver_id (key), lat, lng, geohash, updated_at" },
+                    { table: "payments", fields: "payment_id (PK), trip_id (FK), amount, status" },
+                    { table: "ratings", fields: "id (PK), trip_id (FK), rated_by, rating, comment" }
+                ],
+                scalingStrategy: [
+                    "Location Service and Redis Geo-Index are sharded geographically (by city/region) so a spike in one city's ride demand doesn't affect matching performance elsewhere.",
+                    "WebSocket Gateway nodes are horizontally scaled with sticky routing so a given driver/rider's connection stays on one node for the trip duration, minimizing state-sync overhead.",
+                    "Kafka partitioning by driver_id or geo-region lets location-update consumers scale in parallel while preserving reasonable per-driver ordering.",
+                    "Trip DB is sharded/read-replicated regionally, with a multi-region + DR setup for disaster recovery given the mission-critical nature of active trips and payments."
+                ],
+                failureScenarios: [
+                    { scenario: "A driver's GPS connection drops mid-trip.", mitigation: "The rider app shows the last-known location with a 'signal lost' indicator rather than freezing silently; the driver app auto-reconnects the WebSocket and resumes streaming once connectivity returns." },
+                    { scenario: "The top-matched driver doesn't respond within the 10-second window.", mitigation: "Matching Service automatically falls through to the next-ranked candidate driver — the rider never has to manually retry the request." },
+                    { scenario: "Kafka experiences a partition/lag spike in the location-update topic.", mitigation: "Location Service backpressure means the Geo-Index has slightly stale positions during the lag, which is an acceptable, self-correcting degradation rather than a hard failure — matching still works, just with marginally older location data." },
+                    { scenario: "Trip Service crashes after a trip is marked completed but before payment is triggered.", mitigation: "The completion event is durably recorded (Kafka Trip Events); a reconciliation worker periodically checks for completed trips with no corresponding payment event and re-triggers the charge, using the trip_id as an idempotency key." }
+                ],
+                tradeoffs: [
+                    "Persistent WebSocket connections are more resource-intensive per-connection on the server side than stateless HTTP, but are necessary to hit the real-time UX bar for live tracking.",
+                    "Decoupling location updates via Kafka introduces a small amount of lag (typically sub-second) between actual GPS position and what's reflected in the matching index — an acceptable trade for system stability under load.",
+                    "Geographic sharding improves scalability and fault isolation but adds complexity for cross-region trips (e.g. airport pickups near a region boundary) that need careful boundary handling."
+                ],
                 keyConsiderations: [
                     "Microservices with independent scaling per domain (matching, trip, payment)",
                     "Event-driven architecture using Kafka/Pulsar for location & trip events",
@@ -722,7 +1303,37 @@
                     "Multi-region deployment & backup for disaster recovery"
                 ],
                 metrics: ["Request Latency (P50/P95/P99)", "Error Rate", "Active Rides", "Driver Utilization", "Cancellation Rate", "Payment Success Rate"],
-                guesstimates: ["2M DAU, 1M rides/day", "Location Updates: 10k/sec", "Sub-second matching latency", "High throughput event ingestion", "Storage: Petabytes (Historical GPS tracks)"]
+                interviewTips: [
+                    "Highlight the split between the high-frequency, loosely-consistent location stream and the low-frequency, strongly-consistent trip/payment state — this separation is the crux of the design.",
+                    "Discuss geohashing or quadtrees briefly as the underlying technique that makes 'find nearby drivers' an efficient query instead of a full scan.",
+                    "Mention surge pricing as a natural extension: it's essentially a real-time supply/demand ratio computed from the same geo-index data, published via the Surge Service."
+                ],
+                guesstimates: ["2M DAU, 1M rides/day", "Location Updates: 10k/sec", "Sub-second matching latency", "High throughput event ingestion", "Storage: Petabytes (Historical GPS tracks)"],
+                securityConsiderations: [
+                    "Verify driver identity/KYC (Aadhar/Onfido/Jumio) before allowing a driver account to go online and receive ride requests.",
+                    "Encrypt location data in transit and restrict access to raw historical GPS tracks to authorized services only.",
+                    "Rate limit ride-request creation per account to prevent abuse (fake ride requests to harass drivers).",
+                    "Mask exact rider/driver contact details behind a proxy number/masked calling system during an active trip.",
+                    "Sign and validate WebSocket messages to prevent spoofed location updates from a compromised or jailbroken client."
+                ],
+                costOptimization: [
+                    "Reduce GPS ping frequency dynamically based on driver state (less frequent when idle/parked, more frequent when actively driving a trip).",
+                    "Use geohash-based regional sharding so infrequently-active regions don't consume the same always-on compute as high-density cities.",
+                    "Archive historical GPS tracks to cold storage after the active-dispute window rather than keeping years of raw pings hot.",
+                    "Batch non-urgent analytics events instead of processing every location ping individually in the warehouse pipeline."
+                ],
+                commonMistakes: [
+                    "Writing every GPS ping directly and synchronously to the primary database instead of buffering through Kafka — this doesn't scale past a small fleet of drivers.",
+                    "Mixing the high-frequency location stream and low-frequency trip-state stream onto the same queue/topic, causing trip-critical events to queue behind routine pings.",
+                    "Not handling driver decline/timeout gracefully, leaving riders stuck waiting indefinitely instead of automatically falling through to the next candidate.",
+                    "Computing ETA using straight-line distance instead of actual routing/traffic data, leading to poor driver ranking and rider experience."
+                ],
+                capTheoremNotes: "Location tracking is AP (Availability over Consistency) — a slightly stale driver position is a normal, acceptable trade-off for keeping the whole ingestion pipeline fast and resilient. Trip state and payment are CP — an ambiguous or lost trip/payment record is not acceptable, so those writes favor strict consistency even if it costs a bit of latency.",
+                alternativeApproaches: [
+                    "Client-side driver-to-rider direct P2P location updates (bypassing the server) — lower latency, but loses centralized matching/tracking capability and is much harder to secure.",
+                    "Polling instead of WebSockets for location — simpler infrastructure, but adds latency and wastes bandwidth/battery on both driver and rider devices.",
+                    "A single global geo-index instead of regional sharding — simpler to reason about, but doesn't scale as cleanly and creates a single point of contention for matching queries worldwide."
+                ]
             },
             {
                 id: "url",
@@ -746,6 +1357,48 @@
                     "<b>Snowflake ID:</b> 41 bits timestamp + 10 bits machine ID + 12 bits sequence ID → globally unique, k-sortable 64-bit integer generated without a DB round-trip.",
                     "<b>Base62 Encoding:</b> Encodes the integer using [0-9, a-z, A-Z] to produce a short, URL-safe 7-character code."
                 ],
+                serviceFlow: [
+                    { step: 1, from: "User", to: "API Gateway", detail: "Submits a long URL to be shortened (write path) via a POST request." },
+                    { step: 2, from: "API Gateway", to: "URL Shortening Service", detail: "Routes to a stateless shortening service instance behind the load balancer." },
+                    { step: 3, from: "URL Shortening Service", to: "Short Code Generator (Snowflake)", detail: "Requests a new globally unique 64-bit ID composed of a timestamp, machine ID, and sequence number — no coordination with other nodes needed." },
+                    { step: 4, from: "URL Shortening Service", to: "Base62 Encoder", detail: "Encodes the 64-bit integer into a compact ~7-character alphanumeric string, which becomes the short code." },
+                    { step: 5, from: "URL Shortening Service", to: "Idempotency Service", detail: "Checks whether this exact long_url has already been shortened by this user/context to avoid generating duplicate short codes for the same destination." },
+                    { step: 6, from: "URL Shortening Service", to: "Primary Database (PostgreSQL)", detail: "Persists the {short_code, long_url} mapping as the durable source of truth." },
+                    { step: 7, from: "User", to: "Redirect Service", detail: "Later, clicks the short link (read path); request hits the API Gateway then the Redirect Service." },
+                    { step: 8, from: "Redirect Service", to: "Cache Cluster (Redis)", detail: "Looks up the short_code first in Redis — given the 100:1 read:write ratio, the vast majority of requests are resolved here in sub-millisecond time." },
+                    { step: 9, from: "Redirect Service", to: "Read Replica (on cache miss)", detail: "Falls back to a database read replica, then repopulates Redis with the result so subsequent requests for the same code hit the cache." },
+                    { step: 10, from: "Redirect Service", to: "User", detail: "Issues an HTTP 301/302 redirect to the resolved long URL — the actual redirect itself is nearly instantaneous once the URL is resolved." },
+                    { step: 11, from: "Redirect Service", to: "Kafka (Analytics Pipeline)", detail: "Fires a click event asynchronously (IP, user agent, referrer, timestamp) — this never blocks or slows down the redirect response itself." },
+                    { step: 12, from: "Analytics Service", to: "Data Warehouse", detail: "Stream-processes click events (Flink/Spark) into aggregated geographic/temporal link analytics for dashboards." }
+                ],
+                componentImportance: [
+                    { name: "Snowflake-style Distributed ID Generator", why: "A simple DB auto-increment column becomes a single point of write contention at high scale, and coordinating unique IDs across multiple DB shards is otherwise painful.", ifMissing: "ID generation would either bottleneck on a single DB sequence or risk collisions across distributed nodes trying to generate IDs independently." },
+                    { name: "Base62 Encoding", why: "Produces short, human-shareable, URL-safe codes from a large integer space — this is purely a UX/practicality layer on top of the ID generator.", ifMissing: "Short URLs would need to expose the raw 64-bit integer or use a longer, less user-friendly encoding scheme." },
+                    { name: "Redis Cache-First Redirect Path", why: "With a 100:1 read:write ratio, optimizing the redirect (read) path is by far the highest-leverage thing this system can do — Redis makes the overwhelming majority of requests resolve in-memory.", ifMissing: "Every single redirect click would hit the primary database, and at billions of redirects a month, that read load alone would require a database cluster far larger than necessary." },
+                    { name: "Idempotency Check on URL Creation", why: "Without it, submitting the same long URL twice (e.g. a user double-clicking 'Shorten') creates two different short codes pointing to the same destination, wasting keyspace and fragmenting click analytics.", ifMissing: "The mapping table would accumulate duplicate entries for identical long URLs, and analytics for 'how many times was this URL shared' would be split across multiple short codes." },
+                    { name: "Async Analytics Pipeline (Kafka)", why: "Click tracking is valuable but not on the critical path — the user is waiting for their redirect, not for a click to be logged.", ifMissing: "Logging every click synchronously before redirecting would add unnecessary latency to the single most latency-sensitive operation in the whole system." }
+                ],
+                dbSchema: [
+                    { table: "urls", fields: "id (PK), short_code (unique), long_url, user_id (nullable), created_at, expires_at (nullable), click_count, is_active" },
+                    { table: "clicks", fields: "id (PK), short_code, clicked_at, ip_address, user_agent, country, referer" }
+                ],
+                scalingStrategy: [
+                    "Redirect Service is completely stateless and horizontally scaled behind a load balancer — it's the highest-traffic component and the cheapest to scale out.",
+                    "Cache Cluster (Redis) is the true workhorse for read scaling; targeting a >95% cache hit ratio keeps almost all traffic away from the database entirely.",
+                    "Database read replicas absorb the remaining cache-miss traffic, while the primary handles only the comparatively rare write path.",
+                    "CDN can front the redirect endpoint itself for globally distributed low-latency access, especially for extremely popular short links."
+                ],
+                failureScenarios: [
+                    { scenario: "Two users submit the exact same long URL at nearly the same instant.", mitigation: "A unique constraint on long_url (or an idempotency check before insert) ensures only one short_code is created; the second request is served the existing mapping instead of creating a duplicate." },
+                    { scenario: "Redis cache cluster fails entirely.", mitigation: "Redirect Service falls back to database read replicas directly; latency degrades but the system remains functionally correct — cache is an optimization layer, not the source of truth." },
+                    { scenario: "The ID generator's machine-ID assignment collides (rare misconfiguration).", mitigation: "Machine IDs are allocated centrally/deterministically (e.g. via ZooKeeper or a config service) at startup specifically to prevent this class of bug from ever reaching production." },
+                    { scenario: "A short code goes viral and receives extreme traffic (hot key).", mitigation: "Since it's cached in Redis after the first request, subsequent requests are served from memory regardless of volume; if needed, that specific key can also be replicated across multiple cache nodes to spread load further." }
+                ],
+                tradeoffs: [
+                    "301 (permanent) redirects let browsers cache the redirect locally, reducing server load further, but make it impossible to later change where a short link points — 302 is used when the destination might change.",
+                    "Base62 (case-sensitive) packs more entropy per character than Base36, yielding shorter codes, at the minor cost of codes being harder to read aloud or type manually.",
+                    "Optimizing overwhelmingly for the read path (cache-first) means the write path is comparatively simple and less optimized — an intentional trade given the 100:1 usage skew."
+                ],
                 keyConsiderations: [
                     "Globally unique, k-sortable ID generation (Snowflake) for scale",
                     "Base62 encoding for short & URL-safe codes",
@@ -759,9 +1412,40 @@
                     "High availability with multi-AZ deployment"
                 ],
                 metrics: ["Redirect Latency", "Cache Hit Ratio (>95% target)", "Read:Write Ratio", "301/302 Redirect Rate", "Click Analytics Throughput"],
-                guesstimates: ["10M URLs generated/month", "1B redirects/month", "Read:Write ratio 100:1", "Cache Hit Ratio target > 95%", "Storage: ~5TB for 5 years"]
+                interviewTips: [
+                    "This is the canonical 'design a system dominated by read:write skew' interview question — always lead with the 100:1 ratio and how every design decision follows from optimizing reads.",
+                    "Be ready to compare ID generation strategies: DB auto-increment (simple, doesn't scale), UUID (scales, but not short/sortable), and Snowflake (scales AND stays compact/sortable) — explain why Snowflake wins here.",
+                    "Discuss custom alias support (vanity URLs) as a natural extension that adds a uniqueness-check requirement on top of the base design."
+                ],
+                guesstimates: ["10M URLs generated/month", "1B redirects/month", "Read:Write ratio 100:1", "Cache Hit Ratio target > 95%", "Storage: ~5TB for 5 years"],
+                securityConsiderations: [
+                    "Validate submitted long URLs against a malware/phishing blocklist before shortening, to avoid the service being weaponized for scams.",
+                    "Rate limit URL creation per user/IP to prevent short-code keyspace exhaustion attacks and spam link generation.",
+                    "Make short codes non-sequential/non-guessable (Snowflake+Base62 naturally achieves this) so private/unlisted links can't be enumerated.",
+                    "Support link expiration and revocation so abusive links can be disabled after the fact.",
+                    "Sanitize and log the referer/user-agent on redirect for abuse investigation without over-collecting unnecessary PII."
+                ],
+                costOptimization: [
+                    "Cache hit ratio is the primary cost lever — every 1% improvement meaningfully reduces database read load at this traffic volume.",
+                    "Use a lightweight redirect service (minimal framework overhead) since this is the highest-QPS component in the whole system.",
+                    "Batch analytics click events instead of writing one row per click synchronously to the operational database.",
+                    "Set a reasonable Redis TTL/eviction policy (LRU) so rarely-used short codes naturally age out of the cache in favor of hot ones."
+                ],
+                commonMistakes: [
+                    "Using a simple auto-increment counter for ID generation in a single-node setup — doesn't scale horizontally and becomes a single point of failure/bottleneck.",
+                    "Making the redirect path depend on a synchronous analytics write, adding unnecessary latency to the single most latency-sensitive operation in the system.",
+                    "Not enforcing uniqueness on long_url, leading to duplicate short codes for identical destinations and fragmented click analytics.",
+                    "Choosing 301 (permanently cached by browsers) for links that might later need to be redirected elsewhere, making them effectively unchangeable."
+                ],
+                capTheoremNotes: "The redirect (read) path is strongly AP — availability and low latency matter far more than perfect consistency, so a cache slightly behind the database is completely acceptable. The URL creation (write) path leans CP for the uniqueness constraint on long_url, since allowing duplicate short codes for the same destination would be a data-quality bug.",
+                alternativeApproaches: [
+                    "Hash-based short codes (e.g. MD5/SHA truncated) instead of Snowflake+Base62 — simpler to implement, but requires collision handling and doesn't guarantee uniqueness without a DB check.",
+                    "Pre-generated pool of short codes handed out on request (like a ticket-dispenser pattern) instead of generating on-the-fly — avoids any generation latency, but adds the operational complexity of managing a pool.",
+                    "NoSQL-only storage (no relational DB) — scales writes more easily, but loses the straightforward uniqueness constraint enforcement that a relational unique index gives for free."
+                ]
             }
         ];
+
         const picker = document.getElementById('picker');
         const panel = document.getElementById('panel');
 
