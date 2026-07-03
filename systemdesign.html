@@ -1467,50 +1467,140 @@
         }
 
         function renderPanel(s) {
-            panel.innerHTML = `
+            let html = `
     <div class="panel-head">
       <h2>${s.name} <span style="color:var(--text-faint);font-weight:500;font-size:16px;">— ${s.tag}</span></h2>
       <span class="like">design goals below</span>
     </div>
     <div class="goals">
-      ${s.goals.map(g => `<span class="goal-chip">${g}</span>`).join('')}
+      ${(s.goals||[]).map(g => `<span class="goal-chip">${g}</span>`).join('')}
     </div>
     <div class="diagram-wrap">
       <img src="${s.img}" alt="${s.name} system design diagram" loading="lazy">
     </div>
     <div class="brief-grid">
-      <div class="brief-card">
+      <div class="brief-card" style="grid-column: 1 / -1;">
         <h3>What's going on</h3>
         <p>${s.overview}</p>
       </div>
-      <div class="brief-card">
+      <div class="brief-card" style="grid-column: 1 / -1;">
         <h3>How data flows</h3>
         <p>${s.dataFlow}</p>
       </div>
-      <div class="brief-card flow-card">
+      <div class="brief-card flow-card" style="grid-column: 1 / -1;">
         <h3>Request flow, simplified</h3>
         <div class="flow-steps">
-          ${s.flow.map((f, i) => (i > 0 ? '<span class="flow-arrow">→</span>' : '') + `<span class="flow-step">${f}</span>`).join('')}
+          ${(s.flow||[]).map((f, i) => (i > 0 ? '<span class="flow-arrow">→</span>' : '') + `<span class="flow-step">${f}</span>`).join('')}
         </div>
       </div>
-      <div class="brief-card flow-card">
+      <div class="brief-card flow-card" style="grid-column: 1 / -1;">
         <h3>Key idea to remember</h3>
         <p>${s.keyIdea}</p>
       </div>
       <div class="brief-card">
         <h3>System Components</h3>
         <ul>
-          ${s.components.map(c => `<li>${c}</li>`).join('')}
+          ${(s.components||[]).map(c => `<li>${c}</li>`).join('')}
         </ul>
-      </div>
+      </div>`;
+
+            // Helper function for simple lists
+            const renderList = (title, items) => {
+                if (!items || !items.length) return '';
+                return `
       <div class="brief-card">
-        <h3>Back-of-the-envelope / Guesstimates</h3>
-        <ul>
-          ${s.guesstimates.map(c => `<li>${c}</li>`).join('')}
+        <h3>${title}</h3>
+        <ul style="margin-top:8px; display:flex; flex-direction:column; gap:8px;">
+          ${items.map(i => `<li>${i}</li>`).join('')}
         </ul>
-      </div>
-    </div>
-  `;
+      </div>`;
+            };
+
+            html += renderList("Scaling Strategy", s.scalingStrategy);
+            html += renderList("Tradeoffs", s.tradeoffs);
+            html += renderList("Key Considerations", s.keyConsiderations);
+            html += renderList("Important Metrics", s.metrics);
+            html += renderList("Back-of-the-envelope / Guesstimates", s.guesstimates);
+            html += renderList("Security Considerations", s.securityConsiderations);
+            html += renderList("Cost Optimization", s.costOptimization);
+            html += renderList("Common Mistakes", s.commonMistakes);
+            html += renderList("Alternative Approaches", s.alternativeApproaches);
+            html += renderList("Interview Tips", s.interviewTips);
+
+            if (s.dbSchema && s.dbSchema.length) {
+                html += `
+      <div class="brief-card">
+        <h3>Database Schema</h3>
+        <div style="margin-top:10px; display:flex; flex-direction:column; gap:8px;">
+          ${s.dbSchema.map(d => `
+            <div>
+               <div style="font-family:monospace;font-weight:bold;color:var(--brand-primary);">${d.table}</div>
+               <div style="font-size:13px;color:var(--text-faint);">${d.fields}</div>
+            </div>
+          `).join('')}
+        </div>
+      </div>`;
+            }
+
+            if (s.serviceFlow && s.serviceFlow.length) {
+                html += `
+      <div class="brief-card" style="grid-column: 1 / -1;">
+        <h3>Detailed Service Flow</h3>
+        <div style="display:flex;flex-direction:column;gap:12px;margin-top:10px;">
+          ${s.serviceFlow.map(f => `
+             <div style="background:var(--bg-faint);padding:12px;border-radius:8px;border:1px solid var(--line);">
+               <div style="font-weight:bold;margin-bottom:4px;color:var(--brand-primary);display:flex;align-items:center;">
+                 <span style="display:inline-block;width:24px;height:24px;background:var(--brand-primary);color:var(--bg-dark);border-radius:50%;text-align:center;line-height:24px;margin-right:8px;font-size:12px;">${f.step}</span> 
+                 ${f.from} → ${f.to}
+               </div>
+               <div style="font-size:14px;color:var(--text-faint); margin-left:32px;">${f.detail}</div>
+             </div>
+          `).join('')}
+        </div>
+      </div>`;
+            }
+
+            if (s.componentImportance && s.componentImportance.length) {
+                html += `
+      <div class="brief-card" style="grid-column: 1 / -1;">
+        <h3>Component Importance & Failure Impact</h3>
+        <div style="display:flex;flex-direction:column;gap:12px;margin-top:10px;">
+          ${s.componentImportance.map(c => `
+             <div style="background:var(--bg-faint);padding:12px;border-radius:8px;border:1px solid var(--line);">
+               <div style="font-weight:bold;margin-bottom:6px;color:var(--text-main);font-size:16px;">${c.name}</div>
+               <div style="font-size:14px;margin-bottom:4px;"><strong style="color:var(--brand-primary);">Why:</strong> ${c.why}</div>
+               <div style="font-size:14px;"><strong style="color:#ef4444;">If Missing:</strong> ${c.ifMissing}</div>
+             </div>
+          `).join('')}
+        </div>
+      </div>`;
+            }
+
+            if (s.failureScenarios && s.failureScenarios.length) {
+                html += `
+      <div class="brief-card" style="grid-column: 1 / -1;">
+        <h3>Failure Scenarios & Mitigation</h3>
+        <div style="display:flex;flex-direction:column;gap:12px;margin-top:10px;">
+          ${s.failureScenarios.map(f => `
+             <div style="background:var(--bg-faint);padding:12px;border-radius:8px;border:1px solid var(--line);">
+               <div style="font-size:14px;margin-bottom:4px;"><strong style="color:#ef4444;">Scenario:</strong> ${f.scenario}</div>
+               <div style="font-size:14px;"><strong style="color:#10b981;">Mitigation:</strong> ${f.mitigation}</div>
+             </div>
+          `).join('')}
+        </div>
+      </div>`;
+            }
+
+            if (s.capTheoremNotes) {
+                html += `
+      <div class="brief-card" style="grid-column: 1 / -1;">
+        <h3>CAP Theorem Notes</h3>
+        <p style="margin-top:8px;">${s.capTheoremNotes}</p>
+      </div>`;
+            }
+
+            html += `</div>`; // End brief-grid
+            panel.innerHTML = html;
         }
 
         function loadSystem(id) {
