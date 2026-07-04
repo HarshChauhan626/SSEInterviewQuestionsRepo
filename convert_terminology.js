@@ -103,6 +103,19 @@ const htmlTemplate = `
             color: var(--text-dim);
             line-height: 1.65;
         }
+        .img-loader {
+            position: absolute;
+            width: 32px;
+            height: 32px;
+            border: 3px solid rgba(0,0,0,0.1);
+            border-top: 3px solid var(--accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
@@ -186,8 +199,9 @@ const htmlTemplate = `
             
             if (cat.img) {
                 html += \`
-                    <div class="diagram-wrap">
-                        <img src="\${cat.img}" alt="\${cat.name} concepts" loading="lazy">
+                    <div class="diagram-wrap" style="position: relative; min-height: 250px; display: flex; align-items: center; justify-content: center;">
+                        <div class="img-loader"></div>
+                        <img src="\${cat.img}" alt="\${cat.name} concepts" loading="lazy" onload="this.previousElementSibling.style.display='none'" style="position: relative; z-index: 1; min-height: 250px;">
                     </div>
                 \`;
             }
