@@ -426,6 +426,150 @@
                 max-height: 250px;
             }
         }
+
+        /* ---------- sub-system accordion ---------- */
+        .ss-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 16px;
+        }
+
+        .ss-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            background: var(--bg-card);
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background .15s, border-color .15s;
+            gap: 12px;
+            user-select: none;
+        }
+
+        .ss-toggle:hover {
+            background: rgba(63, 167, 255, 0.06);
+            border-color: rgba(63, 167, 255, 0.3);
+        }
+
+        .ss-toggle.open {
+            border-color: rgba(63, 167, 255, 0.4);
+            background: rgba(63, 167, 255, 0.05);
+        }
+
+        .ss-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .ss-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: rgba(63, 167, 255, 0.12);
+            border: 1px solid rgba(63, 167, 255, 0.25);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 15px;
+            flex-shrink: 0;
+        }
+
+        .ss-title .ss-name {
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .ss-title .ss-sub {
+            font-family: var(--mono);
+            font-size: 10px;
+            color: var(--text-faint);
+            margin-top: 2px;
+        }
+
+        .ss-chev {
+            color: var(--text-faint);
+            font-size: 18px;
+            transition: transform .25s;
+            flex-shrink: 0;
+            line-height: 1;
+        }
+
+        .ss-toggle.open .ss-chev {
+            transform: rotate(180deg);
+        }
+
+        .ss-body {
+            display: none;
+            margin-top: 6px;
+            border: 1px solid rgba(63, 167, 255, 0.2);
+            border-radius: 10px;
+            padding: 24px 20px;
+            background: var(--bg);
+        }
+
+        .ss-body.open {
+            display: block;
+        }
+
+        .ss-goals {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin: 10px 0 18px;
+        }
+
+        .ss-goal {
+            font-family: var(--mono);
+            font-size: 10px;
+            color: var(--accent);
+            border: 1px solid rgba(63, 167, 255, 0.3);
+            padding: 3px 9px;
+            border-radius: 5px;
+        }
+
+        .ss-sect {
+            margin-bottom: 18px;
+        }
+
+        .ss-sect-label {
+            font-family: var(--mono);
+            font-size: 10px;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: .1em;
+            margin-bottom: 8px;
+        }
+
+        .ss-text {
+            font-size: 13.5px;
+            color: var(--text-dim);
+            line-height: 1.65;
+        }
+
+        .ss-ul {
+            padding-left: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .ss-ul li {
+            font-size: 13.5px;
+            color: var(--text-dim);
+            line-height: 1.65;
+        }
+
+        .ss-card {
+            background: var(--bg-raised);
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid var(--line);
+            margin-bottom: 8px;
+        }
     </style>
 </head>
 
@@ -443,10 +587,10 @@
     <div class="hero">
         <div class="eyebrow">system design · interview prep</div>
         <h1>Top 10 System Design <em>Problems</em>, Broken Down</h1>
-        <p>Nine high-frequency interview systems, each with a full architecture diagram and a plain-English walkthrough
+        <p>Ten high-frequency interview systems, each with a full architecture diagram and a plain-English walkthrough
             of what's actually happening — no fluff, just the flow.</p>
         <div class="hero-meta">
-            <span><b>9</b> diagrams</span>
+            <span><b>10</b> diagrams</span>
             <span><b>Client → Edge → Services → Data</b> pattern</span>
             <span>Click a system on the left to load it</span>
         </div>
@@ -1687,6 +1831,793 @@
                     "TCC (Try-Confirm/Cancel) pattern instead of compensation-after-the-fact — reserves resources tentatively in a 'Try' phase before confirming, avoiding some compensation scenarios entirely, but requires every participant to implement three distinct operations instead of one."
                 ]
             },
+            {
+                id: "aiagentplatform",
+                name: "AI Agent Platform",
+                tag: "Create, Deploy, Orchestrate & Monitor Thousands of AI Agents",
+                img: "images/agentiaiorchestratorsystemdesign/AIAgentPlatformSystemDesign.png",
+                goals: ["Highly Available", "Durable Execution", "Scalable to Thousands of Agents", "Multi-Tenant", "Observable", "Secure by Default"],
+                overview: "An AI agent platform is really a workflow engine wearing an AI costume — the hard part isn't calling an LLM, it's making thousand-step, hours-long agent runs survive crashes, retries, human approval pauses, and flaky tool calls without losing state or double-executing a side effect. Underneath the chat interface sits a Temporal-style durable execution engine, a Kafka event backbone, a sandboxed worker runtime, a tool registry that lets agents discover capabilities dynamically, and a two-tier memory layer — five systems that together turn 'call an LLM in a loop' into something that can run reliably at enterprise scale.",
+                dataFlow: "A user (developer, business user, or an automated system) creates an agent or workflow through the Web UI, CLI, API/SDK, chat interface, or webhook. The request passes through the API Gateway (authN, rate limiting, routing) into the Control Plane, where the Workflow (DAG) Designer and Agent Registry & Catalog persist the definition, the Policy Engine checks RBAC/ABAC permissions, and the Secrets Manager and Approval Center are wired in for any steps requiring credentials or human sign-off. <br><br>Execution is handed to the Orchestration & Execution layer (Temporal Cluster), where the Workflow Service starts a durable workflow run, the History Service appends every event to an immutable log, and the Matching Service dispatches tasks to available workers. Every state change is also published to the Event Layer (Kafka topics: AgentEvents, WorkflowEvents, SystemEvents, AuditEvents), which decouples the orchestrator from the Execution Plane. <br><br>In the Execution Plane, Kubernetes-hosted Agent Workers (general-purpose, GPU/inference, and job/batch pools) pull tasks from the queue, download context from the Memory Service, resolve and load tools via the Tool Registry, execute inside a sandboxed runtime, stream tokens/logs back over the event bus, and checkpoint state periodically. <br><br>Short-term memory (Redis) holds conversation state; long-term memory (a vector DB) holds facts, past results, and embeddings for semantic recall. When a workflow requires human judgment, it pauses at an approval checkpoint until an operator responds, then resumes exactly where it left off. Throughout, Observability (OpenTelemetry tracing, Prometheus metrics, ELK logs) and Governance (RBAC/ABAC, SSO/OAuth2/SAML, audit logging) wrap every layer.",
+                keyIdea: "The platform separates 'deciding what happens next' (Temporal-based orchestration, durable and replayable) from 'actually doing it' (stateless, horizontally-scaled workers in the execution plane) — connected entirely through Kafka events — so a crashed worker or a multi-hour human-approval pause never loses workflow state, and thousands of agents can run concurrently without the orchestrator becoming a bottleneck.",
+                flow: ["User creates workflow/agent", "Orchestration (Temporal) starts workflow", "Events published to Kafka", "Workers pick up tasks & execute tools", "Results stored in memory/DB", "Observability captures traces & logs", "Human approval if required", "Workflow completes or recovers"],
+                components: [
+                    "<b>API Gateway:</b> Authentication, rate limiting, and routing for every channel (Web UI, CLI, API/SDK, chat, webhook) before requests reach the Control Plane.",
+                    "<b>Control Plane (Workspace/Tenant Mgmt, Agent Registry, Workflow Designer, Policy Engine, Secrets Manager, Approval Center, Billing/Cost Manager):</b> Owns configuration, permissions, and the human-facing management surface — never touches live execution state directly.",
+                    "<b>Orchestration & Execution (Temporal Cluster):</b> Workflow, History, Matching, Worker, and Visibility services backed by a persistent store (Cassandra/PostgreSQL) providing durable, replayable, exactly-once workflow execution.",
+                    "<b>Event Layer (Kafka Cluster):</b> AgentEvents, WorkflowEvents, SystemEvents, and AuditEvents topics decouple every plane from every other, enabling replay, audit, and independent scaling.",
+                    "<b>Execution Plane (Kubernetes, Multiple Zones):</b> General agent worker pools, GPU/inference pools, and job/batch worker pools running the Agent Worker Runtime.",
+                    "<b>Tooling Layer (Tool Registry, Capability Discovery, Tool Sandbox/Proxy, External Connectors):</b> Lets agents dynamically discover, rank, and safely invoke tools/APIs/DBs/SaaS integrations.",
+                    "<b>Memory Layer (Short-term Redis, Long-term Vector DB):</b> Unified memory API giving agents both fast working-context recall and persistent, semantically-searchable long-term memory.",
+                    "<b>Data & Storage Layer:</b> Metadata DB (PostgreSQL), Object Storage (S3/MinIO), Vector Store, Cache (Redis), immutable Audit Log Store, and cross-region Backup/DR.",
+                    "<b>Observability & Governance:</b> OpenTelemetry tracing, Prometheus metrics, ELK/Loki logs, per-agent execution timelines, Alertmanager alerts, Grafana dashboards, RBAC/ABAC, SSO/OAuth2/SAML, encryption in transit and at rest, and full audit logging."
+                ],
+                componentImages: [
+                    { title: "Event Bus Architecture (Kafka) — Reliable, Scalable, Ordered Event Streaming", src: "images/agentiaiorchestratorsystemdesign/EventQueueForAIAgent.png" },
+                    { title: "Agent Worker Runtime — Reliable Execution Environment for AI Agents", src: "images/agentiaiorchestratorsystemdesign/WorkerRuntime.png" },
+                    { title: "Workflow Engine — Temporal-like Durable, Reliable & Scalable Workflow Execution", src: "images/agentiaiorchestratorsystemdesign/WorkflowEngine.png" },
+                    { title: "Tool Registry + Capability Discovery — The Kubernetes for Tools", src: "images/agentiaiorchestratorsystemdesign/ToolRegistry.png" },
+                    { title: "Memory Service — A Unified Memory Layer for AI Agents", src: "images/agentiaiorchestratorsystemdesign/MemoryService.png" }
+                ],
+                serviceFlow: [
+                    { step: 1, from: "User/Client (Web/CLI/API/Chat/Webhook)", to: "API Gateway", detail: "Request authenticated and rate-limited, then routed to the Control Plane based on whether it's a management action or an execution trigger." },
+                    { step: 2, from: "API Gateway", to: "Control Plane (Workflow Designer / Agent Registry)", detail: "Workflow DAG or agent definition validated against the Policy Engine (RBAC/ABAC) before being persisted; Secrets Manager resolves any required credentials at definition time, not execution time." },
+                    { step: 3, from: "Control Plane", to: "Temporal Cluster (Workflow Service)", detail: "A new durable workflow execution is started; History Service appends WorkflowExecutionStarted as the first immutable event in the run's history." },
+                    { step: 4, from: "Temporal (Matching Service)", to: "Kafka (WorkflowEvents / AgentEvents topics)", detail: "As the workflow schedules activities, corresponding events are published so the Execution Plane and Observability stack stay in sync without polling the orchestrator directly." },
+                    { step: 5, from: "Kafka", to: "Agent Worker (Execution Plane)", detail: "An available worker in the appropriate pool (general, GPU/inference, or job/batch) picks up the task via the Worker Runtime's Poller, using long-polling with a lease/heartbeat." },
+                    { step: 6, from: "Agent Worker", to: "Memory Service", detail: "Worker fetches short-term conversation context from Redis and, if the task requires it, retrieves relevant long-term memory via semantic search against the vector DB." },
+                    { step: 7, from: "Agent Worker", to: "Tool Registry", detail: "Worker queries the registry for the right tool by capability/version, checks permissions, and dynamically loads the tool adapter (cached locally after first load)." },
+                    { step: 8, from: "Agent Worker (Executor/Sandbox)", to: "Tool Sandbox/Proxy or External Connectors", detail: "Task runs in an isolated container/microVM with resource limits and no default network egress; tool invocations are proxied and audited." },
+                    { step: 9, from: "Agent Worker (Output Streamer)", to: "Kafka (AgentEvents)", detail: "Tokens, logs, and progress are streamed back in real time as structured events (token, log, progress, metric) rather than waiting for task completion." },
+                    { step: 10, from: "Agent Worker (Checkpoint Manager)", to: "Temporal History Service", detail: "State is checkpointed periodically and on significant progress; on worker crash, another worker picks up the task from the last checkpoint rather than restarting from scratch." },
+                    { step: 11, from: "Temporal Workflow", to: "Approval Center", detail: "If the workflow reaches a human-approval step, it pauses (durably — no compute consumed) until an operator/auditor responds via the Control Plane, then resumes deterministically." },
+                    { step: 12, from: "Temporal / Kafka", to: "Observability Stack", detail: "Every event and checkpoint feeds OpenTelemetry traces, Prometheus metrics, and per-agent execution timelines, giving full replayable visibility into any run." },
+                    { step: 13, from: "Workflow (on completion or failure)", to: "Billing & Cost Manager / Notification", detail: "Terminal states trigger cost accounting (tokens, compute, tool calls) and notify the initiating user or downstream system." }
+                ],
+                componentImportance: [
+                    { name: "Temporal-based Durable Execution", why: "Agent workflows can run for hours or days, including waiting on human approval or slow external APIs; durable execution means the workflow's state survives process crashes, deployments, and infrastructure failures without losing progress.", ifMissing: "Any crash mid-workflow would force a full restart, wasting all prior LLM calls, tool invocations, and cost — completely unworkable for long-running, expensive agent tasks." },
+                    { name: "Kafka Event Layer (decoupling Control/Orchestration/Execution)", why: "Lets thousands of workers scale independently of the orchestrator and lets Observability/Audit consume the same event stream without touching the critical execution path.", ifMissing: "Direct synchronous coupling between orchestrator and workers would create a scaling bottleneck and make the orchestrator a single point of failure for all agent execution." },
+                    { name: "Sandboxed Worker Runtime (isolated execution)", why: "Agent-generated code and tool calls are inherently untrusted inputs to the system; sandboxing (no root FS, no default network egress, resource limits) contains the blast radius of a misbehaving or compromised task.", ifMissing: "A single malicious or buggy agent task could exfiltrate data, exhaust cluster resources, or pivot to attack other tenants' workloads." },
+                    { name: "Tool Registry & Capability Discovery", why: "Agents need to dynamically find and safely invoke the right tool for a task without hardcoding integrations; centralized versioning, health checks, and permission enforcement prevent one team's tool changes from silently breaking another's agents.", ifMissing: "Every agent would need tools hardcoded and manually updated, making the system brittle and impossible to extend safely as new integrations are added." },
+                    { name: "Two-Tier Memory Layer (short-term Redis + long-term Vector DB)", why: "Agents need fast recall of the current conversation (low-latency, ephemeral) and semantic recall of past knowledge (persistent, embedding-based) — a single store can't serve both access patterns well.", ifMissing: "Without short-term memory, every turn would re-send full context (expensive, slow); without long-term memory, agents couldn't recall relevant past interactions or documents." },
+                    { name: "Idempotency, Checkpointing & Heartbeats", why: "At-least-once delivery is the norm in distributed systems; without idempotency keys and checkpoints, a retried task could re-execute an irreversible tool call (e.g. sending an email twice, charging a payment twice).", ifMissing: "Workflow recovery after any failure would risk duplicate side effects, turning a reliability feature into a correctness bug." }
+                ],
+                dbSchema: [
+                    { table: "tenants", fields: "tenant_id (PK), name, tier, quota_limits, created_at" },
+                    { table: "agents", fields: "agent_id (PK), tenant_id (FK), name, version, config (JSON), status" },
+                    { table: "workflows", fields: "workflow_id (PK), tenant_id (FK), dag_definition (JSON), version, created_by" },
+                    { table: "workflow_executions", fields: "execution_id (PK), workflow_id (FK), status, current_step, started_at, completed_at" },
+                    { table: "workflow_history", fields: "event_id (PK), execution_id (FK), event_type, payload (JSON), sequence, created_at" },
+                    { table: "tools", fields: "tool_id (PK), name, version, owner, endpoint, capabilities (JSON), status" },
+                    { table: "memory_records", fields: "memory_id (PK), tenant_id (FK), agent_id (FK), type, content, embedding, ttl_seconds" },
+                    { table: "approvals", fields: "approval_id (PK), execution_id (FK), requested_by, status, approved_by, decided_at" },
+                    { table: "audit_logs", fields: "log_id (PK), tenant_id (FK), actor, action, resource, timestamp" }
+                ],
+                scalingStrategy: [
+                    "Scale worker pools (general, GPU/inference, job/batch) independently based on queue depth and concurrency, since inference workloads have very different resource profiles than lightweight I/O tasks.",
+                    "Partition Kafka topics by tenant_id or workflow_id to preserve ordering within a workflow while allowing massive parallelism across tenants.",
+                    "Shard the Temporal persistent store and vector DB namespaces per tenant to isolate noisy neighbors and simplify per-tenant data lifecycle management.",
+                    "Run stateless workers behind an autoscaler keyed on task-queue depth and concurrency, with warm pools to reduce cold-start latency for GPU inference workers.",
+                    "Multi-zone Kubernetes deployment for the Execution Plane so a zone failure doesn't halt in-flight agent runs."
+                ],
+                failureScenarios: [
+                    { scenario: "A worker crashes mid-task execution.", mitigation: "Task lease expires (heartbeat missed), Temporal re-queues the task, and another worker picks it up from the last checkpoint; idempotency keys ensure any already-completed side effects aren't repeated." },
+                    { scenario: "A tool call times out or the external API is down.", mitigation: "Worker retries with exponential backoff per the tool's configured retry policy; if retries are exhausted, the activity fails and the workflow's defined error-handling path (retry, compensate, or escalate to human approval) takes over." },
+                    { scenario: "A workflow is waiting on human approval for an extended period.", mitigation: "Temporal's durable timers mean the paused workflow consumes no compute while waiting; a reminder/escalation policy can auto-notify or auto-fail the approval after a timeout." },
+                    { scenario: "Memory service (vector DB) is temporarily unavailable.", mitigation: "Agent falls back to short-term memory only and flags responses as running with degraded long-term context, rather than failing the entire task." }
+                ],
+                tradeoffs: [
+                    "Durable, replayable workflow execution (Temporal) adds infrastructure complexity and requires deterministic workflow code, but is what makes multi-hour, multi-step agent runs survivable in production.",
+                    "Sandboxing every task execution adds per-task overhead (container/microVM startup) in exchange for containing the risk of untrusted agent-generated code and tool calls.",
+                    "Separating short-term and long-term memory duplicates some data and adds sync complexity, but is necessary because low-latency conversational recall and semantic long-term search have fundamentally different performance requirements."
+                ],
+                keyConsiderations: [
+                    "Durable execution for long-running, resumable agent workflows (Temporal or equivalent)",
+                    "Event-driven architecture (Kafka) decoupling control, orchestration, and execution planes",
+                    "Sandboxed, resource-limited execution for untrusted agent code and tool calls",
+                    "Dynamic tool discovery and capability matching rather than hardcoded integrations",
+                    "Two-tier memory (short-term + long-term/vector) for context and semantic recall",
+                    "Human-in-the-loop approval checkpoints for high-stakes or irreversible actions",
+                    "Idempotency, checkpointing, and heartbeats for exactly-once-effective task execution",
+                    "Multi-tenant isolation at the workspace, data, and quota level",
+                    "Full observability: distributed tracing, per-agent execution timelines, metrics, audit logging"
+                ],
+                metrics: ["Workflow Success Rate", "Task Execution Latency (P50/P95/P99)", "Worker Utilization / Queue Depth", "Checkpoint Recovery Time", "Tool Invocation Success Rate", "Memory Retrieval Latency", "Approval Response Time", "Token/Cost per Workflow", "System Error Rate", "Concurrent Active Agents"],
+                interviewTips: [
+                    "Be ready to explain why a Temporal-style durable execution engine is chosen over a simple job queue: workflows need replayable history, timers, signals, and exactly-once semantics that a plain queue doesn't provide.",
+                    "Discuss why tool invocation goes through a registry + sandbox/proxy layer instead of agents calling APIs directly — it centralizes auth, rate limiting, versioning, and blast-radius containment.",
+                    "Explain the short-term vs long-term memory split as an access-pattern problem, not just a storage-tier problem: conversational recall needs sub-millisecond reads, semantic recall needs vector similarity search."
+                ],
+                guesstimates: ["Thousands of concurrent agent workflows", "10K+ tool invocations/day per large tenant", "Task execution P99: <2 sec for lightweight tasks, minutes for LLM-heavy steps", "Memory retrieval latency: <100ms for short-term, <300ms for vector search", "Storage: multi-TB vector store growth per month at scale"],
+                securityConsiderations: [
+                    "Enforce RBAC/ABAC at the Policy Engine for every workflow, tool, and memory access, scoped per tenant.",
+                    "Run all agent task execution in sandboxes with no default network egress, least-privilege IAM roles, and resource limits (CPU/memory/IO).",
+                    "Inject secrets at execution time via short-lived, scoped credentials (OIDC/STS) rather than embedding long-lived keys in agent or tool configs.",
+                    "Audit-log every tool invocation, memory access, and approval decision immutably for compliance and incident investigation.",
+                    "Isolate tenant data at the storage layer (separate namespaces/DBs) to prevent cross-tenant data leakage via shared memory or vector indexes.",
+                    "Validate and version-pin all dynamically loaded tools to prevent a compromised or malicious tool update from silently affecting running agents."
+                ],
+                costOptimization: [
+                    "Cache tool metadata and adapters locally on workers after first load to avoid repeated registry round-trips.",
+                    "Auto-scale GPU/inference worker pools aggressively (scale-to-zero when idle) since these are the most expensive compute resources in the platform.",
+                    "Compress and summarize long-term memory records above a size/age threshold instead of storing full raw context indefinitely.",
+                    "Tier storage (hot Redis → warm vector DB → cold object storage/archive) based on access recency for both memory and workflow history.",
+                    "Batch embedding generation for memory ingestion rather than generating embeddings one record at a time."
+                ],
+                commonMistakes: [
+                    "Writing non-deterministic workflow code (e.g. calling wall-clock time or random values directly) that breaks Temporal's replay-based recovery model.",
+                    "Letting agents call external tools directly instead of routing through the registry/sandbox, bypassing auth, rate limits, and audit logging.",
+                    "Treating short-term memory as sufficient for everything and skipping long-term/vector memory, causing agents to 'forget' relevant context across sessions.",
+                    "Underestimating checkpoint frequency for long-running tasks, so a crash near the end of an expensive multi-minute task loses far more progress than necessary."
+                ],
+                capTheoremNotes: "The workflow orchestration and history path favors Consistency (CP) — Temporal's history log must be strictly ordered and durable, since replay correctness depends on it. The memory retrieval and tool-discovery paths favor Availability (AP) — a slightly stale tool catalog or memory index is acceptable, but those services being unavailable would block agent execution entirely.",
+                alternativeApproaches: [
+                    "Simple job queue (e.g. Celery/SQS) instead of a full durable execution engine — much simpler to operate, but loses replay, deterministic recovery, and native support for long-running timers/signals that agent workflows need.",
+                    "Choreography (agents reacting to Kafka events directly) instead of centralized workflow orchestration — more decentralized and scalable in theory, but far harder to reason about multi-step agent plans, retries, and compensations.",
+                    "Single unified memory store instead of short-term/long-term split — simpler architecture, but forces a trade-off between low-latency conversational access and rich semantic search that hurts one or the other."
+                ],
+                subSystems: [
+                    {
+                        id: "eventbuskafka",
+                        name: "Event Bus Architecture (Kafka)",
+                        tag: "Reliable, Scalable, Ordered Event Streaming for AI Agent Platform",
+                        img: "images/agentiaiorchestratorsystemdesign/EventQueueForAIAgent.png",
+                        goals: ["High Throughput", "Low Latency", "Durable Event Log", "Exactly-Once Semantics", "Replayable", "Backpressure Handling"],
+                        overview: "An event bus is the nervous system that lets every other component — orchestrator, workers, tools, observability — stay in sync without calling each other directly. The hard part isn't 'publish a message'; it's guaranteeing ordering per entity, surviving broker failures without losing events, handling poison messages that would otherwise wedge a partition forever, and giving every downstream consumer a replayable, audit-grade log of everything that ever happened.",
+                        dataFlow: "Producers (Agent Workers, the Orchestrator, Tools/Services, External Systems) publish messages to a Kafka Cluster of N brokers, using Zookeeper/KRaft for cluster metadata and a Schema Registry to enforce Avro/Protobuf/JSON schema compatibility on every topic. Topics are named by domain (agent.events, workflow.commands, workflow.events, tool.invocations, tool.results, notifications.outbox, audit.logs, deadletter.events) and partitioned using a key-based strategy — typically entityId/workflowId/agentId — so that all events for the same entity land on the same partition and are processed in strict order by a single consumer. <br><br>Consumers are organized into Consumer Groups (Workflow Engine, Analytics, Notifications, Search Indexer, and others), where each partition is owned by exactly one consumer within a group, and different groups each get their own full copy of the stream. Delivery uses acks=all with an idempotent producer, replicated across in-sync replicas (ISR); consumers commit offsets manually only after successful processing, with exponential-backoff retries on failure. <br><br>Messages that repeatedly fail processing are routed to a Dead Letter Queue (deadletter.events) after max retries, preserving the original payload plus error metadata for operator review and reprocessing, rather than blocking the partition for every other message behind it. Storage is tiered — hot data on SSD, warm data pushed to S3/GCS — and Multi-Cluster replication (MirrorMaker 2, Cluster Linking) provides cross-region durability and disaster recovery.",
+                        keyIdea: "Kafka guarantees strict ordering only within a partition, never globally — so the entire design (topic naming, key-based partitioning, single-threaded-per-partition consumption) exists to make sure that the one ordering guarantee Kafka actually gives you lines up exactly with the one ordering guarantee your business logic actually needs (e.g. all events for one workflow, in order).",
+                        flow: ["Producer sends event", "Kafka broker (leader) appends to log", "Replicas (ISR) acknowledge", "Consumer group polls partition", "Process event", "Commit offset (manual)", "On failure: retry with backoff", "On repeated failure: route to DLQ"],
+                        components: [
+                            "<b>Kafka Brokers (Cluster):</b> Store the durable, replicated commit log; each partition has one leader broker and N-1 follower replicas for fault tolerance.",
+                            "<b>Zookeeper/KRaft:</b> Cluster metadata and controller election — KRaft removes the Zookeeper dependency in newer Kafka versions.",
+                            "<b>Schema Registry:</b> Enforces Avro/Protobuf/JSON schema compatibility (BACKWARD/FORWARD/FULL/NONE) so producers and consumers can evolve independently without breaking each other.",
+                            "<b>Producers (Agent Workers, Orchestrator, Tools, External Systems):</b> Publish events using acks=all and idempotent producer config to guarantee no duplicate or lost writes on retry.",
+                            "<b>Consumer Groups (Workflow Engine, Analytics, Notifications, Search Indexer):</b> Each group gets an independent full copy of every topic it subscribes to; within a group, partitions are load-balanced across consumer instances.",
+                            "<b>Dead Letter Queue (deadletter.events):</b> Catches poison messages after max retries, storing original payload + headers + error info so failures don't block healthy messages behind them.",
+                            "<b>Tiered Storage:</b> Hot SSD storage for recent data, warm S3/GCS storage for older data, balancing query latency against storage cost.",
+                            "<b>Security Layer:</b> SSL/TLS encryption in transit, SASL (SCRAM/OAUTHBEARER) authentication, and ACLs scoping which principals can produce/consume on which topics."
+                        ],
+                        serviceFlow: [
+                            { step: 1, from: "Producer (Agent Worker)", to: "Kafka Broker (Partition Leader)", detail: "Message is sent with a key (e.g. workflowId) that determines its partition via the partitioner; acks=all means the producer waits for all in-sync replicas to acknowledge." },
+                            { step: 2, from: "Partition Leader", to: "Follower Replicas (ISR)", detail: "Leader replicates the write to all in-sync replicas before acknowledging back to the producer, guaranteeing the message survives a leader failure." },
+                            { step: 3, from: "Kafka Broker", to: "Consumer Group Coordinator", detail: "Coordinator assigns partitions to consumer instances within a group; each partition is owned by exactly one consumer at a time within that group." },
+                            { step: 4, from: "Consumer", to: "Application Logic", detail: "Consumer processes the message; only after successful processing does it manually commit its offset, ensuring at-least-once delivery semantics." },
+                            { step: 5, from: "Consumer (on failure)", to: "Retry Logic", detail: "Failed processing triggers a retry with exponential backoff rather than an immediate re-attempt, giving transient failures (e.g. downstream timeout) time to clear." },
+                            { step: 6, from: "Consumer (after max retries)", to: "Dead Letter Queue Topic", detail: "Message is routed to deadletter.events with full context; the consumer commits its offset and moves on, so one bad message never blocks the rest of the partition." },
+                            { step: 7, from: "DLQ Topic", to: "DLQ Consumers/Operators", detail: "Operators review failed messages, fix root causes, and can reprocess by replaying from the DLQ back into the main flow." },
+                            { step: 8, from: "Kafka Cluster", to: "Multi-Cluster Replication (MirrorMaker 2)", detail: "Critical topics are mirrored to a secondary cluster/region for disaster recovery and cross-region read locality." }
+                        ],
+                        componentImportance: [
+                            { name: "Key-based Partitioning", why: "This is the single mechanism that turns Kafka's per-partition-only ordering guarantee into the ordering guarantee your application actually needs — e.g. all events for one workflow processed in the order they happened.", ifMissing: "Round-robin partitioning would scatter one entity's events across partitions, and consumers could process a 'completed' event before the 'started' event for the same workflow." },
+                            { name: "Dead Letter Queue", why: "Without isolating poison messages, a single malformed event would block every other event behind it on that partition indefinitely, since Kafka consumers process partitions strictly in order.", ifMissing: "One bad message could halt an entire partition's processing, silently delaying every healthy event queued behind it." },
+                            { name: "Idempotent Producer + acks=all", why: "Network retries are inevitable; without idempotency, a retried publish could create duplicate events, and without acks=all, an acknowledged write could still be lost if the leader fails before replication.", ifMissing: "Producer retries during network blips could silently duplicate critical events like payment.authorized or order.completed." },
+                            { name: "Schema Registry", why: "Producers and consumers are deployed independently and evolve on different timelines; schema compatibility rules prevent one team's field rename from breaking every downstream consumer.", ifMissing: "A producer adding or renaming a field could silently break every consumer's deserialization, often discovered only in production." },
+                            { name: "Manual Offset Commit (after processing)", why: "Committing offsets before processing completes risks losing events on consumer crash; committing only after success gives at-least-once delivery — the safer default for most business events.", ifMissing: "Auto-commit before processing finishes means any consumer crash mid-processing permanently loses that event, since Kafka would think it was already handled." },
+                            { name: "Multi-Cluster Replication / Tiered Storage", why: "A single-region, single-tier Kafka cluster is a disaster-recovery and cost liability at scale — replication protects against regional outages, tiering controls storage cost for infrequently-accessed history.", ifMissing: "A regional outage would take down the entire event bus with no failover, and unbounded hot-tier retention would make storage costs balloon linearly with history length." }
+                        ],
+                        dbSchema: [
+                            { table: "topics_metadata", fields: "topic_name (PK), partitions, replication_factor, retention_ms, compaction_policy" },
+                            { table: "schema_registry", fields: "schema_id (PK), subject, version, schema_definition, compatibility_mode" },
+                            { table: "consumer_group_offsets", fields: "group_id (PK), topic, partition, committed_offset, updated_at" },
+                            { table: "dlq_messages", fields: "dlq_id (PK), original_topic, original_partition, payload, error_reason, retry_count, first_failed_at" },
+                            { table: "acl_bindings", fields: "acl_id (PK), principal, topic, operation, permission_type" }
+                        ],
+                        scalingStrategy: [
+                            "Add brokers and increase partition count for high-throughput topics, keeping partition count as a multiple of consumer group size to avoid idle consumers.",
+                            "Use 3+ brokers with replication factor >= 3 and min.insync.replicas configured to survive broker failures without data loss.",
+                            "Scale consumer instances within a group horizontally up to the partition count — beyond that, additional consumers sit idle.",
+                            "Use tiered storage (hot SSD, warm S3/GCS) so retention can grow without linearly growing expensive hot-tier disk cost.",
+                            "Partition dedicated disks for Kafka logs separately from OS/other workloads to avoid I/O contention affecting broker performance."
+                        ],
+                        failureScenarios: [
+                            { scenario: "A broker holding a partition leader crashes.", mitigation: "Kafka's controller automatically elects a new leader from the in-sync replica set; producers and consumers reconnect to the new leader with minimal disruption if min.insync.replicas was properly configured." },
+                            { scenario: "A consumer group experiences a rebalance mid-processing (e.g. consumer scaled up/down).", mitigation: "Uncommitted offsets mean the newly assigned consumer reprocesses from the last committed offset; idempotent consumer logic (dedup by messageId) prevents this from causing duplicate side effects." },
+                            { scenario: "A producer sends a malformed message that fails schema validation.", mitigation: "Schema Registry rejects the write at publish time if using a schema-enforcing serializer, catching the problem before it ever enters the log rather than at consume time." },
+                            { scenario: "Consumer lag grows unbounded during a traffic spike.", mitigation: "Backpressure controls (pause/resume partitions, max.poll.records, rate limiting) and horizontal consumer scaling absorb the spike; lag and ISR shrink/expand alerts fire before it becomes critical." }
+                        ],
+                        tradeoffs: [
+                            "Kafka provides strict ordering only per-partition, never globally — this is a deliberate trade-off for horizontal scalability, and applications must design their partitioning key around it.",
+                            "At-least-once delivery (manual commit after processing) is simpler and safer than exactly-once end-to-end semantics, but requires idempotent consumers to handle occasional duplicate processing.",
+                            "DLQ-based poison message handling trades immediate visibility for overall system throughput — this requires proactive DLQ monitoring to avoid silently losing failed events."
+                        ],
+                        keyConsiderations: [
+                            "Domain-driven, versioned topic naming (plural nouns, environment prefix, avoid over-partitioning)",
+                            "Key-based partitioning as the default strategy for anything requiring per-entity ordering",
+                            "Exactly-once semantics end-to-end requires idempotent producers AND idempotent consumers, not just one side",
+                            "Dead letter queues with alerting on DLQ lag/volume, not just silent accumulation",
+                            "Schema evolution rules agreed upfront (BACKWARD compatibility is the safest default)",
+                            "Consumer group design: one group per independent downstream use case",
+                            "Replay/reprocessing capability via consumer group reset or reading from historical offsets",
+                            "Full observability: consumer lag, ISR shrink/expand, request latency, DLQ message count"
+                        ],
+                        metrics: ["Consumer Lag", "Messages In/Out per sec", "Under-Replicated Partitions", "ISR Shrinks/Expands", "Request Latency", "DLQ Message Count", "Broker Disk Usage", "Failed Message Rate", "Cluster/Topic Throughput", "Schema Registry Compatibility Failures"],
+                        interviewTips: [
+                            "Be ready to explain why global ordering isn't guaranteed and isn't even desirable at scale — the interviewer wants to hear you reason about partitioning keys as an ordering design decision, not a Kafka limitation to work around.",
+                            "Discuss the difference between at-least-once, at-most-once, and exactly-once delivery, and where idempotency has to live in each case (producer-side, consumer-side, or both).",
+                            "Mention DLQ design as a first-class concern, not an afterthought — interviewers look for candidates who plan for poison messages before they happen, including alerting on DLQ volume."
+                        ],
+                        guesstimates: ["50K events/sec at peak across the cluster", "5-10 topics per major domain (agent, workflow, tool, audit)", "Retention: 7 days hot, 90 days warm/cold", "Replication factor: 3", "DLQ rate: <0.1% of total message volume under normal operation"],
+                        securityConsiderations: [
+                            "Enforce SSL/TLS encryption in transit for all producer/consumer/broker communication.",
+                            "Use SASL (SCRAM or OAUTHBEARER) for authentication rather than relying on network isolation alone.",
+                            "Apply ACLs scoping exactly which principals can produce to or consume from each topic — no blanket cluster-wide access.",
+                            "Enable network isolation (VPC/security groups) so brokers aren't reachable from outside the trusted network boundary.",
+                            "Audit-log all topic creation, ACL changes, and consumer group operations for compliance review.",
+                            "Encrypt sensitive payload fields at the application layer before publishing, since topic-level encryption alone doesn't protect data at rest within the log."
+                        ],
+                        costOptimization: [
+                            "Use tiered storage to move older segments to S3/GCS instead of keeping everything on expensive hot-tier SSD indefinitely.",
+                            "Enable compaction for state topics (e.g. latest-value-only use cases) instead of retaining every historical event forever.",
+                            "Right-size partition counts — over-partitioning wastes broker resources on metadata overhead without a corresponding throughput benefit.",
+                            "Set proper retention and cleanup policies per topic rather than using one global default across topics with very different access patterns.",
+                            "Monitor and eliminate unused/legacy topics and consumer groups that quietly accumulate storage and coordination overhead."
+                        ],
+                        commonMistakes: [
+                            "Using round-robin or random partitioning for data that has an implicit ordering requirement, then being surprised when events arrive out of order downstream.",
+                            "Sharing one consumer group across multiple unrelated downstream use cases, causing one slow consumer to create lag that looks like it belongs to a totally different feature.",
+                            "Auto-committing offsets before processing completes, silently losing events on any consumer crash.",
+                            "Treating the DLQ as a black hole instead of an actively monitored queue with alerts on lag/volume and a defined reprocessing workflow."
+                        ],
+                        capTheoremNotes: "Kafka itself is fundamentally an Availability-and-Partition-tolerance-favoring (AP) system for reads/writes under partition scenarios, but the recommended acks=all + min.insync.replicas>=2 configuration pushes it much closer to CP for the write path, at the cost of write availability during replica outages.",
+                        alternativeApproaches: [
+                            "AWS SQS/SNS or Google Pub/Sub instead of self-managed Kafka — much lower operational overhead, but loses Kafka's replay-from-offset capability and strict per-partition ordering guarantees.",
+                            "RabbitMQ instead of Kafka — better fit for complex routing topologies and lower-throughput use cases, but lacks Kafka's log-based replay and long-retention-as-a-feature model.",
+                            "Managed Kafka (Confluent Cloud, MSK) instead of self-hosted — trades some cost and configuration flexibility for drastically reduced operational burden."
+                        ]
+                    },
+                    {
+                        id: "agentworkerruntime",
+                        name: "Agent Worker Runtime",
+                        tag: "Reliable Execution Environment for AI Agents",
+                        img: "images/agentiaiorchestratorsystemdesign/WorkerRuntime.png",
+                        goals: ["Sandboxed Execution", "Fault Tolerant", "Idempotent", "Real-Time Streaming", "Horizontally Scalable", "Recoverable"],
+                        overview: "The worker runtime is where the actual work happens — everything upstream (orchestrator, registry, memory) is just setup for this moment: safely running an agent's task in isolation, streaming its output back live, checkpointing enough state to survive a crash, and cleaning up after itself whether it succeeds or fails. Get this component wrong and every other well-designed piece of the platform is undermined by tasks that silently hang, leak resources, or can't recover from a worker restart.",
+                        dataFlow: "The Worker Supervisor's Poller long-polls the Task Queue (Kafka/NATS) with backoff and jitter, acquiring a lease with a configurable timeout when a task is available. Once a task is received, the Task Executor pipeline runs five sequential stages: the Context Manager downloads conversation history, state, and artifact references from the Memory Service; the Tool Loader queries the Tool Registry by capability/version, downloads adapters/schemas, and preloads dependencies; the Secrets Manager (Vault/KMS) is invoked to retrieve short-lived, scoped credentials (OIDC/STS) rather than long-lived keys; the Executor (Sandbox) optionally does a semantic search against the Vector DB to retrieve relevant context (RAG) before running the actual task logic inside an isolated container/microVM with no default network egress and enforced resource limits. <br><br>Throughout execution, the Output Streamer pushes tokens, logs, and progress updates over a bi-directional gRPC/WebSocket connection as structured event envelopes, while the Checkpoint Manager persists intermediate state and progress metadata periodically and on significant milestones. On successful completion, the worker acknowledges the task, uploads any final artifacts to Object Storage with signed URLs for retrieval, and publishes a domain completion event.",
+                        keyIdea: "Every stage of task execution — receiving, context-loading, tool-loading, executing, checkpointing, completing — is designed to be individually idempotent and resumable, so that no matter where a crash happens in that sequence, another worker picking up the same task (via its lease and last checkpoint) produces the same outcome rather than a partial or duplicated one.",
+                        flow: ["Receive task", "Download context", "Resolve & load tools", "Fetch secrets & auth", "(Optional) retrieve from vector DB", "Execute & stream output", "Checkpoint state", "Ack/complete/fail", "Upload artifacts", "Publish events"],
+                        components: [
+                            "<b>Worker Supervisor:</b> Manages worker lifecycle — polling, lease extension, heartbeats, metrics, logging, and graceful shutdown.",
+                            "<b>Poller:</b> Long-polls the task queue with backoff and jitter, avoiding thundering-herd polling patterns across thousands of concurrent workers.",
+                            "<b>Lease Manager:</b> Extends the task's lease periodically while work is in progress, so the orchestrator knows the task is still actively being handled and doesn't prematurely reassign it.",
+                            "<b>Task Executor (Context Manager, Tool Loader, Executor/Sandbox, Output Streamer, Checkpoint Manager):</b> The five-stage core pipeline that fetches inputs, loads capabilities, runs the isolated task, streams output, and persists progress.",
+                            "<b>Context Store (Memory Service):</b> Supplies conversation history, state, and variables needed to execute the task with full relevant context.",
+                            "<b>Tool Registry (Service):</b> Supplies tool manifests, schemas, and version-pinned adapters/dependencies on demand rather than bundling every possible tool into every worker image.",
+                            "<b>Secrets Manager (Vault/KMS):</b> Issues short-lived, scoped credentials at execution time rather than embedding long-lived keys in worker configuration.",
+                            "<b>Vector DB (Optional):</b> Semantic search for RAG-style context retrieval when a task requires grounding in retrieved knowledge.",
+                            "<b>Local Resources (Disk Cache, Temp Storage, Model Cache, Tool Cache):</b> Instance-local caching layer that avoids redundant network calls for frequently reused data within a single worker's lifetime."
+                        ],
+                        serviceFlow: [
+                            { step: 1, from: "Task Queue (Kafka/NATS)", to: "Worker Supervisor (Poller)", detail: "Worker long-polls with backoff and jitter, attempting to acquire a lease with a configurable timeout on any available task in its assigned partition/queue." },
+                            { step: 2, from: "Worker (Context Manager)", to: "Context Store (Memory Service)", detail: "Fetches conversation history, state, variables, and artifact references needed for the task; includes pointers to artifacts rather than downloading everything eagerly." },
+                            { step: 3, from: "Worker (Tool Loader)", to: "Tool Registry (Service)", detail: "Queries by capability and version constraints, downloads tool manifests/schemas, and resolves dependencies — with local caching to avoid repeated downloads across tasks." },
+                            { step: 4, from: "Worker (Task Executor)", to: "Secrets Manager (Vault/KMS)", detail: "Retrieves short-lived, scoped credentials (API keys, tokens) via OIDC/STS specifically for this task's required tool/API access, minimizing blast radius if leaked." },
+                            { step: 5, from: "Worker (Executor/Sandbox)", to: "Vector DB (Optional)", detail: "If the task requires retrieval-augmented generation, runs a semantic search to attach relevant retrieved knowledge to context before execution begins." },
+                            { step: 6, from: "Executor (Sandbox)", to: "Isolated Runtime (Container/MicroVM)", detail: "Task code/agent loop runs with no root filesystem access, no default network egress, and enforced CPU/memory/IO resource limits." },
+                            { step: 7, from: "Output Streamer", to: "Orchestrator (via Event Bus)", detail: "Streams tokens, logs, and progress in real time as structured event envelopes over bi-directional gRPC/WebSocket, so the caller sees live progress rather than waiting for full completion." },
+                            { step: 8, from: "Checkpoint Manager", to: "Orchestrator (History Service)", detail: "Persists intermediate state and outputs periodically and on significant milestones, recording checkpoint metadata that another worker could resume from." },
+                            { step: 9, from: "Worker", to: "Object Store (S3/GCS)", detail: "On success, final outputs, logs, traces, and artifacts are uploaded and signed URLs generated for retrieval by the caller or downstream steps." },
+                            { step: 10, from: "Worker", to: "Event Bus (Publish Events)", detail: "Emits domain events (task.completed, task.failed, artifact.uploaded, etc.) along with metrics and traces for observability and downstream triggering." }
+                        ],
+                        componentImportance: [
+                            { name: "Sandboxed Execution Environment", why: "Agent task code is inherently semi-trusted — it may call arbitrary tools or execute generated logic; isolation contains what a single misbehaving task can access or damage.", ifMissing: "A single compromised or buggy task could read other tenants' data, exhaust shared cluster resources, or make unauthorized outbound network calls." },
+                            { name: "Lease + Heartbeat Mechanism", why: "Without a lease, a crashed worker's task would be stuck forever with no signal that it needs reassignment; heartbeats give a live signal that work is progressing, distinct from the worker simply being slow.", ifMissing: "Tasks assigned to a crashed worker would remain 'in progress' indefinitely, blocking workflow progress with no automatic recovery path." },
+                            { name: "Checkpoint Manager", why: "Long-running agent tasks (multi-minute LLM chains, multi-step tool calls) would lose all progress on any interruption without periodic checkpointing, making recovery prohibitively expensive.", ifMissing: "A crash near the end of an expensive task would force a full restart from scratch, wasting all prior LLM calls and tool invocations." },
+                            { name: "Short-Lived, Scoped Secrets (via Vault/KMS)", why: "Long-lived credentials embedded in worker config are a standing security liability; issuing short-lived, task-scoped credentials means a leaked credential has a small time window and narrow permission scope.", ifMissing: "A compromised worker or leaked log could expose long-lived credentials with broad access, rather than a narrowly-scoped token that expires quickly." },
+                            { name: "Streaming Output Protocol (Bi-directional gRPC/WebSocket)", why: "Users and downstream systems need real-time visibility into long-running agent tasks (token-by-token generation, progress updates) rather than a black box until completion.", ifMissing: "Callers would see nothing until the entire task finished, making long-running tasks feel unresponsive and making it impossible to intervene early on a task going wrong." },
+                            { name: "Dynamic Tool Loading with Version Pinning", why: "Bundling every possible tool into every worker image is unscalable and makes tool updates require a full worker redeploy; dynamic, versioned loading decouples tool evolution from worker deployment.", ifMissing: "Adding or updating a tool would require rebuilding and redeploying every worker image, making the platform's tool ecosystem effectively static." }
+                        ],
+                        dbSchema: [
+                            { table: "tasks", fields: "task_id (PK), workflow_id (FK), status, assigned_worker_id, lease_expires_at, created_at" },
+                            { table: "task_checkpoints", fields: "checkpoint_id (PK), task_id (FK), step, state (JSON), created_at" },
+                            { table: "task_artifacts", fields: "artifact_id (PK), task_id (FK), storage_url, artifact_type, created_at" },
+                            { table: "worker_instances", fields: "worker_id (PK), pool_type, status, last_heartbeat_at, current_task_id" },
+                            { table: "task_events", fields: "event_id (PK), task_id (FK), event_type, payload (JSON), created_at" }
+                        ],
+                        scalingStrategy: [
+                            "Scale worker pools horizontally based on task queue depth and concurrency rather than fixed instance counts, since workers are fully stateless.",
+                            "Use partitioned queues to preserve locality (e.g. same-tenant tasks routed to warm workers with relevant caches already populated).",
+                            "Maintain warm pools for GPU/inference workers to reduce cold-start latency, since these are the most expensive and slowest-starting worker type.",
+                            "Auto-scale on CPU/memory and queue-depth/concurrency signals together, since either metric alone can miss real bottlenecks.",
+                            "Cache tool adapters and model artifacts locally per worker instance to reduce redundant network calls across many tasks handled by the same worker."
+                        ],
+                        failureScenarios: [
+                            { scenario: "Worker crashes mid-task execution.", mitigation: "Task lease expires after the heartbeat is missed; the orchestrator re-queues the task, and another worker picks it up from the last checkpoint, with idempotency keys preventing duplicate side effects from partial re-execution." },
+                            { scenario: "A tool call inside the sandbox hangs indefinitely.", mitigation: "Executor enforces a timeout per tool invocation independent of the overall task timeout, failing just that step rather than the entire task, and surfacing a tool.error event for retry or escalation." },
+                            { scenario: "Checkpoint write itself fails (e.g. transient network issue to History Service).", mitigation: "Checkpoint writes are retried with backoff; if a checkpoint is missed, the task simply resumes from the previous successful checkpoint on recovery — slightly more redundant work, not data loss." },
+                            { scenario: "Output streaming connection drops mid-task.", mitigation: "Task execution continues independently of the streaming connection; the caller can reconnect and either receive buffered events or poll for current state without interrupting the underlying task." }
+                        ],
+                        tradeoffs: [
+                            "Sandbox startup overhead (container/microVM initialization) adds latency per task in exchange for strong isolation — mitigated with warm pools for latency-sensitive worker types.",
+                            "Frequent checkpointing reduces recovery cost on failure but adds I/O overhead and slight latency to the happy path — checkpoint frequency is tuned per task type based on expected duration and cost of re-execution.",
+                            "Dynamic tool loading adds a small per-task latency for registry lookups (mitigated by local caching) in exchange for decoupling tool evolution from worker deployment cycles."
+                        ],
+                        keyConsiderations: [
+                            "Strict sandbox isolation: no root filesystem, no default network egress, enforced resource limits",
+                            "Idempotency keys and version-pinned inputs/tools for deterministic, safe replay",
+                            "Lease-based task ownership with heartbeats distinct from simple 'is the worker alive' checks",
+                            "Real-time streaming of progress rather than block-until-complete task semantics",
+                            "Checkpoint frequency tuned to task duration and cost-of-redo, not a single global default",
+                            "Short-lived, scoped credentials fetched at execution time rather than long-lived embedded secrets",
+                            "Graceful shutdown handling so in-flight tasks aren't abruptly killed during worker scale-down",
+                            "Full observability: per-task traces, structured logs, metrics on latency/errors/tokens"
+                        ],
+                        metrics: ["Task Start Latency (P99)", "Task Completion Rate", "Checkpoint Recovery Time", "Worker Utilization", "Tool Invocation Latency", "Lease Expiry / Reassignment Rate", "Heartbeat Miss Rate", "Concurrent Tasks per Cluster", "Sandbox Startup Time", "Error Rate by Failure Type"],
+                        interviewTips: [
+                            "Be ready to explain why every stage of the execution pipeline needs to be independently idempotent — a common follow-up is 'what happens if the worker crashes right after step 3?' for every step.",
+                            "Discuss the lease + heartbeat pattern versus simpler 'assume the worker died after N seconds of silence' — heartbeats distinguish 'slow but alive' from 'actually crashed,' which matters enormously for long-running LLM calls.",
+                            "Mention why secrets are fetched at execution time with short TTLs rather than baked into worker config — a strong signal of security maturity in system design interviews."
+                        ],
+                        guesstimates: ["Support 1,000s of concurrent tasks per cluster", "Task start latency P99: sub-second for lightweight tasks", "Checkpoint interval: every 10-30 seconds or on major milestones", "Heartbeat interval: every 5-10 seconds", "Sandbox cold start: 100ms-2s depending on runtime (container vs microVM)"],
+                        securityConsiderations: [
+                            "Run every task in an isolated sandbox with no root filesystem access and no default network egress — explicitly allow-list any required outbound calls.",
+                            "Fetch secrets at execution time with short TTLs (OIDC/STS) scoped narrowly to what the specific task requires.",
+                            "Apply least-privilege IAM roles to worker instances themselves, separate from the task-specific credentials they fetch.",
+                            "Audit-log every secret access, tool invocation, and artifact upload for compliance and incident investigation.",
+                            "Version and checksum tool adapters/dependencies before loading to prevent a compromised registry entry from executing unexpected code.",
+                            "Enforce per-tool authentication and rate limits so one task can't exhaust shared external API quotas for an entire tenant."
+                        ],
+                        costOptimization: [
+                            "Use warm pools sized to typical load for expensive worker types (GPU/inference) rather than always cold-starting, balanced against idle cost.",
+                            "Cache tool adapters, model weights, and frequently accessed context locally per worker to reduce redundant network and compute cost.",
+                            "Right-size checkpoint frequency — too frequent wastes I/O and storage, too infrequent risks expensive re-execution on failure.",
+                            "Archive old checkpoints and task artifacts to cold storage after the task/workflow completes and the retention window passes.",
+                            "Auto-scale to zero for worker pools with no queued work, particularly for expensive GPU/inference pools during off-peak hours."
+                        ],
+                        commonMistakes: [
+                            "Bundling every tool dependency into a single monolithic worker image instead of dynamic, versioned tool loading — makes updates slow and images bloated.",
+                            "Checkpointing only at task completion instead of periodically during execution, losing all progress on any mid-task failure.",
+                            "Using long-lived embedded credentials instead of fetching short-lived scoped secrets per task, creating unnecessary standing security risk.",
+                            "Not enforcing per-tool-call timeouts separately from the overall task timeout, letting one hung tool call consume the entire task's time budget."
+                        ],
+                        capTheoremNotes: "The worker runtime itself favors Availability (AP) for task execution — a worker crashing shouldn't block the overall system, since another worker can pick up the task. The checkpoint and lease state it depends on, however, needs to be Consistent (CP) with the orchestrator's History Service, since two workers must never simultaneously believe they own the same task.",
+                        alternativeApproaches: [
+                            "Long-lived, pre-provisioned worker processes with all tools pre-loaded instead of dynamic per-task tool loading — faster task start, but far less flexible and requires redeployment for every tool change.",
+                            "Full VM-per-task isolation instead of lightweight containers/microVMs — stronger isolation guarantees, but significantly higher startup latency and resource overhead per task.",
+                            "Synchronous request/response task execution instead of streaming output — simpler client integration, but loses real-time visibility into long-running agent tasks."
+                        ]
+                    },
+                    {
+                        id: "workflowengine",
+                        name: "Workflow Engine",
+                        tag: "Temporal-like Durable, Reliable & Scalable Workflow Execution",
+                        img: "images/agentiaiorchestratorsystemdesign/WorkflowEngine.png",
+                        goals: ["Durable Execution", "Never Lose State", "Scalable", "Reliable Failure Handling", "Deterministic Replay", "Exactly-Once Semantics"],
+                        overview: "A workflow engine solves a problem that looks simple until you actually try to build it: how do you run business logic that might take seconds or might take weeks — waiting on human approval, external APIs, or scheduled timers — and guarantee it survives every possible crash, deployment, and infrastructure hiccup along the way, resuming exactly where it left off? The answer (Temporal's core insight) is to never store 'current state' directly — instead, store an immutable event history and replay it deterministically to reconstruct state on demand.",
+                        dataFlow: "Clients (Agent Orchestrator, Services, Web/Mobile, CLI/SDK, Schedulers, External Systems) start workflows through a Front Door/API Gateway handling authN, authZ, and rate limiting, which routes into the Workflow Engine Cluster. The Frontend Service (API) exposes StartWorkflow, SignalWorkflow, QueryWorkflow, CancelWorkflow, and DescribeWorkflow operations. When a workflow starts, the History Service appends a WorkflowExecutionStarted event to an append-only, immutable Persistence Layer (History Store), and the Matching Service places the first task on a task queue for a worker to pick up. <br><br>Worker Fleet instances (stateless, pull-based) long-poll their assigned task queues, execute the deterministic workflow code — pure functions with no side effects that can be safely replayed from history — and issue commands (ScheduleActivity, StartTimer, WaitSignal, StartChildWorkflow, ContinueAsNew) back to the engine. Activities (the actual side-effecting work — calling databases, APIs, or local/remote functions) run separately from workflow code and support heartbeats, retries with configurable backoff policies, and multiple timeout types. <br><br>Every state change is captured as an event in the History Store — the workflow's 'current state' is never stored directly, it's always derived by replaying the event history through the deterministic workflow code. When history grows too large, ContinueAsNew starts a fresh run with a new runId, carrying forward only the necessary state.",
+                        keyIdea: "Workflow code must be perfectly deterministic — the engine doesn't store 'what state is the workflow in' as a snapshot, it stores 'what happened' as an immutable event log and reconstructs state by replaying that log through the same code. This is why workflow code can never call wall-clock time, random values, or any non-deterministic operation directly — doing so would make replay produce a different result than the original execution, silently corrupting recovery.",
+                        flow: ["Client starts workflow", "History service persists & schedules", "Worker picks up task", "Worker executes workflow code (decides next action)", "Activity executed", "Result event recorded", "Workflow continues or completes", "(Repeat until completion)"],
+                        components: [
+                            "<b>Front Door / API Gateway:</b> AuthN, authZ, and rate limiting for all workflow operations before they reach the engine cluster.",
+                            "<b>Frontend Service (API):</b> Exposes StartWorkflow, SignalWorkflow, QueryWorkflow, CancelWorkflow, and DescribeWorkflow as the client-facing surface of the engine.",
+                            "<b>History Service:</b> Owns event append, event read, visibility write, consistency, and replication — the single source of truth for what happened in every workflow run.",
+                            "<b>Matching Service:</b> Manages task queues, long polling, task dispatch, and worker routing — the mechanism by which workflow and activity tasks reach the right worker.",
+                            "<b>Persistence Layer (History Store, Visibility Store, Metadata Store, Blob Store):</b> History Store (Cassandra/PostgreSQL) for the append-only event log, Visibility Store (Elasticsearch) for searchable workflow listing/filtering, Blob Store (S3/GCS) for large payloads.",
+                            "<b>Worker Fleet (Stateless):</b> Pull-based, horizontally-scalable workers that execute deterministic workflow code and the activities it schedules.",
+                            "<b>Activities (Local/Remote):</b> The actual side-effecting operations — DB calls, API calls, tool invocations — kept strictly separate from deterministic workflow orchestration code.",
+                            "<b>Saga Pattern Support:</b> Try/Compensate step pairs, allowing structured rollback of multi-step operations when a later step fails."
+                        ],
+                        serviceFlow: [
+                            { step: 1, from: "Client (SDK/API)", to: "Frontend Service (API Gateway)", detail: "StartWorkflow call authenticated and rate-limited, then routed to the workflow engine cluster with the workflow type and input parameters." },
+                            { step: 2, from: "Frontend Service", to: "History Service", detail: "WorkflowExecutionStarted event appended to the (empty) history for a new run; this is the durability guarantee — the workflow now exists even if every other component crashes immediately after." },
+                            { step: 3, from: "History Service", to: "Matching Service", detail: "First workflow task is scheduled on the appropriate task queue, ready for a worker to claim via long polling." },
+                            { step: 4, from: "Worker Fleet", to: "Matching Service", detail: "Worker long-polls its assigned task queue and picks up the workflow task, decrypting/deserializing the current event history to reconstruct state via replay." },
+                            { step: 5, from: "Worker (Workflow Code)", to: "Decision Logic", detail: "Deterministic workflow code decides the next action — schedule an activity, start a timer, wait on a signal, start a child workflow, or complete — and issues the corresponding command." },
+                            { step: 6, from: "Worker", to: "Activity Execution", detail: "For ScheduleActivity commands, the actual side-effecting work (API call, DB write, tool invocation) runs, separate from the deterministic workflow orchestration layer, with configurable retry and timeout policies." },
+                            { step: 7, from: "Activity Result", to: "History Service", detail: "ActivityTaskCompleted (or Failed/TimedOut) is appended to history; this event becomes part of the permanent record that future replays will reconstruct from." },
+                            { step: 8, from: "History Service", to: "Matching Service", detail: "The result event triggers the next workflow task to be scheduled, continuing the workflow's progression through its logic." },
+                            { step: 9, from: "Worker (on failure)", to: "Saga Compensation / Retry Policy", detail: "If an activity fails after exhausting retries, the workflow's own error-handling logic decides whether to retry at a higher level, trigger saga compensation, or fail the workflow entirely." },
+                            { step: 10, from: "Workflow (on completion)", to: "History Service + Visibility Store", detail: "WorkflowExecutionCompleted is appended; visibility store is updated so the completed run is queryable/searchable by operators without replaying full history." }
+                        ],
+                        componentImportance: [
+                            { name: "Event Sourcing (Immutable History Log)", why: "This is the entire mechanism that makes durability possible without a distributed transaction — 'current state' is a derived, replayable artifact rather than something that can be lost or corrupted independently of the log.", ifMissing: "Storing mutable 'current state' snapshots directly would create a window where a crash between a state update and its persistence loses information with no way to reconstruct what actually happened." },
+                            { name: "Deterministic Workflow Code", why: "Replay-based recovery only works if re-running the same code against the same history produces the same decisions every time; any non-determinism (wall-clock time, random, unordered map iteration) breaks this guarantee silently.", ifMissing: "A workflow could make a different decision on replay than it did originally, causing subtle, hard-to-debug divergence between what actually happened and what the system believes happened." },
+                            { name: "Activities as a Separate Concept from Workflow Code", why: "Side effects (API calls, DB writes) can't be safely replayed — separating them from deterministic orchestration means the engine replays the decision to call an activity, not the side effect itself, using the recorded result instead.", ifMissing: "Replaying a workflow that directly performed side effects would risk re-executing a payment charge or an email send on every replay." },
+                            { name: "Timers (Durable Sleep)", why: "Waiting for a scheduled delay without a durable timer would require keeping a worker process alive the entire time, which is both wasteful and fragile.", ifMissing: "Long delays would need to be implemented as busy-polling or external cron jobs, losing the engine's built-in durability and making delayed logic much harder to reason about." },
+                            { name: "ContinueAsNew", why: "Workflows that loop indefinitely would otherwise accumulate unbounded event history, eventually making replay prohibitively slow and expensive.", ifMissing: "A long-running or infinitely-looping workflow's history would grow forever, and replay time and storage cost would grow linearly with it until the workflow becomes unusable." },
+                            { name: "Saga Pattern Support (Try/Compensate)", why: "Multi-step business processes need structured rollback when a later step fails — Saga support makes this a first-class workflow construct rather than ad-hoc error handling.", ifMissing: "Developers would hand-roll compensation logic inconsistently across workflows, increasing the risk of a failed multi-step process leaving the system in a partially-completed, inconsistent state." }
+                        ],
+                        dbSchema: [
+                            { table: "workflow_executions", fields: "run_id (PK), workflow_id, workflow_type, status, started_at, closed_at" },
+                            { table: "history_events", fields: "event_id (PK), run_id (FK), event_type, event_data (JSON), sequence_number, created_at" },
+                            { table: "activity_tasks", fields: "task_id (PK), run_id (FK), activity_type, status, attempt, scheduled_at, completed_at" },
+                            { table: "timers", fields: "timer_id (PK), run_id (FK), fire_at, status" },
+                            { table: "task_queues", fields: "queue_name (PK), workflow_type, backlog_count" },
+                            { table: "visibility_records", fields: "run_id (PK), workflow_type, status, start_time, close_time, search_attributes (JSON)" }
+                        ],
+                        scalingStrategy: [
+                            "Scale the Worker Fleet horizontally and independently of the engine cluster itself, since workers are entirely stateless and pull-based.",
+                            "Shard the History Store by workflow/run ID range as single-instance throughput becomes a bottleneck, since history is naturally partitionable per run.",
+                            "Use separate task queues per workflow type/activity type to isolate noisy or high-volume workflows from affecting others' latency.",
+                            "Scale the Visibility Store (Elasticsearch) independently since search/list queries have very different load patterns than the transactional History Store.",
+                            "Use ContinueAsNew proactively for any workflow expected to loop many times, keeping per-run history size bounded regardless of total scale."
+                        ],
+                        failureScenarios: [
+                            { scenario: "A worker crashes while executing workflow code.", mitigation: "No state is lost because nothing was persisted directly by the worker — on task reassignment, another worker replays the event history up to the last recorded point and resumes deterministically from there." },
+                            { scenario: "An activity fails repeatedly (e.g. downstream API consistently errors).", mitigation: "Configurable retry policy (initial interval, backoff, max attempts) governs automatic retries; once exhausted, the workflow's own logic decides whether to fail, compensate via Saga, or escalate." },
+                            { scenario: "A workflow is stuck waiting on a signal that never arrives.", mitigation: "WorkflowRunTimeout and ScheduleToStart/StartToClose timeouts ensure a workflow doesn't wait forever; timeout firing is itself a recorded event that the workflow can handle explicitly." },
+                            { scenario: "History Store partition becomes temporarily unavailable.", mitigation: "In-flight workflow tasks on that partition are delayed rather than lost, since the engine won't schedule new tasks without successfully persisting the preceding event; once the store recovers, execution resumes from the last durable point." }
+                        ],
+                        tradeoffs: [
+                            "Event sourcing adds replay overhead (reconstructing state by replaying history) compared to simply reading a stored 'current state' snapshot, but is what makes crash recovery and audit trails possible without extra bookkeeping.",
+                            "Requiring deterministic workflow code is a real constraint on developers (no direct wall-clock time, no direct random calls) in exchange for the ability to safely replay and recover any workflow from any point.",
+                            "Per-workflow strong consistency with cross-workflow eventual consistency means child workflows and cross-workflow queries need to be designed around eventual visibility, not assumed to be instantly consistent."
+                        ],
+                        keyConsiderations: [
+                            "Deterministic workflow code is non-negotiable — no direct time, random, or unordered iteration inside workflow logic",
+                            "Activities (side effects) must be strictly separated from workflow orchestration code",
+                            "ContinueAsNew for any workflow with unbounded or very large iteration counts",
+                            "Configurable retry policies and multiple timeout types tuned per activity, not one global default",
+                            "Signals for external unblocking, Queries for strongly-consistent reads, Timers for durable delays — know when to use each",
+                            "Saga pattern for any multi-step process requiring structured compensation on failure",
+                            "Idempotent activity execution, since at-least-once delivery means activities may be invoked more than once",
+                            "Full observability: workflow run dashboards, task queue depth, execution latency, failure rate, worker health"
+                        ],
+                        metrics: ["Workflow Success Rate", "Workflow Execution Latency (start to complete)", "Task Queue Depth", "Activity Failure Rate", "History Size per Run", "Worker Health / Poll Rate", "Timer Fire Accuracy", "Replay Time (P99)", "Concurrency per Task Queue", "Custom Alert Triggers"],
+                        interviewTips: [
+                            "Be ready to explain the core insight clearly: state isn't stored directly, it's derived by replaying an immutable event history through deterministic code — this is the single idea that unlocks the entire durable execution model.",
+                            "Discuss why Activities must be separate from workflow code: side effects can't be safely replayed, so the engine replays the decision to call an activity and reuses its recorded result rather than re-executing it.",
+                            "Mention ContinueAsNew as the answer to 'what happens to a workflow that loops forever' — a very common follow-up question that tests whether you understand history growth as a real constraint."
+                        ],
+                        guesstimates: ["Thousands of concurrent workflow executions", "Average workflow duration: seconds to days depending on type", "History events per run: 10s to low 100s before ContinueAsNew triggers", "Task queue poll latency: sub-second under normal load", "Worker fleet size: auto-scaled 10s to 1000s of instances based on load"],
+                        securityConsiderations: [
+                            "Enforce authN/authZ and TLS at the Front Door for every workflow operation (Start, Signal, Query, Cancel).",
+                            "Encrypt workflow inputs/outputs and history payloads containing sensitive data, both in transit and at rest.",
+                            "Scope worker permissions narrowly — a worker executing one tenant's workflow should not have implicit access to another tenant's task queues or data.",
+                            "Audit-log every Signal, Cancel, and administrative operation against a running workflow for compliance and incident review.",
+                            "Validate and sanitize all external inputs (signals, start parameters) before they influence workflow decision logic, since workflow code trusts its inputs by design."
+                        ],
+                        costOptimization: [
+                            "Use ContinueAsNew aggressively for long-running or looping workflows to keep per-run history (and replay cost) bounded.",
+                            "Tier the Blob Store for large payloads (input/output blobs) to cheaper storage classes as workflows age past active use.",
+                            "Right-size task queue partitioning — too many idle queues waste coordination overhead, too few creates contention for high-volume workflow types.",
+                            "Archive completed workflow visibility records to cold storage after the operational query window passes, rather than keeping everything in the hot Elasticsearch cluster.",
+                            "Batch activity heartbeats and progress updates where sub-second granularity isn't actually required, reducing History Service write load."
+                        ],
+                        commonMistakes: [
+                            "Calling non-deterministic operations (System.now(), random, unordered map/set iteration) directly inside workflow code instead of through the engine's deterministic APIs, silently breaking replay correctness.",
+                            "Performing side effects (API calls, DB writes) directly in workflow code instead of wrapping them as Activities, risking duplicate execution on replay.",
+                            "Never using ContinueAsNew for long-running loop workflows, letting history grow unbounded until replay becomes prohibitively slow.",
+                            "Treating activity retries as automatically idempotent without actually designing the activity itself to be idempotent (e.g. a payment charge activity that isn't deduplicated will double-charge on retry)."
+                        ],
+                        capTheoremNotes: "Per-workflow, the engine provides strong consistency — a single workflow's history is strictly ordered and durable before any decision based on it is made. Cross-workflow (e.g. querying many workflows' visibility records), the system favors eventual consistency and availability, since strict cross-workflow consistency would require coordination that doesn't scale.",
+                        alternativeApproaches: [
+                            "Simple state-machine-as-a-database-row instead of full event sourcing — much simpler to implement and reason about for short-lived workflows, but loses replay-based recovery and full audit history for free.",
+                            "Cron jobs + manual retry logic instead of a dedicated workflow engine — no new infrastructure to run, but every team reimplements durability, retries, and timeout handling inconsistently and usually incompletely.",
+                            "Choreography (services reacting to each other's events) instead of centralized workflow definitions — more decentralized, but loses the single-place-to-look visibility that makes debugging a multi-step process tractable."
+                        ]
+                    },
+                    {
+                        id: "toolregistry",
+                        name: "Tool Registry + Capability Discovery",
+                        tag: "The Kubernetes for Tools",
+                        img: "images/agentiaiorchestratorsystemdesign/ToolRegistry.png",
+                        goals: ["Dynamic Discovery", "Multi-Tenant Isolation", "High Availability", "Low Latency (<100ms P95)", "Secure by Default", "Version Consistency"],
+                        overview: "As soon as a platform has more than a handful of tools, 'just hardcode the API calls' stops working — agents need to discover the right tool for a task at runtime, tools need to evolve independently without breaking every agent that uses them, and someone needs to enforce who's allowed to invoke what. A tool registry is effectively Kubernetes for tools: a control plane for registering, versioning, discovering, health-checking, and authorizing access to every capability an agent might invoke, so tools can be added and updated without touching agent code.",
+                        dataFlow: "A tool provider (developer or system) registers or updates a tool through the Tool Registry API, submitting tool code/adapter reference, OpenAPI/gRPC schema, input/output schema, auth config, capabilities, and metadata. The registry runs Validation & Normalization (schema check, auth check, capability check, security scan) before storing the definition; on success, it stores metadata + embeddings + search index entries and publishes a tool.registered or tool.updated event to Kafka/NATS for any interested subscribers. <br><br>When an agent needs a tool, it goes through a seven-step discovery flow: understand the goal/context from the current task, extract intent and requirements (via LLM or rules), query the registry using semantic search plus capability constraints, fetch and filter candidates by permission checks, rank and select using a weighted score (relevance 0.40, health 0.15, latency 0.15, cost 0.10, reliability 0.10, usage/popularity 0.05, policy/preference 0.05), bind and load the selected tool's details/auth context/schemas, and finally execute it via a runtime adapter. Feedback (results, failures, latency, user feedback) flows back into the ranking model, continuously improving future selections.",
+                        keyIdea: "The registry decouples 'what capability does an agent need' from 'which specific tool, version, and endpoint fulfills it right now' — an agent asks for a capability (e.g. 'send a Slack message'), and the registry's ranking engine picks the best currently-healthy, permitted, cost-appropriate version, meaning tool infrastructure can change constantly underneath agents that never notice.",
+                        flow: ["Understand goal & context", "Extract intent & requirements", "Query registry (search/discover)", "Candidate fetch (semantic + filter)", "Rank & select (score by relevance/health/cost/latency)", "Bind & load (auth, schemas)", "Execute via runtime adapter", "Feedback loop improves ranking"],
+                        components: [
+                            "<b>Tool Registry API (REST/gRPC):</b> Exposes Register/Update, Discover/Search, Get Details, Health Check, Unregister, and Subscribe (Watch) operations to both tool providers and agent consumers.",
+                            "<b>Service Discovery & Catalog:</b> The canonical list of all registered tools and their current metadata, versions, and status.",
+                            "<b>Capability Index (Embedding + Inverted):</b> Dual-mode search index supporting both semantic (embedding-based) and exact/keyword (inverted-index) tool discovery.",
+                            "<b>Matching & Ranking Engine:</b> Scores candidate tools using a weighted formula (relevance, health, latency, cost, reliability, usage, policy) to select the best fit, not just the first match.",
+                            "<b>Version & Lifecycle Manager:</b> Manages the Draft → Published → Deprecated → Archived lifecycle, semantic versioning, multiple co-existing versions, and default/recommended version pointers.",
+                            "<b>Health Monitor:</b> Runs liveness, readiness, dependency, auth, and schema-compatibility probes on a heartbeat, feeding health status into ranking and triggering alerts/auto-disable on unhealthy tools.",
+                            "<b>Policy & AuthZ Enforcer:</b> RBAC/ABAC enforcement at register, discover, and invoke boundaries, with tenant isolation baked in.",
+                            "<b>Metadata & Schema Store:</b> Stores full tool definitions (input/output schemas, auth config, rate limits, cost, tags) as structured, queryable metadata.",
+                            "<b>External Integrations (Secrets Manager, IAM/Auth Provider, Observability, CI/CD, Service Mesh/DNS):</b> The registry plugs into existing platform infrastructure rather than reimplementing credential storage, auth, or service discovery from scratch."
+                        ],
+                        serviceFlow: [
+                            { step: 1, from: "Tool Provider (Dev/System)", to: "Tool Registry API (Register/Update)", detail: "Submits tool code/adapter, OpenAPI/gRPC schema, input/output schema, auth config, capabilities, and metadata for a new or updated tool version." },
+                            { step: 2, from: "Tool Registry API", to: "Validation & Normalization", detail: "Runs schema check, auth check, capability check, and security scan before accepting the registration — a tool that fails any check is rejected with specific errors, never silently stored." },
+                            { step: 3, from: "Registry Core", to: "Store & Index (Metadata + Vector + Search)", detail: "On successful validation, metadata is persisted, embeddings generated for semantic search, and the version is marked Created in the lifecycle state machine." },
+                            { step: 4, from: "Registry Core", to: "Event Bus (Kafka/NATS)", detail: "Publishes tool.registered or tool.updated so interested consumers (agent runtimes with local caches, observability, other services) stay in sync without polling." },
+                            { step: 5, from: "Agent Runtime", to: "Tool Registry API (Discover)", detail: "Agent queries by understood intent/requirements; registry runs semantic search plus capability/constraint filtering to fetch a candidate set." },
+                            { step: 6, from: "Matching & Ranking Engine", to: "Agent Runtime", detail: "Candidates are scored (relevance 0.40, health 0.15, latency 0.15, cost 0.10, reliability 0.10, usage 0.05, policy 0.05) and returned as a ranked list." },
+                            { step: 7, from: "Agent Runtime", to: "Registry (Get Details)", detail: "Fetches the selected tool's full details, auth context requirements, and schemas needed to actually invoke it correctly." },
+                            { step: 8, from: "Agent Runtime", to: "Secrets Manager", detail: "Resolves the specific credentials required by this tool's auth config, fetched just-in-time rather than pre-provisioned." },
+                            { step: 9, from: "Agent Runtime", to: "Service Mesh/DNS (Consul/Istio)", detail: "Resolves the tool's logical identity to a physical endpoint, health-checked and load-balanced, without the agent ever hardcoding a URL." },
+                            { step: 10, from: "Agent Runtime", to: "Tool Instance (via Runtime Adapter)", detail: "Invokes the tool through the appropriate adapter (HTTP, gRPC, MCP, or local); results, latency, and success/failure are recorded." },
+                            { step: 11, from: "Execution Result", to: "Ranking Feedback Loop", detail: "Results, failures, latency, and any explicit user feedback flow back into the ranking model, so a consistently slow or failing tool gets ranked lower over time even if nominally 'healthy.'" }
+                        ],
+                        componentImportance: [
+                            { name: "Dual-Mode Capability Index (Semantic + Inverted)", why: "Agents describe needs in natural language ('send a notification') but also need exact-match lookup by known tool name or tag — semantic search alone misses exact matches, keyword search alone misses paraphrased requests.", ifMissing: "Discovery would either miss tools described in slightly different language than their metadata, or return noisy semantic matches when an agent actually wanted an exact known tool." },
+                            { name: "Health Monitor (Liveness/Readiness/Dependency/Auth Probes)", why: "A tool that's registered but currently broken (dependency down, auth expired, schema drift) is worse than no tool at all if agents keep trying to invoke it; continuous health checks feed directly into ranking to avoid recommending broken tools.", ifMissing: "Agents would repeatedly discover and attempt to invoke tools that are currently non-functional, wasting retries and degrading task success rate with no early warning." },
+                            { name: "Version & Lifecycle Manager", why: "Tools evolve constantly; without formal lifecycle states (Draft/Published/Deprecated/Archived) and semantic versioning, there's no safe way to roll out a breaking change without silently affecting every agent using the old behavior.", ifMissing: "A tool update could break every agent depending on its previous schema/behavior overnight, with no deprecation window or migration path." },
+                            { name: "Policy & AuthZ Enforcer (RBAC/ABAC)", why: "Not every agent or tenant should be able to discover or invoke every tool — enforcement at register, discover, and invoke boundaries prevents both accidental misuse and deliberate privilege escalation.", ifMissing: "Any agent could discover and attempt to invoke any registered tool regardless of tenant boundaries or role restrictions, a serious multi-tenant security failure." },
+                            { name: "Ranking Feedback Loop", why: "Static rankings go stale — a tool that used to be fast and reliable can degrade, and a newly published alternative might now be the better choice; continuous feedback keeps rankings reflecting current reality rather than registration-time assumptions.", ifMissing: "The registry would keep recommending tools based on outdated performance characteristics, missing regressions and failing to surface better alternatives as they emerge." },
+                            { name: "Service Mesh/DNS Integration for Dynamic Endpoint Resolution", why: "Decoupling a tool's logical identity from its physical endpoint means tools can be redeployed, moved, or scaled without any agent-facing change.", ifMissing: "Every tool relocation, redeploy, or scaling event would require updating hardcoded endpoints across every agent or caller, an operationally fragile and error-prone process." }
+                        ],
+                        dbSchema: [
+                            { table: "tools", fields: "tool_id (PK), name, owner, description, current_version, status, tenant_id" },
+                            { table: "tool_versions", fields: "version_id (PK), tool_id (FK), version, schema (JSON), auth_config (JSON), lifecycle_state, created_at" },
+                            { table: "tool_capabilities", fields: "capability_id (PK), tool_id (FK), capability_tag, embedding" },
+                            { table: "tool_health", fields: "health_id (PK), tool_id (FK), status, last_checked_at, latency_ms, success_rate" },
+                            { table: "tool_usage_logs", fields: "usage_id (PK), tool_id (FK), agent_id, tenant_id, result, latency_ms, created_at" },
+                            { table: "acl_policies", fields: "policy_id (PK), tool_id (FK), role, tenant_id, allowed_actions" }
+                        ],
+                        scalingStrategy: [
+                            "Scale the Capability Index (search) horizontally and independently of the transactional Metadata DB, since search read volume typically far exceeds registration write volume.",
+                            "Cache tool details and auth requirements at the agent runtime level after first discovery, refreshing on TTL or on tool.updated events rather than querying the registry on every invocation.",
+                            "Shard multi-tenant data by tenant_id at the storage layer to keep large tenants from impacting smaller ones' query latency.",
+                            "Run Health Monitor probes as a horizontally-scaled, independently-deployed worker fleet, decoupled from the request-serving registry API path.",
+                            "Use Kafka/NATS pub-sub for tool.registered/updated events so caches invalidate reactively instead of every consumer polling the registry directly."
+                        ],
+                        failureScenarios: [
+                            { scenario: "A tool becomes unhealthy after being widely adopted by many agents.", mitigation: "Health Monitor detects the degradation via probes and immediately lowers its ranking score; sustained failure triggers auto-disable or alerting, and agents are steered toward healthy alternatives without any code change." },
+                            { scenario: "A tool provider pushes a breaking schema change directly to the Published version.", mitigation: "Validation & Normalization rejects schema changes that break declared compatibility rules; providers must publish as a new version, preserving the old version until callers migrate." },
+                            { scenario: "Registry's Capability Index falls behind newly registered tools.", mitigation: "Index update lag is monitored; agents can fall back to exact-name lookup against the Metadata DB directly if semantic search results seem stale or incomplete." },
+                            { scenario: "Two concurrent updates to the same tool version conflict.", mitigation: "Optimistic locking (ETag/version check) on tool definitions rejects the second concurrent write, forcing the provider to reconcile rather than silently overwriting the other update." }
+                        ],
+                        tradeoffs: [
+                            "Dynamic, registry-based tool discovery adds a lookup round-trip (mitigated by local caching) compared to hardcoded tool references, in exchange for tools being addable/updatable without touching agent code.",
+                            "Maintaining multiple co-existing tool versions simultaneously increases storage and operational complexity but is necessary to avoid breaking every consumer on every update.",
+                            "Weighted multi-factor ranking is harder to tune and explain than 'always pick the newest version,' but produces meaningfully better real-world tool selection under varying cost/latency/reliability constraints."
+                        ],
+                        keyConsiderations: [
+                            "Dual-mode (semantic + keyword) search since agents describe needs in varying levels of specificity",
+                            "Formal lifecycle states and semantic versioning so tool evolution never silently breaks existing consumers",
+                            "Health checks feeding directly into ranking, not just a separate dashboard nobody watches",
+                            "RBAC/ABAC enforcement at register, discover, AND invoke — not just one of the three",
+                            "Feedback loop from actual usage results back into ranking, so scores reflect current reality",
+                            "Multi-tenant isolation baked into storage, search, and policy layers, not bolted on afterward",
+                            "Deduplication strategies (name+owner+version, endpoint+schema hash) to prevent silent duplicate registrations",
+                            "Full observability and audit: usage tracking, health dashboards, registration/update audit trail"
+                        ],
+                        metrics: ["Discovery Latency (P95 <100ms)", "Tool Health Status Distribution", "Ranking Selection Accuracy (success rate of chosen tools)", "Registration/Update Rate", "Deprecated Version Usage (should trend to zero)", "Cache Hit Rate (agent-side tool metadata cache)", "Policy Denial Rate", "Duplicate Registration Rate", "Tool Invocation Success Rate (by tool)", "Feedback Loop Lag"],
+                        interviewTips: [
+                            "Be ready to explain the core value proposition clearly: decoupling 'what capability is needed' from 'which specific tool/version/endpoint fulfills it,' which is what makes the tool ecosystem evolvable without touching agent code.",
+                            "Discuss why health status needs to feed directly into ranking rather than just existing as a separate monitoring signal — a common gap in naive designs is treating health checks as observability-only.",
+                            "Mention the deduplication problem explicitly: multiple teams independently registering functionally identical tools is a real operational headache at scale, and interviewers like seeing you've thought about it."
+                        ],
+                        guesstimates: ["1,000s of registered tools across an organization", "10,000s of discovery queries/day at scale", "Discovery latency target: <100ms P95", "Health check interval: every 10-30 seconds per tool", "Version churn: a handful of new versions per active tool per month"],
+                        securityConsiderations: [
+                            "Enforce API key, OAuth2/OIDC, or mTLS authentication for both registration and discovery/invocation endpoints.",
+                            "Apply RBAC/ABAC with resource-level access control (roles: Admin, Publisher, Developer, Agent, Viewer) plus tenant isolation at every layer.",
+                            "Run automated security scans on newly registered or updated tool code/adapters before allowing them into Published state.",
+                            "Scope service accounts used by agents to only the tools/capabilities their specific role requires — least privilege by default.",
+                            "Audit-log every registration, update, deprecation, and policy change for compliance and post-incident investigation.",
+                            "Validate auth configs at registration time so a tool can't be published with overly broad or misconfigured permission requirements."
+                        ],
+                        costOptimization: [
+                            "Cache tool metadata and auth requirements aggressively at the agent-runtime level, invalidating only on explicit update events rather than polling.",
+                            "Batch health check probes where possible instead of probing every tool independently at maximum frequency.",
+                            "Archive Deprecated/Archived tool versions' detailed metadata to cold storage once usage drops to zero, keeping the hot index lean.",
+                            "Right-size embedding regeneration — only recompute embeddings on meaningful description/capability changes, not on every metadata update.",
+                            "Use tiered rate limits per tenant/tool combination to control cost exposure from any single high-volume caller."
+                        ],
+                        commonMistakes: [
+                            "Treating tool discovery as a one-time lookup at agent startup instead of a per-task decision — tool health, cost, and availability change over time and need fresh evaluation.",
+                            "Publishing breaking schema changes directly to an existing version instead of always creating a new version, silently breaking every agent depending on the old schema.",
+                            "Skipping the feedback loop and treating rankings as static after initial scoring, missing both regressions in previously-good tools and improvements in newer alternatives.",
+                            "Enforcing authorization only at invoke time and not at discovery time, letting unauthorized agents see tools they can't actually use — a minor information leak that compounds at scale."
+                        ],
+                        capTheoremNotes: "The registration and policy-enforcement path favors Consistency (CP) — a tool's permission model and version state must be strongly consistent, since incorrectly allowing an unauthorized invocation is a real security failure. The discovery/search path favors Availability (AP) — a slightly stale search index returning marginally outdated rankings is acceptable, but discovery being unavailable would block every agent's ability to act.",
+                        alternativeApproaches: [
+                            "Static tool manifest files bundled with each agent instead of a centralized dynamic registry — zero discovery latency and no registry dependency, but requires redeploying every agent to add or update any tool.",
+                            "Pure keyword/tag-based discovery instead of semantic embedding search — simpler to implement and fully deterministic, but misses tools an agent describes in different language than the registered tags.",
+                            "Fixed, hardcoded ranking (e.g. always newest version, or manually curated priority list) instead of learned multi-factor ranking — easier to reason about and audit, but doesn't adapt to real-world performance/cost/reliability signals over time."
+                        ]
+                    },
+                    {
+                        id: "memoryservice",
+                        name: "Memory Service",
+                        tag: "A Unified Memory Layer for AI Agents",
+                        img: "images/agentiaiorchestratorsystemdesign/MemoryService.png",
+                        goals: ["Fast Recall (Short-Term)", "Persistent Recall (Long-Term)", "Semantic Search", "Cost-Aware Compression", "Multi-Tenant Isolation", "Scalable to Billions of Vectors"],
+                        overview: "Agents forget everything between calls unless something remembers for them — and 'something' can't just be 'dump the whole conversation into the prompt every time,' because that doesn't scale in latency, cost, or context window size. A memory service solves this by splitting recall into two fundamentally different problems: fast, ephemeral working memory for the current conversation (Redis-speed), and persistent, semantically-searchable long-term memory for facts, past results, and preferences (vector-DB-speed) — with compression, eviction, and deduplication keeping both tiers lean over time.",
+                        dataFlow: "On the write path, a memory event arrives from an agent/tool/user and is preprocessed (cleaned, normalized, type and TTL detected), then checked for exact or semantic duplicates before storage. If it passes deduplication, content is chunked into appropriately-sized pieces, embeddings are generated (with cache reuse for identical content), and the result is saved to the appropriate storage tier — Redis for short-term/hot-path memory, a vector DB (Pinecone/Weaviate/Qdrant) for long-term/cold-path memory, with PostgreSQL holding metadata and indexes. The vector index and metadata are updated, and lifecycle policies (TTL, versioning, compression triggers) are applied. <br><br>On the read path, a query (plus context) arrives from an agent, and the system first routes the request — deciding whether to search short-term, long-term, or both (hybrid) based on the nature of the query. It retrieves candidates via vector search plus metadata filters, ranks them by relevance, recency decay, importance/usage signals, and source trust/confidence, then builds a context window by selecting the highest-value memories that fit the token budget (using tiktoken-based counting), compressing/summarizing further if needed, and finally returns the assembled context to the calling agent.",
+                        keyIdea: "Memory retrieval isn't just 'find the closest vectors' — it's a ranking problem balancing relevance, recency, importance, and trust, then a context-window-budget problem (what actually fits), which is why the read path has distinct Rank and Compress stages rather than just Retrieve-and-Return; naive nearest-neighbor search alone would surface stale, low-value, or budget-busting memories just because they're semantically similar.",
+                        flow: ["Receive memory event", "Preprocess (clean/normalize)", "Deduplicate", "Chunk", "Generate embedding", "Store (hot/cold tier)", "Index", "Apply lifecycle policy (TTL/versioning/compression)"],
+                        components: [
+                            "<b>Memory Service API:</b> Write Memory, Read/Search, Update, Delete, and List/History operations exposed to Agent Orchestrator, Tools/Agents, Chat Interface, Workflow Engine, and Analytics/Monitoring consumers.",
+                            "<b>Ingestion Pipeline:</b> Preprocesses, deduplicates, chunks, and embeds incoming memory events before they reach storage.",
+                            "<b>Embedding Service:</b> Generates embeddings across multiple models with batch processing, async generation, and model versioning support.",
+                            "<b>Semantic Search Engine:</b> Dense vector similarity search with hybrid (vector + keyword) support and metadata filtering by tenant/type/time/tags/agent.",
+                            "<b>Ranking Engine:</b> Scores retrieved candidates by relevance, recency decay, importance/usage signals, and source trust/confidence — combining ML-based and rule-based ranking.",
+                            "<b>Context Builder (Window Management):</b> Token-counts (tiktoken), prioritizes high-value memories, and drops/compresses low-priority ones to fit the model's context window.",
+                            "<b>Lifecycle Manager:</b> Applies TTL, versioning, compression, and eviction policies (LRU/LFU/TTL-based, size/cost-based) across both memory tiers.",
+                            "<b>Storage Layer (Redis Cluster for short-term, Vector DB for long-term, PostgreSQL for metadata/index):</b> Two-tier storage matched to the very different access patterns of ephemeral working memory versus persistent semantic recall.",
+                            "<b>Object Storage (S3/GCS):</b> Raw documents, attachments, snapshots, and full summaries backing the structured memory records."
+                        ],
+                        serviceFlow: [
+                            { step: 1, from: "Agent/Tool/User", to: "Memory Service API (Write Memory)", detail: "A memory event (message, fact, tool output, note) is submitted with its type, source, and any TTL hint." },
+                            { step: 2, from: "Ingestion Pipeline", to: "Preprocess Stage", detail: "Content is cleaned, normalized, and its type and TTL are detected/validated before any storage decision is made." },
+                            { step: 3, from: "Ingestion Pipeline", to: "Deduplication Check", detail: "Exact-hash and semantic-embedding-similarity checks run against existing memories to avoid storing near-identical duplicates that would add noise and cost." },
+                            { step: 4, from: "Ingestion Pipeline", to: "Chunking + Embedding Service", detail: "Content is split into appropriately-sized chunks if needed, and embeddings are generated (with cache reuse for previously-seen identical content)." },
+                            { step: 5, from: "Ingestion Pipeline", to: "Storage Layer", detail: "Short-term memories go to Redis; long-term memories go to the vector DB plus PostgreSQL metadata store; large raw content goes to Object Storage." },
+                            { step: 6, from: "Ingestion Pipeline", to: "Lifecycle Manager", detail: "TTL, versioning, and compression policies are applied at write time, setting up automatic future eviction/archival without needing a separate manual pass." },
+                            { step: 7, from: "Agent", to: "Memory Service API (Read/Search)", detail: "Query plus context is submitted; the service decides whether to search short-term, long-term, or both based on query characteristics (hybrid routing)." },
+                            { step: 8, from: "Semantic Search Engine", to: "Ranking Engine", detail: "Vector search plus metadata filters return a candidate set; Ranking Engine scores each by relevance, recency decay, importance/usage, and source trust." },
+                            { step: 9, from: "Ranking Engine", to: "Context Builder", detail: "Top-ranked memories are selected within the target context window's token budget, using tiktoken-based counting to avoid exceeding the model's limit." },
+                            { step: 10, from: "Context Builder", to: "Calling Agent", detail: "If the selected memories still exceed budget, they're compressed/summarized further; final assembled context is returned to the caller." }
+                        ],
+                        componentImportance: [
+                            { name: "Two-Tier Storage (Redis Short-Term + Vector DB Long-Term)", why: "Conversational recall needs sub-millisecond access to recent messages/state; semantic long-term recall needs similarity search across potentially billions of vectors — no single store serves both access patterns well simultaneously.", ifMissing: "Using only a vector DB for everything would make simple 'what did the user just say' lookups unnecessarily slow and expensive; using only Redis would make old data unsearchable semantically and eventually exceed memory capacity." },
+                            { name: "Deduplication (Exact Hash + Semantic Similarity)", why: "Agents naturally generate repetitive or near-identical memories (the same fact restated, the same tool output logged twice); without dedup, storage bloats and search results get cluttered with redundant near-duplicates.", ifMissing: "Storage costs would grow faster than actual information content, and search results would surface multiple near-identical memories instead of one clean canonical version." },
+                            { name: "Ranking Engine (Relevance + Recency + Importance + Trust)", why: "Pure vector similarity surfaces what's semantically closest, not necessarily what's most useful right now — a stale fact from months ago can be more 'similar' than a recent, more relevant update.", ifMissing: "Retrieved context would be semantically plausible but practically wrong — e.g. surfacing an outdated user preference instead of a more recent contradicting one." },
+                            { name: "Context Builder (Token-Aware Window Management)", why: "LLM context windows are finite and expensive; naively stuffing every 'relevant' memory in risks exceeding the limit or wasting budget on low-value content that crowds out more useful information.", ifMissing: "Requests could fail outright from exceeding context limits, or silently waste token budget on marginally relevant memories instead of the highest-value ones." },
+                            { name: "Compression & Summarization", why: "Long-running agents accumulate memory faster than any context window can hold; periodic summarization preserves key information from old/large memories while shrinking their footprint for both storage and future retrieval.", ifMissing: "Old memories would either need to be discarded entirely (losing information) or kept in full (bloating storage and retrieval cost) with no middle ground." },
+                            { name: "TTL & Eviction Policies", why: "Not all memory should live forever — ephemeral working context (mid-conversation state) has a natural expiry, and without automatic eviction, short-term storage would need manual cleanup or grow unbounded.", ifMissing: "Redis (short-term store) would accumulate stale conversation state indefinitely, increasing memory pressure and cost without any corresponding value." }
+                        ],
+                        dbSchema: [
+                            { table: "memories", fields: "id (PK), tenant_id, agent_id, user_id, type, content, embedding, version, created_at, ttl_seconds, expire_at, status" },
+                            { table: "memory_chunks", fields: "chunk_id (PK), memory_id (FK), chunk_index, content, embedding" },
+                            { table: "conversation_state", fields: "state_id (PK), tenant_id, agent_id, session_id, active_intents (JSON), updated_at" },
+                            { table: "memory_versions", fields: "version_id (PK), memory_id (FK), content_snapshot, created_at" },
+                            { table: "dedup_hashes", fields: "hash_id (PK), tenant_id, content_hash, memory_id (FK)" },
+                            { table: "summaries", fields: "summary_id (PK), tenant_id, agent_id, source_memory_ids (JSON), summary_content, created_at" }
+                        ],
+                        scalingStrategy: [
+                            "Shard the vector DB by tenant/agent namespace to isolate large tenants and keep similarity search fast regardless of total corpus size.",
+                            "Scale Redis (short-term memory) horizontally via clustering, partitioned by conversation/session key for even load distribution.",
+                            "Run embedding generation asynchronously and in batches rather than synchronously per write, decoupling ingestion throughput from embedding model latency.",
+                            "Cache embedding results for identical or near-identical content to avoid redundant (and costly) model calls.",
+                            "Use tiered storage (hot Redis → warm vector DB → cold object storage/archive) so retrieval cost scales with actual access frequency, not total data volume."
+                        ],
+                        failureScenarios: [
+                            { scenario: "Vector DB (long-term memory) is temporarily unavailable.", mitigation: "Read path falls back to short-term memory only, returning a response flagged as running with degraded long-term context rather than failing the request entirely." },
+                            { scenario: "Embedding service is slow or rate-limited during a traffic spike.", mitigation: "Ingestion queues writes for async embedding generation rather than blocking; reads against not-yet-embedded content fall back to keyword/metadata search until embedding catches up." },
+                            { scenario: "A memory write and its embedding generation get out of sync (write succeeds, embedding fails).", mitigation: "Memory record is marked with an embedding-pending status; a background reconciliation job retries embedding generation until it succeeds, and search excludes pending records to avoid returning incomplete data." },
+                            { scenario: "Context Builder's compression step fails or times out.", mitigation: "Falls back to a simpler truncation strategy (drop lowest-ranked memories entirely) rather than blocking the entire read request on a failed summarization call." }
+                        ],
+                        tradeoffs: [
+                            "The two-tier storage split adds sync complexity (deciding what belongs where, keeping metadata consistent) in exchange for each tier being optimized for its actual access pattern rather than compromising on both.",
+                            "Aggressive deduplication and compression reduce storage cost and search noise but risk losing subtle distinctions between near-identical memories that occasionally do matter.",
+                            "Multi-factor ranking (relevance + recency + importance + trust) is harder to tune than pure similarity search, but produces meaningfully more useful retrieved context in practice."
+                        ],
+                        keyConsiderations: [
+                            "Two-tier memory (Redis short-term, vector DB long-term) matched to genuinely different access patterns, not an arbitrary split",
+                            "Deduplication at both exact-hash and semantic-similarity levels to control storage growth and search noise",
+                            "Ranking that goes beyond pure vector similarity — recency decay, importance, and source trust all matter",
+                            "Token-aware context window management as a first-class concern, not an afterthought bolted onto retrieval",
+                            "Compression/summarization policies tuned to preserve key information while controlling long-term storage growth",
+                            "TTL and eviction policies appropriate to each memory type (ephemeral vs persistent)",
+                            "Multi-tenant isolation via namespacing at every storage layer, not just at the API boundary",
+                            "Full observability: query latency, hit rate, embedding generation lag, compression/eviction activity"
+                        ],
+                        metrics: ["Read Latency (P50/P95/P99)", "Write/Ingestion Throughput", "Cache Hit Rate", "Embedding Generation Lag", "Deduplication Rate", "Context Window Utilization", "Compression Ratio", "Eviction/TTL Expiry Rate", "Vector Search Recall@K", "Storage Growth Rate (per tier)"],
+                        interviewTips: [
+                            "Be ready to explain why short-term and long-term memory need genuinely different storage systems rather than 'just use one database for everything' — access pattern mismatch is the core justification, not just performance tuning.",
+                            "Discuss the Context Builder's role explicitly: retrieval isn't the last step, fitting within a token budget while preserving the highest-value information is an equally important and distinct problem.",
+                            "Mention deduplication as a real operational concern at scale — agents generating repetitive memories is common, and interviewers want to see you've thought about storage/noise growth, not just retrieval correctness."
+                        ],
+                        guesstimates: ["Billions of vectors at scale across all tenants", "Short-term memory TTL: minutes to hours per conversation", "Long-term memory retention: months to indefinite depending on type", "Read latency target: <100ms P95 for hybrid search", "Compression trigger threshold: memories above a size/age threshold summarized periodically"],
+                        securityConsiderations: [
+                            "Namespace all storage (Redis keys, vector DB namespaces, metadata rows) by tenant_id to prevent cross-tenant memory leakage.",
+                            "Apply RBAC/ABAC on memory read/write/delete operations, scoped per agent and per tenant.",
+                            "Encrypt memory content at rest and in transit, particularly for long-term storage holding potentially sensitive user facts/preferences.",
+                            "Support PII redaction and compliance-driven deletion (right-to-be-forgotten) as first-class delete operations, not just soft-delete flags.",
+                            "Audit-log memory access patterns, especially cross-agent or cross-tenant reads, for compliance review.",
+                            "Version memories rather than allowing silent overwrites, preserving an auditable history of what an agent believed and when."
+                        ],
+                        costOptimization: [
+                            "Use compression/summarization proactively on old or large memories rather than storing full raw content indefinitely.",
+                            "Cache embeddings for repeated/near-identical content to avoid redundant (and often costly) embedding model calls.",
+                            "Tier storage aggressively (hot Redis → warm vector DB → cold object storage) based on actual access recency, not a fixed schedule.",
+                            "Batch embedding generation rather than generating one at a time, taking advantage of model throughput efficiencies.",
+                            "Set TTLs appropriately per memory type so ephemeral short-term data doesn't linger in the more expensive hot tier longer than necessary."
+                        ],
+                        commonMistakes: [
+                            "Using a single storage tier for everything instead of matching short-term/long-term memory to genuinely different access patterns, hurting either latency or search quality.",
+                            "Relying purely on vector similarity for ranking without incorporating recency or importance, surfacing stale but semantically-similar memories over more relevant recent ones.",
+                            "Skipping deduplication and letting repetitive agent-generated memories accumulate, inflating storage cost and cluttering search results with near-duplicates.",
+                            "Ignoring context window token budgets during retrieval and only discovering the overflow problem when a downstream LLM call fails from exceeding its context limit."
+                        ],
+                        capTheoremNotes: "Short-term memory (Redis) favors Availability (AP) — a slightly stale read of conversation state is usually harmless, and the store being unavailable would block every active conversation. Long-term memory writes (especially versioned facts/preferences) lean more toward Consistency (CP) for the metadata layer, since an agent acting on contradictory or lost preference data can produce genuinely wrong behavior.",
+                        alternativeApproaches: [
+                            "Single unified vector DB for both short-term and long-term memory instead of a two-tier split — simpler architecture, but forces a trade-off between low-latency conversational access and cost-efficient long-term storage.",
+                            "Full conversation replay (resend entire history every call) instead of a dedicated memory service — trivially simple and always fully 'consistent,' but doesn't scale in latency, token cost, or context window size beyond short conversations.",
+                            "Rule-based memory retention (keep everything for N days, delete after) instead of ranked, compression-aware lifecycle management — much simpler to implement, but either wastes storage on low-value memories or discards genuinely useful long-term facts indiscriminately."
+                        ]
+                    }
+                ]
+            },
+            {
+                id: "torrent",
+                name: "BitTorrent (Peer-to-Peer File Sharing)",
+                tag: "How Torrent Works",
+                img: "images/TorrentSystemDesign.png",
+                goals: ["Decentralized Distribution", "High Download Speed", "Fault Tolerant", "Bandwidth Efficient", "Censorship Resistant", "Scalable with Demand"],
+                overview: "BitTorrent inverts the normal client-server model on purpose: instead of one server straining under N simultaneous downloads, the file is split into pieces and every downloader immediately becomes an uploader for the pieces they already have. The system gets faster as more people want the file, not slower — the opposite of almost every other distribution system. The hard engineering problem isn't the transfer itself, it's discovery (how do thousands of strangers find each other) and integrity (how do you trust a piece of a file from someone you've never met).",
+                dataFlow: "A content provider holds the original file and creates a .torrent file — a Bencoded metadata document containing the tracker URL(s), piece length, total file size, and a SHA-1 hash for every individual piece. This .torrent file (not the actual content) is distributed via websites, magnet links, or any normal channel. <br><br>A client that wants the file loads the .torrent and contacts either a Tracker Server or the DHT (Distributed Hash Table) network to discover peers. Talking to the tracker is an Announce (start/stop/update) call; the tracker responds with a peer list and continuously tracks swarm membership. If no tracker is available (or by design), the client instead queries the DHT — a decentralized key-value network keyed by info-hash — to find peers without any central coordinator, which is what makes torrents resistant to a tracker being taken down. <br><br>Once the client has a peer list, it joins the Swarm and performs a Handshake with each peer, exchanging a Bitfield (which pieces each side already has), then Interested/Not-Interested signals. From there, the client requests missing pieces from multiple peers in parallel, downloading different pieces from different peers simultaneously. Every downloaded piece is immediately verified against its SHA-1 hash from the .torrent metadata before being trusted or shared further — this is what lets you safely download from strangers, since any tampered or corrupted piece is caught and re-requested rather than silently corrupting the final file. As soon as a piece is verified, the client announces it has that piece (Have message) and starts uploading it to other peers who need it, even before the full file is complete. The file is assembled and complete once every piece has been downloaded and verified.",
+                keyIdea: "Trust is pushed down to the smallest possible unit — the individual piece, verified by its own SHA-1 hash — rather than trusting a peer or a connection as a whole. This is what makes it safe to simultaneously download from dozens of anonymous strangers: a bad or malicious peer can only ever corrupt the pieces they personally serve, and even those are caught and discarded the moment they fail hash verification.",
+                flow: ["Get .torrent file", "Contact tracker/DHT", "Join swarm", "Exchange metadata (bitfields)", "Request pieces from multiple peers", "Download & upload simultaneously", "Verify each piece's hash", "Complete file once all pieces verified"],
+                components: [
+                    "<b>.torrent File:</b> Bencoded metadata file containing the tracker URL, file name/length, piece length, and a SHA-1 hash for every piece — never contains the actual file content.",
+                    "<b>Tracker Server:</b> Central coordination point that registers peers, tracks overall swarm status, and returns a peer list on request; a single point of failure if DHT isn't also available.",
+                    "<b>DHT (Distributed Hash Table):</b> Decentralized peer-discovery mechanism keyed by info-hash, letting clients find peers without relying on any tracker — the feature that makes torrents censorship-resistant.",
+                    "<b>Peers:</b> Individual users simultaneously downloading pieces they need and uploading pieces they already have to others in the same swarm.",
+                    "<b>Pieces:</b> Fixed-size chunks (commonly ~1MB) that the full file is split into; each piece is independently identified by index and verified by its own SHA-1 hash.",
+                    "<b>Swarm:</b> The complete set of peers currently sharing a specific torrent, tracked collectively by the tracker and/or discoverable via DHT.",
+                    "<b>Bitfield Protocol:</b> The mechanism by which peers announce which pieces they currently have, letting others know exactly what to request from whom."
+                ],
+                serviceFlow: [
+                    { step: 1, from: "User", to: "Website/Magnet Link", detail: "User obtains the .torrent file (or a magnet link containing just the info-hash) from any distribution channel — the metadata itself is tiny and easy to host anywhere." },
+                    { step: 2, from: "Client", to: "Tracker Server (Announce)", detail: "Client sends a start Announce call with its info-hash; tracker registers the peer and returns an initial peer list for the swarm." },
+                    { step: 3, from: "Client", to: "DHT Network (fallback/alternative)", detail: "Client can query the DHT by info-hash to find peers, get their addresses, and connect directly — used when no tracker is available or as a supplement." },
+                    { step: 4, from: "Client", to: "Peer (Handshake)", detail: "Client performs a protocol handshake with each discovered peer, confirming both sides are sharing the same torrent before any data exchange begins." },
+                    { step: 5, from: "Peer A", to: "Peer B (Bitfield exchange)", detail: "Each peer sends its bitfield — which piece indices it currently holds — so both sides know exactly what can be requested from whom." },
+                    { step: 6, from: "Peer A", to: "Peer B (Interested/Request)", detail: "Peer A signals interest in pieces it lacks and requests specific piece indices; multiple such requests happen in parallel against different peers." },
+                    { step: 7, from: "Peer B", to: "Peer A (Piece delivery)", detail: "Requested piece data is sent back; Peer A immediately hashes the received piece and compares it against the SHA-1 hash recorded in the .torrent metadata." },
+                    { step: 8, from: "Peer A", to: "Swarm (Have message)", detail: "Once verified, Peer A broadcasts a Have message announcing it now holds that piece, making it immediately available for others to request — uploading starts before the download finishes." },
+                    { step: 9, from: "Client", to: "Tracker (periodic update/stop)", detail: "Client periodically re-announces to the tracker with progress updates, and sends a final stop announcement when it leaves the swarm." }
+                ],
+                componentImportance: [
+                    { name: "Per-Piece SHA-1 Verification", why: "This is the entire trust model of BitTorrent — without independently verifiable pieces, downloading from anonymous strangers would be far too risky, since any single peer could serve corrupted or malicious data.", ifMissing: "A single bad peer could silently corrupt the final assembled file, and there would be no way to detect or isolate which specific piece(s) came from the bad actor." },
+                    { name: "DHT (Distributed Hash Table)", why: "Removes the single point of failure and single point of control that a tracker represents — peer discovery keeps working even if every tracker for a torrent goes offline or is deliberately shut down.", ifMissing: "The entire swarm would become undiscoverable the moment its tracker went down, and a single legal takedown of one tracker could kill distribution of the file entirely." },
+                    { name: "Piece-based Parallel Downloading", why: "Splitting the file into independently-requestable pieces is what allows a client to pull different chunks from many different peers simultaneously, saturating available bandwidth far better than a single-source download.", ifMissing: "Downloads would be limited to a single peer's upload speed at a time, eliminating the core speed advantage that makes torrenting worthwhile over direct download." },
+                    { name: "Immediate Re-sharing (Upload while Downloading)", why: "A peer starts uploading a piece the moment it's verified, rather than waiting for the whole file — this is what makes the swarm's total available bandwidth grow with demand instead of shrinking.", ifMissing: "Early downloaders would have nothing to share until fully complete, drastically reducing the swarm's total upload capacity exactly when it's most needed (right after a popular file is released)." },
+                    { name: "Bitfield/Have Protocol", why: "Peers need an efficient, low-overhead way to communicate exactly which pieces they hold so requests aren't wasted on unavailable pieces.", ifMissing: "Peers would have no efficient way to know what to request from whom, forcing wasteful blind requests or a return to centralized coordination for every single piece." },
+                    { name: "Tracker Server", why: "Even with DHT available, trackers provide fast, low-latency swarm bootstrapping and give a central point for reporting swarm health/statistics.", ifMissing: "Without any tracker, new peers would rely solely on DHT for discovery, which is typically slower to bootstrap from than a direct tracker announce." }
+                ],
+                dbSchema: [
+                    { table: "torrents", fields: "info_hash (PK), name, total_length, piece_length, num_pieces, created_at" },
+                    { table: "pieces", fields: "piece_index (PK), info_hash (FK), sha1_hash, size_bytes" },
+                    { table: "swarm_peers", fields: "peer_id (PK), info_hash (FK), ip_address, port, uploaded_bytes, downloaded_bytes, last_announce_at" },
+                    { table: "tracker_announces", fields: "announce_id (PK), peer_id (FK), event_type, timestamp" },
+                    { table: "dht_nodes", fields: "node_id (PK), ip_address, port, last_seen_at" }
+                ],
+                scalingStrategy: [
+                    "Swarm capacity scales organically with demand — every new downloader adds upload capacity once they hold even one verified piece, unlike a fixed-capacity central server.",
+                    "Multiple trackers can be listed per torrent so tracker load and failure risk is distributed rather than concentrated on one server.",
+                    "DHT scales as a fully decentralized peer-to-peer network with no central bottleneck, since each node only needs to know a small subset of the overall network (via Kademlia-style routing).",
+                    "Piece size can be tuned per torrent (larger pieces for huge files reduce per-piece overhead; smaller pieces for smaller files improve download parallelism and reduce wasted re-downloads on corruption).",
+                    "Peer selection algorithms (e.g. rarest-piece-first, tit-for-tat) help balance load across the swarm and discourage free-riding."
+                ],
+                failureScenarios: [
+                    { scenario: "The tracker goes offline entirely.", mitigation: "Clients supporting DHT fall back to decentralized peer discovery via info-hash lookup, allowing the swarm to continue operating without any tracker at all." },
+                    { scenario: "A peer sends a corrupted or tampered piece.", mitigation: "SHA-1 hash verification catches the mismatch immediately; the piece is discarded and re-requested from a different peer, and the offending peer can be flagged/banned by the client." },
+                    { scenario: "A peer disconnects mid-transfer.", mitigation: "The requesting client simply re-requests the incomplete piece from another peer in the swarm that has it — no global coordination or restart needed." },
+                    { scenario: "A new torrent has very few seeders (peers with the complete file).", mitigation: "This is the acknowledged 'slow start' problem — download speed is limited until more peers join and complete pieces, at which point overall swarm speed increases as those peers begin seeding." }
+                ],
+                tradeoffs: [
+                    "Decentralization via DHT trades the fast, simple bootstrapping of a tracker for resilience against any single point of failure or takedown.",
+                    "Smaller piece sizes improve download parallelism and reduce wasted re-transfer on a failed hash check, but increase per-piece protocol overhead (more hashes, more Have messages).",
+                    "Immediately trusting-but-verifying pieces from anonymous peers (rather than requiring peer-level reputation before any transfer) maximizes swarm speed and openness, at the cost of some wasted bandwidth on pieces that fail verification and must be re-fetched."
+                ],
+                keyConsiderations: [
+                    "Every piece must be independently verifiable — trust the data, not the peer serving it",
+                    "Peer discovery needs both a fast path (tracker) and a resilient path (DHT) since either alone has weaknesses",
+                    "Upload capacity should activate as early as possible per peer (as soon as a piece verifies), not wait for full completion",
+                    "Piece size is a real tuning parameter, not an arbitrary constant — it trades overhead against re-download cost on corruption",
+                    "NAT traversal and firewall issues are a genuine engineering problem for any peer expected to accept incoming connections",
+                    "Free-riding (downloading without uploading) needs to be discouraged via protocol-level incentives (e.g. tit-for-tat piece sharing)",
+                    "The protocol must remain functional even with a partially malicious or unreliable swarm, not assume good-faith peers"
+                ],
+                metrics: ["Download Speed (aggregate across peers)", "Swarm Size (seeders + leechers)", "Piece Verification Failure Rate", "Time to First Byte", "Time to Complete Download", "Upload/Download Ratio per Peer", "Tracker Announce Success Rate", "DHT Query Latency", "Peer Churn Rate"],
+                interviewTips: [
+                    "Be ready to explain why trust is pushed to the piece level (SHA-1 per piece) rather than the peer or connection level — this single design choice is what makes downloading from anonymous strangers viable at all.",
+                    "Discuss the tracker vs DHT trade-off clearly: tracker is faster to bootstrap from but is a central point of failure/control; DHT is fully decentralized but generally slower and more complex to query.",
+                    "Mention why upload starts before download completes (as soon as a piece verifies) — a common overlooked detail that's actually central to why swarm speed scales with demand instead of degrading."
+                ],
+                guesstimates: ["Piece size: typically 256KB–4MB depending on total file size", "SHA-1 hash: 20 bytes per piece", "A 1GB file at 1MB piece size: ~1,000 pieces, ~20KB of piece-hash metadata", "Swarm sizes: from single digits (rare content) to tens of thousands of peers (popular releases)", "Tracker re-announce interval: typically every 15-30 minutes"],
+                securityConsiderations: [
+                    "SHA-1 piece hashing (still adequate for integrity-checking, not cryptographic collision resistance, in this context) catches corrupted or tampered data before it's trusted or re-shared.",
+                    "Clients should validate all peer-supplied protocol messages (handshake, bitfield, piece data) defensively, since any peer in the swarm is an untrusted, potentially adversarial input source.",
+                    "Malicious peers can intentionally serve fake or bad data ('poisoning') — hash verification per piece is the primary defense, alongside client-side peer banning after repeated failures.",
+                    "NAT/firewall traversal (via UPnP, hole punching, or relay peers) is necessary for peers behind restrictive networks to accept incoming connections and fully participate in the swarm.",
+                    "Legal exposure exists at the content layer (what's being shared), not the protocol layer itself — the protocol is content-agnostic and equally suited to legitimate large-file distribution (Linux ISOs, game patches) as to infringing content."
+                ],
+                costOptimization: [
+                    "The protocol itself is designed to minimize any single party's bandwidth cost — the content provider only needs to seed initially, after which the swarm largely sustains itself.",
+                    "Choosing an appropriately large piece size for large files reduces per-piece protocol overhead (fewer Have/hash messages) relative to total transfer size.",
+                    "Encouraging long-lived seeders (peers who stay online after completing download) reduces reliance on the original content provider's bandwidth over the torrent's lifetime.",
+                    "DHT reduces long-term operating cost for content distributors since no dedicated tracker infrastructure needs to be maintained indefinitely."
+                ],
+                commonMistakes: [
+                    "Assuming peers can be trusted once connected instead of verifying every single piece independently regardless of which peer it came from.",
+                    "Relying solely on a single tracker without DHT support, creating an unnecessary single point of failure for peer discovery.",
+                    "Choosing piece size without considering the trade-off between protocol overhead (too small) and wasted re-download cost on corruption (too large).",
+                    "Not accounting for the 'slow start' problem when a new torrent has very few initial seeders, leading to poor early download speeds that are inherent to swarm size, not a bug."
+                ],
+                capTheoremNotes: "BitTorrent is fundamentally an Availability-and-Partition-tolerance-favoring (AP) system — there is no global consistency guarantee about swarm membership or peer state at any given moment, only an eventually-consistent view built from tracker announces and DHT lookups. Data integrity (via per-piece hashing) is handled as a separate, orthogonal guarantee from swarm-state consistency.",
+                alternativeApproaches: [
+                    "Direct centralized download (single server, HTTP/FTP) instead of P2P distribution — much simpler and gives deterministic download speed control, but doesn't scale with demand and puts full bandwidth cost on one party.",
+                    "CDN-based distribution instead of a swarm — offers more predictable performance and easier content control/takedown, but requires ongoing infrastructure cost that scales with total downloads rather than being offset by peer contribution.",
+                    "IPFS (content-addressed, DHT-based distributed storage) instead of BitTorrent — generalizes the swarm/DHT idea beyond single-file torrents into a persistent, content-addressed web, at the cost of a more complex protocol and different caching/pinning incentive model."
+                ]
+            },
         ];
 
         const picker = document.getElementById('picker');
@@ -1762,6 +2693,25 @@
           `).join('')}
         </div>
       </div>`;
+            }
+
+            if (s.subSystems && s.subSystems.length) {
+                var icons = ['⚡', '⚙', '🔄', '🔧', '🧠'];
+                html += '<div class="brief-card" style="grid-column:1/-1;"><h3>In-Depth Sub-System Breakdowns</h3><p style="font-size:13px;color:var(--text-faint);margin-bottom:14px;">Click any panel below to expand the full breakdown for that sub-system.</p><div class="ss-list">' +
+                    s.subSystems.map(function (ss, idx) {
+                        var isFirst = idx === 0;
+                        return '<div>' +
+                            '<div id="ss-toggle-' + idx + '" class="ss-toggle' + (isFirst ? ' open' : '') + '" onclick="toggleSS(' + idx + ')">' +
+                            '<div class="ss-left">' +
+                            '<div class="ss-icon">' + (icons[idx] || '⚙') + '</div>' +
+                            '<div class="ss-title"><div class="ss-name">' + ss.name + '</div><div class="ss-sub">' + ss.tag + '</div></div>' +
+                            '</div>' +
+                            '<span class="ss-chev">&#9660;</span>' +
+                            '</div>' +
+                            '<div id="ss-body-' + idx + '" class="ss-body' + (isFirst ? ' open' : '') + '">' + renderSSContent(ss) + '</div>' +
+                            '</div>';
+                    }).join('') +
+                    '</div></div>';
             }
 
             // Helper function for simple lists
@@ -1861,6 +2811,46 @@
 
             html += `</div>`; // End brief-grid
             panel.innerHTML = html;
+        }
+
+        function toggleSS(id) {
+            var body = document.getElementById('ss-body-' + id);
+            var toggle = document.getElementById('ss-toggle-' + id);
+            body.classList.toggle('open');
+            toggle.classList.toggle('open');
+        }
+
+        function renderSSContent(ss) {
+            var h = '';
+            function lbl(t) { return '<div class="ss-sect-label">' + t + '</div>'; }
+            function sect(title, body) { return '<div class="ss-sect">' + lbl(title) + body + '</div>'; }
+            function lst(title, arr) {
+                if (!arr || !arr.length) return '';
+                return sect(title, '<ul class="ss-ul">' + arr.map(function (i) { return '<li>' + i + '</li>'; }).join('') + '</ul>');
+            }
+            if (ss.goals && ss.goals.length) h += '<div class="ss-goals">' + ss.goals.map(function (g) { return '<span class="ss-goal">' + g + '</span>'; }).join('') + '</div>';
+            if (ss.img) h += '<div class="diagram-wrap" style="margin-bottom:20px;"><img src="' + ss.img + '" alt="' + ss.name + '" loading="lazy"></div>';
+            if (ss.overview) h += sect("What's going on", '<p class="ss-text">' + ss.overview + '</p>');
+            if (ss.dataFlow) h += sect('How data flows', '<p class="ss-text">' + ss.dataFlow + '</p>');
+            if (ss.keyIdea) h += '<div style="background:rgba(63,167,255,0.06);border:1px solid rgba(63,167,255,0.2);border-radius:8px;padding:14px 16px;margin-bottom:18px;">' + lbl('Key idea') + '<p class="ss-text">' + ss.keyIdea + '</p></div>';
+            if (ss.flow && ss.flow.length) h += sect('Request flow, simplified', '<div class="flow-steps">' + ss.flow.map(function (f, i) { return (i > 0 ? '<span class="flow-arrow">→</span>' : '') + ('<span class="flow-step">' + f + '</span>'); }).join('') + '</div>');
+            if (ss.components && ss.components.length) h += sect('System Components', '<ul class="ss-ul">' + ss.components.map(function (c) { return '<li>' + c + '</li>'; }).join('') + '</ul>');
+            if (ss.serviceFlow && ss.serviceFlow.length) h += sect('Detailed Service Flow', '<div style="display:flex;flex-direction:column;gap:10px;">' + ss.serviceFlow.map(function (f) { return '<div class="ss-card"><div style="font-weight:700;color:var(--accent);display:flex;align-items:center;gap:8px;font-size:12px;margin-bottom:4px;"><span style="display:inline-block;min-width:20px;height:20px;background:var(--accent);color:#000;border-radius:50%;text-align:center;line-height:20px;font-size:10px;">' + f.step + '</span>' + f.from + ' → ' + f.to + '</div><div class="ss-text" style="font-size:13px;margin-left:28px;">' + f.detail + '</div></div>'; }).join('') + '</div>');
+            if (ss.componentImportance && ss.componentImportance.length) h += sect('Component Importance &amp; Failure Impact', '<div style="display:flex;flex-direction:column;gap:8px;">' + ss.componentImportance.map(function (c) { return '<div class="ss-card"><div style="font-weight:700;margin-bottom:6px;">' + c.name + '</div><div style="font-size:13px;margin-bottom:3px;"><strong style="color:var(--accent);">Why:</strong> <span class="ss-text">' + c.why + '</span></div><div style="font-size:13px;"><strong style="color:#ef4444;">If Missing:</strong> <span class="ss-text">' + c.ifMissing + '</span></div></div>'; }).join('') + '</div>');
+            if (ss.failureScenarios && ss.failureScenarios.length) h += sect('Failure Scenarios &amp; Mitigation', '<div style="display:flex;flex-direction:column;gap:8px;">' + ss.failureScenarios.map(function (f) { return '<div class="ss-card"><div style="font-size:13px;margin-bottom:3px;"><strong style="color:#ef4444;">Scenario:</strong> <span class="ss-text">' + f.scenario + '</span></div><div style="font-size:13px;"><strong style="color:#10b981;">Mitigation:</strong> <span class="ss-text">' + f.mitigation + '</span></div></div>'; }).join('') + '</div>');
+            if (ss.dbSchema && ss.dbSchema.length) h += sect('Database Schema', '<div style="display:flex;flex-direction:column;gap:8px;">' + ss.dbSchema.map(function (d) { return '<div><div style="font-family:monospace;font-weight:700;color:var(--accent);font-size:12px;">' + d.table + '</div><div style="font-size:12px;color:var(--text-faint);">' + d.fields + '</div></div>'; }).join('') + '</div>');
+            h += lst('Scaling Strategy', ss.scalingStrategy);
+            h += lst('Tradeoffs', ss.tradeoffs);
+            h += lst('Key Considerations', ss.keyConsiderations);
+            h += lst('Important Metrics', ss.metrics);
+            h += lst('Guesstimates', ss.guesstimates);
+            h += lst('Security Considerations', ss.securityConsiderations);
+            h += lst('Cost Optimization', ss.costOptimization);
+            h += lst('Common Mistakes', ss.commonMistakes);
+            h += lst('Alternative Approaches', ss.alternativeApproaches);
+            h += lst('Interview Tips', ss.interviewTips);
+            if (ss.capTheoremNotes) h += sect('CAP Theorem Notes', '<p class="ss-text">' + ss.capTheoremNotes + '</p>');
+            return h;
         }
 
         function loadSystem(id) {
