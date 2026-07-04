@@ -1443,7 +1443,250 @@
                     "Pre-generated pool of short codes handed out on request (like a ticket-dispenser pattern) instead of generating on-the-fly — avoids any generation latency, but adds the operational complexity of managing a pool.",
                     "NoSQL-only storage (no relational DB) — scales writes more easily, but loses the straightforward uniqueness constraint enforcement that a relational unique index gives for free."
                 ]
-            }
+            },
+            {
+                id: "fooddelivery",
+                name: "Food Delivery Platform",
+                tag: "like Zomato / DoorDash / Swiggy",
+                img: "images/fooddeliverysystemdesign/FoodDeliveryPlatformSystemDesign.png",
+                componentImages: [
+                    { src: "images/fooddeliverysystemdesign/FoodDeliveryGeoSpatialSystemDesign.png", title: "Geo-Spatial Search & Discovery System" },
+                    { src: "images/fooddeliverysystemdesign/FoodDeliveryDistributedStateMachine.png", title: "Distributed Order State Machine" },
+                    { src: "images/fooddeliverysystemdesign/FoodDeliveryDispatchRoutingSystemDesign.png", title: "Dispatch & Routing Engine" },
+                    { src: "images/fooddeliverysystemdesign/FoodDeliveryRealTimeLocationIngestionSystemDesign.png", title: "Real-Time Location Ingestion Service" }
+                ],
+                goals: ["Highly Available", "Scalable", "Low Latency", "Real-time Tracking", "Fault Tolerant", "Consistent"],
+                overview: "A food delivery platform is really four hard systems stapled together: a geo-search engine that has to find restaurants and partners near a moving point, a dispatch engine that solves a live matching problem every few seconds, an order state machine that must survive partial failures across a dozen services, and a location-ingestion pipeline processing GPS pings at massive scale to keep ETAs honest. The consumer-facing app is the easy part — the real engineering is in getting a hot bag of food from a kitchen to a doorstep while three independent parties (customer, restaurant, delivery partner) all disagree about timing.",
+                dataFlow: "When a customer opens the app, the request hits the Edge Layer (DNS, CDN, WAF/DDoS protection) then the API Gateway, which handles rate limiting, auth, and routing before anything touches internal services. Search queries are served by the Geo-Spatial Search & Discovery service, which parses the location, plans the query (nearby/area/along-route/text), hits multi-resolution geo indexes (Geohash, S2 Cell, R-Tree/H3), and ranks results with a weighted score combining distance, relevance, popularity, ETA, and availability. <br><br>Placing an order triggers the Order Service, which checks restaurant availability, calculates charges (promo, tax, delivery fee), and hands off to Payment Service. Once payment is confirmed, an order.created event is published to Kafka, and the Distributed Order State Machine takes over — a per-order saga that validates transitions, persists state, publishes events, and triggers side effects (notifications, inventory updates, dispatch) as the order moves through CREATED → PAYMENT_CONFIRMED → ACCEPTED → PREPARING → READY → PICKED_UP → DELIVERED. <br><br>In parallel, the Dispatch & Routing Engine consumes order.ready events, filters candidate delivery partners by availability/location/capacity/skills, scores and ranks them, assigns the order (with reassignment on rejection or timeout), computes the optimal pickup+drop route, and predicts ETA. Throughout the delivery, the Real-Time Location Ingestion pipeline consumes GPS pings from the partner's phone every 1-5 seconds, cleans and map-matches them to the road network via OSRM/Valhalla, and feeds an ML-based ETA engine (XGBoost/DNN) that continuously recalculates arrival time against live traffic and weather.",
+                keyIdea: "The system decomposes into four semi-independent engines — search, dispatch, order-state, and location/ETA — connected entirely through Kafka events rather than direct calls, so a slowdown in one (e.g. ETA prediction) never blocks another (e.g. order state transitions) from progressing.",
+                flow: ["Search nearby restaurants", "Place order", "Payment confirmed", "Order state machine starts", "Dispatch finds partner", "Partner accepts", "Route optimized", "Live location ingested", "ETA recalculated", "Order delivered"],
+                components: [
+                    "<b>API Gateway & Edge Layer:</b> DNS, CDN, WAF/DDoS protection, load balancing, rate limiting, and auth before any request reaches a microservice.",
+                    "<b>Geo-Spatial Search & Discovery Service:</b> Six-stage pipeline (parse/normalize → geo enrichment → query planning → geo search → ranking → response) backed by Geohash/S2/R-Tree indexes for sub-200ms nearby, area, and along-route search.",
+                    "<b>Dispatch & Routing Engine:</b> Stateless workers running candidate filtering, scoring/ranking, assignment, route optimization, ETA prediction, and monitoring/rebalancing as a six-stage pipeline per order.",
+                    "<b>Distributed Order State Machine:</b> A per-order saga orchestrator that validates transitions, persists state with optimistic locking, and guarantees idempotent, exactly-once side effects across 9 possible states including exception paths (CANCELLED, REJECTED, FAILED, EXPIRED, RETURNED).",
+                    "<b>Real-Time Location Ingestion & ETA Service:</b> Ingests millions of GPS events/sec via Kafka/Pulsar, map-matches them to road graphs, and runs an ML ETA model (GBM/XGBoost/DNN) with a live feedback loop comparing predicted vs actual arrival.",
+                    "<b>Order/Payment/Dispatch Services:</b> Core microservices for order lifecycle, payment capture/refund (via Razorpay/Stripe/PayU), and delivery assignment.",
+                    "<b>Redis Cluster:</b> Hot cache for search results, current partner locations, and short-lived locks; Aerospike/Redis also back the geo index and live state store.",
+                    "<b>PostgreSQL/PostGIS/TimescaleDB:</b> PostgreSQL for relational order/user/restaurant data with ACID guarantees, PostGIS for geo queries, TimescaleDB/InfluxDB for location time-series history.",
+                    "<b>Apache Kafka:</b> The backbone event bus carrying order, payment, dispatch, location, status, and notification events between every service."
+                ],
+                serviceFlow: [
+                    { step: 1, from: "Client (Customer/Restaurant/Partner App)", to: "Edge Layer (DNS/CDN/WAF)", detail: "Static assets served from CDN edge; WAF/DDoS protection filters malicious traffic before it reaches origin." },
+                    { step: 2, from: "Edge Layer", to: "API Gateway", detail: "Load balancer routes to the gateway, which handles rate limiting, authentication, and request/response transformation." },
+                    { step: 3, from: "API Gateway", to: "Geo-Spatial Search Service", detail: "Search request is parsed and normalized, then routed through query planning to determine search type (nearby, area/polygon, along-route, text, category)." },
+                    { step: 4, from: "Search Service", to: "Geo Index (Geohash/S2/H3)", detail: "Multi-resolution spatial index returns candidate restaurants/partners; results are ranked using a weighted formula of distance, relevance, popularity, ETA, and availability." },
+                    { step: 5, from: "Client", to: "Order Service", detail: "Customer places order; Order Service validates restaurant availability and calculates final price (promo, tax, delivery fee) before invoking Payment Service." },
+                    { step: 6, from: "Payment Service", to: "Payment Gateway", detail: "External charge processed with idempotency key; on success, an order.created event is published to Kafka." },
+                    { step: 7, from: "Kafka Event Bus", to: "Order State Machine Orchestrator", detail: "Per-order saga picks up the event, persists CREATED state, and transitions to PAYMENT_CONFIRMED, publishing each transition as its own Kafka event." },
+                    { step: 8, from: "Order State Machine", to: "Restaurant App", detail: "order.accepted / order.preparing / order.ready events notify the restaurant and drive state forward as they act on the order." },
+                    { step: 9, from: "Kafka (order.ready)", to: "Dispatch & Routing Engine", detail: "Dispatch engine fetches candidate delivery partners from the real-time Partner Store (Redis/Aerospike), filtered by zone, capacity, skills, and online status." },
+                    { step: 10, from: "Dispatch Engine", to: "Scoring & Ranking Stage", detail: "Weighted scoring (20% distance to restaurant, 20% distance to customer, 15% rating, 10% acceptance rate, 10% workload, etc.) ranks candidates; top candidate is locked for T seconds." },
+                    { step: 11, from: "Dispatch Engine", to: "Delivery Partner App", detail: "Order offer pushed via FCM/APNS; partner accepts or rejects. On rejection/timeout, the engine tries the next best candidate up to max retries, then escalates." },
+                    { step: 12, from: "Dispatch Engine", to: "Route Optimization", detail: "On acceptance, computes best pickup→drop route using Dijkstra/A* with multi-stop TSP heuristics for batched orders." },
+                    { step: 13, from: "Delivery Partner App", to: "Location Ingestion Pipeline", detail: "GPS pings (1-5s interval) stream into Kafka/Pulsar, get validated/deduplicated, then map-matched to the road network via OSRM/Valhalla." },
+                    { step: 14, from: "Location Pipeline", to: "ETA Calculation Service", detail: "Enriched location + traffic + weather features feed the ML ETA model (XGBoost/DNN); predictions are cached in Redis and pushed to Customer/Partner apps over WebSocket/MQTT." },
+                    { step: 15, from: "Order State Machine", to: "Notification/Analytics Services", detail: "Each terminal state (DELIVERED, CANCELLED, RETURNED) fires async Kafka events for notifications, ledger updates, and analytics without blocking the critical path." }
+                ],
+                componentImportance: [
+                    { name: "Geo-Spatial Index (Geohash/S2/H3)", why: "Relational databases can't do fast radius/polygon/along-route search at scale; hierarchical spatial indexes make nearby-restaurant queries sub-200ms even with millions of listings.", ifMissing: "Every search would require expensive full-table geo-distance calculations, causing search latency to spike well past acceptable UX thresholds during peak hours." },
+                    { name: "Dispatch Scoring & Ranking Engine", why: "A naive 'nearest partner' assignment ignores rating, workload, and acceptance history, leading to poor ETAs and partner burnout; weighted multi-factor scoring balances speed against reliability.", ifMissing: "Orders would repeatedly go to overloaded or low-acceptance partners, spiking rejection rates and cascading delays across the whole zone." },
+                    { name: "Distributed Order State Machine (Saga Orchestrator)", why: "An order touches restaurant, payment, and delivery systems that can each fail independently; the saga pattern guarantees every transition is validated, idempotent, and recoverable without manual intervention.", ifMissing: "Partial failures (e.g. restaurant accepts but dispatch never fires) would leave orders permanently stuck with no defined recovery path." },
+                    { name: "Kafka Event Bus", why: "Decouples search, dispatch, order-state, and location services so each can scale and fail independently, while still keeping every consumer eventually consistent.", ifMissing: "Services would need tight synchronous coupling, meaning a slow ETA calculation could block order confirmation entirely." },
+                    { name: "Real-Time Location Ingestion + Map Matching", why: "Raw GPS is noisy; snapping to the road graph before feeding the ETA model is what makes predictions trustworthy rather than wildly inaccurate.", ifMissing: "ETAs would be built on noisy raw coordinates, causing wrong turn-by-turn predictions and customer distrust in live tracking." },
+                    { name: "Redis TTL Lock on Dispatch Assignment", why: "Prevents two dispatch cycles from offering the same order to multiple partners simultaneously, avoiding double-assignment.", ifMissing: "Two partners could both accept the same order, requiring manual reconciliation and damaging partner trust in the platform." }
+                ],
+                dbSchema: [
+                    { table: "users", fields: "user_id (PK), name, email, phone, address, created_at" },
+                    { table: "restaurants", fields: "restaurant_id (PK), name, address, cuisine, rating" },
+                    { table: "menu_items", fields: "item_id (PK), restaurant_id (FK), name, price, availability" },
+                    { table: "orders", fields: "order_id (PK), user_id (FK), restaurant_id (FK), status, total_amount, created_at" },
+                    { table: "order_items", fields: "order_item_id (PK), order_id (FK), item_id (FK), quantity, price" },
+                    { table: "delivery_partners", fields: "partner_id (PK), name, vehicle_type, current_location (lat,lng), status, rating" },
+                    { table: "deliveries", fields: "delivery_id (PK), order_id (FK), partner_id (FK), status, assigned_at, delivered_at" },
+                    { table: "payments", fields: "payment_id (PK), order_id (FK), amount, status, paid_at" },
+                    { table: "order_state_history", fields: "id (PK), order_id (FK), prev_state, new_state, event_type, triggered_by, created_at" }
+                ],
+                scalingStrategy: [
+                    "Partition operational databases and geo indexes by region/city/zone so dispatch and search stay fast even under national scale.",
+                    "Read replicas absorb heavy read traffic from search and live-tracking polling; CQRS separates the write-heavy order path from read-heavy tracking/search paths.",
+                    "Multi-region active-active deployment with a passive DR region holding standby DB/Redis/Kafka replicas.",
+                    "Stateless dispatch and search workers scale horizontally via Kubernetes HPA based on QPS and queue depth, independent of stateful services.",
+                    "Kafka partitioning by zone/city keeps location and order event throughput high without a single hot partition."
+                ],
+                failureScenarios: [
+                    { scenario: "Delivery partner rejects the order or the offer times out.", mitigation: "Dispatch engine automatically tries the next best-ranked candidate; after max retries, the order escalates to manual assignment or the customer-facing ETA is extended." },
+                    { scenario: "Order state write succeeds but the side-effect event (e.g. notify partner) is lost.", mitigation: "Outbox table pattern ensures the state change and event publish are atomic; the state machine orchestrator retries with exponential backoff and idempotency keys prevent duplicate side effects." },
+                    { scenario: "GPS location stream has gaps or noisy readings.", mitigation: "Stream processing removes outliers/duplicates before map-matching; if a partner goes silent, the last-known-good location and predicted ETA are shown with a staleness flag." },
+                    { scenario: "Elasticsearch/geo-index falls behind the source database.", mitigation: "CDC lag is monitored; on large lag, search results are flagged potentially stale and availability is re-verified before order placement regardless of what search displayed." }
+                ],
+                tradeoffs: [
+                    "Order creation and payment favor strong consistency, while search results and live-location display tolerate eventual consistency (a few seconds of staleness) in exchange for speed.",
+                    "The dispatch TTL lock trades a small window of a 'reserved but unconfirmed' partner slot for far simpler concurrency control than cross-service locking.",
+                    "Running four semi-independent engines (search, dispatch, order-state, location/ETA) adds operational complexity but lets each scale and fail without taking the others down."
+                ],
+                keyConsiderations: [
+                    "Event-driven architecture for real-time updates across order, dispatch, and location events",
+                    "Separate read/write databases and caching aggressively for hot paths",
+                    "Geo-spatial indexing for nearby search, dispatch matching, and route optimization",
+                    "Idempotent APIs for all critical operations (payment, dispatch assignment, state transitions)",
+                    "Handling retries, timeouts, and duplicate events without corrupting order state",
+                    "Optimizing dispatch using live location, traffic, and predicted ETA",
+                    "Live tracking via WebSockets/MQTT for customers and partners",
+                    "Partitioning data by region/city for horizontal scale",
+                    "Full observability: distributed tracing, metrics, dashboards, alerting"
+                ],
+                metrics: ["Order Success Rate", "Average Delivery Time", "On-time Delivery Rate", "Dispatch Assignment Success Rate (>95%)", "Reassignment Rate (<5%)", "ETA Accuracy (<10% error)", "Search Latency (P99 <200ms)", "Payment Success Rate", "Partner Acceptance Rate", "System Error Rate", "Active Users"],
+                interviewTips: [
+                    "Be ready to explain why dispatch is modeled as its own stateless pipeline (filter → score → assign → route → ETA → monitor) rather than one monolithic 'assign partner' function — it lets each stage be tuned and scaled independently.",
+                    "Discuss why the order lifecycle needs a formal state machine instead of a status column: it enforces valid transitions, gives an audit trail, and makes retries/idempotency tractable.",
+                    "Mention the ETA feedback loop (predicted vs actual) as a sign of a mature ML system — most candidates forget that ETA models need continuous retraining against ground truth."
+                ],
+                guesstimates: ["5M Daily Active Users (DAU)", "500K orders per day", "Peak Dispatch Assignment Time: <2 sec", "Location Ingestion: millions of GPS events/sec", "Search QPS at peak: ~8,000", "Storage: ~3TB/year for order + location history"],
+                securityConsiderations: [
+                    "Tokenize payment data via the PSP (Razorpay/Stripe/PayU); never store raw card numbers.",
+                    "Enforce OAuth2/JWT auth and rate limiting at the API Gateway for all customer, restaurant, and partner apps.",
+                    "Validate and sanitize location updates to prevent GPS spoofing from being used for fraudulent delivery confirmations.",
+                    "Apply zone-based and role-based access control so restaurant/partner accounts only see their own orders and earnings.",
+                    "Log every order state transition and dispatch decision for fraud investigation and dispute resolution.",
+                    "Rate limit search and order-placement endpoints per user/IP to prevent scraping and abuse of promo codes."
+                ],
+                costOptimization: [
+                    "Cache search results and restaurant/menu details aggressively since they change far less often than they're viewed.",
+                    "Use read replicas and CQRS instead of vertically scaling the primary order DB for the heavy read:write skew from tracking polls.",
+                    "Auto-scale dispatch and search workers based on real-time QPS/queue depth rather than provisioning for peak 24/7.",
+                    "Archive delivered/cancelled order history to cold storage after the retention window instead of keeping it in the hot operational DB.",
+                    "Batch and downsample raw GPS pings before long-term storage; only keep full-resolution data for active deliveries."
+                ],
+                commonMistakes: [
+                    "Treating dispatch as a single nearest-partner lookup instead of a multi-factor scoring problem, leading to poor ETAs and overloaded partners.",
+                    "Modeling order status as a plain database column instead of a validated state machine, allowing invalid transitions and unrecoverable stuck orders.",
+                    "Feeding raw, unfiltered GPS pings directly into the ETA model instead of cleaning and map-matching first, producing wildly inaccurate arrival predictions.",
+                    "Coupling search, dispatch, and order services synchronously instead of through Kafka events, so a slowdown in one cascades into failures across all of them."
+                ],
+                capTheoremNotes: "The order + payment path favors Consistency over Availability (CP) — it's better to briefly delay an order than to double-charge or lose a payment. The search, discovery, and live-tracking paths favor Availability over Consistency (AP) — showing a slightly stale ETA or partner location is acceptable, but the tracking service being down is not.",
+                alternativeApproaches: [
+                    "Batch dispatch (assign partners in windows every few seconds) instead of real-time per-order assignment — improves route-batching efficiency for multi-order pickups, but adds latency to individual order assignment.",
+                    "Rule-based dispatch (simple nearest-available) instead of ML/weighted scoring — much simpler to reason about and debug, but performs worse under uneven demand and partner supply.",
+                    "Polling-based location updates instead of streaming ingestion — simpler infrastructure, but can't support sub-second live tracking or fast ETA recalculation."
+                ]
+            },
+            {
+                id: "sagaorchestrator",
+                name: "Event-Driven Saga Orchestrator",
+                tag: "Microservices Example (E-Commerce Order Flow)",
+                img: "images/EventDrivenSagaSystemDesign.png",
+                goals: ["Data Consistency Across Services", "Fault Tolerant", "Scalable", "Auditable", "Idempotent", "Loosely Coupled"],
+                overview: "A saga orchestrator solves the problem every microservices architecture eventually hits: how do you keep data consistent across five independently-owned databases without a distributed transaction? You can't 2PC-lock Order, Payment, Inventory, and Shipping services together — that would destroy their autonomy and availability. Instead, a central orchestrator drives a multi-step workflow through commands and events, and when any step fails, it doesn't panic — it walks backward, issuing compensating actions to undo everything that already succeeded.",
+                dataFlow: "A client places an order through the API Gateway, which handles authentication, rate limiting, and routing before forwarding the request to the Saga Orchestrator Service. The orchestrator first checks the Idempotency Store (Redis) using a request key to ensure a retried or duplicate request never starts a second saga for the same order. <br><br>The orchestrator persists a new saga instance in the Saga State Store (PostgreSQL) and begins the happy path: it publishes an order.create command to Kafka, which Order Service consumes. Order Service writes to its own local DB using the Outbox pattern — the domain event is written to an Outbox Table in the same local transaction, and a separate Outbox Publisher asynchronously relays it to Kafka as an order.created event, guaranteeing the DB write and event publish never diverge. <br><br>The orchestrator listens for order.created, updates its saga state, and issues the next command: payment.authorize. Payment Service processes it and emits either payment.authorized or payment.failed. If authorized, the orchestrator proceeds to inventory.reserve, then shipping.create, then marks the order complete and notifies the customer — each step following the same command-out, event-back pattern. <br><br>If any step fails (e.g. inventory.reserve comes back as inventory.failed), the orchestrator doesn't retry blindly — it triggers the Saga Compensation Flow: cancel the payment (refund), release any reserved inventory, cancel the order, and notify the failure, walking back through only the steps that had actually succeeded.",
+                keyIdea: "The orchestrator holds all workflow logic centrally (unlike a choreography-based saga where services react to each other's events directly), so there is one place that knows the full state of an order-saga, decides what happens next, and knows exactly which compensating actions to fire on failure — trading some coupling to the orchestrator for dramatically easier debugging and recovery.",
+                flow: ["Start saga", "Create order", "Authorize payment", "Reserve inventory", "Create shipment", "Complete order", "Notify customer", "(On failure) Compensate in reverse order"],
+                components: [
+                    "<b>API Gateway:</b> Handles authentication, rate limiting, routing, and request/response transformation before any request reaches the orchestrator.",
+                    "<b>Saga Orchestrator Service:</b> The brain of the system — starts sagas, persists state, sends the next command, listens for resulting events, and decides whether to proceed or compensate.",
+                    "<b>Saga State Store (PostgreSQL):</b> Durable record of every saga's current step and status, enabling recovery after a crash and giving a queryable audit trail.",
+                    "<b>Idempotency Store (Redis):</b> Stores request keys to guarantee a duplicate client request (e.g. from a retry) never starts a second saga for the same business operation.",
+                    "<b>Apache Kafka (Commands & Events Topics):</b> Two logically separate topic families — commands (order.create, payment.authorize, inventory.reserve...) flow orchestrator → service, while events (order.created, payment.failed...) flow service → orchestrator.",
+                    "<b>Microservices (Order, Payment, Inventory, Shipping, Notification):</b> Each owns its local database exclusively; no service reaches into another's data store directly.",
+                    "<b>Outbox Pattern (per service):</b> Domain event is written to an Outbox Table in the same local transaction as the business write, then a separate Outbox Publisher relays it to Kafka — eliminating the classic dual-write consistency problem.",
+                    "<b>Shared Infra (Service Discovery, Config Server, Monitoring, Logging, Tracing, Alerting):</b> Consul/Eureka for discovery, Spring Cloud Config for centralized config, Prometheus+Grafana for metrics, ELK for logs, Zipkin/Jaeger for distributed tracing across the saga."
+                ],
+                serviceFlow: [
+                    { step: 1, from: "Client (Web/Mobile/Admin)", to: "API Gateway", detail: "Request authenticated, rate-limited, and routed; a unique idempotency key is attached to the order-creation request." },
+                    { step: 2, from: "API Gateway", to: "Saga Orchestrator", detail: "Orchestrator checks the Idempotency Store first — if the key already exists, it returns the existing saga's status instead of starting a duplicate." },
+                    { step: 3, from: "Saga Orchestrator", to: "Saga State Store", detail: "New saga row persisted with status STARTED before any command is sent, so a crash immediately after this point is recoverable." },
+                    { step: 4, from: "Saga Orchestrator", to: "Kafka (order.create command)", detail: "Orchestrator publishes the first command; Order Service is the sole consumer of this topic." },
+                    { step: 5, from: "Order Service", to: "Local DB + Outbox Table", detail: "Order row and outbox event are written in a single local transaction, guaranteeing the event is never lost even if Kafka is briefly unreachable." },
+                    { step: 6, from: "Outbox Publisher", to: "Kafka (order.created event)", detail: "Background poller reads unpublished outbox rows and relays them to Kafka, then marks them published — decoupling the DB write from the network call." },
+                    { step: 7, from: "Kafka (order.created)", to: "Saga Orchestrator", detail: "Orchestrator consumes the event, updates saga state to ORDER_CREATED, and immediately issues the next command: payment.authorize." },
+                    { step: 8, from: "Payment Service", to: "Kafka (payment.authorized / payment.failed)", detail: "On success, saga state advances to PAYMENT_AUTHORIZED and inventory.reserve is issued; on failure, the orchestrator jumps straight to the compensation flow." },
+                    { step: 9, from: "Inventory Service", to: "Kafka (inventory.reserved / inventory.failed)", detail: "On success, shipping.create is issued next; on failure, the orchestrator compensates payment (refund/cancel) since that step already succeeded." },
+                    { step: 10, from: "Shipping Service", to: "Kafka (shipping.created)", detail: "Final domain step; on success the orchestrator marks the saga COMPLETED and issues order.complete." },
+                    { step: 11, from: "Saga Orchestrator", to: "Notification Service", detail: "order.completed or order.failed triggers the customer-facing notification, decoupled from the transactional core of the saga." },
+                    { step: 12, from: "Saga Orchestrator (on failure)", to: "Compensation Chain", detail: "Executes compensating commands in reverse order of what succeeded: payment.cancel/refund → inventory.release → order.cancel → notify failure, updating saga state to COMPENSATING then FAILED." }
+                ],
+                componentImportance: [
+                    { name: "Saga Orchestrator (centralized workflow logic)", why: "Having one component own the full step sequence and compensation logic makes the system's behavior traceable and debuggable — you can query one saga's state and know exactly where it is and what failed.", ifMissing: "Without central orchestration (pure choreography), each service would need to know about every other service's events, creating a tangled web of implicit dependencies that's nearly impossible to trace or modify safely." },
+                    { name: "Outbox Pattern (per service)", why: "Solves the dual-write problem — without it, a service could commit its DB write but crash before publishing the event (or vice versa), silently breaking the saga.", ifMissing: "Events could be lost or published without a corresponding committed DB state, leaving the orchestrator waiting forever for an event that never arrives, or acting on a state that was never actually persisted." },
+                    { name: "Saga State Store (PostgreSQL)", why: "Durable, queryable state is what makes recovery possible — if the orchestrator crashes mid-saga, it can reload every in-flight saga on restart and resume exactly where it left off.", ifMissing: "An in-memory-only orchestrator would silently lose all in-flight sagas on restart, leaving orders in permanently inconsistent states across services with no recovery path." },
+                    { name: "Idempotency Store (Redis)", why: "Client retries (network blips, double-taps) are inevitable; without deduplication at the entry point, a single user action could spawn two parallel sagas for the same order.", ifMissing: "Duplicate sagas could both reserve inventory and charge payment for what the user believes is one order, requiring manual reconciliation and refunds." },
+                    { name: "Kafka (Commands vs Events topic separation)", why: "Keeping commands (orchestrator → service) and events (service → orchestrator) as distinct topic families makes the direction of causality explicit and prevents services from accidentally reacting to each other's raw commands.", ifMissing: "Mixing commands and events on shared topics would blur ownership boundaries and risk services triggering unintended actions from messages meant for someone else." },
+                    { name: "Compensation Flow (Cancel/Release/Refund)", why: "Distributed transactions can't roll back atomically the way a single-DB transaction can — compensation is the only mechanism to approximate 'undo' across services that already committed local changes.", ifMissing: "A failed step deep in the saga (e.g. shipping fails after payment succeeded) would leave the customer charged with no product and no automated way to reverse it." }
+                ],
+                dbSchema: [
+                    { table: "saga_instances", fields: "saga_id (PK), order_id, status, current_step, created_at, updated_at" },
+                    { table: "saga_steps", fields: "step_id (PK), saga_id (FK), step_name, status, command_sent_at, event_received_at" },
+                    { table: "orders", fields: "order_id (PK), customer_id, status, total_amount, created_at" },
+                    { table: "outbox_events", fields: "event_id (PK), aggregate_id, event_type, payload (JSON), published (bool), created_at" },
+                    { table: "payments", fields: "payment_id (PK), order_id (FK), amount, status, authorized_at" },
+                    { table: "inventory_reservations", fields: "reservation_id (PK), order_id (FK), item_id, quantity, status" },
+                    { table: "shipments", fields: "shipment_id (PK), order_id (FK), status, created_at" },
+                    { table: "idempotency_keys", fields: "request_key (PK), saga_id (FK), created_at, expires_at" }
+                ],
+                scalingStrategy: [
+                    "Partition Kafka topics by order_id (or saga_id) so all events for a given saga are strictly ordered on the same partition, preserving causal consistency without a global lock.",
+                    "Scale orchestrator instances horizontally behind a consumer group — Kafka's partition assignment ensures each saga is handled by exactly one orchestrator instance at a time.",
+                    "Each participant service scales independently since it owns its local DB and only communicates via events, with no direct service-to-service coupling.",
+                    "Saga State Store can be sharded by saga_id range or region once single-instance PostgreSQL throughput becomes a bottleneck.",
+                    "Outbox Publishers run as lightweight, horizontally-scalable pollers per service, decoupled from the main service's request-handling capacity."
+                ],
+                failureScenarios: [
+                    { scenario: "Orchestrator crashes mid-saga after sending a command but before receiving the response event.", mitigation: "Saga state was already persisted as 'command sent, awaiting event' before the crash; on restart, the orchestrator reloads in-flight sagas and either waits for the event (if the consumer is still processing) or times out and re-issues the command idempotently." },
+                    { scenario: "A participant service processes the same command twice (e.g. due to consumer rebalance and re-delivery).", mitigation: "Each service tracks processed message IDs and applies commands idempotently — reprocessing payment.authorize for an already-authorized payment is a no-op rather than a double charge." },
+                    { scenario: "Compensation itself fails (e.g. refund call to payment gateway times out).", mitigation: "Compensating actions are retried with exponential backoff; if they exhaust retries, the saga is marked FAILED with a flag for manual reconciliation rather than silently giving up." },
+                    { scenario: "Outbox Publisher falls behind or crashes, delaying event publication.", mitigation: "Unpublished outbox rows persist in the local DB regardless of publisher downtime; when the publisher resumes, it picks up exactly where it left off with no event loss." }
+                ],
+                tradeoffs: [
+                    "Centralized orchestration trades some coupling to the orchestrator (a single logical point of workflow knowledge) for far easier debugging, testing, and change management than pure event choreography.",
+                    "The Outbox pattern adds a small publish-latency window (until the poller picks up the row) in exchange for eliminating the far worse failure mode of losing events entirely.",
+                    "Compensation is 'best-effort undo' rather than a true rollback — the system favors eventual consistency and business-level correctness over the illusion of atomicity that a true distributed transaction would (falsely) promise."
+                ],
+                keyConsiderations: [
+                    "Event-driven, asynchronous communication for loose coupling between services",
+                    "Orchestrator holds the full workflow logic; participant services stay simple and reactive",
+                    "Each service updates only its own local database — no shared database, no cross-service transactions",
+                    "Outbox pattern in every service for reliable, transactionally-consistent event publishing",
+                    "Idempotency keys at the entry point and within each service to avoid duplicate processing",
+                    "Retry with exponential backoff for transient failures before triggering compensation",
+                    "Timeouts on every step so a stuck saga never blocks indefinitely",
+                    "Saga state persisted for both crash recovery and audit/compliance queries",
+                    "Full observability: distributed tracing across the saga, metrics, structured logs, alerting"
+                ],
+                metrics: ["Saga Success Rate", "Saga Completion Time (P50/P95/P99)", "Compensation Trigger Rate", "Step Failure Rate (per step)", "Outbox Publish Lag", "Duplicate Request Rate (caught by idempotency)", "Event Processing Latency", "Saga State Store Query Latency", "Manual Reconciliation Rate", "System Error Rate"],
+                interviewTips: [
+                    "Be ready to contrast orchestration vs choreography: orchestration centralizes decision-making (easier to trace, one point of change) while choreography is fully decentralized (more scalable in theory, much harder to debug 'what happens next').",
+                    "Explain why the Outbox pattern is non-negotiable here: without it, you're one crash away from a domain write and its corresponding event silently diverging — the classic dual-write problem.",
+                    "Discuss compensation as 'best effort semantic undo,' not a true rollback — a refund isn't the same as 'never charged,' and interviewers want to hear you acknowledge that distinction."
+                ],
+                guesstimates: ["1M orders/day", "5 saga steps per order on average", "Compensation triggered on ~2-3% of sagas", "Saga completion P99: <5 sec (happy path)", "Kafka throughput: ~50K events/sec at peak", "Saga State Store: ~2TB/year retained for audit"],
+                securityConsiderations: [
+                    "Enforce authentication and authorization at the API Gateway before any saga can be started on a client's behalf.",
+                    "Validate that command payloads match the expected schema at each service boundary to prevent a compromised or buggy producer from corrupting downstream state.",
+                    "Encrypt sensitive fields (payment details) both in Kafka messages and at rest in each service's local DB.",
+                    "Restrict which services can publish to which Kafka topics via ACLs, so only the orchestrator can issue commands and only the rightful owner can emit a given event type.",
+                    "Log every state transition and compensation trigger with enough detail for fraud investigation and financial audit trails.",
+                    "Ensure idempotency keys and saga IDs are unguessable (UUIDs) to prevent an attacker from probing or replaying another user's saga."
+                ],
+                costOptimization: [
+                    "Batch Outbox Publisher polling intervals rather than publishing on every single insert, trading a small latency increase for far lower Kafka connection overhead.",
+                    "Archive completed/failed saga records to cold storage after the audit retention window instead of keeping them in the hot PostgreSQL state store indefinitely.",
+                    "Auto-scale orchestrator and participant service instances based on Kafka consumer lag rather than provisioning for peak 24/7.",
+                    "Use compacted Kafka topics for saga state snapshots where appropriate, reducing storage versus keeping every intermediate event forever.",
+                    "Right-size retry/backoff limits so failed sagas fail fast into compensation rather than tying up resources on doomed retries."
+                ],
+                commonMistakes: [
+                    "Letting participant services call each other directly 'just this once' instead of always routing through orchestrator commands — this quietly reintroduces the tight coupling the pattern was meant to avoid.",
+                    "Skipping the Outbox pattern and publishing events directly after a DB commit in application code, which silently fails to publish on crash between the two operations.",
+                    "Forgetting compensation logic for a step until it fails in production — every forward step needs its compensating action designed and tested up front, not bolted on later.",
+                    "Treating the saga as synchronous end-to-end (blocking the client until every step completes) instead of returning immediately and letting the client poll or subscribe for saga status."
+                ],
+                capTheoremNotes: "Each participant service's local writes favor Consistency (its own DB is ACID-compliant), but the saga as a whole is fundamentally an Availability-favoring (AP), eventually-consistent pattern across services — there is no moment where all five databases are guaranteed to agree, only a guarantee that they will converge (via completion or compensation) within a bounded time.",
+                alternativeApproaches: [
+                    "Choreography-based saga (services react to each other's events with no central orchestrator) — reduces the orchestrator as a bottleneck/coupling point, but makes the overall workflow much harder to visualize, test, and modify as steps grow.",
+                    "Two-Phase Commit (2PC) across all participant databases — provides true atomicity, but requires all services to support distributed transactions and blocks on the slowest participant, destroying availability and service autonomy.",
+                    "TCC (Try-Confirm/Cancel) pattern instead of compensation-after-the-fact — reserves resources tentatively in a 'Try' phase before confirming, avoiding some compensation scenarios entirely, but requires every participant to implement three distinct operations instead of one."
+                ]
+            },
         ];
 
         const picker = document.getElementById('picker');
@@ -1473,7 +1716,7 @@
       <span class="like">design goals below</span>
     </div>
     <div class="goals">
-      ${(s.goals||[]).map(g => `<span class="goal-chip">${g}</span>`).join('')}
+      ${(s.goals || []).map(g => `<span class="goal-chip">${g}</span>`).join('')}
     </div>
     <div class="diagram-wrap">
       <img src="${s.img}" alt="${s.name} system design diagram" loading="lazy">
@@ -1490,7 +1733,7 @@
       <div class="brief-card flow-card" style="grid-column: 1 / -1;">
         <h3>Request flow, simplified</h3>
         <div class="flow-steps">
-          ${(s.flow||[]).map((f, i) => (i > 0 ? '<span class="flow-arrow">→</span>' : '') + `<span class="flow-step">${f}</span>`).join('')}
+          ${(s.flow || []).map((f, i) => (i > 0 ? '<span class="flow-arrow">→</span>' : '') + `<span class="flow-step">${f}</span>`).join('')}
         </div>
       </div>
       <div class="brief-card flow-card" style="grid-column: 1 / -1;">
@@ -1500,9 +1743,26 @@
       <div class="brief-card">
         <h3>System Components</h3>
         <ul>
-          ${(s.components||[]).map(c => `<li>${c}</li>`).join('')}
+          ${(s.components || []).map(c => `<li>${c}</li>`).join('')}
         </ul>
       </div>`;
+
+            if (s.componentImages && s.componentImages.length) {
+                html += `
+      <div class="brief-card" style="grid-column: 1 / -1;">
+        <h3>In-Depth Component Diagrams</h3>
+        <div style="display:flex; flex-direction:column; gap:24px; margin-top:16px;">
+          ${s.componentImages.map(img => `
+            <div>
+              <h4 style="margin-bottom:12px; color:var(--brand-primary); border-bottom: 1px solid var(--border); padding-bottom: 8px;">${img.title}</h4>
+              <div class="diagram-wrap" style="margin:0;">
+                <img src="${img.src}" alt="${img.title}" loading="lazy" style="max-width:100%; border-radius:8px;">
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>`;
+            }
 
             // Helper function for simple lists
             const renderList = (title, items) => {
