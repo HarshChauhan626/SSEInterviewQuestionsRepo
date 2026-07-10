@@ -1,0 +1,1074 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Interview Q&A Viewer — Dev Notes</title>
+  <meta name="description" content="Browse 2900+ senior engineer interview questions across Kafka, Kubernetes, Databases, React, Go, System Design and more. Practice with randomized flashcards or review all at once.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300;0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;0,14..32,800;1,14..32,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <style>
+    /* ═══════════════════════════════════════════
+       DESIGN SYSTEM — Dev Notes Library
+    ═══════════════════════════════════════════ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:           #0a0c10;
+      --surface:      #111318;
+      --surface2:     #181c23;
+      --surface3:     #1e2330;
+      --border:       rgba(255,255,255,0.07);
+      --border-h:     rgba(255,255,255,0.15);
+      --text:         #e8edf5;
+      --text-2:       #8b95a8;
+      --text-3:       #4e5668;
+      --accent:       #6c8cff;
+      --accent-glow:  rgba(108,140,255,0.18);
+      --correct:      #22d3a6;
+      --warn:         #fbbf24;
+      --radius:       12px;
+      --radius-sm:    8px;
+      --radius-lg:    18px;
+      --mono:         'JetBrains Mono', monospace;
+      --sans:         'Inter', system-ui, sans-serif;
+      --topic-accent: #6c8cff;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.65;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Ambient background ── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      pointer-events: none; z-index: 0; opacity: 0.025;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+      background-size: 200px;
+    }
+
+    .blob {
+      position: fixed; border-radius: 50%;
+      filter: blur(120px); pointer-events: none; z-index: 0; opacity: 0.28;
+      transition: background 0.8s ease;
+    }
+    #blob1 { width: 700px; height: 600px; top: -200px; left: -250px;
+      background: radial-gradient(circle, rgba(108,140,255,0.3) 0%, transparent 70%); }
+    #blob2 { width: 500px; height: 450px; top: 0; right: -200px;
+      background: radial-gradient(circle, rgba(249,115,22,0.2) 0%, transparent 70%); }
+    #blob3 { width: 450px; height: 400px; bottom: 10%; left: 35%;
+      background: radial-gradient(circle, rgba(34,211,166,0.15) 0%, transparent 70%); }
+
+    /* ── Navbar ── */
+    nav {
+      position: sticky; top: 0; z-index: 200;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px clamp(16px,5vw,48px);
+      min-height: 60px;
+      background: rgba(10,12,16,0.82);
+      backdrop-filter: blur(24px) saturate(1.5);
+      -webkit-backdrop-filter: blur(24px) saturate(1.5);
+      border-bottom: 1px solid var(--border);
+      flex-wrap: wrap; gap: 12px;
+    }
+    .nav-left { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+    .nav-back {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 0.78rem; color: var(--text-2); text-decoration: none;
+      font-family: var(--mono); padding: 5px 10px;
+      border: 1px solid var(--border); border-radius: var(--radius-sm);
+      transition: all 0.18s;
+    }
+    .nav-back:hover { border-color: var(--accent); color: var(--accent); }
+    .nav-logo { display: flex; align-items: center; gap: 9px; font-weight: 700; font-size: 0.95rem; }
+    .nav-dot {
+      width: 8px; height: 8px; border-radius: 50%; background: var(--accent);
+      box-shadow: 0 0 10px var(--accent);
+      animation: pulse 2.5s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%,100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.85); }
+    }
+    .nav-right { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .nav-counter {
+      font-family: var(--mono); font-size: 0.76rem;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 100px; padding: 4px 14px;
+      color: var(--text-2); display: none;
+    }
+    .nav-counter.visible { display: flex; align-items: center; gap: 6px; }
+    .nav-counter-current { color: var(--topic-accent); font-weight: 700; }
+
+    /* ── Main layout ── */
+    #app { position: relative; z-index: 1; }
+
+    /* ══════════════════════════════════
+       TOPIC SELECTOR SCREEN
+    ══════════════════════════════════ */
+    #screen-topics {
+      width: min(1200px, calc(100% - 32px));
+      margin: 0 auto; padding: 64px 0 100px;
+    }
+    .hero { margin-bottom: 60px; }
+    .eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-size: 0.75rem; font-weight: 600; letter-spacing: 0.08em;
+      text-transform: uppercase; color: var(--accent);
+      margin-bottom: 18px; padding: 5px 13px;
+      border: 1px solid rgba(108,140,255,0.25); border-radius: 999px;
+      background: rgba(108,140,255,0.07);
+    }
+    .eyebrow::before {
+      content: ''; width: 5px; height: 5px; border-radius: 50%;
+      background: var(--accent); box-shadow: 0 0 6px var(--accent);
+    }
+    .hero h1 {
+      font-size: clamp(2.2rem,5vw,4rem); font-weight: 800;
+      line-height: 1.06; letter-spacing: -0.03em; max-width: 700px;
+      margin-bottom: 16px;
+    }
+    .hero h1 em {
+      font-style: normal;
+      background: linear-gradient(135deg, #6c8cff 0%, #a78bfa 50%, #22d3a6 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero-sub { font-size: 1rem; color: var(--text-2); max-width: 520px; line-height: 1.8; }
+    .hero-stats {
+      display: flex; gap: 32px; margin-top: 28px; flex-wrap: wrap;
+    }
+    .stat-pill {
+      display: flex; flex-direction: column;
+      font-family: var(--mono);
+    }
+    .stat-pill strong { font-size: 1.6rem; font-weight: 800; color: var(--accent); line-height: 1; }
+    .stat-pill span { font-size: 0.72rem; color: var(--text-3); margin-top: 2px; }
+
+    /* Search */
+    .search-wrap { position: relative; max-width: 460px; margin: 40px 0 48px; }
+    .search-wrap svg {
+      position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+      width: 16px; height: 16px; color: var(--text-3); pointer-events: none;
+    }
+    #topic-search {
+      width: 100%; height: 48px; padding: 0 44px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; color: var(--text);
+      font: 0.92rem/1 var(--sans); outline: none;
+      transition: border-color 180ms, box-shadow 180ms;
+    }
+    #topic-search::placeholder { color: var(--text-3); }
+    #topic-search:focus { border-color: rgba(108,140,255,0.5); box-shadow: 0 0 0 3px rgba(108,140,255,0.08); }
+
+    /* Topic grid */
+    .topics-grid {
+      display: grid; gap: 16px;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    }
+    .topic-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); padding: 22px 24px;
+      cursor: pointer; text-decoration: none; color: inherit;
+      transition: all 0.22s cubic-bezier(.4,0,.2,1);
+      display: flex; flex-direction: column; gap: 12px;
+      position: relative; overflow: hidden;
+    }
+    .topic-card::before {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(135deg, var(--card-accent-rgb, rgba(108,140,255,0.06)) 0%, transparent 60%);
+      opacity: 0; transition: opacity 0.22s;
+    }
+    .topic-card:hover { border-color: var(--border-h); transform: translateY(-3px);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.35); }
+    .topic-card:hover::before { opacity: 1; }
+    .topic-card-header { display: flex; align-items: center; gap: 12px; }
+    .topic-icon {
+      font-size: 1.5rem; width: 44px; height: 44px;
+      display: flex; align-items: center; justify-content: center;
+      background: var(--surface2); border-radius: 10px; flex-shrink: 0;
+    }
+    .topic-title { font-weight: 700; font-size: 1rem; }
+    .topic-badge {
+      font-family: var(--mono); font-size: 0.7rem;
+      border: 1px solid currentColor; border-radius: 999px;
+      padding: 2px 8px; opacity: 0.8;
+    }
+    .topic-desc { font-size: 0.83rem; color: var(--text-2); line-height: 1.6; }
+    .topic-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 4px; }
+    .topic-count {
+      font-family: var(--mono); font-size: 0.72rem; color: var(--text-3);
+    }
+    .topic-arrow { font-size: 0.9rem; color: var(--text-3); transition: transform 0.18s; }
+    .topic-card:hover .topic-arrow { transform: translateX(4px); color: var(--topic-accent); }
+
+    /* ══════════════════════════════════
+       VIEWER SCREEN
+    ══════════════════════════════════ */
+    #screen-viewer { display: none; }
+    
+    .viewer-topic-badge {
+      display: flex; align-items: center; gap: 8px;
+      font-weight: 700; font-size: 0.9rem;
+    }
+    .viewer-topic-icon { font-size: 1.2rem; }
+
+    /* Mode toggle */
+    .mode-toggle {
+      display: flex; align-items: center;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); overflow: hidden;
+    }
+    .mode-btn {
+      padding: 6px 14px; font-size: 0.75rem; font-family: var(--mono);
+      background: transparent; border: none; color: var(--text-2);
+      cursor: pointer; transition: all 0.15s; white-space: nowrap;
+    }
+    .mode-btn.active { background: var(--topic-accent); color: #fff; font-weight: 600; }
+
+    /* Randomize / reset btns */
+    .viewer-actions {
+      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    }
+    .action-btn {
+      display: flex; align-items: center; gap: 6px;
+      padding: 6px 13px; font-size: 0.75rem; font-family: var(--mono);
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); color: var(--text-2);
+      cursor: pointer; transition: all 0.18s; user-select: none;
+    }
+    .action-btn:hover { border-color: var(--topic-accent); color: var(--topic-accent); }
+    .action-btn svg { width: 13px; height: 13px; }
+
+    /* ── Content container ── */
+    .viewer-content {
+      max-width: 900px; margin: 0 auto;
+      padding: 40px clamp(16px,4vw,48px) 120px;
+    }
+
+    /* ══════════════════════════════════
+       ONE BY ONE MODE
+    ══════════════════════════════════ */
+    #obo-panel { display: none; }
+    .obo-progress {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 32px; gap: 16px; flex-wrap: wrap;
+    }
+    .progress-track {
+      flex: 1; height: 3px; background: var(--surface2);
+      border-radius: 999px; overflow: hidden; min-width: 100px;
+    }
+    .progress-fill {
+      height: 100%; background: var(--topic-accent);
+      border-radius: 999px; transition: width 0.4s cubic-bezier(.4,0,.2,1);
+    }
+    .progress-text { font-family: var(--mono); font-size: 0.78rem; color: var(--text-3); white-space: nowrap; }
+
+    .obo-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 36px 40px;
+      min-height: 300px;
+      position: relative;
+      transition: all 0.3s cubic-bezier(.4,0,.2,1);
+    }
+    .obo-card.flip-out { opacity: 0; transform: translateY(-12px) scale(0.98); }
+    .obo-card.flip-in  { opacity: 0; transform: translateY(12px) scale(0.98); }
+    .obo-q-label {
+      font-family: var(--mono); font-size: 0.68rem; font-weight: 600;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--topic-accent); margin-bottom: 16px; opacity: 0.9;
+    }
+    .obo-question {
+      font-size: clamp(1.1rem, 2.5vw, 1.45rem);
+      font-weight: 700; line-height: 1.4; margin-bottom: 0;
+    }
+    .show-answer-btn {
+      margin-top: 28px;
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 10px 22px; font-size: 0.85rem; font-family: var(--sans);
+      font-weight: 600; border-radius: var(--radius-sm);
+      border: 1px solid var(--topic-accent);
+      background: rgba(108,140,255,0.08); color: var(--topic-accent);
+      cursor: pointer; transition: all 0.18s; user-select: none;
+    }
+    .show-answer-btn:hover { background: var(--topic-accent); color: #0a0c10; }
+    .show-answer-btn svg { width: 15px; height: 15px; transition: transform 0.2s; }
+    .show-answer-btn.open svg { transform: rotate(180deg); }
+
+    .obo-answer {
+      margin-top: 24px;
+      border-top: 1px solid var(--border);
+      padding-top: 24px;
+      max-height: 0; overflow: hidden;
+      transition: max-height 0.5s cubic-bezier(.4,0,.2,1), opacity 0.3s;
+      opacity: 0;
+    }
+    .obo-answer.visible { max-height: 4000px; opacity: 1; }
+
+    /* OBO Navigation */
+    .obo-nav {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-top: 28px; gap: 12px; flex-wrap: wrap;
+    }
+    .nav-btn {
+      display: flex; align-items: center; gap: 8px;
+      padding: 10px 22px; font-size: 0.85rem; font-family: var(--sans); font-weight: 600;
+      border-radius: var(--radius-sm); cursor: pointer; transition: all 0.18s;
+      user-select: none;
+    }
+    .nav-btn-prev {
+      background: var(--surface2); border: 1px solid var(--border); color: var(--text-2);
+    }
+    .nav-btn-prev:hover:not(:disabled) { border-color: var(--border-h); color: var(--text); }
+    .nav-btn-next {
+      background: var(--topic-accent); border: 1px solid transparent; color: #fff;
+    }
+    .nav-btn-next:hover { opacity: 0.85; }
+    .nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+    .nav-btn svg { width: 16px; height: 16px; }
+
+    /* ══════════════════════════════════
+       ALL AT ONCE MODE
+    ══════════════════════════════════ */
+    #aao-panel { display: none; }
+    .aao-list { display: flex; flex-direction: column; gap: 16px; }
+
+    .aao-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); overflow: hidden;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .aao-card:hover { border-color: var(--border-h); }
+    .aao-card-header {
+      display: flex; align-items: flex-start; gap: 14px;
+      padding: 20px 24px; cursor: pointer; user-select: none;
+    }
+    .aao-qnum {
+      font-family: var(--mono); font-size: 0.72rem; font-weight: 600;
+      color: var(--topic-accent); background: rgba(108,140,255,0.1);
+      border: 1px solid rgba(108,140,255,0.2); border-radius: 6px;
+      padding: 2px 8px; white-space: nowrap; margin-top: 3px; flex-shrink: 0;
+    }
+    .aao-q { font-weight: 600; font-size: 0.97rem; line-height: 1.5; flex: 1; }
+    .aao-toggle-icon {
+      margin-left: auto; flex-shrink: 0; margin-top: 2px;
+      color: var(--text-3); transition: transform 0.25s, color 0.18s;
+      width: 18px; height: 18px;
+    }
+    .aao-card.open .aao-toggle-icon { transform: rotate(180deg); color: var(--topic-accent); }
+
+    .aao-body {
+      max-height: 0; overflow: hidden;
+      transition: max-height 0.45s cubic-bezier(.4,0,.2,1), opacity 0.3s;
+      opacity: 0;
+    }
+    .aao-body.open { max-height: 6000px; opacity: 1; }
+    .aao-body-inner { padding: 0 24px 24px; border-top: 1px solid var(--border); padding-top: 20px; }
+    .aao-body-inner.hidden-answer {
+      display: flex; align-items: center; justify-content: center;
+      padding: 24px; flex-direction: column; gap: 12px;
+    }
+    .aao-show-btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 9px 20px; font-size: 0.82rem; font-weight: 600;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--topic-accent);
+      background: rgba(108,140,255,0.07); color: var(--topic-accent);
+      cursor: pointer; transition: all 0.18s;
+    }
+    .aao-show-btn:hover { background: var(--topic-accent); color: #0a0c10; }
+
+    /* ── Markdown rendered content ── */
+    .md-content { font-size: 0.9rem; color: var(--text); line-height: 1.75; }
+    .md-content h1,.md-content h2,.md-content h3,.md-content h4 {
+      color: var(--text); margin: 20px 0 10px; line-height: 1.3;
+      font-weight: 700;
+    }
+    .md-content h2 { font-size: 1.1rem; }
+    .md-content h3 { font-size: 1rem; color: var(--text-2); }
+    .md-content h4 { font-size: 0.9rem; color: var(--text-2); }
+    .md-content p { margin-bottom: 12px; }
+    .md-content ul, .md-content ol { padding-left: 24px; margin-bottom: 12px; }
+    .md-content li { margin-bottom: 5px; }
+    .md-content strong { color: var(--text); font-weight: 700; }
+    .md-content em { color: var(--text-2); font-style: italic; }
+    .md-content code {
+      font-family: var(--mono); font-size: 0.82em;
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 4px; padding: 1px 6px; color: #a78bfa;
+    }
+    .md-content pre {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 16px 18px;
+      overflow-x: auto; margin: 14px 0;
+    }
+    .md-content pre code {
+      background: none; border: none; padding: 0;
+      font-size: 0.82rem; color: #e8edf5; line-height: 1.7;
+    }
+    .md-content table {
+      width: 100%; border-collapse: collapse; margin: 14px 0;
+      font-size: 0.85rem;
+    }
+    .md-content th {
+      background: var(--surface2); text-align: left;
+      padding: 8px 12px; border: 1px solid var(--border);
+      font-weight: 600; color: var(--text-2); font-size: 0.8rem;
+      text-transform: uppercase; letter-spacing: 0.05em;
+    }
+    .md-content td { padding: 8px 12px; border: 1px solid var(--border); vertical-align: top; }
+    .md-content tr:nth-child(even) td { background: rgba(255,255,255,0.02); }
+    .md-content blockquote {
+      border-left: 3px solid var(--topic-accent); padding: 10px 18px;
+      background: rgba(108,140,255,0.05); border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+      margin: 14px 0; color: var(--text-2);
+    }
+    .md-content a { color: var(--topic-accent); text-decoration: none; }
+    .md-content a:hover { text-decoration: underline; }
+    .md-content hr { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+
+    /* Images */
+    .answer-images { display: flex; flex-direction: column; gap: 12px; margin-top: 20px; }
+    .answer-images img {
+      max-width: 100%; border-radius: var(--radius); border: 1px solid var(--border);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    }
+
+    /* ── Completed banner ── */
+    .obo-done {
+      display: none; text-align: center; padding: 60px 32px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+    }
+    .obo-done .done-icon { font-size: 3.5rem; margin-bottom: 16px; }
+    .obo-done h2 { font-size: 1.6rem; font-weight: 800; margin-bottom: 8px; }
+    .obo-done p { color: var(--text-2); margin-bottom: 24px; }
+    .done-restart-btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 11px 24px; font-size: 0.9rem; font-weight: 600;
+      border-radius: var(--radius-sm); border: none;
+      background: var(--topic-accent); color: #0a0c10; cursor: pointer;
+      transition: opacity 0.18s;
+    }
+    .done-restart-btn:hover { opacity: 0.85; }
+
+    /* ── Empty / loading states ── */
+    .state-empty {
+      text-align: center; padding: 80px 32px;
+      color: var(--text-3); font-size: 0.9rem;
+    }
+    .state-empty .icon { font-size: 2.5rem; margin-bottom: 12px; }
+    .loading-bar {
+      width: 200px; height: 3px; background: var(--surface2);
+      border-radius: 999px; margin: 20px auto 0; overflow: hidden;
+    }
+    .loading-bar::after {
+      content: ''; display: block; height: 100%;
+      background: var(--accent);
+      animation: loading 1.2s ease-in-out infinite;
+    }
+    @keyframes loading {
+      0% { width: 0%; margin-left: 0; }
+      50% { width: 70%; margin-left: 15%; }
+      100% { width: 0%; margin-left: 100%; }
+    }
+
+    /* ── Back to topics btn ── */
+    .back-topics-btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 7px 15px; font-size: 0.78rem; font-family: var(--mono);
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); color: var(--text-2);
+      cursor: pointer; transition: all 0.18s; user-select: none;
+    }
+    .back-topics-btn:hover { border-color: var(--border-h); color: var(--text); }
+
+    /* Responsive */
+    @media (max-width: 860px) {
+      .nav-left { justify-content: center; width: 100%; }
+      .nav-right { justify-content: center; width: 100%; margin-top: 4px; }
+    }
+    @media (max-width: 640px) {
+      .hide-mobile { display: none; }
+      .topics-grid { grid-template-columns: 1fr; }
+      .obo-card { padding: 24px 20px; }
+      .mode-btn { padding: 6px 10px; font-size: 0.7rem; }
+      .action-btn { padding: 5px 8px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="blob" id="blob1"></div>
+  <div class="blob" id="blob2"></div>
+  <div class="blob" id="blob3"></div>
+
+  <!-- ── NAVBAR ── -->
+  <nav>
+    <div class="nav-left">
+      <a href="index.html" class="nav-back" id="nav-back-home">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 3L5 8l5 5"/></svg>
+        Home
+      </a>
+      <div class="nav-logo" id="nav-logo">
+        <div class="nav-dot"></div>
+        Interview Q&amp;A
+      </div>
+      <button class="back-topics-btn" id="btn-back-topics" style="display:none;">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><path d="M10 3L5 8l5 5"/></svg>
+        <span class="hide-mobile">All Topics</span>
+      </button>
+
+      <div class="viewer-topic-badge" id="viewer-topic-badge" style="display:none;">
+        <span class="viewer-topic-icon" id="viewer-icon">📚</span>
+        <span id="viewer-topic-name">Topic</span>
+      </div>
+    </div>
+    <div class="nav-right">
+      <div class="viewer-actions" id="viewer-actions" style="display:none;">
+        <label class="action-btn" title="Show answers by default" style="cursor:pointer">
+          <input type="checkbox" id="chk-show-answers" onchange="toggleShowAnswersByDefault()" style="accent-color: var(--topic-accent);">
+          <span class="hide-mobile">Show Answers</span>
+        </label>
+        <button class="action-btn" id="btn-randomize" title="Shuffle order" style="display:none">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/>
+          </svg>
+          <span class="hide-mobile">Shuffle</span>
+        </button>
+        <button class="action-btn" id="btn-reset-order" title="Reset to original order" style="display:none">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>
+          </svg>
+          <span class="hide-mobile">Reset</span>
+        </button>
+      </div>
+
+      <div class="mode-toggle" id="mode-toggle" style="display:none;">
+        <button class="mode-btn active" id="btn-mode-obo" onclick="setMode('obo')">One by One</button>
+        <button class="mode-btn" id="btn-mode-aao" onclick="setMode('aao')">All at Once</button>
+      </div>
+      <div class="nav-counter" id="nav-counter">
+        <span class="nav-counter-current" id="nav-counter-cur">0</span>
+        <span style="color:var(--text-3)">/</span>
+        <span id="nav-counter-total">0</span>
+      </div>
+    </div>
+  </nav>
+
+  <div id="app">
+
+    <!-- ══════════════════════════════════
+         TOPIC SELECTOR SCREEN
+    ══════════════════════════════════ -->
+    <div id="screen-topics">
+      <div class="hero">
+        <div class="eyebrow">2900+ Questions</div>
+        <h1>Senior Engineer<br><em>Interview Prep</em></h1>
+        <p class="hero-sub">Deep-dive Q&amp;A across every major backend engineering topic. Practice one by one with randomized flashcards, or review all at once.</p>
+        <div class="hero-stats">
+          <div class="stat-pill">
+            <strong id="stat-topics">—</strong>
+            <span>Topics</span>
+          </div>
+          <div class="stat-pill">
+            <strong id="stat-questions">—</strong>
+            <span>Questions</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="search-wrap">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="9" cy="9" r="6"/><path d="M15 15l-3.5-3.5"/>
+        </svg>
+        <input type="text" id="topic-search" placeholder="Search topics…" autocomplete="off" spellcheck="false">
+      </div>
+
+      <div class="topics-grid" id="topics-grid">
+        <div class="state-empty">
+          <div class="icon">📚</div>
+          <div>Loading topics…</div>
+          <div class="loading-bar"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════
+         VIEWER SCREEN
+    ══════════════════════════════════ -->
+    <div id="screen-viewer">
+
+      <!-- Content -->
+      <div class="viewer-content">
+
+        <!-- ONE BY ONE PANEL -->
+        <div id="obo-panel">
+          <div class="obo-progress">
+            <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+            <div class="progress-text" id="progress-text">0 / 0</div>
+          </div>
+
+          <div class="obo-card" id="obo-card">
+            <div class="obo-q-label" id="obo-qlabel">QUESTION 1</div>
+            <div class="obo-question" id="obo-question">—</div>
+            <button class="show-answer-btn" id="btn-show-obo-answer" onclick="toggleOboAnswer()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M6 9l6 6 6-6"/>
+              </svg>
+              Show Answer
+            </button>
+            <div class="obo-answer" id="obo-answer">
+              <div class="md-content" id="obo-answer-content"></div>
+              <div class="answer-images" id="obo-images"></div>
+            </div>
+          </div>
+
+          <div class="obo-done" id="obo-done">
+            <div class="done-icon">🎉</div>
+            <h2>All Done!</h2>
+            <p>You've gone through all <span id="done-count"></span> questions.</p>
+            <button class="done-restart-btn" onclick="restartObo()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px">
+                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>
+              </svg>
+              Start Over
+            </button>
+          </div>
+
+          <div class="obo-nav" id="obo-nav">
+            <button class="nav-btn nav-btn-prev" id="btn-prev" onclick="navigate(-1)">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><path d="M10 3L5 8l5 5"/></svg>
+              Previous
+            </button>
+            <button class="nav-btn nav-btn-next" id="btn-next" onclick="navigate(1)">
+              Next
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><path d="M6 3l5 5-5 5"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- ALL AT ONCE PANEL -->
+        <div id="aao-panel">
+          <div class="aao-list" id="aao-list"></div>
+        </div>
+
+      </div>
+    </div>
+
+  </div><!-- /#app -->
+
+  <script>
+    /* ═══════════════════════════════════════
+       STATE
+    ═══════════════════════════════════════ */
+    let allTopics = [];
+    let currentTopic = null;
+    let questions = [];     // active ordered array
+    let origQuestions = []; // original order from JSON
+    let currentIndex = 0;
+    let mode = 'obo';       // 'obo' | 'aao'
+    let oboAnswerVisible = false;
+    let showAnswersByDefault = false;
+
+    function toggleShowAnswersByDefault() {
+      showAnswersByDefault = document.getElementById('chk-show-answers').checked;
+      if (mode === 'obo') {
+        renderObo();
+      } else {
+        renderAao();
+      }
+    }
+
+    /* ═══════════════════════════════════════
+       MARKED CONFIG
+    ═══════════════════════════════════════ */
+    marked.setOptions({ breaks: true, gfm: true });
+
+    /* ═══════════════════════════════════════
+       INIT — load index.json
+    ═══════════════════════════════════════ */
+    async function init() {
+      try {
+        const res = await fetch('questions-data/index.json');
+        allTopics = await res.json();
+        renderTopicGrid(allTopics);
+        document.getElementById('stat-topics').textContent = allTopics.length;
+        const total = allTopics.reduce((s, t) => s + t.count, 0);
+        document.getElementById('stat-questions').textContent = total.toLocaleString();
+        
+        const urlParams = new URLSearchParams(window.location.search);
+        const topicParam = urlParams.get('topic');
+        if (topicParam) {
+          // Wait for a tick so the DOM is fully ready
+          setTimeout(() => loadTopic(topicParam), 50);
+        }
+      } catch(e) {
+        document.getElementById('topics-grid').innerHTML =
+          `<div class="state-empty"><div class="icon">⚠️</div><div>Could not load topics. Make sure you ran <code>extract_questions.py</code> first.</div></div>`;
+      }
+    }
+
+    /* ═══════════════════════════════════════
+       TOPIC GRID
+    ═══════════════════════════════════════ */
+    function renderTopicGrid(topics) {
+      const grid = document.getElementById('topics-grid');
+      if (!topics.length) {
+        grid.innerHTML = `<div class="state-empty"><div class="icon">🔍</div><div>No topics match your search.</div></div>`;
+        return;
+      }
+      grid.innerHTML = topics.map(t => `
+        <div class="topic-card" onclick="loadTopic('${t.file}')"
+             style="--topic-accent:${t.accent}">
+          <div class="topic-card-header">
+            <div class="topic-icon">${t.icon}</div>
+            <div>
+              <div class="topic-title">${t.topic}</div>
+              <div class="topic-badge" style="color:${t.accent}">${t.count} questions</div>
+            </div>
+          </div>
+          <div class="topic-desc">${t.description}</div>
+          <div class="topic-footer">
+            <span class="topic-count">${t.count} Q&amp;As</span>
+            <span class="topic-arrow">→</span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    /* Search */
+    document.getElementById('topic-search').addEventListener('input', function() {
+      const q = this.value.toLowerCase().trim();
+      const filtered = q ? allTopics.filter(t =>
+        t.topic.toLowerCase().includes(q) ||
+        t.description.toLowerCase().includes(q)
+      ) : allTopics;
+      renderTopicGrid(filtered);
+    });
+
+    /* ═══════════════════════════════════════
+       LOAD TOPIC
+    ═══════════════════════════════════════ */
+    async function loadTopic(file) {
+      // Show viewer, hide topics
+      document.getElementById('screen-topics').style.display = 'none';
+      document.getElementById('screen-viewer').style.display = 'block';
+      
+      // Update Navbar
+      document.getElementById('nav-logo').style.display = 'none';
+      document.getElementById('nav-back-home').style.display = 'none';
+      document.getElementById('btn-back-topics').style.display = 'inline-flex';
+      document.getElementById('viewer-topic-badge').style.display = 'flex';
+      document.getElementById('viewer-actions').style.display = 'flex';
+      document.getElementById('mode-toggle').style.display = 'flex';
+
+      // Find topic meta
+      currentTopic = allTopics.find(t => t.file === file);
+      const accent = currentTopic ? currentTopic.accent : '#6c8cff';
+      applyAccent(accent);
+
+      // Update topic badge
+      document.getElementById('viewer-icon').textContent = currentTopic?.icon || '📚';
+      document.getElementById('viewer-topic-name').textContent = currentTopic?.topic || '';
+
+      // Show loading
+      document.getElementById('obo-panel').style.display = 'none';
+      document.getElementById('aao-panel').style.display = 'none';
+      document.getElementById('aao-list').innerHTML = `
+        <div class="state-empty"><div class="icon">⏳</div><div>Loading questions…</div>
+        <div class="loading-bar"></div></div>`;
+
+      try {
+        const res = await fetch(file);
+        const data = await res.json();
+        origQuestions = data.questions || [];
+        questions = [...origQuestions];
+        currentIndex = 0;
+        oboAnswerVisible = false;
+        setMode('obo');
+      } catch(e) {
+        document.getElementById('aao-list').innerHTML =
+          `<div class="state-empty"><div class="icon">⚠️</div><div>Failed to load questions.</div></div>`;
+      }
+    }
+
+    function applyAccent(color) {
+      document.documentElement.style.setProperty('--topic-accent', color);
+      // Update blob color
+      document.getElementById('blob1').style.background =
+        `radial-gradient(circle, ${hexToRgba(color, 0.22)} 0%, transparent 70%)`;
+    }
+
+    function hexToRgba(hex, alpha) {
+      const r = parseInt(hex.slice(1,3),16);
+      const g = parseInt(hex.slice(3,5),16);
+      const b = parseInt(hex.slice(5,7),16);
+      return `rgba(${r},${g},${b},${alpha})`;
+    }
+
+    /* ═══════════════════════════════════════
+       MODE SWITCHING
+    ═══════════════════════════════════════ */
+    function setMode(m) {
+      mode = m;
+      document.getElementById('btn-mode-obo').classList.toggle('active', m === 'obo');
+      document.getElementById('btn-mode-aao').classList.toggle('active', m === 'aao');
+      document.getElementById('btn-randomize').style.display = m === 'obo' ? 'flex' : 'none';
+      document.getElementById('btn-reset-order').style.display = m === 'obo' ? 'flex' : 'none';
+      document.getElementById('nav-counter').classList.toggle('visible', m === 'obo');
+
+      if (m === 'obo') {
+        document.getElementById('obo-panel').style.display = 'block';
+        document.getElementById('aao-panel').style.display = 'none';
+        renderObo();
+      } else {
+        document.getElementById('obo-panel').style.display = 'none';
+        document.getElementById('aao-panel').style.display = 'block';
+        renderAao();
+      }
+    }
+
+    /* Back to topics */
+    document.getElementById('btn-back-topics').addEventListener('click', () => {
+      document.getElementById('screen-viewer').style.display = 'none';
+      document.getElementById('screen-topics').style.display = 'block';
+      
+      // Restore Navbar
+      document.getElementById('nav-logo').style.display = 'flex';
+      document.getElementById('nav-back-home').style.display = 'flex';
+      document.getElementById('btn-back-topics').style.display = 'none';
+      document.getElementById('viewer-topic-badge').style.display = 'none';
+      document.getElementById('viewer-actions').style.display = 'none';
+      document.getElementById('mode-toggle').style.display = 'none';
+      
+      applyAccent('#6c8cff');
+    });
+
+    /* ═══════════════════════════════════════
+       ONE BY ONE MODE
+    ═══════════════════════════════════════ */
+    function renderObo() {
+      const total = questions.length;
+      const done = document.getElementById('obo-done');
+      const card = document.getElementById('obo-card');
+      const nav  = document.getElementById('obo-nav');
+
+      if (!total) {
+        card.style.display = 'none'; done.style.display = 'block'; nav.style.display = 'none';
+        return;
+      }
+
+      // Update progress
+      const idx = currentIndex;
+      const pct = ((idx + 1) / total * 100).toFixed(1);
+      document.getElementById('progress-fill').style.width = pct + '%';
+      document.getElementById('progress-text').textContent = `${idx + 1} / ${total}`;
+      document.getElementById('nav-counter-cur').textContent = idx + 1;
+      document.getElementById('nav-counter-total').textContent = total;
+
+      // Render question
+      const q = questions[idx];
+      document.getElementById('obo-qlabel').textContent = `QUESTION ${idx + 1}`;
+      document.getElementById('obo-question').textContent = q.question;
+
+      // Reset answer visibility
+      const answerEl = document.getElementById('obo-answer');
+      const btn = document.getElementById('btn-show-obo-answer');
+      
+      if (showAnswersByDefault) {
+        answerEl.classList.add('visible');
+        btn.style.display = 'none';
+        oboAnswerVisible = true;
+      } else {
+        answerEl.classList.remove('visible');
+        btn.style.display = 'inline-flex';
+        btn.classList.remove('open');
+        btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M6 9l6 6 6-6"/></svg> Show Answer`;
+        oboAnswerVisible = false;
+      }
+
+      // Pre-render answer content
+      document.getElementById('obo-answer-content').innerHTML = marked.parse(q.answer || '');
+      renderImages('obo-images', q.images || []);
+
+      // Nav buttons
+      document.getElementById('btn-prev').disabled = (idx === 0);
+      const isLast = (idx === total - 1);
+      const nextBtn = document.getElementById('btn-next');
+      nextBtn.innerHTML = isLast
+        ? `Done <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><path d="M4 8h8M9 4l4 4-4 4"/></svg>`
+        : `Next <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><path d="M6 3l5 5-5 5"/></svg>`;
+      nextBtn.disabled = false;
+
+      card.style.display = 'block';
+      done.style.display = 'none';
+      nav.style.display = 'flex';
+    }
+
+    function toggleOboAnswer() {
+      oboAnswerVisible = !oboAnswerVisible;
+      const el = document.getElementById('obo-answer');
+      const btn = document.getElementById('btn-show-obo-answer');
+      el.classList.toggle('visible', oboAnswerVisible);
+      btn.classList.toggle('open', oboAnswerVisible);
+      btn.innerHTML = oboAnswerVisible
+        ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 15l-6-6-6 6"/></svg> Hide Answer`
+        : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg> Show Answer`;
+    }
+
+    function navigate(dir) {
+      const total = questions.length;
+      const newIdx = currentIndex + dir;
+      if (newIdx < 0) return;
+      if (newIdx >= total) {
+        showDone();
+        return;
+      }
+      // Animate card
+      const card = document.getElementById('obo-card');
+      card.classList.add(dir > 0 ? 'flip-out' : 'flip-in');
+      setTimeout(() => {
+        currentIndex = newIdx;
+        card.classList.remove('flip-out', 'flip-in');
+        renderObo();
+        // Scroll card into view
+        card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }, 200);
+    }
+
+    function showDone() {
+      document.getElementById('obo-card').style.display = 'none';
+      document.getElementById('obo-nav').style.display = 'none';
+      document.getElementById('done-count').textContent = questions.length;
+      document.getElementById('obo-done').style.display = 'block';
+      document.getElementById('progress-fill').style.width = '100%';
+      document.getElementById('progress-text').textContent = `${questions.length} / ${questions.length}`;
+    }
+
+    function restartObo() {
+      currentIndex = 0;
+      oboAnswerVisible = false;
+      renderObo();
+    }
+
+    /* Keyboard navigation */
+    document.addEventListener('keydown', e => {
+      if (mode !== 'obo') return;
+      if (e.target.tagName === 'INPUT') return;
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') navigate(1);
+      if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   navigate(-1);
+      if (e.key === ' ') { e.preventDefault(); toggleOboAnswer(); }
+    });
+
+    /* Shuffle */
+    document.getElementById('btn-randomize').addEventListener('click', () => {
+      questions = [...questions].sort(() => Math.random() - 0.5);
+      currentIndex = 0;
+      oboAnswerVisible = false;
+      renderObo();
+    });
+
+    document.getElementById('btn-reset-order').addEventListener('click', () => {
+      questions = [...origQuestions];
+      currentIndex = 0;
+      oboAnswerVisible = false;
+      renderObo();
+    });
+
+    /* ═══════════════════════════════════════
+       ALL AT ONCE MODE
+    ═══════════════════════════════════════ */
+    function renderAao() {
+      const list = document.getElementById('aao-list');
+      if (!questions.length) {
+        list.innerHTML = `<div class="state-empty"><div class="icon">❓</div><div>No questions found.</div></div>`;
+        return;
+      }
+
+      list.innerHTML = questions.map((q, i) => `
+        <div class="aao-card ${showAnswersByDefault ? 'open' : ''}" id="aao-card-${i}">
+          <div class="aao-card-header" onclick="toggleAao(${i})">
+            <div class="aao-qnum" style="background:rgba(108,140,255,0.08);border-color:rgba(108,140,255,0.2);color:var(--topic-accent)">Q${i+1}</div>
+            <div class="aao-q">${escapeHtml(q.question)}</div>
+            <svg class="aao-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M6 9l6 6 6-6"/>
+            </svg>
+          </div>
+          <div class="aao-body ${showAnswersByDefault ? 'open' : ''}" id="aao-body-${i}">
+            <div class="aao-body-inner">
+              ${showAnswersByDefault ? '' : `
+              <button class="aao-show-btn" id="aao-showbtn-${i}" onclick="toggleAaoAnswer(event, ${i})">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                </svg>
+                Show Answer
+              </button>`}
+              <div class="md-content" id="aao-answer-${i}" style="${showAnswersByDefault ? 'display:block' : 'display:none'}">${marked.parse(q.answer || '')}</div>
+              ${(q.images && q.images.length) ? `<div class="answer-images" id="aao-imgs-${i}" style="${showAnswersByDefault ? 'display:flex' : 'display:none'}">${q.images.map(src=>`<img src="${src}" alt="Diagram" loading="lazy">`).join('')}</div>` : ''}
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function toggleAao(i) {
+      const card = document.getElementById(`aao-card-${i}`);
+      const body = document.getElementById(`aao-body-${i}`);
+      const isOpen = card.classList.contains('open');
+      card.classList.toggle('open', !isOpen);
+      body.classList.toggle('open', !isOpen);
+    }
+
+    function toggleAaoAnswer(e, i) {
+      e.stopPropagation();
+      const btn    = document.getElementById(`aao-showbtn-${i}`);
+      const answer = document.getElementById(`aao-answer-${i}`);
+      const imgs   = document.getElementById(`aao-imgs-${i}`);
+      const isHidden = answer.style.display === 'none';
+      answer.style.display = isHidden ? 'block' : 'none';
+      if (imgs) imgs.style.display = isHidden ? 'flex' : 'none';
+      btn.innerHTML = isHidden
+        ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg> Hide Answer`
+        : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> Show Answer`;
+    }
+
+    /* ═══════════════════════════════════════
+       HELPERS
+    ═══════════════════════════════════════ */
+    function renderImages(containerId, images) {
+      const el = document.getElementById(containerId);
+      if (!el) return;
+      if (!images || !images.length) { el.innerHTML = ''; return; }
+      el.innerHTML = images.map(src =>
+        `<img src="${src}" alt="Diagram" loading="lazy">`
+      ).join('');
+      el.style.display = 'flex';
+    }
+
+    function escapeHtml(str) {
+      return (str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    /* ═══════════════════════════════════════
+       BOOT
+    ═══════════════════════════════════════ */
+    init();
+  </script>
+
+</body>
+</html>

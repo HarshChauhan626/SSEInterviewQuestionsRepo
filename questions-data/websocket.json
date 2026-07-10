@@ -1,0 +1,369 @@
+{
+  "topic": "WebSockets",
+  "description": "WebSocket protocol, scaling, security, reliability, and system design",
+  "icon": "🔄",
+  "accent": "#67e8f9",
+  "source": "websocket.md",
+  "questions": [
+    {
+      "id": 1,
+      "question": "WebSocket Fundamentals",
+      "answer": "### What is WebSocket?\n\n**Definition:** WebSocket is a communication protocol that provides full-duplex (two-way), persistent communication channels over a single, long-lived TCP connection between a client and server.\n\n**Analogy:** Think of the difference between sending letters (HTTP) vs. having a phone call (WebSocket).\n- With **HTTP (letters)**: You write a letter, send it, wait for a reply letter. Each exchange is independent.\n- With **WebSocket (phone call)**: Once connected, both parties can speak and listen simultaneously, at any time, without needing to initiate a new request each time.\n\n**Formal definition (RFC 6455):** WebSocket is a protocol that enables two-way communication between a client and a remote host, with the server allowed to send content to the browser without being first requested by the client.",
+      "images": []
+    },
+    {
+      "id": 2,
+      "question": "Why WebSocket Was Introduced",
+      "answer": "Before WebSocket, real-time web communication was painful. Developers had to hack around HTTP's request-response model:\n\n```\nPROBLEM TIMELINE:\n─────────────────────────────────────────────────────────\n1990s-2000s  │  Pure HTTP polling — client asks \"anything new?\" every N seconds\n2000s        │  Long Polling — keep request open until server has something\n2000s        │  HTTP Streaming — hack using chunked transfer encoding\n2011         │  WebSocket (RFC 6455) — proper two-way protocol\n─────────────────────────────────────────────────────────\n```\n\n**Core problems WebSocket solved:**\n- Eliminate redundant HTTP headers on every message (often 800–2000 bytes overhead)\n- Allow server-initiated pushes without tricks\n- Reduce latency by avoiding connection setup on every exchange\n- Enable true real-time, bidirectional communication",
+      "images": []
+    },
+    {
+      "id": 3,
+      "question": "WebSocket vs Long Polling",
+      "answer": "**Long Polling:**\n```\nClient → Server: \"Any messages?\" [holds connection open]\nServer: [waits...waits...waits...]\nServer → Client: \"Here's a message!\" [immediately sends when available]\nClient: [immediately sends new request] \"Any more messages?\"\n[repeat]\n\nBetter than polling, but:\n- Still creates a new HTTP request/response cycle per message\n- Complex to implement correctly\n- Headers re-sent each round trip\n- Not true bidirectional (client still initiates)\n```",
+      "images": []
+    },
+    {
+      "id": 4,
+      "question": "WebSocket vs SSE (Server-Sent Events)",
+      "answer": "| Feature | WebSocket | SSE |\n|---|---|---|\n| Direction | Bidirectional | Server → Client only |\n| Protocol | ws/wss | HTTP/HTTPS |\n| Browser support | All modern browsers | All modern browsers |\n| Reconnection | Manual | Automatic |\n| Binary data | Yes | No (text only) |\n| Multiplexing | Manual | Native in HTTP/2 |\n| Complexity | Higher | Lower |\n| Best for | Chat, gaming, real-time collab | News feeds, notifications, dashboards |\n\n**Analogy:**\n- **SSE** = a radio broadcast (server broadcasts, clients listen)\n- **WebSocket** = a walkie-talkie (either side can talk at any time)",
+      "images": []
+    },
+    {
+      "id": 5,
+      "question": "Full-Duplex Communication",
+      "answer": "**Full-duplex** means data can flow in both directions *simultaneously*, like a two-lane road.\n\n```\nSIMPLEX      ──────────────▶  (one direction only, e.g., TV broadcast)\nHALF-DUPLEX  ──────▶ then ◀──  (both directions, but not at same time, e.g., walkie-talkie)\nFULL-DUPLEX  ══════════════  (both directions simultaneously, e.g., phone call)\n              ◀─────────────\n```\n\nWebSocket operates over TCP which is itself full-duplex. The WebSocket protocol preserves this property, allowing the client and server to send frames simultaneously without waiting.",
+      "images": []
+    },
+    {
+      "id": 6,
+      "question": "Real-World Use Cases",
+      "answer": "| Use Case | Why WebSocket? |\n|---|---|\n| **Chat applications** | Messages delivered instantly in both directions |\n| **Live sports scores** | Server pushes score updates the moment they happen |\n| **Stock tickers & trading** | Sub-millisecond price feed delivery |\n| **Multiplayer games** | Real-time position/action synchronization |\n| **Collaborative editing** | Simultaneous edits from multiple users (Google Docs style) |\n| **IoT dashboards** | Devices stream sensor data continuously |\n| **Customer support chat** | Agent and user exchange messages in real time |\n| **Live auctions** | Instant bid updates to all participants |\n| **Notification systems** | Push alerts without polling |\n| **Code collaboration tools** | Live pair programming |",
+      "images": []
+    },
+    {
+      "id": 7,
+      "question": "Protocol & Handshake",
+      "answer": "### HTTP Upgrade Mechanism\n\nWebSocket begins life as an HTTP request. The client asks the server to \"upgrade\" the connection from HTTP to WebSocket.\n\n```\nUPGRADE FLOW:\n\n   Browser                              Server\n      │                                    │\n      │  1. HTTP GET /chat                 │\n      │     Upgrade: websocket             │\n      │     Connection: Upgrade            │\n      │     Sec-WebSocket-Key: abc123==    │\n      │─────────────────────────────────▶ │\n      │                                    │  2. Validates key, generates Accept\n      │  HTTP/1.1 101 Switching Protocols  │\n      │  Upgrade: websocket                │\n      │  Sec-WebSocket-Accept: xyz789==    │\n      │ ◀───────────────────────────────── │\n      │                                    │\n      │  ═══════ WebSocket Frames ════════ │  3. HTTP connection upgraded\n      │  (TCP connection reused)           │\n```",
+      "images": []
+    },
+    {
+      "id": 8,
+      "question": "Opening Handshake — Full Request/Response Headers",
+      "answer": "**Client Request:**\n```http\nGET /chat HTTP/1.1\nHost: server.example.com\nUpgrade: websocket\nConnection: Upgrade\nSec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\nSec-WebSocket-Version: 13\nOrigin: http://example.com\nSec-WebSocket-Protocol: chat, superchat   (optional: subprotocols)\nSec-WebSocket-Extensions: permessage-deflate  (optional: extensions)\n```\n\n**Server Response (success):**\n```http\nHTTP/1.1 101 Switching Protocols\nUpgrade: websocket\nConnection: Upgrade\nSec-WebSocket-Accept: s3pPLMBiTxaQ9kYGzzhZRbK+xOo=\nSec-WebSocket-Protocol: chat             (selected subprotocol)\n```\n\nThe `101 Switching Protocols` status code is the green light — the connection is now a WebSocket.",
+      "images": []
+    },
+    {
+      "id": 9,
+      "question": "Sec-WebSocket-Key & Sec-WebSocket-Accept",
+      "answer": "This is a security mechanism to prevent cross-protocol attacks.\n\n**How it works:**\n1. Client generates a random 16-byte value, base64-encodes it → `Sec-WebSocket-Key`\n2. Server concatenates the key with the magic string `258EAFA5-E914-47DA-95CA-C5AB0DC85B11`\n3. Server SHA-1 hashes the result and base64-encodes it → `Sec-WebSocket-Accept`\n4. Client verifies the accept value to confirm the server understood the WebSocket protocol\n\n```javascript\n// Server-side computation of Sec-WebSocket-Accept:\nconst crypto = require('crypto');\nconst MAGIC = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11';\n\nfunction computeAccept(key) {\n  return crypto\n    .createHash('sha1')\n    .update(key + MAGIC)\n    .digest('base64');\n}\n```\n\n**Purpose:** Prevents HTTP servers from accidentally treating WebSocket frames as HTTP requests.",
+      "images": []
+    },
+    {
+      "id": 10,
+      "question": "Control Frames vs Data Frames",
+      "answer": "**Data Frames (carry application payload):**\n\n| Opcode | Hex | Description |\n|---|---|---|\n| Continuation | 0x0 | Continuation of a fragmented message |\n| Text | 0x1 | UTF-8 encoded text data |\n| Binary | 0x2 | Binary data (images, protobuf, etc.) |\n\n**Control Frames (manage the connection):**\n\n| Opcode | Hex | Description |\n|---|---|---|\n| Close | 0x8 | Initiate connection close |\n| Ping | 0x9 | Keep-alive check |\n| Pong | 0xA | Response to Ping |\n\nControl frames must have `FIN=1` and payload ≤ 125 bytes.",
+      "images": []
+    },
+    {
+      "id": 11,
+      "question": "Connection Lifecycle Management",
+      "answer": "### Connection States\n\nThe WebSocket API defines four ready states:\n\n```\nCONNECTING (0) ──▶ OPEN (1) ──▶ CLOSING (2) ──▶ CLOSED (3)\n     │                 │              │               │\n     │                 │              │               │\n  Handshake        Ready to      Close frame      Connection\n  in progress      send/recv     exchanged        terminated\n```\n\n```javascript\nconst ws = new WebSocket('wss://example.com/ws');\n\nswitch (ws.readyState) {\n  case WebSocket.CONNECTING: // 0\n  case WebSocket.OPEN:       // 1\n  case WebSocket.CLOSING:    // 2\n  case WebSocket.CLOSED:     // 3\n}\n```",
+      "images": []
+    },
+    {
+      "id": 12,
+      "question": "Opening and Closing Handshake",
+      "answer": "**Opening:** The HTTP Upgrade described in Section 2.\n\n**Closing Handshake:**\n```\nInitiator (either side)         Other side\n       │                              │\n       │──── Close frame ────────────▶│  (with status code + reason)\n       │◀─── Close frame ─────────────│  (echo close)\n       │                              │\n       │──── TCP FIN ────────────────▶│\n       │◀─── TCP FIN ─────────────────│\n       │                              │\n   Connection closed              Connection closed\n```\n\nThe close frame contains a 2-byte status code and optional UTF-8 reason string.",
+      "images": []
+    },
+    {
+      "id": 13,
+      "question": "Ping/Pong Heartbeats",
+      "answer": "TCP connections can silently die (network interruption, NAT timeout, idle firewall rules). Ping/Pong detects this.\n\n```\nClient              Server\n  │                    │\n  │◀──── PING ─────────│  every 30s (server sends ping)\n  │───── PONG ─────────▶│  client must respond\n  │                    │\n  │◀──── PING ─────────│\n  │  [no pong — 3 timeouts]\n  │  [server closes connection]\n```\n\n```javascript\n// Server-side heartbeat (Node.js ws library)\nconst HEARTBEAT_INTERVAL = 30_000;\nconst HEARTBEAT_TIMEOUT  = 10_000;\n\nfunction startHeartbeat(ws) {\n  ws.isAlive = true;\n  ws.on('pong', () => { ws.isAlive = true; });\n\n  const interval = setInterval(() => {\n    if (!ws.isAlive) {\n      clearInterval(interval);\n      return ws.terminate();\n    }\n    ws.isAlive = false;\n    ws.ping();\n  }, HEARTBEAT_INTERVAL);\n}\n```",
+      "images": []
+    },
+    {
+      "id": 14,
+      "question": "Client-Side WebSocket Engineering",
+      "answer": "### Browser WebSocket API\n\n```javascript\n// Basic usage\nconst ws = new WebSocket('wss://example.com/ws');\n\n// Connection opened\nws.onopen = (event) => {\n  console.log('Connected');\n  ws.send('Hello Server!');\n};\n\n// Message received\nws.onmessage = (event) => {\n  console.log('Received:', event.data);\n  // event.data is string (text) or Blob/ArrayBuffer (binary)\n};\n\n// Error\nws.onerror = (event) => {\n  console.error('WebSocket error:', event);\n};\n\n// Connection closed\nws.onclose = (event) => {\n  console.log(`Closed: code=${event.code} reason=${event.reason}`);\n};\n\n// Send data\nws.send('text message');\nws.send(JSON.stringify({ type: 'chat', text: 'Hi' }));\nws.send(new ArrayBuffer(8));   // binary\nws.send(new Blob([data]));     // binary\n\n// Close\nws.close(1000, 'User logged out');\n```",
+      "images": []
+    },
+    {
+      "id": 15,
+      "question": "Auto-Reconnect Implementation",
+      "answer": "```javascript\nclass RobustWebSocket extends EventTarget {\n  #url; #ws; #attempt = 0; #forcedClose = false;\n  #messageQueue = [];\n\n  constructor(url) {\n    super();\n    this.#url = url;\n    this.#connect();\n  }\n\n  #connect() {\n    this.#ws = new WebSocket(this.#url);\n\n    this.#ws.onopen = () => {\n      this.#attempt = 0;\n      // Flush queued messages\n      while (this.#messageQueue.length) {\n        this.#ws.send(this.#messageQueue.shift());\n      }\n      this.dispatchEvent(new Event('open'));\n    };\n\n    this.#ws.onmessage = (e) => this.dispatchEvent(\n      new MessageEvent('message', { data: e.data })\n    );\n\n    this.#ws.onclose = () => {\n      if (!this.#forcedClose) this.#scheduleReconnect();\n    };\n  }\n\n  #scheduleReconnect() {\n    const delay = Math.min(1000 * 2 ** this.#attempt++, 30_000);\n    setTimeout(() => this.#connect(), delay + Math.random() * 500);\n  }\n\n  send(data) {\n    if (this.#ws.readyState === WebSocket.OPEN) {\n      this.#ws.send(data);\n    } else {\n      this.#messageQueue.push(data);  // queue if not connected\n    }\n  }\n\n  close() {\n    this.#forcedClose = true;\n    this.#ws.close(1000, 'User initiated');\n  }\n}\n```",
+      "images": []
+    },
+    {
+      "id": 16,
+      "question": "Handling Offline/Online Transitions",
+      "answer": "```javascript\nwindow.addEventListener('online', () => {\n  if (ws.readyState !== WebSocket.OPEN) {\n    reconnect();\n  }\n});\n\nwindow.addEventListener('offline', () => {\n  // Don't attempt reconnect while offline — pointless\n  clearReconnectTimers();\n});\n```",
+      "images": []
+    },
+    {
+      "id": 17,
+      "question": "Authentication from Frontend",
+      "answer": "WebSockets don't support custom headers in the initial browser API (unlike `fetch`). Options:\n\n**Option 1: Token in URL (query param) — simple but less secure**\n```javascript\nconst token = getJWT();\nconst ws = new WebSocket(`wss://example.com/ws?token=${token}`);\n// Risk: token appears in server logs!\n```\n\n**Option 2: Token in first message — preferred**\n```javascript\nws.onopen = () => {\n  ws.send(JSON.stringify({ type: 'auth', token: getJWT() }));\n  // Server accepts/rejects before processing other messages\n};\n```\n\n**Option 3: Cookie-based auth — cleanest for browser clients**\n```javascript\n// If the user is already logged in via cookie-based session,\n// the browser automatically sends cookies with the WebSocket upgrade request.\nconst ws = new WebSocket('wss://example.com/ws');\n// Server reads session cookie from the Upgrade request headers\n```",
+      "images": []
+    },
+    {
+      "id": 18,
+      "question": "Backend WebSocket Server Architecture",
+      "answer": "### Connection Manager\n\nEvery WebSocket server needs a registry of active connections:\n\n```javascript\nclass ConnectionManager {\n  #connections = new Map();  // connectionId → ws\n\n  register(id, ws) {\n    this.#connections.set(id, ws);\n    ws.on('close', () => this.#connections.delete(id));\n  }\n\n  send(id, message) {\n    const ws = this.#connections.get(id);\n    if (ws?.readyState === WebSocket.OPEN) {\n      ws.send(JSON.stringify(message));\n      return true;\n    }\n    return false;\n  }\n\n  broadcast(message, filter = () => true) {\n    const data = JSON.stringify(message);\n    for (const [id, ws] of this.#connections) {\n      if (filter(id) && ws.readyState === WebSocket.OPEN) {\n        ws.send(data);\n      }\n    }\n  }\n\n  get size() { return this.#connections.size; }\n}\n```",
+      "images": []
+    },
+    {
+      "id": 19,
+      "question": "User-Session Mapping",
+      "answer": "```\nConnection Registry:\n\nconnectionId (UUID) ──▶ ws object\nuserId              ──▶ Set<connectionId>   (user may have multiple tabs)\nsessionId           ──▶ connectionId\n\nExample:\n  user:alice ──▶ { conn_1, conn_2 }   (two browser tabs)\n  user:bob   ──▶ { conn_3 }\n  conn_1     ──▶ ws_object_A\n  conn_2     ──▶ ws_object_B\n  conn_3     ──▶ ws_object_C\n```\n\n```javascript\nclass UserSessionMap {\n  #userToConns = new Map();   // userId → Set<connectionId>\n  #connToUser  = new Map();   // connectionId → userId\n  #connToWs    = new Map();   // connectionId → ws\n\n  connect(userId, connId, ws) {\n    if (!this.#userToConns.has(userId)) {\n      this.#userToConns.set(userId, new Set());\n    }\n    this.#userToConns.get(userId).add(connId);\n    this.#connToUser.set(connId, userId);\n    this.#connToWs.set(connId, ws);\n  }\n\n  disconnect(connId) {\n    const userId = this.#connToUser.get(connId);\n    this.#userToConns.get(userId)?.delete(connId);\n    this.#connToUser.delete(connId);\n    this.#connToWs.delete(connId);\n  }\n\n  sendToUser(userId, message) {\n    const connIds = this.#userToConns.get(userId) ?? new Set();\n    for (const connId of connIds) {\n      const ws = this.#connToWs.get(connId);\n      if (ws?.readyState === 1) ws.send(JSON.stringify(message));\n    }\n  }\n}\n```",
+      "images": []
+    },
+    {
+      "id": 20,
+      "question": "Room / Channel Architecture",
+      "answer": "```\nRoom Architecture:\n\n  room:general ──▶ { alice, bob, charlie }\n  room:sports  ──▶ { alice, dave }\n  room:tech    ──▶ { bob, eve }\n\n  alice is in: general, sports\n  bob   is in: general, tech\n```\n\n```javascript\nclass RoomManager {\n  #rooms = new Map();  // roomId → Set<userId>\n\n  join(roomId, userId) {\n    if (!this.#rooms.has(roomId)) this.#rooms.set(roomId, new Set());\n    this.#rooms.get(roomId).add(userId);\n  }\n\n  leave(roomId, userId) {\n    this.#rooms.get(roomId)?.delete(userId);\n  }\n\n  broadcast(roomId, message, excludeUserId = null) {\n    const members = this.#rooms.get(roomId) ?? new Set();\n    for (const userId of members) {\n      if (userId !== excludeUserId) {\n        userSessionMap.sendToUser(userId, message);\n      }\n    }\n  }\n}\n```",
+      "images": []
+    },
+    {
+      "id": 21,
+      "question": "Stateful vs Stateless Design",
+      "answer": "| Aspect | Stateful | Stateless |\n|---|---|---|\n| Connection state | Stored in server memory | Stored in external store (Redis) |\n| Scaling | Sticky sessions required | Any node can serve any request |\n| Failover | Lost on node crash | Survives node crash |\n| Latency | Lower (in-memory) | Higher (network call to Redis) |\n| Complexity | Simpler per-node | More moving parts |\n\n**Hybrid approach (recommended for large systems):**\n- Hot data (active connections, room membership) in process memory\n- Persistent data (message history, user data) in Redis/DB\n- Pub/Sub for cross-node messaging",
+      "images": []
+    },
+    {
+      "id": 22,
+      "question": "Worker Threads / Event Loops",
+      "answer": "Node.js is single-threaded. CPU-heavy work blocks the event loop and freezes all WebSocket connections.\n\n```\nBAD: CPU work blocks all connections\n  Event Loop ─── WS msg ─── [JSON.parse big payload 200ms] ─── all other msgs blocked!\n\nGOOD: Offload CPU work to worker threads\n  Event Loop ─── WS msg ─── [post to worker] ─────────────────▶ WS msg ─── WS msg...\n                                    │\n                               Worker Thread\n                               [JSON.parse 200ms]\n                                    │\n                             result posted back\n```",
+      "images": []
+    },
+    {
+      "id": 23,
+      "question": "Scaling WebSocket Systems",
+      "answer": "### Vertical vs Horizontal Scaling\n\n**Vertical scaling:** Give the server more CPU and RAM. Simple but has limits, and creates a single point of failure.\n\n**Horizontal scaling:** Add more server nodes. More complex but virtually unlimited capacity.\n\n```\nHORIZONTAL SCALING PROBLEM:\n\n  Client A connected to Server 1\n  Client B connected to Server 2\n\n  Client A sends a message to Client B...\n  Server 1 doesn't know about Client B's connection!\n  Server 1 has no direct reference to Server 2's connection.\n\n  Solution: Cross-server messaging via shared pub/sub (Redis)\n```",
+      "images": []
+    },
+    {
+      "id": 24,
+      "question": "Distributed Pub/Sub with Redis",
+      "answer": "Redis Pub/Sub enables cross-server message delivery:\n\n```\nARCHITECTURE:\n\nServer 1 (Alice connected)     Server 2 (Bob connected)\n        │                               │\n        │  publish to                   │  subscribe to\n        │  \"user:bob\" channel           │  \"user:bob\" channel\n        │                               │\n        └──────────▶ Redis ────────────▶│\n                  Pub/Sub              │\n                                Bob receives message!\n```\n\n```javascript\nconst redis = require('redis');\nconst pub = redis.createClient();\nconst sub = redis.createClient();\n\n// Server startup: subscribe to this server's channels\nsub.subscribe('broadcast');\nsub.subscribe(`server:${SERVER_ID}`);\n\nsub.on('message', (channel, message) => {\n  const { targetUserId, data } = JSON.parse(message);\n  // Deliver to local connection if present\n  userSessionMap.sendToUser(targetUserId, data);\n});\n\n// When routing a message to userId:\nasync function routeToUser(userId, message) {\n  const serverId = await redis.hget('user_servers', userId);\n  if (serverId === SERVER_ID) {\n    // Local delivery\n    userSessionMap.sendToUser(userId, message);\n  } else {\n    // Remote delivery via pub/sub\n    pub.publish(`server:${serverId}`, JSON.stringify({ targetUserId: userId, data: message }));\n  }\n}\n```",
+      "images": []
+    },
+    {
+      "id": 25,
+      "question": "Cross-Region Scaling",
+      "answer": "```\nGLOBAL ARCHITECTURE:\n\nRegion: US-EAST          Region: EU-WEST         Region: AP-SOUTH\n  ┌──────────────┐         ┌──────────────┐        ┌──────────────┐\n  │  WS Cluster  │         │  WS Cluster  │        │  WS Cluster  │\n  └──────┬───────┘         └──────┬───────┘        └──────┬───────┘\n         │                        │                        │\n         └────────────────────────┼────────────────────────┘\n                                  │\n                         Global Message Bus\n                         (Kafka / NATS / custom)\n```\n\n**Challenges:**\n- Latency: cross-region messages add 50–200ms\n- Consistency: user may appear online in one region but not another\n- Fan-out: a popular room may have users in all regions\n- Auth: tokens must be valid cross-region",
+      "images": []
+    },
+    {
+      "id": 26,
+      "question": "Security",
+      "answer": "### WSS Encryption\n\nUse `wss://` always. Everything described in Section 2 applies here. Key points:\n- TLS prevents eavesdropping, tampering, and impersonation\n- Verify TLS certificate validity server-side\n- Use TLS 1.2+ (TLS 1.0/1.1 deprecated)\n- Consider certificate pinning for mobile apps",
+      "images": []
+    },
+    {
+      "id": 27,
+      "question": "Cross-Site WebSocket Hijacking (CSWSH)",
+      "answer": "**Attack:** A malicious site initiates a WebSocket connection to your server using the victim's credentials (cookies).\n\n**Mitigations:**\n1. Validate `Origin` header (see above)\n2. Use CSRF tokens for WebSocket upgrade\n3. Use token-based auth (not just cookies)\n4. Ensure WebSocket endpoint is authenticated before processing messages",
+      "images": []
+    },
+    {
+      "id": 28,
+      "question": "Reliability & Delivery Guarantees",
+      "answer": "### TCP Guarantees\n\nTCP provides:\n- **Ordered delivery** — bytes arrive in the order they were sent\n- **Reliable delivery** — lost packets are retransmitted\n- **Error detection** — checksums on every segment\n\nWebSocket inherits these, but only within a single connection. When a connection drops and you reconnect, there's a gap.",
+      "images": []
+    },
+    {
+      "id": 29,
+      "question": "Duplicate Prevention (Idempotency)",
+      "answer": "```javascript\n// Server-side deduplication with a sliding window\nconst recentSeqs = new Map();  // connectionId → Set<seq>\n\nfunction isDuplicate(connId, seq) {\n  const seen = recentSeqs.get(connId) ?? new Set();\n  if (seen.has(seq)) return true;\n  seen.add(seq);\n  recentSeqs.set(connId, seen);\n  // Expire old entries periodically\n  return false;\n}\n```",
+      "images": []
+    },
+    {
+      "id": 30,
+      "question": "Message Persistence & Replay",
+      "answer": "```\nDURABLE MESSAGE FLOW:\n\nClient ──▶ Server ──▶ [Database: messages table] ──▶ Deliver to recipients\n                               │\n                      On reconnect: client sends lastSeq\n                               │\n                      Server queries: SELECT * FROM messages\n                                       WHERE seq > lastSeq\n                                         AND room = roomId\n                               │\n                      Server replays missed messages\n```",
+      "images": []
+    },
+    {
+      "id": 31,
+      "question": "Performance Optimization",
+      "answer": "### Memory Management\n\nEach WebSocket connection consumes memory for:\n- Socket buffers (send and receive)\n- Application-level buffers\n- Per-connection state objects\n\n**Rough estimate:** 1,000 bytes–10 KB per connection (varies by OS, buffers, application)\n\n**For 1 million connections:** 1–10 GB RAM minimum just for connection overhead.",
+      "images": []
+    },
+    {
+      "id": 32,
+      "question": "epoll / Event Loops",
+      "answer": "Node.js and most modern servers use **I/O multiplexing** (epoll on Linux) — a single thread can efficiently monitor thousands of connections simultaneously.\n\n```\nWITHOUT EPOLL (thread-per-connection):\n  1000 connections = 1000 threads = huge memory + context switching\n\nWITH EPOLL (event-driven):\n  1000 connections = 1 thread + epoll watches all FDs\n  Only acts when a FD is ready (has data)\n  C10K problem solved\n```",
+      "images": []
+    },
+    {
+      "id": 33,
+      "question": "Compression (permessage-deflate)",
+      "answer": "WebSocket supports per-message deflate compression:\n\n```http\n/* Negotiated during handshake */\nClient: Sec-WebSocket-Extensions: permessage-deflate\nServer: Sec-WebSocket-Extensions: permessage-deflate; server_no_context_takeover\n```\n\n**Typical compression ratios for JSON payloads: 3:1 to 10:1**\n\n**Tradeoff:** CPU cost vs bandwidth savings. Beneficial for text-heavy messages over slow connections. May not be worth it for binary data (already compressed) or high-frequency small messages (overhead > savings).",
+      "images": []
+    },
+    {
+      "id": 34,
+      "question": "Binary vs Text Frames",
+      "answer": "| Aspect | Text (opcode 0x1) | Binary (opcode 0x2) |\n|---|---|---|\n| Encoding | UTF-8 only | Any bytes |\n| Overhead | None | None |\n| Performance | JSON parsing CPU cost | Protobuf/MessagePack faster |\n| Debuggability | Easy (readable) | Hard (need decoder) |\n| Size | Verbose (JSON) | Compact (Protobuf ~3-10x smaller) |\n\n**Recommendation:** Use binary + Protobuf/MessagePack for high-throughput systems. Use text + JSON for developer-friendliness at lower volumes.",
+      "images": []
+    },
+    {
+      "id": 35,
+      "question": "Monitoring & Observability",
+      "answer": "### Key Metrics to Track\n\n**Connection metrics:**\n- Active connections (current count)\n- Connection rate (new connections/sec)\n- Disconnection rate (with breakdown by close code)\n- Connection duration distribution\n\n**Message metrics:**\n- Messages sent/received per second\n- Message size distribution (bytes)\n- Message processing latency (time from receipt to delivery)\n\n**Error metrics:**\n- Error rate by error type\n- Heartbeat failure rate\n- Authentication failure rate\n\n**Infrastructure metrics:**\n- Memory per connection\n- File descriptor usage %\n- CPU usage (event loop lag in Node.js)\n- Network I/O (bytes in/out)",
+      "images": []
+    },
+    {
+      "id": 36,
+      "question": "Prometheus Metrics (Node.js example)",
+      "answer": "```javascript\nconst client = require('prom-client');\n\nconst activeConnections = new client.Gauge({\n  name: 'ws_active_connections',\n  help: 'Number of active WebSocket connections',\n  labelNames: ['server_id'],\n});\n\nconst messageCounter = new client.Counter({\n  name: 'ws_messages_total',\n  help: 'Total WebSocket messages',\n  labelNames: ['direction', 'type'],\n});\n\nconst messageLatency = new client.Histogram({\n  name: 'ws_message_latency_ms',\n  help: 'Message processing latency in milliseconds',\n  buckets: [1, 5, 10, 25, 50, 100, 250, 500, 1000],\n});\n\n// Instrument your code:\nwss.on('connection', (ws) => {\n  activeConnections.inc({ server_id: SERVER_ID });\n  ws.on('close', () => activeConnections.dec({ server_id: SERVER_ID }));\n});\n```",
+      "images": []
+    },
+    {
+      "id": 37,
+      "question": "Deployment & Infrastructure",
+      "answer": "### Nginx for WebSockets\n\nFull production Nginx config:\n\n```nginx\nupstream ws_backend {\n  least_conn;\n  server ws1.internal:8080 weight=1;\n  server ws2.internal:8080 weight=1;\n  server ws3.internal:8080 weight=1;\n  keepalive 32;\n}\n\nmap $http_upgrade $connection_upgrade {\n  default  upgrade;\n  ''       close;\n}\n\nserver {\n  listen 443 ssl http2;\n  server_name ws.example.com;\n\n  ssl_certificate     /etc/ssl/certs/example.crt;\n  ssl_certificate_key /etc/ssl/private/example.key;\n  ssl_protocols TLSv1.2 TLSv1.3;\n\n  location /ws {\n    proxy_pass            http://ws_backend;\n    proxy_http_version    1.1;\n    proxy_set_header      Upgrade    $http_upgrade;\n    proxy_set_header      Connection $connection_upgrade;\n    proxy_set_header      Host       $host;\n    proxy_set_header      X-Real-IP  $remote_addr;\n    proxy_read_timeout    3600s;\n    proxy_send_timeout    3600s;\n    proxy_buffers         8 32k;\n    proxy_buffer_size     64k;\n  }\n}\n```",
+      "images": []
+    },
+    {
+      "id": 38,
+      "question": "Zero-Downtime Deployments",
+      "answer": "**Challenge:** During a rolling deployment, existing long-lived WebSocket connections are on old nodes being terminated.\n\n**Strategy:**\n```\n1. Start new node (new version)\n2. Load balancer routes new connections to new node\n3. Send SIGTERM to old node\n4. Old node:\n   a. Stops accepting new connections\n   b. Sends \"server_restart\" message to all connected clients\n   c. Clients see message and reconnect (to new node)\n   d. After 30s grace period, old node terminates\n```\n\n```javascript\nprocess.on('SIGTERM', () => {\n  // Notify clients of planned restart\n  for (const ws of wss.clients) {\n    ws.send(JSON.stringify({ type: 'server_restart', reconnectIn: 5000 }));\n  }\n  // Stop accepting new connections\n  wss.close(() => process.exit(0));\n});\n```",
+      "images": []
+    },
+    {
+      "id": 39,
+      "question": "Common System Design Patterns",
+      "answer": "### Chat System\n\n```\nARCHITECTURE:\n\nUsers ──▶ WebSocket Servers (WS1, WS2, WS3)\n                │\n         Redis Pub/Sub\n         ┌──────┴──────┐\n         │             │\n    Room State    Message DB\n    (Redis Hash)  (Postgres/MongoDB)\n\nMESSAGE FLOW:\n  1. Alice (on WS1) sends { type:\"chat\", room:\"general\", text:\"Hello\" }\n  2. WS1 validates, saves to DB, publishes to Redis channel \"room:general\"\n  3. Redis delivers to all WS servers subscribed to \"room:general\"\n  4. Each WS server delivers to its locally-connected members of \"general\"\n```",
+      "images": []
+    },
+    {
+      "id": 40,
+      "question": "Live Score / Notification System",
+      "answer": "```\nARCHITECTURE:\n\nScore Source (sports API / game engine)\n        │\n   Event Processor\n        │\n   Redis Pub/Sub ──▶ WebSocket Servers ──▶ Subscribed Clients\n                              │\n                    Client subscribes:\n                    { type: \"subscribe\", topic: \"match:42\" }\n\nBROADCAST PATTERN (fan-out):\n  1 score update ──▶ 100,000 subscribers\n  Must be highly optimized:\n  - Pre-serialize message once\n  - Use shared ArrayBuffer\n  - Deliver in parallel (async fan-out)\n```",
+      "images": []
+    },
+    {
+      "id": 41,
+      "question": "Collaborative Editing (Operational Transform / CRDT)",
+      "answer": "```\nPROBLEM: Two users edit same document simultaneously\n\nUser A (pos 5): insert \"Hello\"\nUser B (pos 5): insert \"World\"\n\nWithout coordination:\n  Document: \"HelloWorld\" or \"WorldHello\" (inconsistent!)\n\nOPERATIONAL TRANSFORM:\n  Server receives A's op then B's op\n  Transforms B's op relative to A's op:\n  B's new position = 5 + length(\"Hello\") = 10\n  Result: \"Hello World\" (consistent for all users)\n\nCRDT (Conflict-free Replicated Data Type):\n  Each character has a globally unique ID and position\n  Operations always converge regardless of order\n  No central server needed\n```",
+      "images": []
+    },
+    {
+      "id": 42,
+      "question": "Advanced Distributed System Concepts",
+      "answer": "### Distributed Presence\n\nTracking who is online across multiple servers:\n\n```\nNAIVE APPROACH (wrong):\n  Each server maintains local online set\n  Server 1: { alice, bob }\n  Server 2: { carol }\n  Server 3: { dave }\n  → No server knows the global picture!\n\nCORRECT APPROACH:\n  Redis Hash: user_online → { alice: server1, bob: server1, carol: server2, ... }\n\n  On connect:  HSET user_online <userId> <serverId>\n               EXPIRE (with TTL — heartbeat keeps it alive)\n  On disconnect: HDEL user_online <userId>\n  To check:    HGET user_online <userId>\n  To list all: HGETALL user_online\n```",
+      "images": []
+    },
+    {
+      "id": 43,
+      "question": "CAP Theorem for WebSocket Systems",
+      "answer": "```\nCAP Theorem: In a distributed system, you can guarantee only 2 of:\n  C — Consistency (all nodes see the same data)\n  A — Availability (every request gets a response)\n  P — Partition Tolerance (system works despite network splits)\n\nFor WebSocket systems:\n  Most choose AP (Availability + Partition Tolerance):\n    - Users may briefly see stale presence data\n    - Messages may be delivered out of order across regions\n    - But the system stays up and users can connect\n\n  Some choose CP (Consistency + Partition Tolerance):\n    - Trading systems, financial platforms\n    - Better to reject than to serve stale data\n```",
+      "images": []
+    },
+    {
+      "id": 44,
+      "question": "Event Sourcing with WebSocket",
+      "answer": "```\nTRADITIONAL: Store current state\n  DB: { user: alice, balance: 100 }\n\nEVENT SOURCING: Store all events\n  DB events table:\n    { type: \"deposit\",  amount: 200 }\n    { type: \"withdraw\", amount: 100 }\n    { type: \"deposit\",  amount: 50  }\n\n  Current state = replay of all events (current balance: 150)\n\nWEBSOCKET INTEGRATION:\n  - New events are immediately pushed via WebSocket\n  - Clients can request replay from any point\n  - Perfect audit trail\n  - Enables time-travel debugging\n```",
+      "images": []
+    },
+    {
+      "id": 45,
+      "question": "WebSocket in Cloud Ecosystems",
+      "answer": "### AWS API Gateway WebSockets\n\nAWS API Gateway supports WebSocket APIs with Lambda integration:\n\n```\nClient ──▶ API Gateway (WebSocket) ──▶ Lambda functions\n\nRoutes:\n  $connect    → onConnect Lambda\n  $disconnect → onDisconnect Lambda\n  $default    → onMessage Lambda\n  /chat       → chatHandler Lambda\n\nConnection management:\n  API Gateway stores connectionId\n  Lambda uses SDK to send back:\n\n  const apigw = new ApiGatewayManagementApi({ endpoint: ENDPOINT });\n  await apigw.postToConnection({\n    ConnectionId: connectionId,\n    Data: JSON.stringify({ type: 'msg', text: 'Hello' })\n  }).promise();\n```\n\n**Limitations:**\n- 10 minute connection timeout (configurable up to 2 hours)\n- 128 KB max message size\n- Cold start latency for Lambda\n- Not ideal for very high message frequency",
+      "images": []
+    },
+    {
+      "id": 46,
+      "question": "Alternatives & Emerging Technologies",
+      "answer": "### Comparison Table\n\n| Technology | Direction | Transport | Best For |\n|---|---|---|---|\n| WebSocket | Bidirectional | TCP | General real-time, chat, games |\n| SSE | Server→Client | HTTP | News feeds, notifications |\n| Long Polling | Server→Client | HTTP | Legacy browser support |\n| WebRTC Data Channels | P2P bidirectional | UDP/SCTP | Video calls, P2P file transfer |\n| gRPC streaming | Bidirectional | HTTP/2 | Microservice streaming |\n| HTTP/2 Server Push | Server→Client | HTTP/2 | Asset push (deprecated in Chrome) |\n| WebTransport | Bidirectional | HTTP/3 (QUIC) | Next-gen, low-latency gaming |\n| MQTT | Pub/Sub | TCP | IoT, constrained devices |\n| GraphQL Subscriptions | Server→Client | WebSocket | Type-safe real-time queries |\n| Socket.IO | Bidirectional | WebSocket + fallback | Rapid development, legacy support |",
+      "images": []
+    },
+    {
+      "id": 47,
+      "question": "WebTransport (Emerging)",
+      "answer": "WebTransport is the next evolution, built on HTTP/3 (QUIC):\n\n```\nADVANTAGES OVER WEBSOCKET:\n  - Streams: multiple independent streams on one connection\n  - Datagrams: UDP-like unreliable delivery (for games, video)\n  - No head-of-line blocking (QUIC streams are independent)\n  - Better connection migration (IP change = no reconnect needed)\n  - Faster handshake (QUIC 0-RTT)\n\nCURRENT STATUS (2025):\n  - Available in Chrome, Firefox, Edge\n  - Server support growing (Node.js, Deno, Go)\n  - Not yet suitable as WebSocket replacement for all cases\n```",
+      "images": []
+    },
+    {
+      "id": 48,
+      "question": "Socket.IO vs Raw WebSocket",
+      "answer": "| Aspect | Raw WebSocket | Socket.IO |\n|---|---|---|\n| Fallback | No | Yes (polling) |\n| Rooms | Manual | Built-in |\n| Auto-reconnect | Manual | Built-in |\n| Acknowledgements | Manual | Built-in |\n| Namespace | Manual | Built-in |\n| Binary | Manual | Built-in |\n| Overhead | Minimal | Extra (~60KB client library) |\n| Flexibility | Full | Opinionated |\n| Best for | Custom high-perf systems | Rapid development |",
+      "images": []
+    },
+    {
+      "id": 49,
+      "question": "Coding Practice Topics",
+      "answer": "### Basic WebSocket Server (Node.js)\n\n```javascript\nconst { WebSocketServer } = require('ws');\nconst wss = new WebSocketServer({ port: 8080 });\n\nwss.on('connection', (ws, req) => {\n  const ip = req.socket.remoteAddress;\n  console.log(`New connection from ${ip}`);\n\n  ws.on('message', (data) => {\n    console.log('Received:', data.toString());\n    ws.send(`Echo: ${data}`);\n  });\n\n  ws.on('close', (code, reason) => {\n    console.log(`Connection closed: ${code} ${reason}`);\n  });\n\n  ws.on('error', (err) => {\n    console.error('Error:', err);\n  });\n\n  ws.send('Welcome!');\n});\n\nconsole.log('WebSocket server running on ws://localhost:8080');\n```",
+      "images": []
+    },
+    {
+      "id": 50,
+      "question": "Chat Application (with rooms)",
+      "answer": "```javascript\nconst { WebSocketServer } = require('ws');\nconst { randomUUID } = require('crypto');\n\nconst wss = new WebSocketServer({ port: 8080 });\nconst rooms = new Map();  // roomId → Set<ws>\n\nwss.on('connection', (ws) => {\n  ws.id = randomUUID();\n  ws.rooms = new Set();\n\n  ws.on('message', (raw) => {\n    const msg = JSON.parse(raw.toString());\n\n    switch (msg.type) {\n      case 'join': {\n        const room = rooms.get(msg.room) ?? new Set();\n        room.add(ws);\n        rooms.set(msg.room, room);\n        ws.rooms.add(msg.room);\n        broadcast(msg.room, { type: 'join', user: ws.id }, ws);\n        break;\n      }\n      case 'chat': {\n        broadcast(msg.room, { type: 'chat', user: ws.id, text: msg.text });\n        break;\n      }\n    }\n  });\n\n  ws.on('close', () => {\n    for (const room of ws.rooms) {\n      rooms.get(room)?.delete(ws);\n    }\n  });\n});\n\nfunction broadcast(roomId, message, exclude = null) {\n  const room = rooms.get(roomId) ?? new Set();\n  const data = JSON.stringify(message);\n  for (const client of room) {\n    if (client !== exclude && client.readyState === 1) {\n      client.send(data);\n    }\n  }\n}\n```",
+      "images": []
+    },
+    {
+      "id": 51,
+      "question": "Redis Pub/Sub Integration",
+      "answer": "```javascript\nconst Redis = require('ioredis');\nconst pub = new Redis();\nconst sub = new Redis();\n\n// Subscribe to all channels this server handles\nsub.subscribe('broadcast', `server:${SERVER_ID}`);\n\nsub.on('message', (channel, message) => {\n  const { targetId, data } = JSON.parse(message);\n  const ws = connections.get(targetId);\n  if (ws?.readyState === 1) ws.send(data);\n});\n\n// Route message to a user\nasync function sendToUser(userId, data) {\n  const serverId = await pub.hget('user_server', userId);\n  if (serverId === SERVER_ID) {\n    connections.get(userId)?.send(data);\n  } else {\n    pub.publish(`server:${serverId}`, JSON.stringify({ targetId: userId, data }));\n  }\n}\n```",
+      "images": []
+    },
+    {
+      "id": 52,
+      "question": "Common Interview Questions",
+      "answer": "### Fundamental Theory\n\n**Q: What is WebSocket and how does it differ from HTTP?**  \nWebSocket is a full-duplex, persistent communication protocol. Unlike HTTP (request-response), WebSocket allows both client and server to send messages at any time after a one-time handshake. It runs over TCP and is initiated via an HTTP Upgrade request.\n\n**Q: Explain the WebSocket handshake.**  \nClient sends an HTTP GET with `Upgrade: websocket` and a `Sec-WebSocket-Key`. Server responds with `101 Switching Protocols` and a `Sec-WebSocket-Accept` (derived by SHA-1 hashing the key + magic string). The TCP connection is then repurposed for WebSocket frames.\n\n**Q: What is masking and why is it required?**  \nClient-to-server frames must be XOR-masked with a random 4-byte key to prevent cache-poisoning attacks by shared intermediary proxies. Server-to-client frames are not masked (performance reasons; server is trusted).",
+      "images": []
+    },
+    {
+      "id": 53,
+      "question": "Senior-Level Deep Dive",
+      "answer": "### Kernel Networking & TCP Internals\n\n```\nWHAT HAPPENS WHEN CLIENT SENDS A WEBSOCKET FRAME:\n\nApplication layer:\n  ws.send(\"Hello\")\n       │\n       ▼\nWebSocket library:\n  Frame: [FIN=1, opcode=text, mask=1, len=5, masking_key=..., payload=\"Hello\"]\n       │\n       ▼\nTCP layer (kernel):\n  Splits into segments, adds TCP header (src port, dst port, seq num, ack)\n  Adds to send buffer\n  Congestion control (CUBIC by default on Linux): controls how fast to send\n       │\n       ▼\nIP layer:\n  Adds IP header (src/dst IP), routing\n       │\n       ▼\nNIC driver → wire\n```\n\n**TCP buffer tuning for WebSocket servers:**\n```bash\n# Increase TCP buffer sizes (/etc/sysctl.conf)\nnet.core.rmem_max     = 134217728   # 128MB max receive buffer\nnet.core.wmem_max     = 134217728   # 128MB max send buffer\nnet.ipv4.tcp_rmem     = 4096 87380 67108864\nnet.ipv4.tcp_wmem     = 4096 65536 67108864\nnet.ipv4.tcp_fin_timeout = 10       # Reduce TIME_WAIT duration\nnet.ipv4.tcp_tw_reuse    = 1        # Reuse TIME_WAIT sockets\n```",
+      "images": []
+    },
+    {
+      "id": 54,
+      "question": "Load Balancer Behavior at Scale",
+      "answer": "```\nL4 LOAD BALANCER (TCP level):\n  Sees: IP:port pairs\n  Routes: based on IP hash or round-robin at TCP level\n  WebSocket: works transparently (just TCP bytes)\n  Sticky sessions: IP-hash affinity\n  Limitation: can't inspect HTTP headers\n\nL7 LOAD BALANCER (HTTP level):\n  Sees: full HTTP request including headers\n  Routes: can inspect URL, cookies, JWT\n  WebSocket: must explicitly support Upgrade header passthrough\n  Sticky sessions: cookie-based (more reliable than IP-hash)\n  Advantage: health checks on WebSocket endpoints\n\nHAProxy for WebSocket:\n  frontend ws_frontend\n      bind *:443 ssl crt /etc/ssl/cert.pem\n      default_backend ws_backend\n\n  backend ws_backend\n      balance leastconn        # best for long-lived connections\n      cookie SERVERID insert   # sticky session via cookie\n      option http-server-close\n      server ws1 10.0.0.1:8080 check cookie ws1\n      server ws2 10.0.0.2:8080 check cookie ws2\n```",
+      "images": []
+    },
+    {
+      "id": 55,
+      "question": "Netty Architecture (JVM WebSocket)",
+      "answer": "For JVM-based high-performance WebSocket servers (like those handling 1M+ connections):\n\n```\nNETTY CHANNEL PIPELINE:\n\nInbound:  NioEventLoop → ByteToMessageDecoder → WebSocketFrameDecoder\n                       → WebSocketServerHandshaker → YourHandler\n\nOutbound: YourHandler → WebSocketFrameEncoder → MessageToByteEncoder\n                      → NioEventLoop → Socket\n\nEVENT LOOP GROUPS:\n  BossGroup:   1–4 threads (accept new connections)\n  WorkerGroup: CPU*2 threads (handle I/O on existing connections)\n\n  BossGroup\n      │── accepts connection\n      │── hands off to WorkerGroup\n  WorkerGroup\n      │── handles all I/O (reads/writes) for assigned connections\n      │── NEVER block in event loop (use separate thread pool for business logic)\n```",
+      "images": []
+    },
+    {
+      "id": 56,
+      "question": "Large-Scale Infrastructure: The Numbers",
+      "answer": "```\nSCALE BENCHMARKS (rough order of magnitude):\n\nConnections per server:\n  Node.js (ws):     ~100K concurrent (with tuning)\n  Go (gorilla/ws):  ~500K concurrent\n  Netty (Java):     ~1M concurrent (with 64GB RAM)\n\nMessage throughput:\n  Simple echo:      ~1M msg/sec on modern hardware\n  With processing:  ~100K–500K msg/sec\n\nMemory per connection:\n  Kernel buffers:   ~16KB (2x 8KB default)\n  Application:      ~1–5KB (depending on per-conn state)\n  Total estimate:   ~20–50KB per connection\n\nFor 1M connections:\n  RAM needed:       20–50 GB just for connections\n  File descriptors: 1M+ (requires OS tuning)\n  Servers needed:   2–20 (depending on message rate)\n```",
+      "images": []
+    },
+    {
+      "id": 57,
+      "question": "Cost / Performance Tradeoffs at Scale",
+      "answer": "| Decision | Cheap | Expensive |\n|---|---|---|\n| Protocol | Binary (Protobuf) | Text (JSON) |\n| Message format | Fixed-width binary | Schema-free JSON |\n| Fan-out | Pre-compute groups | Dynamic lookup |\n| Presence | Approximate (Bloom filters) | Exact (Redis HSET) |\n| Message history | Ring buffer (bounded) | Full log (unbounded) |\n| Delivery | At-most-once (UDP-style) | Exactly-once (ACKs + dedup) |\n| Compression | Per-message deflate | No compression |",
+      "images": []
+    },
+    {
+      "id": 58,
+      "question": "Compliance & Security at Scale",
+      "answer": "**PII in WebSocket messages:**\n- Log message *metadata* (type, size, timestamp) but not *content*\n- Encrypt message payloads at application layer if E2E required\n- Implement message retention policies\n\n**Audit logging:**\n```\nEvery connection event:\n  { time, userId, connectionId, ip, action: \"connect|disconnect\" }\n\nEvery significant message:\n  { time, userId, type, roomId, seq } — no message content\n```\n\n**GDPR considerations:**\n- Connection logs containing IP and userId = personal data\n- Implement log TTL and deletion mechanisms\n- Allow users to export their message history (right to access)\n- Allow users to delete their message history (right to erasure)",
+      "images": []
+    },
+    {
+      "id": 59,
+      "question": "Global Architecture Decisions",
+      "answer": "```\nOPTION A: CENTRALIZED\n  All users connect to one region\n  ├── Pros: Simple, consistent, easy debugging\n  └── Cons: High latency for distant users, single region failure = global outage\n\nOPTION B: REGIONAL CLUSTERS + GLOBAL MESH\n  Users connect to nearest regional cluster\n  Regions are connected by internal message bus\n  ├── Pros: Low latency globally, regional isolation\n  └── Cons: Complex, messages must route between regions\n\nOPTION C: EDGE (Cloudflare Durable Objects / Fly.io)\n  Compute runs at 200+ PoPs globally\n  Each room/user is a Durable Object at nearest PoP\n  ├── Pros: ~10ms latency globally, no regional setup\n  └── Cons: Vendor lock-in, Durable Objects model constraints, cost\n\nRECOMMENDATION:\n  Small/medium (< 100K CCU):   Single region + CDN\n  Large (100K–10M CCU):        2–4 regional clusters + Redis/Kafka mesh\n  Massive (10M+ CCU):          Edge computing + custom global routing\n```",
+      "images": []
+    },
+    {
+      "id": 60,
+      "question": "Quick Reference Cheat Sheet",
+      "answer": "```\nWEBSOCKET LIFECYCLE:\n  ws://  → port 80   (unencrypted — NEVER in production)\n  wss:// → port 443  (TLS encrypted — always use this)\n\n  States: CONNECTING(0) → OPEN(1) → CLOSING(2) → CLOSED(3)\n\nHANDSHAKE HEADERS:\n  Client: Upgrade: websocket | Connection: Upgrade\n          Sec-WebSocket-Key: <base64 random 16 bytes>\n          Sec-WebSocket-Version: 13\n  Server: HTTP 101 | Sec-WebSocket-Accept: <SHA1(key + MAGIC) | base64>\n\nFRAME OPCODES:\n  0x0 Continuation | 0x1 Text | 0x2 Binary\n  0x8 Close        | 0x9 Ping | 0xA Pong\n\nCLOSE CODES:\n  1000 Normal | 1001 Going Away | 1006 Abnormal (no frame)\n  4000–4999  Application-defined\n\nSCALING PATTERN:\n  WS Servers ──▶ Redis Pub/Sub ──▶ Cross-server delivery\n  Sticky sessions: ip_hash (Nginx) or ClientIP (K8s Service)\n\nSECURITY CHECKLIST:\n  ✓ Always use wss://\n  ✓ Validate Origin header\n  ✓ Authenticate before processing messages\n  ✓ Rate limit messages per connection\n  ✓ Validate all message schemas\n  ✓ Set max message size\n\nPERFORMANCE CHECKLIST:\n  ✓ Increase file descriptor limit (ulimit -n 1000000)\n  ✓ Tune TCP buffers (sysctl)\n  ✓ Use binary frames for high-throughput\n  ✓ Implement backpressure\n  ✓ Monitor bufferedAmount\n  ✓ Heartbeat every 25s (beats NAT timeout)\n```",
+      "images": []
+    }
+  ]
+}

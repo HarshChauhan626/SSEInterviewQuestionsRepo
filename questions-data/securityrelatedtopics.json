@@ -1,0 +1,171 @@
+{
+  "topic": "Security",
+  "description": "Auth, OAuth2, JWT, RBAC, API security, secrets management, and more",
+  "icon": "🔐",
+  "accent": "#f87171",
+  "source": "securityrelatedtopics.md",
+  "questions": [
+    {
+      "id": 1,
+      "question": "What is Authentication?",
+      "answer": "Authentication answers:\n\n\"Who are you?\"\n\nExamples:\n\n* Username + Password\n* Google Login\n* Face ID\n* OTP",
+      "images": []
+    },
+    {
+      "id": 2,
+      "question": "What is Authorization?",
+      "answer": "Authorization answers:\n\n\"What are you allowed to do?\"\n\nExample:\n\nUser authenticated successfully.\n\nCan they:\n\n* View data?\n* Edit data?\n* Delete data?\n\nAuthorization decides.",
+      "images": []
+    },
+    {
+      "id": 3,
+      "question": "Authentication vs Authorization",
+      "answer": "Authentication:\n\n```\nWho are you?\n```\n\nAuthorization:\n\n```\nWhat can you do?\n```",
+      "images": []
+    },
+    {
+      "id": 4,
+      "question": "What Problem Does OAuth Solve?",
+      "answer": "Without OAuth:\n\n```\nGive password to third party app\n```\n\nDangerous.\n\nOAuth allows:\n\n```\nGrant access\nwithout sharing password\n```",
+      "images": []
+    },
+    {
+      "id": 5,
+      "question": "Why Authorization Code Flow?",
+      "answer": "Access token never exposed directly.\n\nMore secure.",
+      "images": []
+    },
+    {
+      "id": 6,
+      "question": "Most Asked OAuth Questions",
+      "answer": "### Why Authorization Code Flow over Implicit Flow?\n\nMore secure.\n\n### Why refresh tokens?\n\nAvoid asking users to login repeatedly.\n\n### What happens if access token leaks?\n\nShort expiry minimizes damage.",
+      "images": []
+    },
+    {
+      "id": 7,
+      "question": "What is OIDC?",
+      "answer": "OAuth handles authorization.\n\nOIDC adds authentication.\n\nThink:\n\n```\nOAuth = Access\n\nOIDC = Identity + Access\n```",
+      "images": []
+    },
+    {
+      "id": 8,
+      "question": "What is SAML?",
+      "answer": "XML based authentication protocol.\n\nCommon in enterprises.\n\nExamples:\n\n* Okta\n* Azure AD\n* Corporate Login",
+      "images": []
+    },
+    {
+      "id": 9,
+      "question": "What is JWT?",
+      "answer": "JSON Web Token\n\nPortable authentication token.",
+      "images": []
+    },
+    {
+      "id": 10,
+      "question": "Why Signature?",
+      "answer": "Detect tampering.",
+      "images": []
+    },
+    {
+      "id": 11,
+      "question": "Role Based Access Control",
+      "answer": "Access based on role.\n\nExample:\n\n```\nAdmin\nManager\nAgent\nCustomer\n```",
+      "images": []
+    },
+    {
+      "id": 12,
+      "question": "Attribute Based Access Control",
+      "answer": "Access determined by attributes.",
+      "images": []
+    },
+    {
+      "id": 13,
+      "question": "What is MFA?",
+      "answer": "Multiple authentication factors.\n\nExample:\n\n```\nPassword\n+\nOTP\n```",
+      "images": []
+    },
+    {
+      "id": 14,
+      "question": "Why MFA?",
+      "answer": "Even if password leaks:\n\nAttacker still needs OTP.",
+      "images": []
+    },
+    {
+      "id": 15,
+      "question": "Session Based Authentication",
+      "answer": "Server stores session.\n\n```\nUser\n |\nSession ID\n |\nCookie\n |\nServer Session Store\n```",
+      "images": []
+    },
+    {
+      "id": 16,
+      "question": "OWASP API Top 10",
+      "answer": "Know these:\n\n1. Broken Object Level Authorization\n2. Broken Authentication\n3. Excessive Data Exposure\n4. Rate Limiting Issues\n5. SSRF\n6. Security Misconfiguration\n7. Injection\n8. Broken Function Level Authorization",
+      "images": []
+    },
+    {
+      "id": 17,
+      "question": "What is a Secret?",
+      "answer": "Sensitive information.\n\nExamples:\n\n* DB Password\n* API Key\n* AWS Credentials\n* JWT Signing Key",
+      "images": []
+    },
+    {
+      "id": 18,
+      "question": "OAuth/OIDC",
+      "answer": "1. Explain OAuth flow.\n2. What is Authorization Code Flow?\n3. What is PKCE?\n4. Difference between OAuth and OIDC?\n5. Access token vs Refresh token?\n6. Why use refresh tokens?",
+      "images": []
+    },
+    {
+      "id": 19,
+      "question": "Design authentication for 10 million users.",
+      "answer": "### Design SSO for multiple applications.\n\n### JWT or Session? Why?\n\n### How would you secure microservice-to-microservice communication?\n\n### How would you implement zero-trust architecture?\n\n### How would you prevent account takeover attacks?\n\n### How would you design fine-grained permissions?\n\n### How would you implement multi-region authentication?\n\n### How would you secure Kafka communication?\n\n### How would you secure internal APIs?\n\n### How would you handle secret rotation across thousands of services?\n\n### How would you secure a public payment API?",
+      "images": []
+    },
+    {
+      "id": 20,
+      "question": "What Is CSRF?",
+      "answer": "Tricking a logged-in user into performing unwanted actions.",
+      "images": []
+    },
+    {
+      "id": 21,
+      "question": "What Is An Origin?",
+      "answer": "```text\nProtocol + Domain + Port\n```\n\nExample:\n\n```text\nhttps://app.com\nhttps://api.app.com\n```\n\nDifferent origins.",
+      "images": []
+    },
+    {
+      "id": 22,
+      "question": "What Is XSS?",
+      "answer": "Attacker injects JavaScript into web pages.",
+      "images": []
+    },
+    {
+      "id": 23,
+      "question": "Why?",
+      "answer": "Prevent:\n\n* DDoS\n* Brute force attacks\n* API abuse",
+      "images": []
+    },
+    {
+      "id": 24,
+      "question": "What Is Replay Attack?",
+      "answer": "Attacker captures valid request.\n\nReplays later.",
+      "images": []
+    },
+    {
+      "id": 25,
+      "question": "What Is It?",
+      "answer": "Normal HTTPS:\n\nServer proves identity.\n\nmTLS:\n\nBoth sides prove identity.",
+      "images": []
+    },
+    {
+      "id": 26,
+      "question": "SPIFFE/SPIRE",
+      "answer": "Cloud-native identity.",
+      "images": []
+    },
+    {
+      "id": 27,
+      "question": "Design secure authentication for 100 million users.",
+      "answer": "### Design SSO across 500 applications.\n\n### OAuth vs Session Authentication?\n\n### JWT revocation strategies?\n\n### How would you secure Kafka?\n\n### How would you secure gRPC?\n\n### How would you secure service-to-service communication?\n\n### How would you design fine-grained authorization?\n\n### How would you implement Zero Trust?\n\n### How would you prevent account takeover?\n\n### How would you secure Kubernetes?\n\n### How would you rotate secrets with zero downtime?\n\n### How would you secure payment APIs?\n\n### How would you detect credential stuffing attacks?\n\n### How would you secure public APIs against abuse?\n\n### How would you secure a multi-tenant SaaS platform?",
+      "images": []
+    }
+  ]
+}

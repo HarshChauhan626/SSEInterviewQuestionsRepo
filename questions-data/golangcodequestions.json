@@ -1,0 +1,39 @@
+{
+  "topic": "Go Code Questions",
+  "description": "Hands-on Go coding challenges and code-reading questions",
+  "icon": "💻",
+  "accent": "#10b981",
+  "source": "golangcodequestions.md",
+  "questions": [
+    {
+      "id": 1,
+      "question": "Interview Questions & Design Notes",
+      "answer": "### Q1: How do you prevent goroutine leaks in this pipeline?\nEvery goroutine in the pipeline is designed with a strict termination path:\n1. **Reading from channels**: Goroutines range over their input channels (`for item := range in`). When the previous stage closes its output channel, the loop automatically terminates.\n2. **Writing to channels**: Every channel send is wrapped in a `select` statement that listens on both the destination channel and the context cancellation signal (`case <-ctx.Done()`). This guarantees that if a downstream consumer blocks (due to an error or shutdown), upstream workers do not block indefinitely.\n3. **Closing channels**: Upstream stages handle closure asynchronously via `go func() { wg.Wait(); close(out) }()`. Once all workers in a stage finish processing, the output channel is closed. This triggers a cascade of terminations downstream.\n4. **Error handling**: The `drainErrors` routine has a `case <-ctx.Done()` block to ensure it exits safely even if the context is cancelled before `errCh` closes.",
+      "images": []
+    },
+    {
+      "id": 2,
+      "question": "How is ordering preserved while executing stages concurrently?",
+      "answer": "To maintain high throughput, the pipeline processes files concurrently and out-of-order. However, to preserve the original sequence of the input:\n- Each data structure (`RawFile`, `ParsedFile`, etc.) carries the original sequence `Index`.\n- The final terminal stage (`writeStage`) collects all processed records into a slice.\n- It then sorts the slice by `Index` using Go's `sort.Slice` before returning them.\n\n> [!NOTE]\n> *Alternative*: For streaming systems where memory is tight and output must stream incrementally, a heap-based priority queue (merge-sort) can be used to merge incoming records on the fly.",
+      "images": []
+    },
+    {
+      "id": 3,
+      "question": "How do you scale the number of workers per stage?",
+      "answer": "Each stage's worker count (`numReaders`, `numParsers`, etc.) is declared as a configurable parameter or constant:\n- **CPU-bound tasks** (e.g., JSON parsing): Keep the number of workers close to `runtime.GOMAXPROCS` or CPU cores.\n- **I/O-bound tasks** (e.g., file reading, API/DB calls): You can scale worker counts much higher (e.g., dozens or hundreds of workers) to hide network/disk latency.\n\nUse Go's `pprof` tool at runtime to inspect channel queue depths and identify bottlenecks.",
+      "images": []
+    },
+    {
+      "id": 4,
+      "question": "What is the bottleneck in this specific implementation?",
+      "answer": "The writers have the lowest worker allocation (`numWriters = 5`) and the highest simulated latency ($5\\text{ms}$–$20\\text{ms}$ vs $1\\text{ms}$–$10\\text{ms}$ for parsers). In a real environment:\n- If the `validCh` channel is consistently full, it confirms the writer is the bottleneck.\n- To resolve it, we can increase the writer pool size, configure batch writes, or optimize DB indexes.",
+      "images": []
+    },
+    {
+      "id": 5,
+      "question": "How would you handle context cancellation mid-pipeline?",
+      "answer": "If a cancellation request occurs (e.g., client cancels the request or an OS interrupt):\n1. The cancel signal is propagated down through `ctx.Done()`.\n2. Select cases in all active worker goroutines catch the signal and return immediately.\n3. Once all workers return, their respective `sync.WaitGroup` completes, triggering the `close(ch)` block.\n4. The remaining channels are drained/closed down the line, ensuring a safe, deadlock-free shutdown.",
+      "images": []
+    }
+  ]
+}
