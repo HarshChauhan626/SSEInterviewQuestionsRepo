@@ -1,0 +1,162 @@
+[
+  {
+    "file": "dsa-questions-data/backtracking.json",
+    "topic": "DSA: Backtracking",
+    "description": "N-Queens, combinations, permutations, and subsets",
+    "icon": "🔄",
+    "accent": "#f59e0b",
+    "count": 10
+  },
+  {
+    "file": "dsa-questions-data/binarysearch.json",
+    "topic": "DSA: Binary Search",
+    "description": "Monotonic functions, search boundaries, and rotated arrays",
+    "icon": "🔍",
+    "accent": "#3b82f6",
+    "count": 10
+  },
+  {
+    "file": "dsa-questions-data/bitmanipulation.json",
+    "topic": "DSA: Bit Manipulation",
+    "description": "Bitwise operators, masks, and binary trickery",
+    "icon": "🔢",
+    "accent": "#14b8a6",
+    "count": 10
+  },
+  {
+    "file": "dsa-questions-data/disjoinset.json",
+    "topic": "DSA: Disjoint Set",
+    "description": "Union-Find, connectivity, and cycle detection",
+    "icon": "🕸️",
+    "accent": "#ec4899",
+    "count": 10
+  },
+  {
+    "file": "dsa-questions-data/dp.json",
+    "topic": "DSA: Dynamic Programming",
+    "description": "Memoization, tabulation, knapsack, and sequence alignment",
+    "icon": "📈",
+    "accent": "#8b5cf6",
+    "count": 20
+  },
+  {
+    "file": "dsa-questions-data/graph.json",
+    "topic": "DSA: Graphs",
+    "description": "BFS, DFS, Dijkstra, topological sort, and cycles",
+    "icon": "🌿",
+    "accent": "#10b981",
+    "count": 15
+  },
+  {
+    "file": "dsa-questions-data/greedy.json",
+    "topic": "DSA: Greedy",
+    "description": "Interval scheduling, local optimization, and Huffman coding",
+    "icon": "🍕",
+    "accent": "#f59e0b",
+    "count": 10
+  },
+  {
+    "file": "dsa-questions-data/heap.json",
+    "topic": "DSA: Heap",
+    "description": "Priority queues, top K elements, and running median",
+    "icon": "🥞",
+    "accent": "#ef4444",
+    "count": 10
+  },
+  {
+    "file": "dsa-questions-data/intervals.json",
+    "topic": "DSA: Intervals",
+    "description": "Merging, inserting, and scheduling overlapping intervals",
+    "icon": "📅",
+    "accent": "#f97316",
+    "count": 10
+  },
+  {
+    "file": "dsa-questions-data/linkedlist.json",
+    "topic": "DSA: Linked List",
+    "description": "Pointers, reversals, cycle detection, and merging",
+    "icon": "🔗",
+    "accent": "#06b6d4",
+    "count": 15
+  },
+  {
+    "file": "dsa-questions-data/monotonicstack.json",
+    "topic": "DSA: Monotonic Stack",
+    "description": "Next greater element, histogram areas, and boundary analysis",
+    "icon": "🥞",
+    "accent": "#6366f1",
+    "count": 10
+  },
+  {
+    "file": "dsa-questions-data/prefixsum.json",
+    "topic": "DSA: Prefix Sum",
+    "description": "Cumulative sums, range query optimization, and subarray matches",
+    "icon": "➕",
+    "accent": "#84cc16",
+    "count": 10
+  },
+  {
+    "file": "dsa-questions-data/queue.json",
+    "topic": "DSA: Queue & Stack",
+    "description": "FIFO and LIFO behaviors, custom implementations, and deque patterns",
+    "icon": "📥",
+    "accent": "#ec4899",
+    "count": 10
+  },
+  {
+    "file": "dsa-questions-data/recursion.json",
+    "topic": "DSA: Recursion",
+    "description": "Divide and conquer, call stack execution, and tree traversals",
+    "icon": "🌀",
+    "accent": "#14b8a6",
+    "count": 20
+  },
+  {
+    "file": "dsa-questions-data/slidingwindow.json",
+    "topic": "DSA: Sliding Window",
+    "description": "Fixed and variable window sizes, subarray constraints, and two-pointer tracking",
+    "icon": "🪟",
+    "accent": "#06b6d4",
+    "count": 15
+  },
+  {
+    "file": "dsa-questions-data/strings.json",
+    "topic": "DSA: Strings",
+    "description": "String manipulation, pattern matching, palindromes, and parsing",
+    "icon": "🔤",
+    "accent": "#3b82f6",
+    "count": 60
+  },
+  {
+    "file": "dsa-questions-data/trees.json",
+    "topic": "DSA: Trees",
+    "description": "BST properties, node traversals, depth, and structural queries",
+    "icon": "🌳",
+    "accent": "#10b981",
+    "count": 15
+  },
+  {
+    "file": "dsa-questions-data/trie.json",
+    "topic": "DSA: Trie",
+    "description": "Prefix trees, autocomplete design, and dictionary searches",
+    "icon": "🌲",
+    "accent": "#8b5cf6",
+    "count": 10
+  },
+  {
+    "file": "dsa-questions-data/twopointer.json",
+    "topic": "DSA: Two Pointers",
+    "description": "Fast/slow pointers, left/right boundaries, and sorted array searches",
+    "icon": "👉",
+    "accent": "#f97316",
+    "count": 10
+  },
+  {
+    "file": "dsa-questions-data/puzzles.json",
+    "topic": "Logic Puzzles",
+    "description": "50 Classic Logic & Math Puzzles for engineering interviews",
+    "icon": "🧩",
+    "accent": "#fb923c",
+    "count": 50
+  }
+]

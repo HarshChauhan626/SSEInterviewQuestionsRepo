@@ -1,0 +1,144 @@
+{
+  "topic": "DSA: Trees",
+  "description": "BST properties, node traversals, depth, and structural queries",
+  "icon": "🌳",
+  "accent": "#10b981",
+  "source": "trees.md",
+  "questions": [
+    {
+      "id": 1,
+      "question": "Binary Tree Maximum Path Sum",
+      "problem": "Given a binary tree, find the maximum path sum. A path is any sequence of nodes where each pair of adjacent nodes has an edge. The path does not need to pass through the root. A node can only appear once.\n\n```\nInput:\n        -10\n       /    \\\n      9      20\n            /  \\\n           15    7\nOutput: 42  (15 → 20 → 7)\n```\nConstraints: Node values can be negative. −10⁴ ≤ val ≤ 10⁴.",
+      "intuition": "At every node you face a choice:\n1. Use the node alone.\n2. Extend from left child through this node.\n3. Extend from right child through this node.\n4. Use both children through this node (this forms a \"arch\" — valid as a path but cannot be extended further up).\n\nThe trick: what you *report to the parent* is always a single arm (node + best one child), but what you *record as answer* can be the arch.\n\n**Why This Approach**\nA global variable tracks the best complete path seen so far. Each recursive call returns the best *extendable* arm. This separates \"what I report up\" from \"what I record as answer\" — the key insight for all path problems.",
+      "code": "```java\nclass Solution {\n    int maxSum = Integer.MIN_VALUE;\n\n    public int maxPathSum(TreeNode root) {\n        dfs(root);\n        return maxSum;\n    }\n\n    // Returns max gain extendable to parent\n    private int dfs(TreeNode node) {\n        if (node == null) return 0;\n\n        // Ignore negative contributions\n        int left  = Math.max(dfs(node.left),  0);\n        int right = Math.max(dfs(node.right), 0);\n\n        // Path through this node (arch) — update global answer\n        maxSum = Math.max(maxSum, node.val + left + right);\n\n        // Return the best single arm to parent\n        return node.val + Math.max(left, right);\n    }\n}\n```",
+      "test_cases": "| Input Tree | Expected Output |\n|---|---|\n| `[1, 2, 3]` | 6 |\n| `[-3]` | -3 (single node, can't avoid it) |\n| `[-10, 9, 20, null, null, 15, 7]` | 42 |\n| `[2, -1, -2]` | 2 (just root) |",
+      "images": []
+    },
+    {
+      "id": 2,
+      "question": "Diameter of Binary Tree",
+      "problem": "Given the root of a binary tree, return the length of the diameter — the longest path between any two nodes. The path may or may not pass through the root.\n\n```\nInput:\n      1\n     / \\\n    2   3\n   / \\\n  4   5\nOutput: 3  (path: 4→2→1→3 or 4→2→5)\n```",
+      "intuition": "Diameter at any node = height(left subtree) + height(right subtree). Since the widest path may not pass through the root, compute this at every node and track the global maximum — exactly like Problem 1 but counting edges instead of summing values.\n\n**Why DFS + Global Variable**\nA single post-order DFS computes heights bottom-up. At each node, the diameter *through* that node is immediately available. O(n) time, O(h) space.",
+      "code": "```java\nclass Solution {\n    int diameter = 0;\n\n    public int diameterOfBinaryTree(TreeNode root) {\n        height(root);\n        return diameter;\n    }\n\n    private int height(TreeNode node) {\n        if (node == null) return 0;\n        int left  = height(node.left);\n        int right = height(node.right);\n        diameter  = Math.max(diameter, left + right); // edges through this node\n        return 1 + Math.max(left, right);             // height reported to parent\n    }\n}\n```",
+      "test_cases": "| Input | Expected |\n|---|---|\n| `[1, 2, 3, 4, 5]` | 3 |\n| `[1, 2]` | 1 |\n| Single node `[1]` | 0 |\n| Skewed tree 1→2→3→4→5 | 4 |",
+      "images": []
+    },
+    {
+      "id": 3,
+      "question": "Lowest Common Ancestor (LCA) of a Binary Tree",
+      "problem": "Given a binary tree and two nodes `p` and `q`, find their lowest common ancestor (LCA) — the deepest node that has both `p` and `q` as descendants (a node is a descendant of itself).\n\n```\nInput: root = [3,5,1,6,2,0,8,null,null,7,4], p=5, q=1\nOutput: 3\n\nInput: same tree, p=5, q=4\nOutput: 5\n```",
+      "intuition": "Post-order DFS: ask left subtree \"do you have p or q?\", ask right subtree same. If both return non-null, the current node is the LCA. If only one side returns non-null, bubble that result up.\n\n**Why Post-order**\nWe need to gather information from children before deciding at the current node. Post-order naturally expresses \"compute children first, then decide.\"",
+      "code": "```java\nclass Solution {\n    public TreeNode lowestCommonAncestor(TreeNode root, TreeNode p, TreeNode q) {\n        if (root == null || root == p || root == q) return root;\n\n        TreeNode left  = lowestCommonAncestor(root.left,  p, q);\n        TreeNode right = lowestCommonAncestor(root.right, p, q);\n\n        // Both sides found something → this node is LCA\n        if (left != null && right != null) return root;\n\n        // Bubble up whichever side found something\n        return left != null ? left : right;\n    }\n}\n```",
+      "test_cases": "| Tree | p | q | Expected |\n|---|---|---|---|\n| `[3,5,1,6,2,0,8]` | 5 | 1 | 3 |\n| `[3,5,1,6,2,0,8]` | 5 | 4 | 5 |\n| Two-node tree `[1,2]` | 1 | 2 | 1 |\n| p == q | 5 | 5 | 5 |",
+      "images": []
+    },
+    {
+      "id": 4,
+      "question": "Binary Tree Level Order Traversal",
+      "problem": "Given the root of a binary tree, return the node values level by level (left to right) as a list of lists.\n\n```\nInput:\n    3\n   / \\\n  9  20\n    /  \\\n   15   7\nOutput: [[3], [9,20], [15,7]]\n```",
+      "intuition": "BFS naturally processes nodes level by level. The key trick: before expanding a level, snapshot `queue.size()` — that's exactly how many nodes belong to the current level.\n\n**Why BFS with Size Snapshot**\nWithout snapshotting the size, you can't tell where one level ends and the next begins. Snapshotting at the start of each while-loop iteration cleanly separates levels.",
+      "code": "```java\nclass Solution {\n    public List<List<Integer>> levelOrder(TreeNode root) {\n        List<List<Integer>> result = new ArrayList<>();\n        if (root == null) return result;\n\n        Queue<TreeNode> queue = new LinkedList<>();\n        queue.offer(root);\n\n        while (!queue.isEmpty()) {\n            int size = queue.size(); // snapshot current level count\n            List<Integer> level = new ArrayList<>();\n\n            for (int i = 0; i < size; i++) {\n                TreeNode node = queue.poll();\n                level.add(node.val);\n                if (node.left  != null) queue.offer(node.left);\n                if (node.right != null) queue.offer(node.right);\n            }\n            result.add(level);\n        }\n        return result;\n    }\n}\n```",
+      "test_cases": "| Input | Expected |\n|---|---|\n| `[3,9,20,null,null,15,7]` | `[[3],[9,20],[15,7]]` |\n| Single node `[1]` | `[[1]]` |\n| null | `[]` |\n| Skewed left tree | One node per list |",
+      "images": []
+    },
+    {
+      "id": 5,
+      "question": "Serialize and Deserialize Binary Tree",
+      "problem": "Design an algorithm to serialize a binary tree to a string and deserialize that string back to the tree. There is no restriction on your format.",
+      "intuition": "Pre-order DFS with null markers. When serializing, write each node's value; write `\"#\"` for nulls. For deserialization, consume the pre-order sequence character-by-character — the structure rebuilds itself because pre-order uniquely determines the tree when nulls are recorded.\n\n**Why Pre-order with Null Markers**\nIn-order alone is ambiguous. Pre-order with explicit nulls is unambiguous and mirrors the recursive call structure perfectly, making deserialization a clean recursive consumer.",
+      "code": "```java\npublic class Codec {\n\n    public String serialize(TreeNode root) {\n        StringBuilder sb = new StringBuilder();\n        serDFS(root, sb);\n        return sb.toString();\n    }\n\n    private void serDFS(TreeNode node, StringBuilder sb) {\n        if (node == null) { sb.append(\"#,\"); return; }\n        sb.append(node.val).append(\",\");\n        serDFS(node.left,  sb);\n        serDFS(node.right, sb);\n    }\n\n    public TreeNode deserialize(String data) {\n        Queue<String> tokens = new LinkedList<>(Arrays.asList(data.split(\",\")));\n        return desDFS(tokens);\n    }\n\n    private TreeNode desDFS(Queue<String> tokens) {\n        String token = tokens.poll();\n        if (\"#\".equals(token)) return null;\n        TreeNode node = new TreeNode(Integer.parseInt(token));\n        node.left  = desDFS(tokens);\n        node.right = desDFS(tokens);\n        return node;\n    }\n}\n```",
+      "test_cases": "| Original Tree | Serialized (example) | Roundtrip Valid? |\n|---|---|---|\n| `[1,2,3,null,null,4,5]` | `1,2,#,#,3,4,#,#,5,#,#,` | ✓ |\n| `[]` | `#,` | ✓ |\n| Single node | `1,#,#,` | ✓ |\n| Full binary tree | deterministic | ✓ |",
+      "images": []
+    },
+    {
+      "id": 6,
+      "question": "Validate Binary Search Tree",
+      "problem": "Given the root of a binary tree, determine if it is a valid BST. A valid BST: left subtree has only nodes with values **strictly less than** root; right subtree has only nodes with values **strictly greater than** root; both subtrees are also valid BSTs.\n\n```\nInput: [2,1,3] → true\nInput: [5,1,4,null,null,3,6] → false (4 is in right subtree of 5 but 3 < 5)\n```",
+      "intuition": "The classic mistake: only checking the immediate children. The correct approach passes *valid range bounds* [min, max] down the recursion. Every node must satisfy `min < node.val < max`.\n\n**Why Range Bounds**\nA node deep in the right subtree must be greater than ALL ancestors, not just its immediate parent. Passing bounds propagates the full constraint.",
+      "code": "```java\nclass Solution {\n    public boolean isValidBST(TreeNode root) {\n        return validate(root, Long.MIN_VALUE, Long.MAX_VALUE);\n    }\n\n    private boolean validate(TreeNode node, long min, long max) {\n        if (node == null) return true;\n        if (node.val <= min || node.val >= max) return false;\n        return validate(node.left,  min,      node.val)\n            && validate(node.right, node.val, max);\n    }\n}\n```",
+      "test_cases": "| Input | Expected |\n|---|---|\n| `[2,1,3]` | true |\n| `[5,1,4,null,null,3,6]` | false |\n| `[Integer.MAX_VALUE]` | true (use Long bounds!) |\n| `[2,2,2]` | false (equal values not allowed) |",
+      "images": []
+    },
+    {
+      "id": 7,
+      "question": "Binary Tree Right Side View",
+      "problem": "Given a binary tree, imagine yourself standing on the right side. Return the values of the nodes you can see, ordered from top to bottom.\n\n```\nInput:\n    1\n   / \\\n  2   3\n   \\   \\\n    5   4\nOutput: [1, 3, 4]\n```",
+      "intuition": "The rightmost node at each level is visible. BFS level-order: after processing each level, record the last node polled (or added). Alternatively, DFS with right-before-left: the first node visited at each depth is the rightmost.\n\n**Why BFS is Cleaner Here**\nBFS naturally groups nodes by level; picking the last node per level is trivial.",
+      "code": "```java\nclass Solution {\n    public List<Integer> rightSideView(TreeNode root) {\n        List<Integer> result = new ArrayList<>();\n        if (root == null) return result;\n\n        Queue<TreeNode> queue = new LinkedList<>();\n        queue.offer(root);\n\n        while (!queue.isEmpty()) {\n            int size = queue.size();\n            for (int i = 0; i < size; i++) {\n                TreeNode node = queue.poll();\n                if (i == size - 1) result.add(node.val); // last in level\n                if (node.left  != null) queue.offer(node.left);\n                if (node.right != null) queue.offer(node.right);\n            }\n        }\n        return result;\n    }\n}\n```",
+      "test_cases": "| Input | Expected |\n|---|---|\n| `[1,2,3,null,5,null,4]` | `[1,3,4]` |\n| `[1,2,3,4]` | `[1,3,4]` |\n| Single node | `[1]` |\n| Left-only tree 1→2→3 | `[1,2,3]` |",
+      "images": []
+    },
+    {
+      "id": 8,
+      "question": "Construct Binary Tree from Preorder and Inorder Traversal",
+      "problem": "Given `preorder` and `inorder` traversal arrays of a binary tree with unique values, construct and return the binary tree.\n\n```\npreorder = [3,9,20,15,7]\ninorder  = [9,3,15,20,7]\nOutput:\n    3\n   / \\\n  9  20\n    /  \\\n   15   7\n```",
+      "intuition": "Preorder's first element is always the root. Find that root in inorder — everything to its left is the left subtree, everything to its right is the right subtree. Recurse with the corresponding sub-arrays.\n\n**Why HashMap for Inorder Index**\nLinear searching for the root in inorder at every step gives O(n²). A HashMap gives O(1) lookup, reducing total time to O(n).",
+      "code": "```java\nclass Solution {\n    Map<Integer, Integer> inorderIndex = new HashMap<>();\n    int preIdx = 0;\n\n    public TreeNode buildTree(int[] preorder, int[] inorder) {\n        for (int i = 0; i < inorder.length; i++)\n            inorderIndex.put(inorder[i], i);\n        return build(preorder, 0, inorder.length - 1);\n    }\n\n    private TreeNode build(int[] preorder, int left, int right) {\n        if (left > right) return null;\n\n        int rootVal = preorder[preIdx++];\n        TreeNode root = new TreeNode(rootVal);\n        int mid = inorderIndex.get(rootVal);\n\n        root.left  = build(preorder, left,    mid - 1);\n        root.right = build(preorder, mid + 1, right);\n        return root;\n    }\n}\n```",
+      "test_cases": "| preorder | inorder | Expected Tree |\n|---|---|---|\n| `[3,9,20,15,7]` | `[9,3,15,20,7]` | Standard example |\n| `[1]` | `[1]` | Single node |\n| `[-1]` | `[-1]` | Negative value |\n| `[1,2]` | `[2,1]` | Root with left child only |",
+      "images": []
+    },
+    {
+      "id": 9,
+      "question": "Kth Smallest Element in a BST",
+      "problem": "Given the root of a BST and an integer `k`, return the `k`th smallest value among all node values.\n\n```\nInput: root = [3,1,4,null,2], k = 1\nOutput: 1\n```",
+      "intuition": "In-order traversal of a BST visits nodes in ascending sorted order. The k-th node visited in-order is the k-th smallest. Stop early once k reaches 0.\n\n**Why In-order Is Perfect**\nBST in-order = sorted array. No need to materialize the entire sorted array — decrement a counter and return as soon as it hits zero.",
+      "code": "```java\nclass Solution {\n    int count = 0, result = 0;\n\n    public int kthSmallest(TreeNode root, int k) {\n        count = k;\n        inorder(root);\n        return result;\n    }\n\n    private void inorder(TreeNode node) {\n        if (node == null || count < 0) return;\n        inorder(node.left);\n        if (--count == 0) { result = node.val; return; }\n        inorder(node.right);\n    }\n}\n```",
+      "test_cases": "| Tree | k | Expected |\n|---|---|---|\n| `[3,1,4,null,2]` | 1 | 1 |\n| `[5,3,6,2,4]` | 3 | 4 |\n| Single node `[1]` | 1 | 1 |\n| `[5,3,6,2,4]` | 5 | 6 |",
+      "images": []
+    },
+    {
+      "id": 10,
+      "question": "Flatten Binary Tree to Linked List",
+      "problem": "Given the root of a binary tree, flatten the tree into a \"linked list\" in-place using the same `TreeNode` class. The linked list follows pre-order traversal order, with all `left` pointers set to null.\n\n```\nInput:\n    1\n   / \\\n  2   5\n / \\   \\\n3   4   6\nOutput: 1→2→3→4→5→6 (as right pointers)\n```",
+      "intuition": "Process right-to-left in pre-order (reverse pre-order: right, left, root). Maintain a `prev` pointer. At each node, set `node.right = prev`, `node.left = null`, then update `prev = node`. This weaves the list from tail to head without needing extra space.\n\n**Why Reverse Pre-order**\nGoing right→left→root means when we set `node.right = prev`, prev is already the correctly flattened tail of the right subtree.",
+      "code": "```java\nclass Solution {\n    TreeNode prev = null;\n\n    public void flatten(TreeNode root) {\n        if (root == null) return;\n        flatten(root.right);\n        flatten(root.left);\n        root.right = prev;\n        root.left  = null;\n        prev = root;\n    }\n}\n```",
+      "test_cases": "| Input | Expected linked list order |\n|---|---|\n| `[1,2,5,3,4,null,6]` | 1→2→3→4→5→6 |\n| `[]` | `[]` |\n| `[0]` | `[0]` |\n| Skewed right tree | unchanged structure |",
+      "images": []
+    },
+    {
+      "id": 11,
+      "question": "Path Sum II (All Root-to-Leaf Paths with Target Sum)",
+      "problem": "Given a binary tree and a target sum, return all root-to-leaf paths where the sum equals `targetSum`.\n\n```\nInput: root = [5,4,8,11,null,13,4,7,2,null,null,5,1], targetSum = 22\nOutput: [[5,4,11,2],[5,8,4,5]]\n```",
+      "intuition": "Backtracking DFS. Carry the current path and remaining sum. On reaching a leaf, check if remaining == 0. Add a *copy* of the path to results (important!), then backtrack by removing the last element.\n\n**Why Backtracking**\nWe explore all paths but share one mutable list, undoing additions when we retreat. This is O(n) space for the path vs O(n·L) if we copy at every step.",
+      "code": "```java\nclass Solution {\n    List<List<Integer>> result = new ArrayList<>();\n\n    public List<List<Integer>> pathSum(TreeNode root, int targetSum) {\n        dfs(root, targetSum, new ArrayList<>());\n        return result;\n    }\n\n    private void dfs(TreeNode node, int remaining, List<Integer> path) {\n        if (node == null) return;\n\n        path.add(node.val);\n        remaining -= node.val;\n\n        if (node.left == null && node.right == null && remaining == 0)\n            result.add(new ArrayList<>(path)); // copy!\n        else {\n            dfs(node.left,  remaining, path);\n            dfs(node.right, remaining, path);\n        }\n\n        path.remove(path.size() - 1); // backtrack\n    }\n}\n```",
+      "test_cases": "| Tree | targetSum | Expected |\n|---|---|---|\n| `[5,4,8,11,null,13,4,7,2,null,null,5,1]` | 22 | `[[5,4,11,2],[5,8,4,5]]` |\n| `[1,2,3]` | 5 | `[]` |\n| `[1,2]` | 1 | `[]` (no leaf path sums to 1) |\n| Single node `[1]` | 1 | `[[1]]` |",
+      "images": []
+    },
+    {
+      "id": 12,
+      "question": "Morris Inorder Traversal (O(1) Space)",
+      "problem": "Perform an in-order traversal of a binary tree using O(1) extra space (no recursion stack, no explicit stack). Return values in sorted order for a BST.",
+      "intuition": "Morris traversal uses the *right pointers of predecessor nodes* as temporary back-links (threads). For each node:\n- If no left child: visit node, go right.\n- If left child: find in-order predecessor (rightmost of left subtree). If predecessor's right is null → thread it to current node, go left. If predecessor's right already points back to current → we've visited the left subtree, cut the thread, visit current node, go right.\n\n**Why This Is Brilliant**\nThe tree is temporarily modified and restored. No additional data structure needed. O(n) time, O(1) space.",
+      "code": "```java\nclass Solution {\n    public List<Integer> inorderTraversal(TreeNode root) {\n        List<Integer> result = new ArrayList<>();\n        TreeNode curr = root;\n\n        while (curr != null) {\n            if (curr.left == null) {\n                result.add(curr.val); // visit\n                curr = curr.right;\n            } else {\n                // Find in-order predecessor\n                TreeNode pred = curr.left;\n                while (pred.right != null && pred.right != curr)\n                    pred = pred.right;\n\n                if (pred.right == null) {\n                    pred.right = curr; // create thread\n                    curr = curr.left;\n                } else {\n                    pred.right = null; // remove thread\n                    result.add(curr.val); // visit\n                    curr = curr.right;\n                }\n            }\n        }\n        return result;\n    }\n}\n```",
+      "test_cases": "| Input | Expected |\n|---|---|\n| `[1,null,2,3]` | `[1,3,2]` |\n| `[]` | `[]` |\n| `[1]` | `[1]` |\n| BST `[4,2,6,1,3,5,7]` | `[1,2,3,4,5,6,7]` |",
+      "images": []
+    },
+    {
+      "id": 13,
+      "question": "Count Good Nodes in a Binary Tree",
+      "problem": "A node `X` is **good** if, on the path from root to `X`, there is no node with a value greater than `X.val`. Given the root, return the number of good nodes.\n\n```\nInput:\n       3\n      / \\\n     1   4\n    /   / \\\n   3   1   5\nOutput: 4  (nodes 3, 3, 4, 5 are good)\n```",
+      "intuition": "DFS, passing the maximum value seen so far on the path from root to current node. A node is good if its value ≥ that maximum. Update the max as you recurse down.\n\n**Why Pre-order DFS**\nPre-order naturally carries parent information downward. The max-so-far is a top-down parameter — it belongs to pre-order.",
+      "code": "```java\nclass Solution {\n    public int goodNodes(TreeNode root) {\n        return dfs(root, Integer.MIN_VALUE);\n    }\n\n    private int dfs(TreeNode node, int maxSoFar) {\n        if (node == null) return 0;\n\n        int good = node.val >= maxSoFar ? 1 : 0;\n        int newMax = Math.max(maxSoFar, node.val);\n\n        return good\n             + dfs(node.left,  newMax)\n             + dfs(node.right, newMax);\n    }\n}\n```",
+      "test_cases": "| Input | Expected |\n|---|---|\n| `[3,1,4,3,null,1,5]` | 4 |\n| `[3,3,null,4,2]` | 3 |\n| Single node `[1]` | 1 |\n| All same values `[2,2,2]` | 3 |",
+      "images": []
+    },
+    {
+      "id": 14,
+      "question": "Fenwick Tree (Binary Indexed Tree) — Range Sum Queries",
+      "problem": "Given an array `nums`, implement a data structure supporting:\n1. `update(index, val)` — set `nums[index] = val`\n2. `sumRange(left, right)` — return the sum of elements from index `left` to `right` (0-indexed)\n\nConstraints: up to 3×10⁴ calls; O(log n) per operation.",
+      "intuition": "A Fenwick Tree (BIT) stores partial sums in a clever bit-indexed structure. Each index `i` is responsible for `lowbit(i)` elements (where `lowbit(i) = i & -i`). Prefix sums can be computed and updated in O(log n) by following the bit structure.\n\n**Why Fenwick Tree**\nA prefix sum array gives O(1) queries but O(n) updates. A segment tree gives O(log n) for both but requires more code. The Fenwick Tree achieves O(log n) for both with extremely compact code — a popular interview choice.\n\n**Key Operations**\n- **Query prefix(i)**: repeatedly subtract `lowbit` from i and accumulate.\n- **Update point(i, delta)**: repeatedly add `lowbit` to i and update.\n- **Range sum [l,r]** = `prefix(r+1) - prefix(l)` (1-indexed internally).",
+      "code": "```java\nclass NumArray {\n    private int[] bit; // 1-indexed\n    private int[] nums;\n    private int n;\n\n    public NumArray(int[] nums) {\n        this.n    = nums.length;\n        this.nums = new int[n];\n        this.bit  = new int[n + 1];\n        for (int i = 0; i < n; i++) update(i, nums[i]);\n    }\n\n    public void update(int index, int val) {\n        int delta = val - nums[index];\n        nums[index] = val;\n        for (int i = index + 1; i <= n; i += i & -i) // add lowbit\n            bit[i] += delta;\n    }\n\n    public int sumRange(int left, int right) {\n        return prefix(right + 1) - prefix(left);\n    }\n\n    private int prefix(int i) {\n        int sum = 0;\n        for (; i > 0; i -= i & -i) // subtract lowbit\n            sum += bit[i];\n        return sum;\n    }\n}\n```",
+      "test_cases": "| Operations | Expected |\n|---|---|\n| `init [1,3,5]`, `sumRange(0,2)` | 9 |\n| `update(1,2)`, `sumRange(0,2)` | 8 |\n| `init [0,0,0]`, `update(0,5)`, `sumRange(0,0)` | 5 |\n| Large array, point updates interleaved with queries | O(log n) per op |",
+      "images": []
+    },
+    {
+      "id": 15,
+      "question": "Fenwick Tree — Count of Smaller Numbers After Self",
+      "problem": "Given an integer array `nums`, return an array `counts` where `counts[i]` is the number of elements to the right of `nums[i]` that are smaller than `nums[i]`.\n\n```\nInput:  [5, 2, 6, 1]\nOutput: [2, 1, 1, 0]\n```",
+      "intuition": "Process from right to left. For each element, query \"how many numbers already inserted are smaller than this one?\" Then insert the current number. This is a classic rank/order-statistics problem — perfect for a Fenwick Tree operating on *coordinate-compressed* ranks.\n\n**Why Fenwick Tree + Coordinate Compression**\nValues can be large/negative. Compress them to ranks [1..n], then use a BIT where `bit[rank]` counts how many times rank has been inserted. Query prefix sum up to `rank-1` for \"count of smaller.\"",
+      "code": "```java\nclass Solution {\n    public List<Integer> countSmaller(int[] nums) {\n        int n = nums.length;\n\n        // Coordinate compression\n        int[] sorted = nums.clone();\n        Arrays.sort(sorted);\n        sorted = Arrays.stream(sorted).distinct().toArray();\n        Map<Integer, Integer> rank = new HashMap<>();\n        for (int i = 0; i < sorted.length; i++)\n            rank.put(sorted[i], i + 1); // 1-indexed\n\n        int m = sorted.length;\n        int[] bit = new int[m + 1];\n        Integer[] result = new Integer[n];\n\n        for (int i = n - 1; i >= 0; i--) {\n            int r = rank.get(nums[i]);\n            result[i] = query(bit, r - 1);  // count smaller\n            update(bit, r, m);              // insert rank\n        }\n        return Arrays.asList(result);\n    }\n\n    private void update(int[] bit, int i, int n) {\n        for (; i <= n; i += i & -i) bit[i]++;\n    }\n\n    private int query(int[] bit, int i) {\n        int sum = 0;\n        for (; i > 0; i -= i & -i) sum += bit[i];\n        return sum;\n    }\n}\n```",
+      "test_cases": "| Input | Expected |\n|---|---|\n| `[5,2,6,1]` | `[2,1,1,0]` |\n| `[2,0,1]` | `[2,1,0]` |\n| `[1]` | `[0]` |\n| All same `[3,3,3]` | `[0,0,0]` |\n| Descending `[5,4,3,2,1]` | `[4,3,2,1,0]` |",
+      "images": []
+    }
+  ]
+}

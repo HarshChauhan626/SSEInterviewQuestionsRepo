@@ -1,0 +1,189 @@
+{
+  "topic": "DSA: Dynamic Programming",
+  "description": "Memoization, tabulation, knapsack, and sequence alignment",
+  "icon": "📈",
+  "accent": "#8b5cf6",
+  "source": "dp.md",
+  "questions": [
+    {
+      "id": 1,
+      "question": "Climbing Stairs (Linear DP / Fibonacci)",
+      "problem": "You are climbing a staircase with `n` steps. Each time you can climb 1 or 2 steps. In how many distinct ways can you reach the top?",
+      "intuition": "To reach step `i`, you either came from step `i-1` (one step) or step `i-2` (two steps). So the total ways to reach `i` = ways to reach `i-1` + ways to reach `i-2`. This is exactly Fibonacci!\n\n**Why This Approach?**\nThe problem has **optimal substructure** (answer at step `i` depends on smaller steps) and **overlapping subproblems** (same sub-steps computed repeatedly in recursion). DP eliminates recomputation.\n\n**Recurrence**\n```\ndp[i] = dp[i-1] + dp[i-2]\nBase: dp[1] = 1, dp[2] = 2\n```",
+      "code": "```java\npublic int climbStairs(int n) {\n    if (n <= 2) return n;\n    int prev2 = 1, prev1 = 2;\n    for (int i = 3; i <= n; i++) {\n        int curr = prev1 + prev2;\n        prev2 = prev1;\n        prev1 = curr;\n    }\n    return prev1;\n}\n```",
+      "test_cases": "**Example:**\n- Input: `n = 5`\n- Output: `8`\n\n| Input | Output | Reason |\n|-------|--------|--------|\n| 1 | 1 | Only one way: {1} |\n| 2 | 2 | {1,1} or {2} |\n| 5 | 8 | Standard case |\n| 10 | 89 | Fibonacci(12) |",
+      "images": []
+    },
+    {
+      "id": 2,
+      "question": "House Robber (Linear DP with Skip)",
+      "problem": "Given an array of non-negative integers representing amounts of money in houses, rob the maximum money without robbing two adjacent houses.",
+      "intuition": "At each house `i`, you make a binary decision:\n- **Rob it**: Gain `nums[i]` + best up to `i-2`\n- **Skip it**: Take best up to `i-1`\n\n**Why This Approach?**\nYou cannot make a greedy choice (robbing the largest doesn't always work due to adjacency). DP captures all decisions.\n\n**Recurrence**\n```\ndp[i] = max(dp[i-1], dp[i-2] + nums[i])\nBase: dp[0] = nums[0], dp[1] = max(nums[0], nums[1])\n```",
+      "code": "```java\npublic int rob(int[] nums) {\n    int n = nums.length;\n    if (n == 1) return nums[0];\n    int prev2 = nums[0];\n    int prev1 = Math.max(nums[0], nums[1]);\n    for (int i = 2; i < n; i++) {\n        int curr = Math.max(prev1, prev2 + nums[i]);\n        prev2 = prev1;\n        prev1 = curr;\n    }\n    return prev1;\n}\n```",
+      "test_cases": "**Example:**\n- Input: `[2, 7, 9, 3, 1]`\n- Output: `12` (rob houses 0, 2, 4 → 2+9+1=12)\n\n| Input | Output |\n|-------|--------|\n| [1,2,3,1] | 4 |\n| [2,7,9,3,1] | 12 |\n| [5] | 5 |\n| [2,1,1,2] | 4 |",
+      "images": []
+    },
+    {
+      "id": 3,
+      "question": "Longest Increasing Subsequence (LIS)",
+      "problem": "Given an integer array `nums`, return the length of the longest strictly increasing subsequence.",
+      "intuition": "For each element `nums[i]`, look at all previous elements `nums[j]` where `j < i` and `nums[j] < nums[i]`. The LIS ending at `i` is the best LIS ending at any such `j`, plus 1.\n\n**Why DP (not Greedy alone)?**\nPure greedy fails. You need to track ALL possible LIS endings. The O(n log n) patience sort is greedy + binary search but the O(n²) DP is foundational.\n\n**Recurrence**\n```\ndp[i] = max(dp[j] + 1) for all j < i where nums[j] < nums[i]\nBase: dp[i] = 1 (each element alone)\nAnswer: max(dp)\n```",
+      "code": "```java\n// O(n^2) DP\npublic int lengthOfLIS(int[] nums) {\n    int n = nums.length;\n    int[] dp = new int[n];\n    Arrays.fill(dp, 1);\n    int maxLen = 1;\n    for (int i = 1; i < n; i++) {\n        for (int j = 0; j < i; j++) {\n            if (nums[j] < nums[i]) {\n                dp[i] = Math.max(dp[i], dp[j] + 1);\n            }\n        }\n        maxLen = Math.max(maxLen, dp[i]);\n    }\n    return maxLen;\n}\n\n// O(n log n) — Patience Sort\npublic int lengthOfLIS_NLogN(int[] nums) {\n    List<Integer> tails = new ArrayList<>();\n    for (int num : nums) {\n        int lo = 0, hi = tails.size();\n        while (lo < hi) {\n            int mid = (lo + hi) / 2;\n            if (tails.get(mid) < num) lo = mid + 1;\n            else hi = mid;\n        }\n        if (lo == tails.size()) tails.add(num);\n        else tails.set(lo, num);\n    }\n    return tails.size();\n}\n```",
+      "test_cases": "**Example:**\n- Input: `[10, 9, 2, 5, 3, 7, 101, 18]`\n- Output: `4` → `[2, 3, 7, 101]`\n\n| Input | Output |\n|-------|--------|\n| [10,9,2,5,3,7,101,18] | 4 |\n| [0,1,0,3,2,3] | 4 |\n| [7,7,7,7] | 1 |\n| [1,3,6,7,9,4,10,5,6] | 6 |",
+      "images": []
+    },
+    {
+      "id": 4,
+      "question": "Longest Common Subsequence (LCS)",
+      "problem": "Given two strings `text1` and `text2`, return the length of their longest common subsequence. A subsequence need not be contiguous.",
+      "intuition": "Build a 2D table. `dp[i][j]` = LCS of first `i` chars of text1 and first `j` chars of text2.\n- If `text1[i-1] == text2[j-1]`: both chars match → `dp[i][j] = dp[i-1][j-1] + 1`\n- Else: take the best by ignoring one char → `dp[i][j] = max(dp[i-1][j], dp[i][j-1])`\n\n**Why 2D DP?**\nTwo sequences create a 2D state space. Each cell only depends on left, top, and diagonal — clean bottom-up fill.",
+      "code": "```java\npublic int longestCommonSubsequence(String text1, String text2) {\n    int m = text1.length(), n = text2.length();\n    int[][] dp = new int[m + 1][n + 1];\n    for (int i = 1; i <= m; i++) {\n        for (int j = 1; j <= n; j++) {\n            if (text1.charAt(i - 1) == text2.charAt(j - 1)) {\n                dp[i][j] = dp[i - 1][j - 1] + 1;\n            } else {\n                dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);\n            }\n        }\n    }\n    return dp[m][n];\n}\n```",
+      "test_cases": "**Example:**\n- Input: `text1 = \"abcde\"`, `text2 = \"ace\"`\n- Output: `3` → \"ace\"\n\n| text1 | text2 | Output |\n|-------|-------|--------|\n| \"abcde\" | \"ace\" | 3 |\n| \"abc\" | \"abc\" | 3 |\n| \"abc\" | \"def\" | 0 |\n| \"oxcpqrsvwf\" | \"shmtulqrypy\" | 2 |",
+      "images": []
+    },
+    {
+      "id": 5,
+      "question": "Edit Distance (Levenshtein)",
+      "problem": "Given two strings `word1` and `word2`, return the minimum number of operations (insert, delete, replace) to convert `word1` to `word2`.",
+      "intuition": "`dp[i][j]` = min operations to convert first `i` chars of word1 to first `j` chars of word2.\n- Chars match: `dp[i][j] = dp[i-1][j-1]` (no cost)\n- Chars differ: `dp[i][j] = 1 + min(dp[i-1][j-1], dp[i-1][j], dp[i][j-1])` → replace, delete, insert\n\n**Why This Approach?**\nThree operations map cleanly to three neighboring cells in the DP table. This is the canonical two-sequence transformation DP.",
+      "code": "```java\npublic int minDistance(String word1, String word2) {\n    int m = word1.length(), n = word2.length();\n    int[][] dp = new int[m + 1][n + 1];\n    for (int i = 0; i <= m; i++) dp[i][0] = i;\n    for (int j = 0; j <= n; j++) dp[0][j] = j;\n    for (int i = 1; i <= m; i++) {\n        for (int j = 1; j <= n; j++) {\n            if (word1.charAt(i - 1) == word2.charAt(j - 1)) {\n                dp[i][j] = dp[i - 1][j - 1];\n            } else {\n                dp[i][j] = 1 + Math.min(dp[i - 1][j - 1],\n                                Math.min(dp[i - 1][j], dp[i][j - 1]));\n            }\n        }\n    }\n    return dp[m][n];\n}\n```",
+      "test_cases": "**Example:**\n- Input: `word1 = \"horse\"`, `word2 = \"ros\"`\n- Output: `3`\n\n| word1 | word2 | Output |\n|-------|-------|--------|\n| \"horse\" | \"ros\" | 3 |\n| \"intention\" | \"execution\" | 5 |\n| \"\" | \"abc\" | 3 |\n| \"abc\" | \"abc\" | 0 |",
+      "images": []
+    },
+    {
+      "id": 6,
+      "question": "0/1 Knapsack",
+      "problem": "Given `n` items each with weight `w[i]` and value `v[i]`, and a knapsack capacity `W`, find the maximum value you can carry. Each item can be used **at most once**.",
+      "intuition": "`dp[i][w]` = max value using first `i` items with capacity `w`.\n- Don't take item `i`: `dp[i-1][w]`\n- Take item `i` (if `w[i] <= w`): `dp[i-1][w-w[i]] + v[i]`\n- Take the max.\n\n**Why \"0/1\"?**\nEach item is either taken (1) or not (0) — no repetition. This forces us to look at `dp[i-1]` row, not `dp[i]`.",
+      "code": "```java\npublic int knapsack(int W, int[] weights, int[] values, int n) {\n    int[][] dp = new int[n + 1][W + 1];\n    for (int i = 1; i <= n; i++) {\n        for (int w = 0; w <= W; w++) {\n            dp[i][w] = dp[i - 1][w]; // don't take\n            if (weights[i - 1] <= w) {\n                dp[i][w] = Math.max(dp[i][w],\n                    dp[i - 1][w - weights[i - 1]] + values[i - 1]);\n            }\n        }\n    }\n    return dp[n][W];\n}\n\n// Space optimized — 1D\npublic int knapsack1D(int W, int[] weights, int[] values, int n) {\n    int[] dp = new int[W + 1];\n    for (int i = 0; i < n; i++) {\n        for (int w = W; w >= weights[i]; w--) { // reverse to avoid reuse\n            dp[w] = Math.max(dp[w], dp[w - weights[i]] + values[i]);\n        }\n    }\n    return dp[W];\n}\n```",
+      "test_cases": "**Example:**\n- weights = [1,3,4,5], values = [1,4,5,7], W = 7\n- Output: `9` (items with weights 3 and 4)\n\n| W | weights | values | Output |\n|---|---------|--------|--------|\n| 7 | [1,3,4,5] | [1,4,5,7] | 9 |\n| 10 | [5,4,3] | [10,40,30] | 70 |\n| 0 | [1,2] | [10,20] | 0 |\n| 3 | [4,5] | [1,2] | 0 |",
+      "images": []
+    },
+    {
+      "id": 7,
+      "question": "Coin Change (Minimum Coins)",
+      "problem": "Given coin denominations and amount `n`, find the minimum number of coins to make exactly `n`. Coins can be reused unlimited times.",
+      "intuition": "`dp[i]` = min coins to make amount `i`.\nFor each amount, try every coin: `dp[i] = min(dp[i - coin] + 1)` for all valid coins.\n\n**Why Unbounded?**\nEach coin can be picked multiple times → when processing coin `c`, we allow using it again (unlike 0/1 knapsack where we iterate backwards).\n\n**Recurrence**\n```\ndp[0] = 0\ndp[i] = min(dp[i - coin] + 1) for each coin where coin <= i\nAnswer: dp[amount] (or -1 if unreachable)\n```",
+      "code": "```java\npublic int coinChange(int[] coins, int amount) {\n    int[] dp = new int[amount + 1];\n    Arrays.fill(dp, amount + 1); // sentinel infinity\n    dp[0] = 0;\n    for (int i = 1; i <= amount; i++) {\n        for (int coin : coins) {\n            if (coin <= i) {\n                dp[i] = Math.min(dp[i], dp[i - coin] + 1);\n            }\n        }\n    }\n    return dp[amount] > amount ? -1 : dp[amount];\n}\n```",
+      "test_cases": "**Example:**\n- coins = [1, 5, 6, 9], amount = 11\n- Output: `2` (5 + 6)\n\n| coins | amount | Output |\n|-------|--------|--------|\n| [1,5,6,9] | 11 | 2 |\n| [1,2,5] | 11 | 3 |\n| [2] | 3 | -1 |\n| [1] | 0 | 0 |",
+      "images": []
+    },
+    {
+      "id": 8,
+      "question": "Coin Change II (Count Ways)",
+      "problem": "Given coin denominations and an `amount`, return the number of combinations to make exactly `amount`. Each coin may be used unlimited times.\n\nHere we **count ways**, not minimize. We iterate **coins in outer loop** and **amounts in inner** to avoid counting permutations as separate combinations.",
+      "intuition": "`dp[i]` = number of ways to make amount `i`. For each coin, update: `dp[i] += dp[i - coin]`.\n\n**Why Outer Loop = Coins?**\nIf amounts were outer and coins inner, we'd count [1,2] and [2,1] as different — giving permutations, not combinations.",
+      "code": "```java\npublic int change(int amount, int[] coins) {\n    int[] dp = new int[amount + 1];\n    dp[0] = 1; // one way to make 0 — use nothing\n    for (int coin : coins) {           // outer: coins\n        for (int i = coin; i <= amount; i++) { // inner: amounts\n            dp[i] += dp[i - coin];\n        }\n    }\n    return dp[amount];\n}\n```",
+      "test_cases": "**Example:**\n- coins = [1,2,5], amount = 5\n- Output: `4` → {5}, {2,2,1}, {2,1,1,1}, {1,1,1,1,1}\n\n| coins | amount | Output |\n|-------|--------|--------|\n| [1,2,5] | 5 | 4 |\n| [2] | 3 | 0 |\n| [10] | 10 | 1 |\n| [1,2,3] | 4 | 4 |",
+      "images": []
+    },
+    {
+      "id": 9,
+      "question": "Partition Equal Subset Sum",
+      "problem": "Given an integer array `nums`, return true if it can be partitioned into two subsets with equal sum.",
+      "intuition": "If total sum is odd → impossible. Otherwise, find if any subset sums to `total/2`. This reduces to **subset sum** which is a 0/1 knapsack variant.\n\n**Recurrence**\n`dp[j]` = true if subset with sum `j` is achievable.\nFor each num, iterate j from target down to num: `dp[j] |= dp[j - num]`",
+      "code": "```java\npublic boolean canPartition(int[] nums) {\n    int sum = 0;\n    for (int n : nums) sum += n;\n    if (sum % 2 != 0) return false;\n    int target = sum / 2;\n    boolean[] dp = new boolean[target + 1];\n    dp[0] = true;\n    for (int num : nums) {\n        for (int j = target; j >= num; j--) {\n            dp[j] = dp[j] || dp[j - num];\n        }\n    }\n    return dp[target];\n}\n```",
+      "test_cases": "**Example:**\n- Input: `[1, 5, 11, 5]`\n- Output: `true` → {1,5,5} and {11}\n\n| Input | Output |\n|-------|--------|\n| [1,5,11,5] | true |\n| [1,2,3,5] | false |\n| [2,2,1,1] | true |\n| [1] | false |",
+      "images": []
+    },
+    {
+      "id": 10,
+      "question": "Word Break",
+      "problem": "Given a string `s` and a dictionary `wordDict`, return true if `s` can be segmented into space-separated words from the dictionary.",
+      "intuition": "`dp[i]` = true if `s[0..i-1]` can be segmented. For each position `i`, check all splits `j` where `dp[j]` is true and `s[j..i-1]` is in dict.\n\n**Why DP?**\nNaive recursion recomputes the same suffix multiple times. DP caches results for each prefix end-index.",
+      "code": "```java\npublic boolean wordBreak(String s, List<String> wordDict) {\n    Set<String> dict = new HashSet<>(wordDict);\n    int n = s.length();\n    boolean[] dp = new boolean[n + 1];\n    dp[0] = true;\n    for (int i = 1; i <= n; i++) {\n        for (int j = 0; j < i; j++) {\n            if (dp[j] && dict.contains(s.substring(j, i))) {\n                dp[i] = true;\n                break;\n            }\n        }\n    }\n    return dp[n];\n}\n```",
+      "test_cases": "**Example:**\n- s = \"leetcode\", wordDict = [\"leet\", \"code\"]\n- Output: `true`\n\n| s | wordDict | Output |\n|---|----------|--------|\n| \"leetcode\" | [\"leet\",\"code\"] | true |\n| \"applepenapple\" | [\"apple\",\"pen\"] | true |\n| \"catsandog\" | [\"cats\",\"dog\",\"sand\",\"and\",\"cat\"] | false |\n| \"aaaaaaa\" | [\"aaaa\",\"aaa\"] | true |",
+      "images": []
+    },
+    {
+      "id": 11,
+      "question": "Matrix Chain Multiplication (Interval DP)",
+      "problem": "Given `n` matrices, find the minimum number of scalar multiplications to compute their product. Matrix `i` has dimensions `dims[i-1] x dims[i]`.",
+      "intuition": "`dp[i][j]` = min cost to multiply matrices `i` through `j`. Try every split point `k` between `i` and `j`:\n`dp[i][j] = min(dp[i][k] + dp[k+1][j] + dims[i-1]*dims[k]*dims[j])`\n\n**Why Interval DP?**\nThe problem naturally decomposes over **intervals** of matrices. We compute smaller intervals first and build up.",
+      "code": "```java\npublic int matrixChainOrder(int[] dims) {\n    int n = dims.length - 1; // number of matrices\n    int[][] dp = new int[n][n];\n    // len = chain length\n    for (int len = 2; len <= n; len++) {\n        for (int i = 0; i <= n - len; i++) {\n            int j = i + len - 1;\n            dp[i][j] = Integer.MAX_VALUE;\n            for (int k = i; k < j; k++) {\n                int cost = dp[i][k] + dp[k + 1][j]\n                         + dims[i] * dims[k + 1] * dims[j + 1];\n                dp[i][j] = Math.min(dp[i][j], cost);\n            }\n        }\n    }\n    return dp[0][n - 1];\n}\n```",
+      "test_cases": "**Example:**\n- dims = [10, 30, 5, 60]\n- Output: `4500`\n\n| dims | Output |\n|------|--------|\n| [10,30,5,60] | 4500 |\n| [40,20,30,10,30] | 26000 |\n| [1,2,3,4] | 18 |",
+      "images": []
+    },
+    {
+      "id": 12,
+      "question": "Burst Balloons (Interval DP — Reverse Thinking)",
+      "problem": "Given `n` balloons with values `nums[i]`, bursting balloon `i` earns `nums[i-1]*nums[i]*nums[i+1]` coins. Return max coins from bursting all balloons. Boundaries are `1`.",
+      "intuition": "Instead of thinking which balloon to burst **first**, think which to burst **last** in a range `[left, right]`.\n`dp[i][j]` = max coins from bursting all balloons between `i` and `j` (exclusive boundaries).\nIf balloon `k` is the last in range: `dp[i][j] = dp[i][k] + dp[k][j] + nums[i]*nums[k]*nums[j]`\n\n**Why Reverse Thinking?**\nBursting changes neighbors, making forward state messy. Last-to-burst maintains fixed boundaries.",
+      "code": "```java\npublic int maxCoins(int[] nums) {\n    int n = nums.length;\n    int[] arr = new int[n + 2];\n    arr[0] = arr[n + 1] = 1;\n    for (int i = 0; i < n; i++) arr[i + 1] = nums[i];\n    int m = n + 2;\n    int[][] dp = new int[m][m];\n    for (int len = 2; len < m; len++) {\n        for (int left = 0; left < m - len; left++) {\n            int right = left + len;\n            for (int k = left + 1; k < right; k++) {\n                dp[left][right] = Math.max(dp[left][right],\n                    dp[left][k] + dp[k][right] + arr[left] * arr[k] * arr[right]);\n            }\n        }\n    }\n    return dp[0][m - 1];\n}\n```",
+      "test_cases": "**Example:**\n- Input: `[3, 1, 5, 8]`\n- Output: `167`\n\n| Input | Output |\n|-------|--------|\n| [3,1,5,8] | 167 |\n| [1,5] | 10 |\n| [1] | 1 |\n| [7,9,8,0,7,1,3,5,5,2,3] | 1654 |",
+      "images": []
+    },
+    {
+      "id": 13,
+      "question": "Unique Paths (Grid DP)",
+      "problem": "A robot starts at top-left of an `m x n` grid and can only move right or down. Count the distinct paths to reach the bottom-right.",
+      "intuition": "`dp[i][j]` = number of ways to reach cell `(i,j)`. You can only arrive from top `(i-1,j)` or left `(i,j-1)`.\n`dp[i][j] = dp[i-1][j] + dp[i][j-1]`\nBase: entire top row and left column = 1.",
+      "code": "```java\npublic int uniquePaths(int m, int n) {\n    int[][] dp = new int[m][n];\n    for (int i = 0; i < m; i++) dp[i][0] = 1;\n    for (int j = 0; j < n; j++) dp[0][j] = 1;\n    for (int i = 1; i < m; i++)\n        for (int j = 1; j < n; j++)\n            dp[i][j] = dp[i - 1][j] + dp[i][j - 1];\n    return dp[m - 1][n - 1];\n}\n```",
+      "test_cases": "**Example:**\n- m=3, n=7 → Output: `28`\n\n| m | n | Output |\n|---|---|--------|\n| 3 | 7 | 28 |\n| 3 | 2 | 3 |\n| 1 | 1 | 1 |\n| 10 | 10 | 48620 |",
+      "images": []
+    },
+    {
+      "id": 14,
+      "question": "Minimum Path Sum (Grid DP)",
+      "problem": "Given an `m x n` grid of non-negative integers, find the path from top-left to bottom-right (moving only right or down) that minimizes the sum of all numbers along the path.",
+      "intuition": "`dp[i][j]` = min sum to reach cell `(i,j)`.\n`dp[i][j] = grid[i][j] + min(dp[i-1][j], dp[i][j-1])`",
+      "code": "```java\npublic int minPathSum(int[][] grid) {\n    int m = grid.length, n = grid[0].length;\n    int[][] dp = new int[m][n];\n    dp[0][0] = grid[0][0];\n    for (int i = 1; i < m; i++) dp[i][0] = dp[i-1][0] + grid[i][0];\n    for (int j = 1; j < n; j++) dp[0][j] = dp[0][j-1] + grid[0][j];\n    for (int i = 1; i < m; i++)\n        for (int j = 1; j < n; j++)\n            dp[i][j] = grid[i][j] + Math.min(dp[i-1][j], dp[i][j-1]);\n    return dp[m-1][n-1];\n}\n```",
+      "test_cases": "**Example:**\n- Grid: `[[1,3,1],[1,5,1],[4,2,1]]`\n- Output: `7` → 1→3→1→1→1\n\n| Grid | Output |\n|------|--------|\n| [[1,3,1],[1,5,1],[4,2,1]] | 7 |\n| [[1,2],[5,6],[1,1]] | 8 |\n| [[1]] | 1 |",
+      "images": []
+    },
+    {
+      "id": 15,
+      "question": "Maximal Square (2D Grid DP)",
+      "problem": "Given an `m x n` binary matrix, find the largest square containing only `'1'`s and return its area.",
+      "intuition": "`dp[i][j]` = side length of the largest square whose **bottom-right corner** is at `(i,j)`.\nIf `matrix[i][j] == '1'`:\n`dp[i][j] = min(dp[i-1][j], dp[i][j-1], dp[i-1][j-1]) + 1`\nThe minimum of three neighbors limits the square you can form.\n\n**Why Min of Three?**\nYou need the top, left, and diagonal squares to all be of at least that size to extend the square.",
+      "code": "```java\npublic int maximalSquare(char[][] matrix) {\n    int m = matrix.length, n = matrix[0].length;\n    int[][] dp = new int[m + 1][n + 1];\n    int maxSide = 0;\n    for (int i = 1; i <= m; i++) {\n        for (int j = 1; j <= n; j++) {\n            if (matrix[i-1][j-1] == '1') {\n                dp[i][j] = Math.min(dp[i-1][j],\n                            Math.min(dp[i][j-1], dp[i-1][j-1])) + 1;\n                maxSide = Math.max(maxSide, dp[i][j]);\n            }\n        }\n    }\n    return maxSide * maxSide;\n}\n```",
+      "test_cases": "**Example:**\n- Input: `[[\"1\",\"0\",\"1\",\"1\",\"1\"],[\"1\",\"0\",\"1\",\"1\",\"1\"],[\"1\",\"1\",\"1\",\"1\",\"1\"],[\"1\",\"0\",\"0\",\"1\",\"0\"]]`\n- Output: `4`\n\n| Input | Output |\n|-------|--------|\n| [[\"1\",\"0\",\"1\",\"1\",\"1\"],[\"1\",\"0\",\"1\",\"1\",\"1\"],[\"1\",\"1\",\"1\",\"1\",\"1\"],[\"1\",\"0\",\"0\",\"1\",\"0\"]] | 4 |\n| [[\"0\",\"1\"],[\"1\",\"0\"]] | 1 |\n| [[\"0\"]] | 0 |\n| [[\"1\",\"1\",\"1\"],[\"1\",\"1\",\"1\"],[\"1\",\"1\",\"1\"]] | 9 |",
+      "images": []
+    },
+    {
+      "id": 16,
+      "question": "Best Time to Buy/Sell Stock with Cooldown (State Machine DP)",
+      "problem": "Given stock prices, find max profit. After selling, you must wait 1 day (cooldown) before buying. You may not hold multiple stocks.",
+      "intuition": "Model 3 states:\n- **HELD**: currently holding a stock\n- **SOLD**: just sold (entering cooldown)\n- **REST**: cooldown/rest state (can buy next day)\n\nTransitions:\n- `held = max(held, rest - price)` (buy from rest)\n- `sold = held + price` (sell)\n- `rest = max(rest, sold)` (transition out of cooldown)",
+      "code": "```java\npublic int maxProfit(int[] prices) {\n    int held = Integer.MIN_VALUE, sold = 0, rest = 0;\n    for (int price : prices) {\n        int prevSold = sold;\n        sold = held + price;\n        held = Math.max(held, rest - price);\n        rest = Math.max(rest, prevSold);\n    }\n    return Math.max(sold, rest);\n}\n```",
+      "test_cases": "**Example:**\n- prices = [1, 2, 3, 0, 2]\n- Output: `3` → buy day0, sell day2, cooldown day3, buy day4\n\n| prices | Output |\n|--------|--------|\n| [1,2,3,0,2] | 3 |\n| [1] | 0 |\n| [2,1] | 0 |\n| [6,1,3,2,4,7] | 6 |",
+      "images": []
+    },
+    {
+      "id": 17,
+      "question": "Longest Palindromic Substring (Palindrome DP)",
+      "problem": "Given a string `s`, return the longest palindromic substring.",
+      "intuition": "`dp[i][j]` = true if `s[i..j]` is a palindrome.\n- `dp[i][i] = true` (single char)\n- `dp[i][i+1] = (s[i] == s[i+1])`\n- `dp[i][j] = (s[i] == s[j]) && dp[i+1][j-1]` for len ≥ 3\n\n**Why Fill by Length?**\nWe need `dp[i+1][j-1]` to be computed before `dp[i][j]` — so iterate by increasing substring length.",
+      "code": "```java\npublic String longestPalindrome(String s) {\n    int n = s.length();\n    boolean[][] dp = new boolean[n][n];\n    int start = 0, maxLen = 1;\n    // len 1\n    for (int i = 0; i < n; i++) dp[i][i] = true;\n    // len 2\n    for (int i = 0; i < n - 1; i++) {\n        if (s.charAt(i) == s.charAt(i + 1)) {\n            dp[i][i + 1] = true;\n            start = i; maxLen = 2;\n        }\n    }\n    // len 3+\n    for (int len = 3; len <= n; len++) {\n        for (int i = 0; i <= n - len; i++) {\n            int j = i + len - 1;\n            if (s.charAt(i) == s.charAt(j) && dp[i + 1][j - 1]) {\n                dp[i][j] = true;\n                if (len > maxLen) { start = i; maxLen = len; }\n            }\n        }\n    }\n    return s.substring(start, start + maxLen);\n}\n```",
+      "test_cases": "**Example:**\n- Input: `\"babad\"`\n- Output: `\"bab\"` or `\"aba\"`\n\n| Input | Output |\n|-------|--------|\n| \"babad\" | \"bab\" |\n| \"cbbd\" | \"bb\" |\n| \"a\" | \"a\" |\n| \"racecar\" | \"racecar\" |",
+      "images": []
+    },
+    {
+      "id": 18,
+      "question": "Decode Ways (Conditional Linear DP)",
+      "problem": "A string of digits can be decoded like `'A'=1, ..., 'Z'=26`. Return the number of ways to decode a given digit string.",
+      "intuition": "`dp[i]` = number of ways to decode `s[0..i-1]`.\n- Single digit decode: if `s[i-1] != '0'` → `dp[i] += dp[i-1]`\n- Two digit decode: if `s[i-2..i-1]` is between 10–26 → `dp[i] += dp[i-2]`\n\n**Why Conditional?**\n'0' cannot stand alone. Two-digit codes must be ≤ 26. These conditions make the recurrence non-trivial.",
+      "code": "```java\npublic int numDecodings(String s) {\n    int n = s.length();\n    int[] dp = new int[n + 1];\n    dp[0] = 1;\n    dp[1] = s.charAt(0) == '0' ? 0 : 1;\n    for (int i = 2; i <= n; i++) {\n        int oneDigit = s.charAt(i - 1) - '0';\n        int twoDigit = Integer.parseInt(s.substring(i - 2, i));\n        if (oneDigit >= 1) dp[i] += dp[i - 1];\n        if (twoDigit >= 10 && twoDigit <= 26) dp[i] += dp[i - 2];\n    }\n    return dp[n];\n}\n```",
+      "test_cases": "**Example:**\n- Input: `\"226\"`\n- Output: `3` → \"BZ\"(2,26), \"VF\"(22,6), \"BBF\"(2,2,6)\n\n| Input | Output |\n|-------|--------|\n| \"226\" | 3 |\n| \"12\" | 2 |\n| \"06\" | 0 |\n| \"11106\" | 2 |\n| \"10\" | 1 |",
+      "images": []
+    },
+    {
+      "id": 19,
+      "question": "Distinct Subsequences (Count DP on Two Sequences)",
+      "problem": "Given strings `s` and `t`, count the number of distinct subsequences of `s` that equal `t`.",
+      "intuition": "`dp[i][j]` = number of ways to form `t[0..j-1]` from `s[0..i-1]`.\n- If `s[i-1] != t[j-1]`: `dp[i][j] = dp[i-1][j]` (skip s[i-1])\n- If `s[i-1] == t[j-1]`: `dp[i][j] = dp[i-1][j] + dp[i-1][j-1]` (use it or skip it)\n\n**Why Two Options When Chars Match?**\nEven when characters match, you can choose not to use that occurrence of `s[i-1]` and find the match later.",
+      "code": "```java\npublic int numDistinct(String s, String t) {\n    int m = s.length(), n = t.length();\n    long[][] dp = new long[m + 1][n + 1];\n    for (int i = 0; i <= m; i++) dp[i][0] = 1; // empty t matched by any prefix\n    for (int i = 1; i <= m; i++) {\n        for (int j = 1; j <= n; j++) {\n            dp[i][j] = dp[i - 1][j]; // always: skip s[i-1]\n            if (s.charAt(i - 1) == t.charAt(j - 1)) {\n                dp[i][j] += dp[i - 1][j - 1]; // also: use s[i-1]\n            }\n        }\n    }\n    return (int) dp[m][n];\n}\n```",
+      "test_cases": "**Example:**\n- s = \"rabbbit\", t = \"rabbit\"\n- Output: `3` (choose which 'b' to skip)\n\n| s | t | Output |\n|---|---|--------|\n| \"rabbbit\" | \"rabbit\" | 3 |\n| \"babgbag\" | \"bag\" | 5 |\n| \"abc\" | \"abc\" | 1 |\n| \"abc\" | \"d\" | 0 |",
+      "images": []
+    },
+    {
+      "id": 20,
+      "question": "Russian Doll Envelopes (2D LIS)",
+      "problem": "Each envelope has `[w, h]`. You can put envelope A inside B if `A.w < B.w` AND `A.h < B.h`. Return max envelopes you can nest.",
+      "intuition": "Sort by width ascending. For equal widths, sort height **descending** (prevents using two envelopes of same width). Then run LIS on heights only.\n\n**Why Sort Height Descending for Equal Widths?**\nIf widths are equal, you can't nest them. Descending height ensures LIS picks at most one from each equal-width group.",
+      "code": "```java\npublic int maxEnvelopes(int[][] envelopes) {\n    Arrays.sort(envelopes, (a, b) ->\n        a[0] == b[0] ? b[1] - a[1] : a[0] - b[0]);\n    // Extract heights and run O(n log n) LIS\n    int[] heights = new int[envelopes.length];\n    for (int i = 0; i < envelopes.length; i++) heights[i] = envelopes[i][1];\n    return lisLength(heights);\n}\n\nprivate int lisLength(int[] nums) {\n    List<Integer> tails = new ArrayList<>();\n    for (int num : nums) {\n        int lo = 0, hi = tails.size();\n        while (lo < hi) {\n            int mid = (lo + hi) / 2;\n            if (tails.get(mid) < num) lo = mid + 1;\n            else hi = mid;\n        }\n        if (lo == tails.size()) tails.add(num);\n        else tails.set(lo, num);\n    }\n    return tails.size();\n}\n```",
+      "test_cases": "**Example:**\n- envelopes = [[5,4],[6,4],[6,7],[2,3]]\n- Output: `3` → [2,3] → [5,4] → [6,7]\n\n| envelopes | Output |\n|-----------|--------|\n| [[5,4],[6,4],[6,7],[2,3]] | 3 |\n| [[1,1],[1,1],[1,1]] | 1 |\n| [[2,100],[3,200],[4,300],[5,500],[5,400],[5,250],[6,400],[7,300]] | 5 |\n| [[1,2]] | 1 |",
+      "images": []
+    }
+  ]
+}

@@ -945,6 +945,28 @@
     const toolsGrid = document.getElementById('toolsGrid');
     if (toolsGrid) {
       toolsGrid.innerHTML = `
+        <a class="tool-card" href="questions-viewer.html" style="border-color: rgba(108,140,255,0.2); background: linear-gradient(135deg, rgba(108,140,255,0.06) 0%, transparent 60%);">
+          <div class="tool-card-icon">🎯</div>
+          <div class="tool-card-body">
+            <div class="tool-card-title">Interview Q&amp;A Viewer</div>
+            <div class="tool-card-desc">2900+ senior engineer Q&amp;As across 20 topics. Practice one-by-one with randomized flashcards or review all at once with show/hide answers.</div>
+          </div>
+          <div class="tool-card-footer">
+            <span class="tool-pill" style="background:rgba(108,140,255,0.12);color:#6c8cff">2900+ Q&amp;As</span>
+            <span class="tool-arrow">${arrowSvg}</span>
+          </div>
+        </a>
+        <a class="tool-card" href="dsa-questions-viewer.html" style="border-color: rgba(16,185,129,0.2); background: linear-gradient(135deg, rgba(16,185,129,0.06) 0%, transparent 60%);">
+          <div class="tool-card-icon">📊</div>
+          <div class="tool-card-body">
+            <div class="tool-card-title">DSA &amp; Logic Puzzles Viewer</div>
+            <div class="tool-card-desc">560 interactive DSA and logic puzzle Q&amp;As across 22 topics. Go through problems with flashcards or review all at once.</div>
+          </div>
+          <div class="tool-card-footer">
+            <span class="tool-pill" style="background:rgba(16,185,129,0.12);color:#10b981">560 Q&amp;As</span>
+            <span class="tool-arrow">${arrowSvg}</span>
+          </div>
+        </a>
         <a class="tool-card" href="codechecker.html">
           <div class="tool-card-icon">💻</div>
           <div class="tool-card-body">
