@@ -2618,6 +2618,115 @@
                     "IPFS (content-addressed, DHT-based distributed storage) instead of BitTorrent — generalizes the swarm/DHT idea beyond single-file torrents into a persistent, content-addressed web, at the cost of a more complex protocol and different caching/pinning incentive model."
                 ]
             },
+            {
+                id: "kafka-eks-keda",
+                name: "Kafka on EKS with KEDA",
+                tag: "highly scalable",
+                img: "images/kafkaeksekdaarchitecture.png",
+                goals: ["Highly Available", "Scalable", "Fault Tolerant", "Auto-scaling", "Durable"],
+                overview: "Running Kafka on Kubernetes (EKS) means treating brokers as stateful pods backed by persistent volumes, while KEDA closes the loop by scaling consumer pods up and down based on real consumer lag rather than CPU/memory alone.",
+                dataFlow: "<b>Produce:</b> Producers (apps/services) send messages to a Kubernetes Service (ClusterIP/NodePort) fronting the Kafka Brokers, exposed internally via a Headless Service so each broker pod gets a stable network identity. <br><br><b>Broker Storage & Replication:</b> Each broker pod (broker-0, broker-1, broker-2) hosts leader and follower replicas for different topic-partitions (e.g. Topic A/Partition 0 leads on broker-0, follows on the others), backed by Persistent Volumes (EBS gp3/io2) for durability. Cluster config enforces replication.factor=3, min.insync.replicas=2, and acks=all. <br><br><b>Consume:</b> Consumers (apps/services) read from the brokers via the Kubernetes Service. <br><br><b>Autoscaling:</b> KEDA monitors consumer lag (via Prometheus/Burrow), and scales the consumer Deployment's HPA up when lag exceeds a threshold and down when lag drops, so consumer capacity tracks real backlog instead of static replica counts.",
+                keyIdea: "The architecture separates two scaling/reliability concerns: broker-side durability (replication factor, acks, ISR, persistent volumes) guarantees no data loss, while KEDA's lag-based autoscaling on the consumer side ensures processing capacity elastically matches incoming message volume — neither is achievable by naive CPU-based Kubernetes autoscaling alone.",
+                flow: ["Producers send messages", "K8s Service routes to broker leader", "Leader replicates to followers (ISR)", "Message durably committed (acks=all)", "Consumers pull via K8s Service", "KEDA monitors lag", "HPA scales consumer pods", "Leader failure triggers new election"],
+                components: [
+                    "<b>Kubernetes Service (ClusterIP/NodePort):</b> Routes produce/consume traffic to the appropriate broker pods without exposing pod-level networking details.",
+                    "<b>Kafka Brokers (Headless Service):</b> Gives each broker pod (broker-0/1/2) a stable, individually addressable DNS identity required for Kafka's peer-to-peer replication protocol.",
+                    "<b>Broker Pods:</b> Each hosts a mix of partition leaders and followers across topics, distributing both write load and replica storage.",
+                    "<b>Persistent Volumes (EBS gp3/io2):</b> Durable block storage per broker so partition data survives pod restarts/rescheduling.",
+                    "<b>Zookeeper (optional, KRaft mode):</b> Traditionally coordinates broker metadata/leader election; KRaft mode removes this dependency by having brokers manage metadata internally.",
+                    "<b>KEDA Operator:</b> Watches external metrics (Kafka consumer lag) and drives a ScaledObject/HPA to resize the consumer Deployment.",
+                    "<b>Prometheus / Burrow:</b> Exposes consumer lag metrics that KEDA polls to make scaling decisions.",
+                    "<b>Consumer Deployment (HPA via KEDA):</b> The actual pool of consumer pods, scaled between minReplicaCount and maxReplicaCount based on lag."
+                ],
+                serviceFlow: [
+                    { step: 1, from: "Producers (Apps/Services)", to: "Kubernetes Service", detail: "Messages are sent to a ClusterIP/NodePort Service, which abstracts away which specific broker pod handles the write." },
+                    { step: 2, from: "Kubernetes Service", to: "Broker Pod (Partition Leader)", detail: "The Service routes the request to the broker currently holding the leader replica for the target partition — only the leader accepts reads/writes." },
+                    { step: 3, from: "Leader Broker", to: "Follower Brokers", detail: "The leader replicates the write to its N-1 followers; with acks=all, the producer waits until min.insync.replicas (2) confirm the write before it's considered committed." },
+                    { step: 4, from: "Broker Pods", to: "Persistent Volumes (EBS)", detail: "Each broker persists partition segments to its attached EBS volume (gp3/io2) so data survives pod rescheduling or node failure." },
+                    { step: 5, from: "Consumers (Apps/Services)", to: "Kubernetes Service", detail: "Consumers pull messages through the same Service abstraction, which routes to the correct partition leader." },
+                    { step: 6, from: "KEDA Operator", to: "Prometheus/Burrow", detail: "KEDA periodically (default 30s polling interval) queries lag metrics for the configured consumer group and topic." },
+                    { step: 7, from: "KEDA Operator", to: "HPA / Consumer Deployment", detail: "If lag exceeds lagThreshold (e.g. 1000), KEDA scales the consumer Deployment up (to maxReplicaCount); if lag falls below threshold after the cooldown period, it scales back down." },
+                    { step: 8, from: "Broker-1 (Leader) Fails", to: "Group Coordinator / Remaining Brokers", detail: "On leader failure, an in-sync follower (e.g. broker-2) is automatically elected as the new leader, and traffic for that partition reroutes to it." },
+                    { step: 9, from: "Consumer Group Coordinator", to: "Consumer Instances", detail: "When a consumer leaves/joins (e.g. C2 leaves a 3-consumer group), the coordinator triggers a stop-the-world rebalance, reassigning partitions among remaining consumers (Range, RoundRobin, or CooperativeSticky strategy)." }
+                ],
+                componentImportance: [
+                    { name: "Headless Service for Brokers", why: "Kafka's replication protocol needs brokers to address each other directly and consistently by stable hostname, which a normal load-balanced Service would break.", ifMissing: "Broker-to-broker replication traffic could be misrouted or load-balanced incorrectly, breaking leader-follower sync." },
+                    { name: "Replication Factor >= 3 with min.insync.replicas = 2", why: "Guarantees that a write is durable across multiple failure domains before being acknowledged, and that the cluster can tolerate at least one broker failure without data loss.", ifMissing: "A single broker failure could cause data loss or make the cluster unable to accept writes safely." },
+                    { name: "acks=all Producer Config", why: "Forces the producer to wait for acknowledgment from all in-sync replicas, trading a bit of latency for strong durability guarantees on critical data.", ifMissing: "Messages could be acknowledged to the producer before they're safely replicated, risking silent data loss on leader failure." },
+                    { name: "Persistent Volumes (EBS)", why: "Kafka brokers are stateful; pod restarts/rescheduling in Kubernetes are common, and without durable storage, partition data would be lost every time a pod moves.", ifMissing: "Broker pod restarts would wipe partition data, making the cluster unreliable for any persistent workload." },
+                    { name: "KEDA Lag-Based Autoscaling", why: "Consumer throughput needs to track actual backlog (lag), not proxy metrics like CPU, since a consumer can be CPU-idle while lag balloons during an upstream burst.", ifMissing: "Consumer pod count would stay static or scale on the wrong signal, causing lag to grow unbounded during traffic spikes or wasting resources during quiet periods." },
+                    { name: "Consumer Group Rebalancing", why: "Ensures partitions are always fully and exclusively assigned across active consumers as membership changes, so no partition is left unconsumed or double-consumed.", ifMissing: "Partitions could be orphaned (unconsumed, growing lag) or double-assigned (duplicate processing) whenever a consumer joins or leaves." }
+                ],
+                dbSchema: [
+                    { table: "topics", fields: "topic_name (PK), partition_count, replication_factor" },
+                    { table: "partitions", fields: "topic_name (FK), partition_id, leader_broker_id, isr_list" },
+                    { table: "brokers", fields: "broker_id (PK), pod_name, host, rack, status" },
+                    { table: "consumer_groups", fields: "group_id (PK), topic, coordinator_broker_id, rebalance_strategy" },
+                    { table: "consumer_offsets", fields: "group_id (FK), topic, partition_id, committed_offset" },
+                    { table: "keda_scaled_objects", fields: "name (PK), consumer_group, lag_threshold, min_replicas, max_replicas, polling_interval" }
+                ],
+                scalingStrategy: [
+                    "Broker pods scale by adding more brokers and rebalancing partitions across them (topic-level parallelism), bounded by partition count.",
+                    "Consumer pods scale elastically via KEDA's ScaledObject, watching per-topic/per-group lag and adjusting replicas between minReplicaCount and maxReplicaCount.",
+                    "Storage scales independently per broker via EBS volume expansion (gp3/io2) without needing to resize the whole cluster.",
+                    "Partition count is set up front for target throughput (num.partitions sized to expected consumer parallelism), since increasing partitions later can disrupt key-based ordering."
+                ],
+                failureScenarios: [
+                    { scenario: "Broker-1 (holding a partition leader) fails.", mitigation: "An in-sync follower (e.g. broker-2) is automatically elected as the new leader; producers/consumers reconnect and continue against the new leader with minimal disruption." },
+                    { scenario: "A consumer instance crashes or leaves the group.", mitigation: "The Group Coordinator detects the drop (session timeout), triggers a rebalance, and reassigns that consumer's partitions to the remaining active consumers." },
+                    { scenario: "Consumer lag spikes sharply during a traffic burst.", mitigation: "KEDA detects lag exceeding lagThreshold and scales the consumer Deployment up (within maxReplicaCount) to increase parallel processing capacity." },
+                    { scenario: "A broker pod is rescheduled to a different node.", mitigation: "The Persistent Volume (EBS) reattaches to the new pod location, and the Headless Service DNS entry updates so peers can still reach it by stable name." }
+                ],
+                tradeoffs: [
+                    "acks=all with min.insync.replicas=2 adds write latency compared to acks=1, but is necessary for critical/financial data where message loss is unacceptable.",
+                    "KEDA's polling interval (default 30s) means scaling reacts to lag with some delay — tunable, but too aggressive a poll rate increases load on the metrics backend.",
+                    "Higher partition counts improve consumer parallelism but increase overhead (more replication traffic, longer leader elections, more open file handles per broker)."
+                ],
+                keyConsiderations: [
+                    "Stateful broker pods on Kubernetes require persistent volumes and stable network identity (headless service)",
+                    "KRaft mode removes the Zookeeper dependency for metadata/leader election",
+                    "Lag-based autoscaling (KEDA) instead of CPU-based HPA for consumer workloads",
+                    "Replication factor, min.insync.replicas, and acks=all tuned for durability vs latency",
+                    "Consumer group rebalancing strategy affects disruption during scaling/membership changes",
+                    "AWS-specific integrations: EBS CSI driver for storage, NLB/ALB for external access, IRSA for secure AWS API access",
+                    "CloudWatch for logs/metrics, S3 for backups/snapshots",
+                    "Idempotent producers to avoid duplicate writes on retries"
+                ],
+                metrics: ["Consumer Lag", "Under Replicated Partitions", "Offline Partitions", "Leader Elections (count)", "Request Latency", "Bytes In/Out"],
+                interviewTips: [
+                    "Emphasize the split between broker-side durability guarantees (replication, ISR, acks) and consumer-side elasticity (KEDA lag-based scaling) — they solve different problems.",
+                    "Be ready to explain why lag is a better autoscaling signal than CPU for consumers: a consumer can be CPU-idle while lag grows if it's I/O-bound or downstream-throttled.",
+                    "Mention KRaft mode as the modern alternative to Zookeeper-based coordination, showing awareness of Kafka's evolving architecture.",
+                    "Discuss the leader election flow concretely: which broker takes over, how ISR determines eligible candidates, and what happens to in-flight writes."
+                ],
+                guesstimates: ["3 broker pods (replication factor 3)", "Consumer scale range: 1–20 pods", "Lag threshold: 1000 messages", "Polling interval: 30s", "Storage: EBS gp3/io2 per broker"],
+                securityConsiderations: [
+                    "Use AWS MSK IAM Auth or SASL/IAM for broker authentication instead of open PLAINTEXT listeners.",
+                    "Restrict external access via AWS NLB/ALB with appropriate security groups rather than exposing brokers directly to the internet.",
+                    "Use IAM Roles for Service Accounts (IRSA) so pods access AWS resources (S3, CloudWatch) with least-privilege, short-lived credentials instead of static keys.",
+                    "Encrypt data at rest on EBS volumes and in transit between producers/brokers/consumers.",
+                    "Enable idempotent producers (enable.idempotence=true) to prevent duplicate message injection on retries."
+                ],
+                costOptimization: [
+                    "Right-size partition count and consumer maxReplicaCount to avoid over-provisioning idle consumer pods during low-traffic periods.",
+                    "Use gp3 over io2 where sustained high IOPS isn't required, since gp3 is generally more cost-effective for typical Kafka workloads.",
+                    "Archive old segments/logs to S3 per retention policy (log.retention.hours) instead of keeping everything on hot EBS storage indefinitely.",
+                    "Tune KEDA's cooldownPeriod so consumer pods don't thrash (scale up/down repeatedly) under bursty-but-brief lag spikes."
+                ],
+                commonMistakes: [
+                    "Using a regular (non-headless) Service for broker-to-broker communication, breaking Kafka's need for stable per-broker addressing.",
+                    "Setting replication.factor too low (e.g. 1 or 2) for production, risking data loss on a single broker failure.",
+                    "Relying on CPU-based HPA instead of KEDA lag-based scaling for consumers, which reacts to the wrong signal.",
+                    "Not setting min.insync.replicas alongside acks=all, which can silently weaken the intended durability guarantee.",
+                    "Ignoring rebalance strategy choice (defaulting to Range) when CooperativeSticky would reduce disruption during frequent scaling events."
+                ],
+                capTheoremNotes: "Kafka brokers favor CP-leaning behavior for committed writes when acks=all and min.insync.replicas is set — a write isn't acknowledged until durability is assured, even at some latency cost. Consumer-side lag tolerance is more AP-leaning: a temporarily lagging consumer group is an acceptable, self-correcting condition rather than a hard failure, which is exactly what KEDA's elastic scaling is designed to smooth out.",
+                alternativeApproaches: [
+                    "Managed Kafka (AWS MSK) instead of self-hosted-on-EKS — less operational overhead for broker management, but less control over pod-level tuning and Kubernetes-native integration.",
+                    "CPU/memory-based HPA instead of KEDA — simpler to configure, but a poor proxy for actual backlog and can under- or over-scale consumers relative to real demand.",
+                    "Zookeeper-based coordination instead of KRaft — more battle-tested historically, but adds an extra stateful system to operate and is being phased out by the Kafka community."
+                ]
+            },
         ];
 
         const picker = document.getElementById('picker');
