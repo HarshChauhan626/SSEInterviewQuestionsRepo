@@ -1,0 +1,99 @@
+{
+  "topic": "DSA: Disjoint Set",
+  "description": "Union-Find, connectivity, and cycle detection",
+  "icon": "🕸️",
+  "accent": "#ec4899",
+  "source": "disjoinset.md",
+  "questions": [
+    {
+      "id": 1,
+      "question": "Number of Connected Components in an Undirected Graph",
+      "problem": "Given `n` nodes (0 to n-1) and a list of undirected edges, return the **number of connected components**.",
+      "intuition": "Every node starts as its own component (n components). Each time we successfully `union` two nodes that were in **different** components, the total count drops by 1.\n\n**Why Union-Find?**\n- Merging groups and counting them is the literal definition of DSU.\n- BFS/DFS works too but UF is cleaner and faster for dynamic connectivity.\n\n**Approach**\n1. Initialize DSU with `n` nodes → `count = n`.\n2. For each edge `(u, v)`: if `union(u, v)` returns true (different components), decrement `count`.\n3. Return `count`.\n\n\n**Complexity:** Time O(E · α(N)) ≈ O(E) | Space O(N)",
+      "code": "```java\nclass Solution {\n    public int countComponents(int n, int[][] edges) {\n        UnionFind uf = new UnionFind(n);\n        int count = n;\n        for (int[] e : edges) {\n            if (uf.union(e[0], e[1])) count--;\n        }\n        return count;\n    }\n}\n```",
+      "test_cases": "**Example:**\n```\nInput:  n = 5, edges = [[0,1],[1,2],[3,4]]\nOutput: 2\n```\n\n```\nn=5, edges=[[0,1],[1,2],[3,4]]        → 2\nn=5, edges=[]                          → 5\nn=5, edges=[[0,1],[1,2],[2,3],[3,4]]  → 1\nn=1, edges=[]                          → 1\n```",
+      "images": []
+    },
+    {
+      "id": 2,
+      "question": "Number of Islands (Union-Find approach)",
+      "problem": "Given a 2D grid of `'1'` (land) and `'0'` (water), return the **number of islands**.",
+      "intuition": "Treat each land cell as a node. Adjacent land cells belong to the same island. Use DSU to merge adjacent cells; the number of distinct roots among land cells = number of islands.\n\n**Why Union-Find?**\nAvoids recursive DFS stack overflow for large grids; also more intuitive for \"merging regions\".\n\n**Approach**\n1. Map 2D index `(r, c)` → 1D index `r * cols + c`.\n2. Initialize DSU for all cells; track `islandCount` = number of '1' cells.\n3. For each land cell, try to union with right and down neighbors; decrement count on successful union.\n4. Return `islandCount`.\n\n\n**Complexity:** Time O(M·N·α(M·N)) | Space O(M·N)",
+      "code": "```java\nclass Solution {\n    public int numIslands(char[][] grid) {\n        int rows = grid.length, cols = grid[0].length;\n        UnionFind uf = new UnionFind(rows * cols);\n        int count = 0;\n\n        int[][] dirs = {{0,1},{1,0}};\n        for (int r = 0; r < rows; r++) {\n            for (int c = 0; c < cols; c++) {\n                if (grid[r][c] == '1') {\n                    count++;\n                    for (int[] d : dirs) {\n                        int nr = r + d[0], nc = c + d[1];\n                        if (nr < rows && nc < cols && grid[nr][nc] == '1') {\n                            if (uf.union(r * cols + c, nr * cols + nc)) count--;\n                        }\n                    }\n                }\n            }\n        }\n        return count;\n    }\n}\n```",
+      "test_cases": "**Example:**\n```\nInput:\n  1 1 0\n  1 0 0\n  0 0 1\nOutput: 2\n```\n\n```\nAll '1's 3×3             → 1\nAll '0's 3×3             → 0\nCheckerboard pattern     → number of '1' cells\nSingle cell '1'          → 1\n```",
+      "images": []
+    },
+    {
+      "id": 3,
+      "question": "Redundant Connection",
+      "problem": "Given a tree with `n` nodes and `n` edges (one extra edge creates a cycle), return the **edge that creates the cycle**.",
+      "intuition": "Process edges one by one. The **first edge** where both endpoints are **already in the same component** is the redundant one — adding it creates a cycle.\n\n**Why Union-Find?**\nCycle detection in an undirected graph is DSU's sweet spot: `union` returns false exactly when a cycle is formed.\n\n**Approach**\n1. Initialize DSU.\n2. For each edge `(u, v)`: if `find(u) == find(v)` → return this edge. Otherwise `union(u, v)`.\n\n\n**Complexity:** Time O(N·α(N)) | Space O(N)",
+      "code": "```java\nclass Solution {\n    public int[] findRedundantConnection(int[][] edges) {\n        UnionFind uf = new UnionFind(edges.length + 1);\n        for (int[] e : edges) {\n            if (!uf.union(e[0], e[1])) return e;\n        }\n        return new int[]{};\n    }\n}\n```",
+      "test_cases": "**Example:**\n```\nInput:  edges = [[1,2],[1,3],[2,3]]\nOutput: [2,3]\n```\n\n```\n[[1,2],[1,3],[2,3]]         → [2,3]\n[[1,2],[2,3],[3,4],[1,4],[1,5]] → [1,4]\n[[1,2]]                     → (invalid, but handle gracefully)\n```",
+      "images": []
+    },
+    {
+      "id": 4,
+      "question": "Accounts Merge",
+      "problem": "Given a list of accounts where each account is `[name, email1, email2, ...]`, merge accounts that share at least one email. Return merged accounts sorted.",
+      "intuition": "Emails are nodes. If two emails appear in the same account, they belong to the same \"person\". Union all emails in the same account together. Then group by root.\n\n**Why Union-Find?**\nMerging equivalence classes (emails belonging to same person) across multiple lists is exactly what DSU does efficiently.\n\n**Approach**\n1. Map each email to a unique integer ID.\n2. For each account, union all emails with the first email of that account.\n3. Group emails by their root ID; sort each group; prepend the name.\n\n\n**Complexity:** Time O(N·K·log(N·K)) | Space O(N·K) where K = avg emails per account",
+      "code": "```java\nclass Solution {\n    public List<List<String>> accountsMerge(List<List<String>> accounts) {\n        Map<String, Integer> emailId = new HashMap<>();\n        Map<String, String> emailName = new HashMap<>();\n        int id = 0;\n\n        for (List<String> acc : accounts) {\n            String name = acc.get(0);\n            for (int i = 1; i < acc.size(); i++) {\n                String email = acc.get(i);\n                if (!emailId.containsKey(email)) {\n                    emailId.put(email, id++);\n                }\n                emailName.put(email, name);\n            }\n        }\n\n        UnionFind uf = new UnionFind(id);\n        for (List<String> acc : accounts) {\n            int first = emailId.get(acc.get(1));\n            for (int i = 2; i < acc.size(); i++) {\n                uf.union(first, emailId.get(acc.get(i)));\n            }\n        }\n\n        Map<Integer, List<String>> groups = new HashMap<>();\n        for (String email : emailId.keySet()) {\n            int root = uf.find(emailId.get(email));\n            groups.computeIfAbsent(root, k -> new ArrayList<>()).add(email);\n        }\n\n        List<List<String>> result = new ArrayList<>();\n        for (List<String> emails : groups.values()) {\n            Collections.sort(emails);\n            emails.add(0, emailName.get(emails.get(0)));\n            result.add(emails);\n        }\n        return result;\n    }\n}\n```",
+      "test_cases": "**Example:**\n```\nInput:  [[\"John\",\"a@a\",\"b@b\"],[\"John\",\"b@b\",\"c@c\"],[\"Mary\",\"d@d\"]]\nOutput: [[\"John\",\"a@a\",\"b@b\",\"c@c\"],[\"Mary\",\"d@d\"]]\n```\n\n```\nNo shared emails → same accounts returned separately\nAll same emails  → single merged account\nName differs but email same → still merge (edge case: problem says merge by email)\n```",
+      "images": []
+    },
+    {
+      "id": 5,
+      "question": "Graph Valid Tree",
+      "problem": "Given `n` nodes and a list of undirected edges, determine whether the edges form a **valid tree**.",
+      "intuition": "A valid tree on `n` nodes must satisfy **two conditions**:\n1. Exactly `n-1` edges (necessary for connectivity without cycles).\n2. No cycles (checked via DSU).\n\n**Why Union-Find?**\nBoth cycle detection and connectivity can be verified in a single pass with DSU.\n\n**Approach**\n1. If `edges.length != n - 1` → return false immediately.\n2. Run DSU on all edges; if any `union` returns false → cycle → return false.\n3. Return true.\n\n\n**Complexity:** Time O(N·α(N)) | Space O(N)",
+      "code": "```java\nclass Solution {\n    public boolean validTree(int n, int[][] edges) {\n        if (edges.length != n - 1) return false;\n        UnionFind uf = new UnionFind(n);\n        for (int[] e : edges) {\n            if (!uf.union(e[0], e[1])) return false;\n        }\n        return true;\n    }\n}\n```",
+      "test_cases": "**Example:**\n```\nInput:  n=5, edges=[[0,1],[0,2],[0,3],[1,4]]\nOutput: true\n\nInput:  n=5, edges=[[0,1],[1,2],[2,3],[1,3],[1,4]]\nOutput: false\n```\n\n```\nn=1, edges=[]                      → true  (single node)\nn=2, edges=[[0,1],[0,1]]          → false (duplicate edge = cycle)\nn=5, edges with cycle              → false\nn=5, edges=[[0,1],[0,2],[0,3],[1,4]] → true\n```",
+      "images": []
+    },
+    {
+      "id": 6,
+      "question": "Smallest String With Swaps",
+      "problem": "Given a string `s` and a list of index pairs, you can swap characters at paired indices any number of times. Return the **lexicographically smallest** string.",
+      "intuition": "Indices connected (directly or transitively) by swap pairs form a component. Within a component, you can arrange characters in **any order** — so sort them and place the smallest characters at the smallest indices.\n\n**Why Union-Find?**\nTransitive connectivity (\"can reach X through swaps\") is precisely what DSU captures.\n\n**Approach**\n1. Union all pairs of indices.\n2. Group indices by their root.\n3. For each group, collect characters, sort them, and place them back at the sorted indices.\n\n\n**Complexity:** Time O(N log N) | Space O(N)",
+      "code": "```java\nclass Solution {\n    public String smallestStringWithSwaps(String s, List<List<Integer>> pairs) {\n        int n = s.length();\n        UnionFind uf = new UnionFind(n);\n        for (List<Integer> p : pairs) uf.union(p.get(0), p.get(1));\n\n        Map<Integer, List<Integer>> groups = new HashMap<>();\n        for (int i = 0; i < n; i++) {\n            groups.computeIfAbsent(uf.find(i), k -> new ArrayList<>()).add(i);\n        }\n\n        char[] res = new char[n];\n        for (List<Integer> indices : groups.values()) {\n            List<Character> chars = new ArrayList<>();\n            for (int idx : indices) chars.add(s.charAt(idx));\n            Collections.sort(indices);\n            Collections.sort(chars);\n            for (int i = 0; i < indices.size(); i++) res[indices.get(i)] = chars.get(i);\n        }\n        return new String(res);\n    }\n}\n```",
+      "test_cases": "**Example:**\n```\nInput:  s=\"dcab\", pairs=[[0,3],[1,2]]\nOutput: \"bacd\"\n```\n\n```\ns=\"dcab\", pairs=[[0,3],[1,2]]           → \"bacd\"\ns=\"dcab\", pairs=[[0,3],[1,2],[0,2]]     → \"abcd\"\ns=\"cba\",  pairs=[]                       → \"cba\"\ns=\"a\",    pairs=[]                       → \"a\"\n```",
+      "images": []
+    },
+    {
+      "id": 7,
+      "question": "Satisfiability of Equality Equations",
+      "problem": "Given equations like `\"a==b\"` and `\"a!=b\"`, determine whether all equations can be satisfied simultaneously.",
+      "intuition": "First process all `==` equations by unioning the variables. Then check all `!=` equations — if the two variables are in the **same component**, it's a contradiction.\n\n**Why Union-Find?**\nEquality is an equivalence relation; DSU models equivalence classes perfectly.\n\n**Approach**\n1. Map each variable to an integer (a→0 … z→25).\n2. First pass: union all `==` pairs.\n3. Second pass: for each `!=`, if `find(x) == find(y)` → return false.\n4. Return true.\n\n\n**Complexity:** Time O(N·α(26)) ≈ O(N) | Space O(1) (fixed 26 nodes)",
+      "code": "```java\nclass Solution {\n    public boolean equationsPossible(String[] equations) {\n        UnionFind uf = new UnionFind(26);\n        for (String eq : equations) {\n            if (eq.charAt(1) == '=') {\n                uf.union(eq.charAt(0) - 'a', eq.charAt(3) - 'a');\n            }\n        }\n        for (String eq : equations) {\n            if (eq.charAt(1) == '!') {\n                if (uf.connected(eq.charAt(0) - 'a', eq.charAt(3) - 'a')) return false;\n            }\n        }\n        return true;\n    }\n}\n```",
+      "test_cases": "**Example:**\n```\nInput:  [\"a==b\",\"b!=c\",\"b==c\"]\nOutput: false\n```\n\n```\n[\"a==b\",\"b!=c\",\"b==c\"]   → false\n[\"c==c\",\"b==d\",\"x!=z\"]   → true\n[\"a==b\",\"a==c\",\"b!=c\"]   → false\n[\"a!=a\"]                  → false\n```",
+      "images": []
+    },
+    {
+      "id": 8,
+      "question": "Minimum Spanning Tree — Kruskal's Algorithm",
+      "problem": "Given `n` nodes and weighted edges, find the **minimum cost to connect all nodes** (Minimum Spanning Tree).",
+      "intuition": "Greedily pick the cheapest edge that doesn't create a cycle. DSU tells us instantly whether adding an edge creates a cycle (both endpoints in same component).\n\n**Why Union-Find?**\nKruskal's algorithm **is** the textbook application of DSU. Checking for cycles across a sorted edge list is O(α(N)) per edge.\n\n**Approach**\n1. Sort edges by weight.\n2. Greedily take each edge; if it connects two different components (`union` returns true), add its weight and decrement remaining node count.\n3. Stop when all nodes are connected (1 component).\n\n\n**Complexity:** Time O(E log E) | Space O(N)",
+      "code": "```java\nclass Solution {\n    public int minimumCost(int n, int[][] connections) {\n        Arrays.sort(connections, (a, b) -> a[2] - b[2]);\n        UnionFind uf = new UnionFind(n + 1);\n        int cost = 0, edges = 0;\n\n        for (int[] conn : connections) {\n            if (uf.union(conn[0], conn[1])) {\n                cost += conn[2];\n                if (++edges == n - 1) return cost;\n            }\n        }\n        return -1; // not fully connected\n    }\n}\n```",
+      "test_cases": "**Example:**\n```\nInput:  n=4, edges=[[0,1,10],[0,2,6],[0,3,5],[1,3,15],[2,3,4]]\nOutput: 19   (edges: 2-3 cost 4, 0-3 cost 5, 0-1 cost 10)\n```\n\n```\nn=2, edges=[[0,1,5]]                           → 5\nn=4, edges=[[0,1,10],[0,2,6],[0,3,5],[2,3,4]] → 19\nAlready fully connected with same weights       → n-1 * weight\nn=1, edges=[]                                  → 0\n```",
+      "images": []
+    },
+    {
+      "id": 9,
+      "question": "Detect Cycle in Undirected Graph / Number of Operations to Make Network Connected",
+      "problem": "You have `n` computers and `connections` (cables). Find the **minimum number of cables to move** to make all computers connected. Return -1 if impossible.",
+      "intuition": "- You need at least `n-1` edges to connect `n` nodes. If `connections.length < n-1` → return -1.\n- Each redundant edge (both endpoints in same component) is a \"spare cable\" that can be reused.\n- Number of moves = number of disconnected components - 1.\n\n**Why Union-Find?**\nCounting components and detecting redundant edges simultaneously is effortless with DSU.\n\n**Approach**\n1. If total edges < n-1 → return -1.\n2. Process all edges; count extra edges (failed unions) and components.\n3. Answer = components - 1 (we have enough extras since edges ≥ n-1).\n\n\n**Complexity:** Time O(E·α(N)) | Space O(N)",
+      "code": "```java\nclass Solution {\n    public int makeConnected(int n, int[][] connections) {\n        if (connections.length < n - 1) return -1;\n\n        UnionFind uf = new UnionFind(n);\n        int components = n;\n\n        for (int[] conn : connections) {\n            if (uf.union(conn[0], conn[1])) components--;\n        }\n        return components - 1;\n    }\n}\n```",
+      "test_cases": "**Example:**\n```\nInput:  n=4, connections=[[0,1],[0,2],[1,2]]\nOutput: 1\n```\n\n```\nn=4, connections=[[0,1],[0,2],[1,2]]                → 1\nn=6, connections=[[0,1],[0,2],[0,3],[1,2],[1,3]]    → 2\nn=6, connections=[[0,1],[0,2],[0,3],[1,2]]          → -1 (not enough cables)\nn=1, connections=[]                                  → 0\n```",
+      "images": []
+    },
+    {
+      "id": 10,
+      "question": "Swim in Rising Water",
+      "problem": "In an N×N grid, cell `(r, c)` has elevation `grid[r][c]`. Wait time `t` means you can swim through cells with elevation ≤ t. Find the **minimum time** to swim from top-left `(0,0)` to bottom-right `(N-1,N-1)`.",
+      "intuition": "Sort all cells by elevation. Add cells from lowest to highest. After adding each cell, union it with adjacent already-added cells. The answer is the elevation of the cell we add that **first connects (0,0) to (N-1,N-1)**.\n\n**Why Union-Find?**\nWe need to detect the moment two specific nodes become connected as we incrementally add nodes — a classic DSU \"online connectivity\" query.\n\n**Approach**\n1. Collect all `(elevation, row, col)` triples and sort by elevation.\n2. Maintain a `visited` boolean grid.\n3. For each cell in sorted order: mark visited, union with visited neighbors.\n4. After each union, check if `(0,0)` and `(N-1,N-1)` are connected → return current elevation.\n\n\n**Complexity:** Time O(N² log N²) = O(N² log N) | Space O(N²)",
+      "code": "```java\nclass Solution {\n    public int swimInWater(int[][] grid) {\n        int n = grid.length;\n        int[][] cells = new int[n * n][3];\n        for (int r = 0; r < n; r++)\n            for (int c = 0; c < n; c++)\n                cells[r * n + c] = new int[]{grid[r][c], r, c};\n\n        Arrays.sort(cells, (a, b) -> a[0] - b[0]);\n\n        UnionFind uf = new UnionFind(n * n);\n        boolean[][] visited = new boolean[n][n];\n        int[][] dirs = {{0,1},{0,-1},{1,0},{-1,0}};\n\n        for (int[] cell : cells) {\n            int t = cell[0], r = cell[1], c = cell[2];\n            visited[r][c] = true;\n\n            for (int[] d : dirs) {\n                int nr = r + d[0], nc = c + d[1];\n                if (nr >= 0 && nr < n && nc >= 0 && nc < n && visited[nr][nc]) {\n                    uf.union(r * n + c, nr * n + nc);\n                }\n            }\n\n            if (uf.connected(0, n * n - 1)) return t;\n        }\n        return -1;\n    }\n}\n```",
+      "test_cases": "**Example:**\n```\nInput:\n  0 2\n  1 3\nOutput: 3\n```\n\n```\n[[0,2],[1,3]]          → 3\n[[0,1,2,3,4]...]       → depends on grid\n1×1 grid [[0]]        → 0\n2×2 [[0,1],[2,3]]     → 3\n```",
+      "images": []
+    }
+  ]
+}
