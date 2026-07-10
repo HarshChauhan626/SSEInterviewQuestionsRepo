@@ -610,6 +610,10 @@
     </a>
     <div class="nav-stats">
       <div class="nav-stat">
+        <strong id="qa-count">—</strong>
+        <span>Q&amp;A</span>
+      </div>
+      <div class="nav-stat">
         <strong id="quiz-count">—</strong>
         <span>Quizzes</span>
       </div>
@@ -639,6 +643,19 @@
       <span class="search-count" id="visibleCount"></span>
     </div>
 
+    <!-- Q&A section -->
+    <div id="qaSection" class="animate-in animate-delay-1">
+      <div class="section-header">
+        <span class="section-badge" style="background: rgba(108,140,255,0.1); border: 1px solid rgba(108,140,255,0.25); color: #6c8cff;">Q&amp;A</span>
+        <h2 class="section-title">Interview Q&amp;A</h2>
+        <div class="section-divider"></div>
+        <span class="section-count" id="qa-shown"></span>
+      </div>
+      <div class="quiz-grid" id="qaGrid">
+        <div class="empty" id="qaEmpty">No Q&amp;A match your search.</div>
+      </div>
+    </div>
+
     <!-- Quizzes section -->
     <div id="quizSection" class="animate-in animate-delay-2">
       <div class="section-header">
@@ -656,7 +673,7 @@
     <div id="notesSection" class="animate-in animate-delay-3">
       <div class="section-header">
         <span class="section-badge note">Notes</span>
-        <h2 class="section-title">Markdown Notes</h2>
+        <h2 class="section-title">DSA Markdown Notes</h2>
         <div class="section-divider"></div>
         <span class="section-count" id="notes-shown"></span>
       </div>
@@ -683,9 +700,20 @@
         <span class="section-badge quiz">Tools</span>
         <h2 class="section-title">Interactive Practice Tools</h2>
         <div class="section-divider"></div>
-        <span class="section-count">2 available</span>
+        <span class="section-count">3 available</span>
       </div>
       <div class="tools-grid" id="toolsGrid">
+        <a class="tool-card" href="questions-viewer.html" style="border-color: rgba(108,140,255,0.2); background: linear-gradient(135deg, rgba(108,140,255,0.06) 0%, transparent 60%);">
+          <div class="tool-card-icon">🎯</div>
+          <div class="tool-card-body">
+            <div class="tool-card-title">Interview Q&amp;A Viewer</div>
+            <div class="tool-card-desc">2900+ senior engineer Q&amp;As across 20 topics. Practice one-by-one with randomized flashcards or review all at once with show/hide answers.</div>
+          </div>
+          <div class="tool-card-footer">
+            <span class="tool-pill" style="background:rgba(108,140,255,0.12);color:#6c8cff">2900+ Q&amp;As</span>
+            <span class="tool-arrow">${arrowSvg}</span>
+          </div>
+        </a>
         <a class="tool-card" href="codechecker.html">
           <div class="tool-card-icon">💻</div>
           <div class="tool-card-body">
@@ -721,38 +749,38 @@
     /* ── Data (unchanged from original logic) ── */
     const fallbackFiles = [
       "custom-test.html",
-      "a2arag.md",
-      "agenticai.md",
-      "architecturalpatterns.md",
+      "questions-viewer.html?topic=questions-data/a2arag.json",
+      "questions-viewer.html?topic=questions-data/agenticai.json",
+      "questions-viewer.html?topic=questions-data/architecturalpatterns.json",
       "quiz.html?id=agenticai",
       "quiz.html?id=awssolutionarchitect",
       "quiz.html?id=databases",
-      "databases.md",
-      "distributedsystems.md",
-      "dotnet.md",
+      "questions-viewer.html?topic=questions-data/databases.json",
+      "questions-viewer.html?topic=questions-data/distributedsystems.json",
+      "questions-viewer.html?topic=questions-data/dotnet.json",
       "dsaeasytomedium.md",
       "dsaextended.html",
-      "golang.md",
-      "golangcodequestions.md",
+      "questions-viewer.html?topic=questions-data/golang.json",
+      "questions-viewer.html?topic=questions-data/golangcodequestions.json",
       "quiz.html?id=go",
-      "kafka.md",
+      "questions-viewer.html?topic=questions-data/kafka.json",
       "quiz.html?id=kafka",
-      "kubernetes.md",
-      "networkingessentials.md",
-      "nodejs.md",
+      "questions-viewer.html?topic=questions-data/kubernetes.json",
+      "questions-viewer.html?topic=questions-data/networkingessentials.json",
+      "questions-viewer.html?topic=questions-data/nodejs.json",
       "quiz.html?id=networking",
       "quiz.html?id=nodejs",
-      "observability.md",
+      "questions-viewer.html?topic=questions-data/observability.json",
       "quiz.html?id=postgresql",
-      "postgresql.md",
+      "questions-viewer.html?topic=questions-data/postgresql.json",
       "puzzles.md",
-      "react.md",
+      "questions-viewer.html?topic=questions-data/react.json",
       "quiz.html?id=reactnextjs",
-      "securityrelatedtopics.md",
-      "systemdesigneventdrivenetc.md",
-      "systemdesigninterviewdesigncheatsheet.md",
+      "questions-viewer.html?topic=questions-data/securityrelatedtopics.json",
+      "questions-viewer.html?topic=questions-data/systemdesigneventdrivenetc.json",
+      "questions-viewer.html?topic=questions-data/systemdesigninterviewdesigncheatsheet.json",
       "quiz.html?id=systemdesign",
-      "websocket.md"
+      "questions-viewer.html?topic=questions-data/websocket.json"
     ];
 
     const titleMap = {
@@ -861,7 +889,11 @@
     ]);
 
     function isNoteFile(file) {
-      return file.endsWith(".md") || visibleDsaNotes.has(file);
+      return (file.endsWith(".md") || visibleDsaNotes.has(file)) && !file.startsWith("questions-viewer.html");
+    }
+
+    function isQuestionFile(file) {
+      return file.startsWith("questions-viewer.html?topic=");
     }
 
     function noteHref(file) {
@@ -871,20 +903,29 @@
     let libraryFiles = [...fallbackFiles];
 
     /* ── DOM refs ── */
+    const qaGrid      = document.querySelector("#qaGrid");
     const quizGrid    = document.querySelector("#quizGrid");
     const notesGrid   = document.querySelector("#notesGrid");
     const filter      = document.querySelector("#filter");
     const count       = document.querySelector("#count");
     const visibleCount = document.querySelector("#visibleCount");
+    const qaCount     = document.querySelector("#qa-count");
     const quizCount   = document.querySelector("#quiz-count");
     const noteCount   = document.querySelector("#note-count");
+    const qaShown     = document.querySelector("#qa-shown");
     const quizShown   = document.querySelector("#quiz-shown");
     const notesShown  = document.querySelector("#notes-shown");
+    const qaEmpty     = document.querySelector("#qaEmpty");
     const quizEmpty   = document.querySelector("#quizEmpty");
     const notesEmpty  = document.querySelector("#notesEmpty");
 
     function titleFromFile(file) {
       if (titleMap[file]) return titleMap[file];
+      if (file.startsWith("questions-viewer.html?topic=")) {
+        const jsonFile = file.split("/").pop();
+        const base = jsonFile.replace(".json", "");
+        return titleMap[base + ".md"] || base;
+      }
       return file
         .replace(/\.(md|html)$/i, "")
         .replace(/([a-z])([A-Z])/g, "$1 $2")
@@ -986,8 +1027,32 @@
         file.toLowerCase().includes(term) || titleFromFile(file).toLowerCase().includes(term)
       );
 
-      const quizFiles = allFiles.filter(f => f.includes("quiz.html"));
+      const qaFiles = allFiles.filter(isQuestionFile);
+      const quizFiles = allFiles.filter(f => f.includes("quiz.html") && !isQuestionFile(f));
       const noteFiles = allFiles.filter(isNoteFile);
+
+      /* Render Q&A */
+      const qaCards = qaFiles.map(file => {
+        const href  = file;
+        const title = titleFromFile(file);
+        // Find original .md name to look up icon
+        const base = file.split("/").pop().replace(".json", ".md");
+        const icon  = noteIconMap[base] || "📚";
+        return `
+          <a class="quiz-card" href="${href}" style="border-color: rgba(108,140,255,0.2)">
+            <div class="quiz-card-icon" style="background: rgba(108,140,255,0.1); border-color: rgba(108,140,255,0.2); color: #6c8cff;">${icon}</div>
+            <div class="quiz-card-body">
+              <div class="quiz-card-title">${title}</div>
+              <div class="quiz-card-file">${file.split("/").pop()}</div>
+            </div>
+            <div class="quiz-card-footer">
+              <span class="quiz-pill" style="background: rgba(108,140,255,0.1); color: #6c8cff;">Q&amp;A</span>
+              <span class="card-arrow">${arrowSvg}</span>
+            </div>
+          </a>`;
+      });
+      qaGrid.innerHTML = qaCards.join("") + `<div class="empty" id="qaEmpty" style="display:${qaCards.length ? 'none' : 'block'}">No Q&amp;A match your search.</div>`;
+      qaShown.textContent = `${qaFiles.length} shown`;
 
       /* Render quizzes */
       const quizCards = quizFiles.map(file => {
@@ -1031,8 +1096,11 @@
       notesShown.textContent = `${noteFiles.length} shown`;
 
       /* Update counters */
-      const totalQuizzes = libraryFiles.filter(f => f.includes("quiz.html")).length;
+      const totalQa      = libraryFiles.filter(isQuestionFile).length;
+      const totalQuizzes = libraryFiles.filter(f => f.includes("quiz.html") && !isQuestionFile(f)).length;
       const totalNotes   = libraryFiles.filter(isNoteFile).length;
+      
+      qaCount.textContent   = totalQa;
       quizCount.textContent = totalQuizzes;
       noteCount.textContent = totalNotes;
       count.textContent     = libraryFiles.length;
@@ -1047,7 +1115,21 @@
         const manifest = await response.json();
         const files = Array.isArray(manifest) ? manifest : manifest.files;
         if (Array.isArray(files) && files.length) {
-          const noteFiles = files.filter(file => file.endsWith(".md") && !hiddenDsaTopicNotes.has(file));
+          const rawNoteFiles = files.filter(file => file.endsWith(".md") && !hiddenDsaTopicNotes.has(file));
+          
+          const noteFiles = [];
+          const qaFiles = [];
+          
+          rawNoteFiles.forEach(f => {
+            if (f.startsWith("dsa") || f === "puzzles.md") {
+              noteFiles.push(f);
+            } else {
+              // Except for systemdesignterminology which is md but has its own html page, wait, terminology is in rawNoteFiles?
+              // Actually let's just make it a question file.
+              qaFiles.push(`questions-viewer.html?topic=questions-data/${f.replace(".md", ".json")}`);
+            }
+          });
+
           const quizFiles = [
             "custom-test.html",
             "quiz.html?id=agenticai",
@@ -1061,7 +1143,7 @@
             "quiz.html?id=systemdesign",
             "quiz.html?id=go"
           ];
-          libraryFiles = [...noteFiles, "dsaextended.html", ...quizFiles].sort((a, b) => a.localeCompare(b));
+          libraryFiles = [...noteFiles, "dsaextended.html", ...qaFiles, ...quizFiles].sort((a, b) => a.localeCompare(b));
         }
       } catch (error) {
         libraryFiles = [...fallbackFiles];

@@ -1,0 +1,453 @@
+{
+  "topic": ".NET / C#",
+  "description": "C# fundamentals, ASP.NET, async/await, LINQ, and .NET internals",
+  "icon": "🔷",
+  "accent": "#60a5fa",
+  "source": "dotnet.md",
+  "questions": [
+    {
+      "id": 1,
+      "question": "Difference between abstraction and encapsulation?",
+      "answer": "- **Abstraction** is about *what* an object does — it hides complexity by exposing only relevant operations (via interfaces or abstract classes). Think: \"I can call `Drive()` on a car without knowing how the engine works.\"\n- **Encapsulation** is about *how* the object protects its state — it bundles data with methods and restricts direct access using `private`/`protected`. Think: \"The car's engine internals are hidden behind a casing.\"\n\n```csharp\n// Abstraction: consumer only sees the interface\npublic interface IPaymentGateway {\n    bool ProcessPayment(decimal amount);\n}\n\n// Encapsulation: internal balance is hidden, mutated only through methods\npublic class BankAccount {\n    private decimal _balance;\n    public void Deposit(decimal amount) => _balance += amount;\n    public decimal GetBalance() => _balance;\n}\n```",
+      "images": []
+    },
+    {
+      "id": 2,
+      "question": "Difference between interface and abstract class?",
+      "answer": "| Feature | Interface | Abstract Class |\n|---|---|---|\n| Multiple inheritance | ✅ Yes | ❌ No (single only) |\n| Constructor | ❌ No | ✅ Yes |\n| Fields | ❌ No (only properties) | ✅ Yes |\n| Access modifiers on members | All public by default | Any modifier |\n| Default implementation | ✅ (C# 8+) | ✅ |\n| Use when | Defining a capability/contract | Sharing base logic + enforcing structure |\n\n**Rule of thumb:** Use an interface when you want to say \"this thing *can do* X\". Use an abstract class when you want to say \"this thing *is a kind of* X and shares common code.\"\n\n```csharp\npublic interface ILoggable {\n    void Log(string message);\n}\n\npublic abstract class BaseService {\n    protected readonly ILogger _logger;\n    protected BaseService(ILogger logger) => _logger = logger;\n    public abstract void Execute(); // must be implemented\n    public void LogStart() => _logger.LogInformation(\"Starting...\");\n}\n```",
+      "images": []
+    },
+    {
+      "id": 3,
+      "question": "Difference between method overloading and overriding?",
+      "answer": "- **Overloading** — same method name, different parameters (resolved at compile time / static dispatch).\n- **Overriding** — subclass replaces a `virtual`/`abstract` method from the base class (resolved at runtime / dynamic dispatch).\n\n```csharp\n// Overloading (compile time)\npublic int Add(int a, int b) => a + b;\npublic double Add(double a, double b) => a + b;\n\n// Overriding (runtime)\npublic class Animal {\n    public virtual string Speak() => \"...\";\n}\npublic class Dog : Animal {\n    public override string Speak() => \"Woof\";\n}\n```",
+      "images": []
+    },
+    {
+      "id": 4,
+      "question": "What is polymorphism?",
+      "answer": "Polymorphism means \"many forms\" — the ability of different types to be treated as the same base type, while each provides its own behavior.\n\n- **Compile-time (static):** Method overloading, operator overloading.\n- **Runtime (dynamic):** Method overriding via `virtual`/`override`.\n\n```csharp\nList<Animal> animals = new() { new Dog(), new Cat() };\nforeach (var a in animals)\n    Console.WriteLine(a.Speak()); // calls the correct override per type\n```\n\nThis is essential for writing extensible, open/closed-principle-compliant code.",
+      "images": []
+    },
+    {
+      "id": 5,
+      "question": "What is inheritance?",
+      "answer": "Inheritance lets a class (child/derived) acquire the fields, properties, and methods of another class (parent/base), enabling code reuse and establishing an \"is-a\" relationship.\n\n```csharp\npublic class Vehicle {\n    public int Speed { get; set; }\n    public void Accelerate() => Speed += 10;\n}\n\npublic class Car : Vehicle {\n    public int Doors { get; set; }\n}\n\nvar car = new Car();\ncar.Accelerate(); // inherited from Vehicle\n```\n\nC# supports single class inheritance but multiple interface implementation.",
+      "images": []
+    },
+    {
+      "id": 6,
+      "question": "Difference between `==` and `.Equals()`?",
+      "answer": "| | `==` | `.Equals()` |\n|---|---|---|\n| **Value types** | Compares values | Compares values |\n| **Reference types (default)** | Compares references (same object?) | Compares references (unless overridden) |\n| **`string`** | Compares content (overloaded) | Compares content |\n| **Null safety** | Safe (no NullReferenceException) | Throws if called on null |\n\n```csharp\nstring a = new string(\"hello\");\nstring b = new string(\"hello\");\n\nConsole.WriteLine(a == b);        // True  (string overloads ==)\nConsole.WriteLine(a.Equals(b));   // True\nConsole.WriteLine(ReferenceEquals(a, b)); // False (different objects)\n```\n\nFor custom types: override both `==` and `Equals()` together, and also `GetHashCode()`.",
+      "images": []
+    },
+    {
+      "id": 7,
+      "question": "Difference between value type and reference type?",
+      "answer": "| | Value Type | Reference Type |\n|---|---|---|\n| **Stored in** | Stack (or inline in containing object) | Heap |\n| **Assignment** | Copies the value | Copies the reference |\n| **Examples** | `int`, `double`, `bool`, `struct`, `enum` | `class`, `string`, `array`, `interface` |\n| **Default value** | Zero/false/null-equivalent | `null` |\n| **Nullability** | Not nullable by default (`int?` for nullable) | Nullable by default |\n\n```csharp\nint x = 5;\nint y = x; // y is a copy; changing y doesn't affect x\n\nvar list1 = new List<int> { 1, 2, 3 };\nvar list2 = list1; // both point to same list; list2.Add(4) affects list1\n```",
+      "images": []
+    },
+    {
+      "id": 8,
+      "question": "What is boxing and unboxing?",
+      "answer": "- **Boxing:** Converting a value type to `object` (or an interface type). The value is copied to the heap, wrapped in an object.\n- **Unboxing:** Extracting the value type back from the object. Requires explicit cast.\n\n```csharp\nint num = 42;\nobject boxed = num;        // boxing — heap allocation\nint unboxed = (int)boxed;  // unboxing — explicit cast required\n```\n\n**Performance impact:** Boxing allocates memory on the heap and involves GC pressure. In hot paths, avoid boxing by using generics (`List<int>` instead of `ArrayList`).",
+      "images": []
+    },
+    {
+      "id": 9,
+      "question": "What are delegates and events?",
+      "answer": "**Delegate:** A type-safe function pointer — a reference to a method with a specific signature.\n\n```csharp\npublic delegate int MathOperation(int a, int b);\n\nMathOperation add = (a, b) => a + b;\nConsole.WriteLine(add(3, 4)); // 7\n```\n\n**Event:** A delegate wrapped with publish/subscribe semantics. External code can subscribe (`+=`) or unsubscribe (`-=`) but cannot invoke directly.\n\n```csharp\npublic class Button {\n    public event EventHandler Clicked;\n    public void Click() => Clicked?.Invoke(this, EventArgs.Empty);\n}\n\nvar btn = new Button();\nbtn.Clicked += (s, e) => Console.WriteLine(\"Button clicked!\");\nbtn.Click();\n```\n\nBuilt-in generic delegates: `Action<T>` (no return), `Func<T, TResult>` (with return), `Predicate<T>` (returns bool).",
+      "images": []
+    },
+    {
+      "id": 10,
+      "question": "What is a lambda expression?",
+      "answer": "A lambda is an inline anonymous function using the `=>` syntax. Syntactic sugar over anonymous delegates.\n\n```csharp\n// Without lambda\nFunc<int, int> square = delegate(int x) { return x * x; };\n\n// With lambda (expression)\nFunc<int, int> square = x => x * x;\n\n// With lambda (statement body)\nFunc<int, int> square = x => { return x * x; };\n\n// Used heavily in LINQ\nvar evens = numbers.Where(n => n % 2 == 0).ToList();\n```\n\nLambdas can capture variables from the enclosing scope (closures), which has GC implications if references are held longer than expected.",
+      "images": []
+    },
+    {
+      "id": 11,
+      "question": "What is LINQ?",
+      "answer": "Language Integrated Query — a unified syntax for querying collections, databases, XML, and more directly in C#.\n\n```csharp\nvar people = new List<Person> { ... };\n\n// Query syntax\nvar adults = from p in people\n             where p.Age >= 18\n             orderby p.Name\n             select p.Name;\n\n// Method syntax (more common)\nvar adults = people\n    .Where(p => p.Age >= 18)\n    .OrderBy(p => p.Name)\n    .Select(p => p.Name);\n```\n\nLINQ is lazy (deferred execution) — the query is not evaluated until iterated. Call `.ToList()` or `.ToArray()` to force evaluation.",
+      "images": []
+    },
+    {
+      "id": 12,
+      "question": "Difference between `IEnumerable` and `IQueryable`?",
+      "answer": "| | `IEnumerable<T>` | `IQueryable<T>` |\n|---|---|---|\n| **Namespace** | `System.Collections.Generic` | `System.Linq` |\n| **Execution** | In-memory (client-side) | Translated to query (e.g., SQL) |\n| **Use case** | In-memory collections | EF Core / ORM queries |\n| **Filtering** | Loads all data, then filters | Filters at the database |\n| **Performance** | Slower for large DB datasets | Much more efficient |\n\n```csharp\n// IQueryable — SQL: SELECT * WHERE Age > 18\nIQueryable<User> query = dbContext.Users.Where(u => u.Age > 18);\n\n// IEnumerable — loads ALL users into memory, then filters\nIEnumerable<User> users = dbContext.Users.ToList().Where(u => u.Age > 18);\n```\n\n**Rule:** Keep the query as `IQueryable` as long as possible before calling `.ToList()`.",
+      "images": []
+    },
+    {
+      "id": 13,
+      "question": "What is async/await?",
+      "answer": "`async`/`await` is C#'s way of writing asynchronous code that reads like synchronous code. It's built on `Task`-returning methods and state machines generated by the compiler.\n\n```csharp\npublic async Task<string> GetDataAsync(string url) {\n    using var client = new HttpClient();\n    string result = await client.GetStringAsync(url); // doesn't block thread\n    return result;\n}\n```\n\n- `await` suspends the method and releases the thread back to the thread pool while the I/O completes.\n- The method resumes (possibly on a different thread) when the awaited task completes.\n- The compiler transforms the method into a state machine under the hood.",
+      "images": []
+    },
+    {
+      "id": 14,
+      "question": "Difference between Task, Thread, and async?",
+      "answer": "| | `Thread` | `Task` | `async/await` |\n|---|---|---|---|\n| **Abstraction level** | Low | Medium | High |\n| **Thread pool** | No (own thread) | Yes | Yes |\n| **Return value** | No | Yes (`Task<T>`) | Yes |\n| **Cancellation** | Manual | `CancellationToken` | `CancellationToken` |\n| **Best for** | Long-running CPU work | CPU or I/O work | I/O-bound async work |\n\n```csharp\n// Thread — manual, heavyweight\nnew Thread(() => DoWork()).Start();\n\n// Task — pool-based\nTask.Run(() => DoWork());\n\n// async/await — idiomatic for I/O\nawait httpClient.GetAsync(url);\n```\n\nIn modern .NET, prefer `async/await` + `Task`. Use raw `Thread` only for long-running, dedicated CPU work.",
+      "images": []
+    },
+    {
+      "id": 15,
+      "question": "What is dependency injection?",
+      "answer": "DI is a design pattern where an object's dependencies are provided externally rather than created internally. It decouples components, making them testable and replaceable.\n\n```csharp\n// Without DI (tightly coupled)\npublic class OrderService {\n    private readonly EmailSender _emailSender = new EmailSender(); // hardcoded\n}\n\n// With DI (loosely coupled)\npublic class OrderService {\n    private readonly IEmailSender _emailSender;\n    public OrderService(IEmailSender emailSender) => _emailSender = emailSender;\n}\n\n// Registration in ASP.NET Core\nbuilder.Services.AddScoped<IEmailSender, SmtpEmailSender>();\n```\n\nBenefits: testability (inject mocks), replaceability, single responsibility.",
+      "images": []
+    },
+    {
+      "id": 16,
+      "question": "What is garbage collection?",
+      "answer": "The .NET GC automatically manages memory by tracking object references and reclaiming memory for objects that are no longer reachable.\n\n**Generations:**\n- **Gen 0:** Short-lived objects (most GC happens here, very fast).\n- **Gen 1:** Objects that survived Gen 0.\n- **Gen 2:** Long-lived objects (full GC, most expensive).\n- **LOH (Large Object Heap):** Objects ≥ 85 KB; collected with Gen 2.\n\n**Key points:**\n- GC is non-deterministic — you don't control when it runs.\n- Implement `IDisposable` + `using` for deterministic release of unmanaged resources (file handles, DB connections).\n- `GC.Collect()` exists but should almost never be called manually.",
+      "images": []
+    },
+    {
+      "id": 17,
+      "question": "What are generics?",
+      "answer": "Generics allow you to write type-safe, reusable code without specifying the actual type until usage.\n\n```csharp\n// Without generics — loses type safety\npublic class Box {\n    private object _value;\n    public void Set(object v) => _value = v;\n    public object Get() => _value;\n}\n\n// With generics — type safe, no boxing\npublic class Box<T> {\n    private T _value;\n    public void Set(T v) => _value = v;\n    public T Get() => _value;\n}\n\nvar intBox = new Box<int>();\nintBox.Set(42);\nint val = intBox.Get(); // no cast needed\n```\n\nGeneric constraints (`where T : class`, `where T : new()`, `where T : IComparable`) let you restrict what types are allowed.",
+      "images": []
+    },
+    {
+      "id": 18,
+      "question": "What is reflection?",
+      "answer": "Reflection allows inspecting and interacting with type metadata at runtime — discovering classes, methods, properties, and invoking them dynamically.\n\n```csharp\nType type = typeof(MyClass);\nConsole.WriteLine(type.Name);\n\n// Get all public methods\nforeach (var method in type.GetMethods())\n    Console.WriteLine(method.Name);\n\n// Invoke a method dynamically\nvar instance = Activator.CreateInstance(type);\ntype.GetMethod(\"MyMethod\")?.Invoke(instance, null);\n```\n\n**Use cases:** Serialization, ORMs, dependency injection containers, plugin systems, unit testing frameworks.\n\n**Downside:** Slow (bypasses compile-time checks), no IntelliSense, runtime errors instead of compile errors. Use sparingly.",
+      "images": []
+    },
+    {
+      "id": 19,
+      "question": "Difference between `const`, `readonly`, and `static`?",
+      "answer": "| | `const` | `readonly` | `static` |\n|---|---|---|---|\n| **Set when** | Compile time | Declaration or constructor | N/A (modifier, not about mutability) |\n| **Instance or type** | Type-level (implicitly static) | Instance or static | Type-level |\n| **Value can change** | Never | After construction: No | Yes (unless also readonly) |\n| **Reference types** | Only primitives & strings | Any type | Any type |\n\n```csharp\npublic class Config {\n    public const int MaxRetries = 3;          // compile-time constant\n    public readonly DateTime StartedAt;       // set once in constructor\n    public static int InstanceCount;          // shared across all instances\n\n    public Config() {\n        StartedAt = DateTime.UtcNow;\n        InstanceCount++;\n    }\n}\n```",
+      "images": []
+    },
+    {
+      "id": 20,
+      "question": "Difference between .NET Framework and .NET Core?",
+      "answer": "| | .NET Framework | .NET Core / .NET 5+ |\n|---|---|---|\n| **Platform** | Windows only | Cross-platform (Windows, Linux, macOS) |\n| **Open source** | Partially | Fully open source |\n| **Deployment** | GAC, machine-wide | Self-contained or framework-dependent |\n| **Performance** | Good | Significantly better |\n| **Future** | Maintenance only | Active development |\n| **Side-by-side versioning** | No | Yes |\n\n.NET 5+ unified the two stacks. \"ASP.NET Core\" now refers to the modern, cross-platform framework.",
+      "images": []
+    },
+    {
+      "id": 21,
+      "question": "Why is .NET Core cross-platform?",
+      "answer": ".NET Core was designed with platform abstraction from day one:\n- The **CLR (CoreCLR)** is ported to Linux and macOS.\n- The **BCL (Base Class Libraries)** use platform abstractions (PAL) to wrap OS-specific system calls.\n- **Kestrel** (the web server) is implemented entirely in managed C# with platform-neutral I/O via libuv/epoll/kqueue.\n- **Build tooling** (dotnet CLI, MSBuild) runs on all platforms.",
+      "images": []
+    },
+    {
+      "id": 22,
+      "question": "Explain middleware in ASP.NET Core.",
+      "answer": "Middleware is a component in the HTTP request pipeline that can inspect, modify, or short-circuit requests and responses. Each middleware decides whether to pass the request to the next component.\n\n```csharp\n// Custom middleware\napp.Use(async (context, next) => {\n    Console.WriteLine($\"Before: {context.Request.Path}\");\n    await next(context); // call next middleware\n    Console.WriteLine($\"After: {context.Response.StatusCode}\");\n});\n\n// Terminal middleware (no next)\napp.Run(async context => {\n    await context.Response.WriteAsync(\"Hello!\");\n});\n```\n\n**Common built-in middleware:** `UseAuthentication`, `UseAuthorization`, `UseRouting`, `UseCors`, `UseStaticFiles`, `UseExceptionHandler`.\n\nOrder matters — middleware executes in registration order on the way in, and in reverse order on the way out.",
+      "images": []
+    },
+    {
+      "id": 23,
+      "question": "Request lifecycle in ASP.NET Core?",
+      "answer": "```\nClient Request\n    ↓\nKestrel (HTTP server)\n    ↓\nMiddleware Pipeline (in order):\n  - Exception Handling\n  - HTTPS Redirection\n  - Static Files\n  - Routing\n  - Authentication\n  - Authorization\n  - Endpoint (Controller Action / Minimal API)\n    ↓\nModel Binding → Action Filters → Controller Action → Result Filters → Response\n    ↑\nResponse travels back up through middleware (in reverse)\n    ↑\nKestrel sends response to Client\n```",
+      "images": []
+    },
+    {
+      "id": 24,
+      "question": "What is dependency injection in ASP.NET Core?",
+      "answer": "ASP.NET Core has a built-in IoC container. Services are registered in `Program.cs` and injected via constructor injection.\n\n```csharp\n// Register\nbuilder.Services.AddScoped<IOrderRepository, SqlOrderRepository>();\nbuilder.Services.AddSingleton<IMemoryCache, MemoryCache>();\n\n// Inject (constructor injection)\npublic class OrderController : ControllerBase {\n    private readonly IOrderRepository _repo;\n    public OrderController(IOrderRepository repo) => _repo = repo;\n}\n```",
+      "images": []
+    },
+    {
+      "id": 25,
+      "question": "What are service lifetimes?",
+      "answer": "**Singleton:** One instance for the entire application lifetime. Shared across all requests.\n```csharp\nbuilder.Services.AddSingleton<IMyCache, MyCache>();\n```\nUse for: caches, configuration objects, stateless services.\n\n**Scoped:** One instance per HTTP request. Created when the request starts, disposed when it ends.\n```csharp\nbuilder.Services.AddScoped<IDbContext, AppDbContext>();\n```\nUse for: DbContext, unit-of-work objects.\n\n**Transient:** A new instance every time it's requested from the container.\n```csharp\nbuilder.Services.AddTransient<IEmailSender, SmtpEmailSender>();\n```\nUse for: lightweight, stateless services.\n\n> ⚠️ **Captive Dependency:** Never inject a Scoped or Transient service into a Singleton — the short-lived service gets captured for the Singleton's lifetime.",
+      "images": []
+    },
+    {
+      "id": 26,
+      "question": "What is Kestrel server?",
+      "answer": "Kestrel is ASP.NET Core's built-in, cross-platform HTTP web server written in managed C#. It's used as the default edge server or behind a reverse proxy (nginx, IIS, Azure Front Door).\n\n- Extremely high throughput (often ranked in TechEmpower benchmarks).\n- Supports HTTP/1.1, HTTP/2, HTTP/3 (QUIC).\n- In production: typically placed behind a reverse proxy for SSL termination, load balancing, and static file serving.",
+      "images": []
+    },
+    {
+      "id": 27,
+      "question": "What is `appsettings.json`?",
+      "answer": "`appsettings.json` is the primary configuration file for ASP.NET Core apps — a JSON file for storing app settings like connection strings, feature flags, logging levels, and custom config.\n\n```json\n{\n  \"ConnectionStrings\": {\n    \"Default\": \"Server=.;Database=MyDb;Trusted_Connection=True;\"\n  },\n  \"Logging\": {\n    \"LogLevel\": { \"Default\": \"Information\" }\n  },\n  \"FeatureFlags\": {\n    \"EnableNewCheckout\": true\n  }\n}\n```\n\nEnvironment-specific overrides: `appsettings.Development.json`, `appsettings.Production.json`.",
+      "images": []
+    },
+    {
+      "id": 28,
+      "question": "How does configuration work?",
+      "answer": "Configuration is built as a layered system — later sources override earlier ones.\n\n**Default load order:**\n1. `appsettings.json`\n2. `appsettings.{Environment}.json`\n3. Environment variables\n4. Command-line arguments\n5. User secrets (Development only)\n\n```csharp\n// Strongly-typed config binding\nbuilder.Services.Configure<JwtOptions>(\n    builder.Configuration.GetSection(\"Jwt\"));\n\n// Injecting\npublic class AuthService {\n    private readonly JwtOptions _opts;\n    public AuthService(IOptions<JwtOptions> opts) => _opts = opts.Value;\n}\n```",
+      "images": []
+    },
+    {
+      "id": 29,
+      "question": "What is routing?",
+      "answer": "Routing maps incoming HTTP requests to the correct endpoint (controller action or minimal API handler) based on URL pattern and HTTP method.\n\n```csharp\n// Minimal API\napp.MapGet(\"/users/{id}\", async (int id, IUserService svc) => \n    await svc.GetByIdAsync(id));\n\n// Controller routing\n[Route(\"api/[controller]\")]\npublic class UsersController : ControllerBase {\n    [HttpGet(\"{id}\")]\n    public async Task<IActionResult> GetUser(int id) { ... }\n}\n```",
+      "images": []
+    },
+    {
+      "id": 30,
+      "question": "Attribute routing vs conventional routing?",
+      "answer": "**Conventional routing** — defined centrally in `Program.cs`, uses route templates like `{controller}/{action}/{id?}`. Common in MVC apps.\n\n```csharp\napp.MapControllerRoute(name: \"default\", pattern: \"{controller=Home}/{action=Index}/{id?}\");\n```\n\n**Attribute routing** — routes defined directly on controllers/actions with `[Route]`, `[HttpGet]`, etc. More explicit, preferred for Web APIs.\n\n```csharp\n[Route(\"api/orders\")]\npublic class OrdersController : ControllerBase {\n    [HttpGet(\"{id:int}\")]\n    public IActionResult GetOrder(int id) { ... }\n}\n```\n\nAttribute routing gives more control, is self-documenting, and is the standard for REST APIs.",
+      "images": []
+    },
+    {
+      "id": 31,
+      "question": "What are filters?",
+      "answer": "Filters run code at specific stages of the action execution pipeline — before or after model binding, action execution, result execution, or exception handling.\n\n| Filter Type | Runs When |\n|---|---|\n| `IActionFilter` | Before/after action method |\n| `IResultFilter` | Before/after result execution |\n| `IExceptionFilter` | On unhandled exceptions |\n| `IAuthorizationFilter` | Before action, checks authorization |\n| `IResourceFilter` | Early in pipeline, can short-circuit |\n\n```csharp\npublic class LogActionFilter : IActionFilter {\n    public void OnActionExecuting(ActionExecutingContext ctx) \n        => Console.WriteLine($\"Executing: {ctx.ActionDescriptor.DisplayName}\");\n    public void OnActionExecuted(ActionExecutedContext ctx) \n        => Console.WriteLine(\"Executed\");\n}\n```\n\nApply with `[ServiceFilter(typeof(...))]` or globally in `AddControllers(o => o.Filters.Add(...))`.",
+      "images": []
+    },
+    {
+      "id": 32,
+      "question": "What is model binding?",
+      "answer": "Model binding automatically maps incoming HTTP request data (route values, query strings, form data, JSON body) to action method parameters or model objects.\n\n```csharp\n// Binds from route, query, and body automatically\n[HttpPost(\"{categoryId}\")]\npublic IActionResult Create(\n    int categoryId,                      // from route\n    [FromQuery] bool notifyUser,         // from query string\n    [FromBody] CreateProductDto dto)     // from JSON body\n{ ... }\n```\n\n**Data annotations** on models enable automatic validation:\n```csharp\npublic class CreateProductDto {\n    [Required] public string Name { get; set; }\n    [Range(0.01, 10000)] public decimal Price { get; set; }\n}\n```",
+      "images": []
+    },
+    {
+      "id": 33,
+      "question": "What is DTO?",
+      "answer": "A Data Transfer Object is a plain class used to shape data moving between layers (e.g., API request/response) — keeping your domain model separate from what's exposed to the client.\n\n```csharp\n// Domain model (internal)\npublic class User {\n    public int Id { get; set; }\n    public string Email { get; set; }\n    public string PasswordHash { get; set; } // never expose this!\n}\n\n// DTO (external-facing)\npublic class UserResponseDto {\n    public int Id { get; set; }\n    public string Email { get; set; }\n}\n```\n\nBenefits: security (never accidentally leak sensitive fields), versioning flexibility, reduced coupling.",
+      "images": []
+    },
+    {
+      "id": 34,
+      "question": "What is AutoMapper?",
+      "answer": "AutoMapper is a library that eliminates boilerplate code for mapping between objects (e.g., domain model → DTO).\n\n```csharp\n// Profile configuration\npublic class MappingProfile : Profile {\n    public MappingProfile() {\n        CreateMap<User, UserResponseDto>();\n        CreateMap<CreateUserDto, User>()\n            .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => DateTime.UtcNow));\n    }\n}\n\n// Registration\nbuilder.Services.AddAutoMapper(typeof(MappingProfile));\n\n// Usage\nvar dto = _mapper.Map<UserResponseDto>(user);\n```\n\nAlternative: **Mapster** (faster, zero-config); or manual mapping for complex cases.",
+      "images": []
+    },
+    {
+      "id": 35,
+      "question": "How do you handle exceptions globally?",
+      "answer": "**Option 1: Exception Handler Middleware** (recommended for APIs)\n\n```csharp\napp.UseExceptionHandler(appBuilder => {\n    appBuilder.Run(async context => {\n        var error = context.Features.Get<IExceptionHandlerFeature>();\n        context.Response.StatusCode = error?.Error switch {\n            NotFoundException => 404,\n            ValidationException => 400,\n            _ => 500\n        };\n        await context.Response.WriteAsJsonAsync(new { \n            message = error?.Error.Message \n        });\n    });\n});\n```\n\n**Option 2: `IExceptionFilter`** — applied to specific controllers.\n\n**Option 3: `IMiddleware`** — custom middleware for full control.\n\n**Option 4: Problem Details** (RFC 7807) via `AddProblemDetails()` — standardized error responses.",
+      "images": []
+    },
+    {
+      "id": 36,
+      "question": "What is authentication vs authorization?",
+      "answer": "- **Authentication:** *Who are you?* — verifying identity (JWT, cookies, API keys, OAuth).\n- **Authorization:** *What can you do?* — verifying permissions (roles, policies, claims).\n\n```csharp\n// Authentication setup\nbuilder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)\n    .AddJwtBearer(options => { ... });\n\n// Authorization\n[Authorize(Roles = \"Admin\")]\npublic IActionResult AdminOnly() => Ok();\n\n[Authorize(Policy = \"MinAge18\")]\npublic IActionResult AdultsOnly() => Ok();\n```\n\n`UseAuthentication()` must come before `UseAuthorization()` in middleware pipeline.",
+      "images": []
+    },
+    {
+      "id": 37,
+      "question": "JWT authentication flow?",
+      "answer": "```\n1. Client POSTs credentials → /auth/login\n2. Server validates credentials\n3. Server generates JWT:\n   - Header: { alg: \"HS256\", typ: \"JWT\" }\n   - Payload: { sub: userId, roles, exp, iat }\n   - Signature: HMACSHA256(base64(header) + \".\" + base64(payload), secretKey)\n4. Server returns: { accessToken, refreshToken }\n5. Client stores tokens (memory or httpOnly cookie)\n6. Client sends: Authorization: Bearer <accessToken> on subsequent requests\n7. Server validates signature, checks expiry, extracts claims\n8. When access token expires, client sends refresh token → /auth/refresh\n9. Server validates refresh token, issues new access token\n```\n\n```csharp\nvar token = new JwtSecurityToken(\n    issuer: _config[\"Jwt:Issuer\"],\n    audience: _config[\"Jwt:Audience\"],\n    claims: claims,\n    expires: DateTime.UtcNow.AddMinutes(15),\n    signingCredentials: new SigningCredentials(\n        new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config[\"Jwt:Secret\"])),\n        SecurityAlgorithms.HmacSha256));\n```",
+      "images": []
+    },
+    {
+      "id": 38,
+      "question": "What is CORS?",
+      "answer": "Cross-Origin Resource Sharing is a browser security mechanism that controls whether a web page can make requests to a different domain than the one that served it.\n\n```csharp\nbuilder.Services.AddCors(options => {\n    options.AddPolicy(\"AllowFrontend\", policy => {\n        policy.WithOrigins(\"https://myapp.com\")\n              .AllowAnyMethod()\n              .AllowAnyHeader()\n              .AllowCredentials();\n    });\n});\n\napp.UseCors(\"AllowFrontend\");\n```\n\nCORS is enforced by the browser — it doesn't protect server-to-server communication.",
+      "images": []
+    },
+    {
+      "id": 39,
+      "question": "What is Swagger?",
+      "answer": "Swagger (OpenAPI) generates interactive API documentation from your code. In .NET, `Swashbuckle` or `NSwag` auto-generates the OpenAPI spec from controllers and models.\n\n```csharp\nbuilder.Services.AddEndpointsApiExplorer();\nbuilder.Services.AddSwaggerGen(c => {\n    c.SwaggerDoc(\"v1\", new() { Title = \"My API\", Version = \"v1\" });\n    // Add JWT support to swagger UI\n    c.AddSecurityDefinition(\"Bearer\", new OpenApiSecurityScheme { ... });\n});\n\napp.UseSwagger();\napp.UseSwaggerUI();\n```\n\nAccess at `/swagger` — provides a UI to test endpoints directly.",
+      "images": []
+    },
+    {
+      "id": 40,
+      "question": "What is API versioning?",
+      "answer": "API versioning allows evolving your API without breaking existing clients.\n\n```csharp\nbuilder.Services.AddApiVersioning(options => {\n    options.DefaultApiVersion = new ApiVersion(1, 0);\n    options.AssumeDefaultVersionWhenUnspecified = true;\n    options.ReportApiVersions = true;\n});\n\n// URL segment versioning: /api/v1/users\n[ApiVersion(\"1.0\")]\n[Route(\"api/v{version:apiVersion}/[controller]\")]\npublic class UsersController : ControllerBase { ... }\n\n// Header versioning: X-Api-Version: 2.0\n// Query string: /api/users?api-version=2.0\n```\n\nStrategies: URL segment (most explicit), header, query string, media type.",
+      "images": []
+    },
+    {
+      "id": 41,
+      "question": "How do you secure APIs?",
+      "answer": "- **Authentication:** JWT / OAuth2 / API keys\n- **Authorization:** Role-based (`[Authorize(Roles = \"Admin\")]`) or policy-based\n- **HTTPS:** Always enforce; redirect HTTP → HTTPS\n- **Rate limiting:** Prevent abuse and DDoS\n- **Input validation:** Model validation + `[ApiController]` auto-validation\n- **CORS:** Whitelist allowed origins\n- **Secrets management:** Never commit secrets; use Azure Key Vault / AWS Secrets Manager / environment variables\n- **SQL injection:** Use parameterized queries / EF Core (never string concatenation)\n- **Sensitive data:** Never log or expose PII; use DTOs to control what's returned\n- **Dependency updates:** Regularly patch NuGet packages",
+      "images": []
+    },
+    {
+      "id": 42,
+      "question": "What is rate limiting?",
+      "answer": "Rate limiting caps how many requests a client can make in a time window — prevents abuse, DDoS, and ensures fair usage.\n\n**.NET 7+ built-in rate limiting:**\n```csharp\nbuilder.Services.AddRateLimiter(options => {\n    options.AddFixedWindowLimiter(\"fixed\", config => {\n        config.PermitLimit = 100;\n        config.Window = TimeSpan.FromMinutes(1);\n        config.QueueLimit = 0;\n    });\n});\n\napp.UseRateLimiter();\n\n[EnableRateLimiting(\"fixed\")]\npublic class OrdersController : ControllerBase { ... }\n```\n\nStrategies: Fixed window, Sliding window, Token bucket, Concurrency limiter.",
+      "images": []
+    },
+    {
+      "id": 43,
+      "question": "How do you validate requests?",
+      "answer": "**Data annotations (simple):**\n```csharp\npublic class CreateUserDto {\n    [Required, EmailAddress] public string Email { get; set; }\n    [Required, MinLength(8)] public string Password { get; set; }\n    [Range(18, 120)] public int Age { get; set; }\n}\n// [ApiController] automatically returns 400 on validation failure\n```\n\n**FluentValidation (complex rules):**\n```csharp\npublic class CreateUserValidator : AbstractValidator<CreateUserDto> {\n    public CreateUserValidator() {\n        RuleFor(x => x.Email).NotEmpty().EmailAddress();\n        RuleFor(x => x.Password).MinimumLength(8)\n            .Matches(\"[A-Z]\").WithMessage(\"Must contain uppercase\");\n        RuleFor(x => x.Age).GreaterThanOrEqualTo(18);\n    }\n}\n```",
+      "images": []
+    },
+    {
+      "id": 44,
+      "question": "Difference between EF and Dapper?",
+      "answer": "| | EF Core | Dapper |\n|---|---|---|\n| **Type** | Full ORM | Micro-ORM |\n| **SQL generation** | Automatic | Manual |\n| **Performance** | Good (with care) | Faster (thin wrapper) |\n| **Change tracking** | Yes | No |\n| **Migrations** | Yes | No |\n| **Learning curve** | Higher | Low |\n| **Best for** | CRUD-heavy apps | Complex/custom SQL |\n\n**Common pattern:** Use EF Core for CRUD, Dapper for complex reporting queries.",
+      "images": []
+    },
+    {
+      "id": 45,
+      "question": "What is DbContext?",
+      "answer": "`DbContext` is the primary class in EF Core — it represents a session with the database, manages entity tracking, and exposes `DbSet<T>` properties for querying.\n\n```csharp\npublic class AppDbContext : DbContext {\n    public DbSet<User> Users { get; set; }\n    public DbSet<Order> Orders { get; set; }\n\n    protected override void OnModelCreating(ModelBuilder modelBuilder) {\n        modelBuilder.Entity<User>()\n            .HasIndex(u => u.Email).IsUnique();\n        \n        modelBuilder.Entity<Order>()\n            .HasOne(o => o.User)\n            .WithMany(u => u.Orders)\n            .HasForeignKey(o => o.UserId);\n    }\n}\n```\n\nRegister: `builder.Services.AddDbContext<AppDbContext>(opt => opt.UseSqlServer(connString));`",
+      "images": []
+    },
+    {
+      "id": 46,
+      "question": "What are migrations?",
+      "answer": "Migrations are C#-generated files that represent incremental changes to your database schema, allowing you to evolve the schema over time without losing data.\n\n```bash\n# Create migration\ndotnet ef migrations add AddUserTable\n\n# Apply to database\ndotnet ef database update\n\n# Rollback\ndotnet ef database update PreviousMigrationName\n```\n\nEach migration has an `Up()` (apply) and `Down()` (revert) method. In production, apply migrations programmatically at startup or via CI/CD pipeline.",
+      "images": []
+    },
+    {
+      "id": 47,
+      "question": "Code First vs Database First?",
+      "answer": "**Code First:** Define C# entity classes → EF generates the database schema via migrations. Standard modern approach.\n\n**Database First:** Existing database → EF generates C# entity classes via scaffolding.\n```bash\ndotnet ef dbcontext scaffold \"ConnectionString\" Microsoft.EntityFrameworkCore.SqlServer\n```\n\n**Code First is preferred** for greenfield projects; Database First for working with existing legacy databases.",
+      "images": []
+    },
+    {
+      "id": 48,
+      "question": "What is lazy loading?",
+      "answer": "Lazy loading automatically loads related entities from the database the first time the navigation property is accessed.\n\n```csharp\n// With lazy loading (requires proxies)\nvar order = await db.Orders.FindAsync(id);\nvar items = order.Items; // triggers a DB query HERE\n```\n\n**Requires:** `UseLazyLoadingProxies()` + all navigation properties must be `virtual`.\n\n**Problem:** Can cause N+1 queries silently. Generally avoid in web APIs — prefer explicit eager loading.",
+      "images": []
+    },
+    {
+      "id": 49,
+      "question": "Eager loading vs explicit loading?",
+      "answer": "**Eager loading** — loads related data in the same query using `Include()`.\n```csharp\nvar orders = await db.Orders\n    .Include(o => o.Items)\n    .ThenInclude(i => i.Product)\n    .ToListAsync();\n// Single SQL query with JOINs\n```\n\n**Explicit loading** — load related data on demand with `LoadAsync()`.\n```csharp\nvar order = await db.Orders.FindAsync(id);\nawait db.Entry(order).Collection(o => o.Items).LoadAsync();\n// Two separate queries, but you control when\n```\n\nEager loading is best when you always need the related data. Explicit is good when you conditionally need it.",
+      "images": []
+    },
+    {
+      "id": 50,
+      "question": "What is tracking vs no-tracking?",
+      "answer": "**Tracking (default):** EF Core tracks changes to loaded entities. Calling `SaveChanges()` detects and persists those changes. Has memory overhead.\n\n**No-tracking:** Entities are loaded read-only, not tracked. Faster and uses less memory.\n\n```csharp\n// No-tracking — for read-only queries\nvar products = await db.Products\n    .AsNoTracking()\n    .Where(p => p.IsActive)\n    .ToListAsync();\n\n// Default tracking — for updates\nvar user = await db.Users.FindAsync(id);\nuser.Name = \"New Name\";\nawait db.SaveChangesAsync(); // EF detects the change\n```\n\nUse `AsNoTracking()` for all GET/read endpoints — significant performance win.",
+      "images": []
+    },
+    {
+      "id": 51,
+      "question": "What are navigation properties?",
+      "answer": "Navigation properties are C# properties on an entity that represent related entities, allowing you to traverse relationships.\n\n```csharp\npublic class Order {\n    public int Id { get; set; }\n    public int UserId { get; set; }\n    public User User { get; set; }             // reference navigation (many-to-one)\n    public List<OrderItem> Items { get; set; } // collection navigation (one-to-many)\n}\n\n// Using navigation property in query\nvar order = await db.Orders\n    .Include(o => o.User)\n    .Include(o => o.Items)\n    .FirstAsync(o => o.Id == orderId);\n\nConsole.WriteLine(order.User.Email);\n```",
+      "images": []
+    },
+    {
+      "id": 52,
+      "question": "How does LINQ translate to SQL?",
+      "answer": "EF Core's query provider intercepts LINQ expression trees and translates them into the target database's SQL dialect.\n\n```csharp\n// C# LINQ\nvar result = await db.Orders\n    .Where(o => o.UserId == userId && o.Status == OrderStatus.Pending)\n    .OrderByDescending(o => o.CreatedAt)\n    .Take(10)\n    .Select(o => new { o.Id, o.Total })\n    .ToListAsync();\n\n// Generated SQL (approximate)\n-- SELECT TOP 10 o.Id, o.Total\n-- FROM Orders o\n-- WHERE o.UserId = @p0 AND o.Status = @p1\n-- ORDER BY o.CreatedAt DESC\n```\n\nIf EF can't translate an expression, it throws at runtime or (dangerously) switches to client-side evaluation. Use `ToQueryString()` to inspect generated SQL during development.",
+      "images": []
+    },
+    {
+      "id": 53,
+      "question": "How do you optimize EF queries?",
+      "answer": "- **Use `AsNoTracking()`** for read-only queries.\n- **Project with `Select()`** — only fetch columns you need, not the whole entity.\n- **Use `Include()` wisely** — don't load navigation properties you won't use.\n- **Avoid N+1** — always use `Include()` instead of accessing navigation properties in a loop.\n- **Use pagination** — `Skip()` + `Take()` with indexed columns.\n- **Use compiled queries** for hot paths.\n- **Use raw SQL** via `FromSqlRaw()` or `ExecuteSqlRaw()` for complex queries EF generates poorly.\n- **Check generated SQL** with `.ToQueryString()` or EF logging.\n- **Index columns** used in `Where()` and `OrderBy()`.\n\n```csharp\n// Good: only loads needed columns\nvar names = await db.Users\n    .Where(u => u.IsActive)\n    .AsNoTracking()\n    .Select(u => new { u.Id, u.Name })\n    .ToListAsync();\n```",
+      "images": []
+    },
+    {
+      "id": 54,
+      "question": "What is connection pooling?",
+      "answer": "Connection pooling reuses existing database connections instead of opening a new one for each request — dramatically reducing latency and resource usage.\n\nIn .NET, `SqlConnection` and EF Core use the **ADO.NET connection pool** by default. When a connection is \"closed\", it's returned to the pool, not physically closed.\n\n```csharp\n// Pool is managed automatically; configure via connection string:\n\"Server=.;Database=MyDb;Min Pool Size=5;Max Pool Size=100;Connection Timeout=30;\"\n```\n\nWith EF Core's `AddDbContextPool<T>()`, the DbContext itself is pooled (reused across requests), reducing object allocation overhead.",
+      "images": []
+    },
+    {
+      "id": 55,
+      "question": "Transactions in EF Core?",
+      "answer": "```csharp\n// Implicit transaction: SaveChanges wraps all changes in a transaction\nawait db.SaveChangesAsync(); // atomic\n\n// Explicit transaction: multiple SaveChanges in one transaction\nusing var transaction = await db.Database.BeginTransactionAsync();\ntry {\n    db.Orders.Add(order);\n    await db.SaveChangesAsync();\n    \n    db.Inventory.Update(item);\n    await db.SaveChangesAsync();\n    \n    await transaction.CommitAsync();\n} catch {\n    await transaction.RollbackAsync();\n    throw;\n}\n```\n\nFor distributed transactions (multiple databases/services), use the **Saga pattern** or **Outbox pattern** instead of distributed transactions.",
+      "images": []
+    },
+    {
+      "id": 56,
+      "question": "What causes N+1 query problems?",
+      "answer": "N+1 occurs when you load a list of N entities, then access a navigation property on each one — triggering N additional queries.\n\n```csharp\n// N+1 Problem: 1 query for orders + N queries for each user\nvar orders = await db.Orders.ToListAsync();          // Query 1: SELECT * FROM Orders\nforeach (var order in orders) {\n    Console.WriteLine(order.User.Name);              // Query 2...N+1: SELECT * FROM Users WHERE Id = ?\n}\n\n// Fix: use Include()\nvar orders = await db.Orders.Include(o => o.User).ToListAsync(); // Single JOIN query\n```\n\n**Detection:** Enable EF Core logging, use MiniProfiler, or use `ToQueryString()`.",
+      "images": []
+    },
+    {
+      "id": 57,
+      "question": "How do you handle concurrency?",
+      "answer": "**Optimistic concurrency** (most common) — no locks; detect conflicts at save time using a `RowVersion` / `ConcurrencyToken`.\n\n```csharp\npublic class Product {\n    public int Id { get; set; }\n    public decimal Price { get; set; }\n    [Timestamp] public byte[] RowVersion { get; set; } // auto-updated by DB\n}\n\ntry {\n    await db.SaveChangesAsync();\n} catch (DbUpdateConcurrencyException ex) {\n    // Another user modified the record; resolve conflict\n    var entry = ex.Entries.Single();\n    var dbValues = await entry.GetDatabaseValuesAsync();\n    // Decide: client wins, server wins, or merge\n}\n```\n\n**Pessimistic concurrency** — use `SELECT ... WITH (UPDLOCK)` via raw SQL for high-contention scenarios.",
+      "images": []
+    },
+    {
+      "id": 58,
+      "question": "Difference between parallelism and concurrency?",
+      "answer": "- **Concurrency:** Dealing with multiple things *at once* — tasks make progress by interleaving (may run on a single core). Used for I/O-bound work.\n- **Parallelism:** Doing multiple things *simultaneously* — tasks execute at the exact same time on multiple cores. Used for CPU-bound work.\n\n```csharp\n// Concurrency (async I/O — single thread, but handling multiple I/O operations)\nvar t1 = httpClient.GetAsync(\"url1\");\nvar t2 = httpClient.GetAsync(\"url2\");\nawait Task.WhenAll(t1, t2); // concurrent, not necessarily parallel\n\n// Parallelism (CPU work on multiple cores)\nParallel.ForEach(largeList, item => ProcessItem(item));\n```",
+      "images": []
+    },
+    {
+      "id": 59,
+      "question": "What is deadlock?",
+      "answer": "A deadlock occurs when two or more threads are each waiting for a resource held by the other — creating a circular dependency where no thread can proceed.\n\n**Classic deadlock in async code:**\n```csharp\n// ❌ DEADLOCK: Blocking on async in synchronization context (e.g., ASP.NET 4.x or UI thread)\nvar result = GetDataAsync().Result; // blocks the thread\n// GetDataAsync tries to resume on the same thread → deadlock\n\n// ✅ FIX: await all the way up\nvar result = await GetDataAsync();\n// or use ConfigureAwait(false) in library code\nvar result = await GetDataAsync().ConfigureAwait(false);\n```",
+      "images": []
+    },
+    {
+      "id": 60,
+      "question": "What is `lock` in C#?",
+      "answer": "`lock` is a synchronization primitive that ensures only one thread can execute a block of code at a time. Internally uses `Monitor.Enter`/`Monitor.Exit`.\n\n```csharp\nprivate readonly object _lockObj = new object();\nprivate int _counter = 0;\n\npublic void Increment() {\n    lock (_lockObj) {\n        _counter++;\n    }\n}\n```\n\n**Rules:**\n- Lock on a dedicated `private readonly object`, never on `this` or a type.\n- Keep locked sections short.\n- Never call external code inside a lock.\n- `lock` is not async-friendly — use `SemaphoreSlim` for async code.",
+      "images": []
+    },
+    {
+      "id": 61,
+      "question": "What is `SemaphoreSlim`?",
+      "answer": "`SemaphoreSlim` is a lightweight, async-compatible synchronization primitive that limits the number of concurrent accesses to a resource.\n\n```csharp\nprivate readonly SemaphoreSlim _semaphore = new SemaphoreSlim(1, 1); // mutex\n\npublic async Task UpdateAsync() {\n    await _semaphore.WaitAsync(); // async wait — doesn't block thread\n    try {\n        await DoWorkAsync();\n    } finally {\n        _semaphore.Release();\n    }\n}\n\n// Throttle: allow only 5 concurrent HTTP calls\nprivate readonly SemaphoreSlim _throttle = new SemaphoreSlim(5);\n```\n\nUse `SemaphoreSlim` instead of `lock` whenever you need async locking.",
+      "images": []
+    },
+    {
+      "id": 62,
+      "question": "What is thread safety?",
+      "answer": "Thread safety means a piece of code behaves correctly when accessed by multiple threads concurrently — no data corruption, race conditions, or deadlocks.\n\n```csharp\n// NOT thread safe\nprivate int _count = 0;\npublic void Increment() => _count++; // read-modify-write is not atomic\n\n// Thread safe options:\n// 1. Interlocked (atomic operations)\nInterlocked.Increment(ref _count);\n\n// 2. lock\nlock (_lock) { _count++; }\n\n// 3. Concurrent collections\nvar dict = new ConcurrentDictionary<string, int>();\ndict.AddOrUpdate(\"key\", 1, (k, v) => v + 1);\n```",
+      "images": []
+    },
+    {
+      "id": 63,
+      "question": "Difference between `Task.WhenAll` and `Task.WaitAll`?",
+      "answer": "| | `Task.WhenAll` | `Task.WaitAll` |\n|---|---|---|\n| **Returns** | `Task` (awaitable) | `void` |\n| **Thread behavior** | Async — releases thread while waiting | Blocks the calling thread |\n| **Exception handling** | All exceptions collected in `AggregateException` | Same |\n| **Use in async code** | ✅ Yes | ❌ No (causes blocking/deadlock risk) |\n\n```csharp\n// ✅ Correct: async, non-blocking\nawait Task.WhenAll(task1, task2, task3);\n\n// ❌ Avoid: blocks the thread\nTask.WaitAll(task1, task2, task3);\n```",
+      "images": []
+    },
+    {
+      "id": 64,
+      "question": "What happens if async code blocks?",
+      "answer": "Blocking async code (`.Result`, `.Wait()`, blocking `Task`) can cause:\n- **Deadlocks** — especially in contexts with a `SynchronizationContext` (classic ASP.NET, WPF/WinForms).\n- **Thread starvation** — blocking ThreadPool threads prevents new work from being processed; the pool exhausts available threads while blocked threads pile up.\n- **Reduced throughput** — the scalability benefit of async (thread reuse during I/O) is completely lost.\n\n```csharp\n// ❌ ALL of these can deadlock or starve the pool\nvar result = GetAsync().Result;\nGetAsync().Wait();\nGetAsync().GetAwaiter().GetResult();\n```\n\n**Rule:** If it's async at any layer, it must be async all the way up.",
+      "images": []
+    },
+    {
+      "id": 65,
+      "question": "Explain synchronization context.",
+      "answer": "`SynchronizationContext` is the mechanism that controls how continuations (code after `await`) are scheduled. In ASP.NET Core, there is **no** `SynchronizationContext` (unlike classic ASP.NET or UI frameworks), so continuations run on ThreadPool threads.\n\nIn WPF/WinForms, the UI `SynchronizationContext` marshals continuations back to the UI thread, which is why blocking on async from the UI thread causes deadlocks.\n\n```csharp\n// In library code: use ConfigureAwait(false) to avoid capturing context\npublic async Task<string> GetDataAsync() {\n    var data = await _httpClient.GetStringAsync(url).ConfigureAwait(false);\n    return data; // resumes on ThreadPool, not UI/ASP context\n}\n```\n\nIn ASP.NET Core, `ConfigureAwait(false)` is not strictly required but is still a good habit for library code.",
+      "images": []
+    },
+    {
+      "id": 66,
+      "question": "When should you avoid async?",
+      "answer": "- **Very short synchronous operations** — the overhead of state machine, task allocation, and context switching costs more than the operation itself.\n- **Simple property access or in-memory operations** — no I/O, no need for async.\n- **Inside locks** — `lock` doesn't support `await`; use `SemaphoreSlim` instead.\n- **Constructors** — can't be async; use factory methods instead.\n- **Fire-and-forget with exceptions** — unobserved task exceptions can crash the process; handle them explicitly.\n\n```csharp\n// Overkill: no I/O, no benefit\npublic async Task<int> AddAsync(int a, int b) => a + b; // ❌ don't do this\n\n// Just do:\npublic int Add(int a, int b) => a + b;\n```",
+      "images": []
+    },
+    {
+      "id": 67,
+      "question": "How did you implement SSO?",
+      "answer": "SSO (Single Sign-On) allows users to authenticate once and access multiple applications. Common implementations:\n\n**SAML 2.0 (enterprise):**\n- Identity Provider (IdP): Azure AD, Okta, ADFS\n- Service Provider (SP): your app\n- User authenticates with IdP → IdP sends signed SAML assertion → SP validates and creates session\n\n**OpenID Connect (modern/web):**\n```csharp\nbuilder.Services.AddAuthentication()\n    .AddOpenIdConnect(\"AzureAD\", options => {\n        options.Authority = \"https://login.microsoftonline.com/{tenantId}/v2.0\";\n        options.ClientId = config[\"AzureAD:ClientId\"];\n        options.ClientSecret = config[\"AzureAD:ClientSecret\"];\n        options.ResponseType = \"code\";\n        options.Scope.Add(\"openid profile email\");\n        options.CallbackPath = \"/signin-oidc\";\n    });\n```\n\nThe IdP handles authentication; your app trusts the token issued by the IdP.",
+      "images": []
+    },
+    {
+      "id": 68,
+      "question": "What is OAuth2/OpenID Connect?",
+      "answer": "**OAuth2** is an *authorization* framework — it allows third-party apps to obtain limited access to a user's resources without exposing credentials.\n\n- Flows: Authorization Code (web), Client Credentials (server-to-server), Device Code (CLI/TV)\n- Issues: **Access tokens** (opaque or JWT) to access protected resources\n\n**OpenID Connect (OIDC)** is an *authentication* layer on top of OAuth2.\n- Adds an **ID token** (JWT) that contains user identity claims (`sub`, `email`, `name`)\n- Answers \"who is this user?\" not just \"what can they access?\"\n\n```\nAuthorization Code Flow:\n1. App redirects user to IdP: /authorize?client_id=...&response_type=code&scope=openid\n2. User authenticates with IdP\n3. IdP redirects back with: ?code=AUTHORIZATION_CODE\n4. App exchanges code for tokens: POST /token with code + client_secret\n5. IdP returns: { access_token, id_token, refresh_token }\n```",
+      "images": []
+    },
+    {
+      "id": 69,
+      "question": "How does refresh token work?",
+      "answer": "Refresh tokens exist because access tokens are short-lived (15 min) for security — if stolen, damage is limited. Refresh tokens are long-lived (days/weeks) but stored server-side so they can be revoked.\n\n```csharp\n// Issue refresh token on login\nvar refreshToken = new RefreshToken {\n    Token = Convert.ToBase64String(RandomNumberGenerator.GetBytes(64)),\n    UserId = user.Id,\n    ExpiresAt = DateTime.UtcNow.AddDays(30),\n    CreatedAt = DateTime.UtcNow\n};\nawait db.RefreshTokens.AddAsync(refreshToken);\n\n// Validate on refresh request\nvar stored = await db.RefreshTokens\n    .FirstOrDefaultAsync(r => r.Token == incomingToken && !r.IsRevoked);\nif (stored == null || stored.ExpiresAt < DateTime.UtcNow)\n    return Unauthorized();\n\n// Rotate: revoke old, issue new (prevents reuse attacks)\nstored.IsRevoked = true;\nvar newRefreshToken = GenerateRefreshToken();\n```\n\n**Refresh token rotation** (revoke on use + issue new) prevents refresh token theft.",
+      "images": []
+    },
+    {
+      "id": 70,
+      "question": "How do you secure authentication systems?",
+      "answer": "- **Hash passwords** with bcrypt/Argon2 — never MD5/SHA1, never plain text.\n- **Short-lived access tokens** (15 min), revocable refresh tokens.\n- **Refresh token rotation** — invalidate on use.\n- **httpOnly Secure cookies** for refresh tokens — prevents XSS access.\n- **HTTPS everywhere** — tokens over plain HTTP are trivially stolen.\n- **Rate limit login endpoints** — prevent brute force.\n- **Account lockout** after N failed attempts.\n- **MFA** for sensitive accounts.\n- **Constant-time comparison** for token/secret comparison (prevent timing attacks).\n- **Monitor and alert** on suspicious login patterns (new location, multiple failures).\n- **Revocation list** or short expiry to handle logout and compromised tokens.",
+      "images": []
+    },
+    {
+      "id": 71,
+      "question": "How do you debug memory leaks?",
+      "answer": "**Symptoms:** Growing memory over time, frequent GC, eventual OOM crashes.\n\n**Common causes in .NET:**\n- Static collections that grow indefinitely.\n- Event handlers not unsubscribed (e.g., `+=` without `-=`).\n- HttpClient instances not reused (use `IHttpClientFactory`).\n- Finalizers holding objects alive too long.\n- Long-lived objects holding references to short-lived ones (gen2 promotion).\n\n**Debugging tools:**\n```bash\n# Capture memory dump\ndotnet-dump collect -p <pid>\ndotnet-dump analyze <dump_file>\n> dumpheap -stat         # top types by size\n> gcroot <address>       # find what's holding an object\n\n# dotnet-counters live monitoring\ndotnet-counters monitor --process-id <pid> System.Runtime\n```\n\n**Process:**\n1. Monitor with `dotnet-counters` to confirm leak (GC heap growing).\n2. Capture dump under load.\n3. Analyze with `dotnet-dump` or PerfView.\n4. Find the root reference keeping objects alive.\n5. Fix: unsubscribe events, use `WeakReference`, fix `IDisposable`, etc.",
+      "images": []
+    },
+    {
+      "id": 72,
+      "question": "How do you optimize SQL-heavy APIs?",
+      "answer": "**Query optimization:**\n- Use `EXPLAIN`/`SET STATISTICS IO ON` to read query plans.\n- Add covering indexes for common query patterns.\n- Avoid `SELECT *` — select only needed columns.\n- Use CTEs and window functions instead of subqueries.\n- Paginate with `OFFSET/FETCH` or keyset pagination (faster for large datasets).\n\n**Application-level:**\n- Cache query results in Redis for reads with acceptable staleness.\n- Use `IQueryable` projections to push filtering to the database.\n- Batch inserts/updates (`BulkInsert` via EF Extensions).\n- Use Dapper for complex, hand-tuned queries where EF generates poor SQL.\n\n**Infrastructure:**\n- Read replicas for reporting/analytics queries.\n- Connection pooling tuned to workload.\n- Query result caching with appropriate invalidation.\n- Database partitioning/sharding for very large tables.",
+      "images": []
+    },
+    {
+      "id": 73,
+      "question": "How do you reduce cloud cost?",
+      "answer": "**Compute:**\n- Right-size instances — use Application Insights/metrics to find over-provisioned services.\n- Use auto-scaling — scale in during off-peak hours.\n- Spot/preemptible instances for batch/non-critical workloads.\n- Use containers (AKS) for bin packing — multiple apps per node.\n\n**Database:**\n- Use serverless tiers (Azure SQL Serverless) for dev/low-traffic.\n- Reduce DTUs/RUs by optimizing queries (fewer reads = lower cost).\n- Archive old data to cheap storage (Blob/S3).\n- Use Redis instead of DB for ephemeral/session data.\n\n**Networking:**\n- CDN for static assets — reduces origin egress cost.\n- Compress API responses — less data transfer.\n- Keep inter-service traffic within the same region/VNet (avoid egress charges).\n\n**Storage:**\n- Lifecycle policies — move old blobs to cool/archive tiers automatically.\n- Delete unused resources (orphaned disks, snapshots, old deployments).",
+      "images": []
+    },
+    {
+      "id": 74,
+      "question": "How do you handle high traffic?",
+      "answer": "**Horizontal scaling:**\n- Stateless APIs behind a load balancer — any instance handles any request.\n- Session state in Redis, not in-memory.\n- Use sticky sessions only if absolutely necessary.\n\n**Caching:**\n- Redis for session data, computed results, rate limit counters.\n- Response caching for read-heavy endpoints (`[ResponseCache]`).\n- CDN for static and semi-static content.\n\n**Async and non-blocking:**\n- Fully async code — maximizes request throughput per instance.\n- Queue slow operations (email sending, report generation) to background workers via message queues (Service Bus, RabbitMQ).\n\n**Rate limiting and circuit breakers:**\n- Rate limit per client to prevent any single client overwhelming the system.\n- Circuit breakers (Polly) to fail fast when downstream dependencies are slow.\n\n**Database:**\n- Read replicas for read-heavy workloads.\n- Connection pool tuning.\n- CQRS — separate read and write models to scale independently.\n\n**Load testing:**\n- Baseline with k6/NBomber before going live.\n- Identify and fix bottlenecks before they hit production.\n- Monitor P95/P99 latency, not just averages.",
+      "images": []
+    }
+  ]
+}
