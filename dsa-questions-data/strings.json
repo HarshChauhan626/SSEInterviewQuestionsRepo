@@ -8,6 +8,7 @@
     {
       "id": 1,
       "question": "🟡 Longest Substring Without Repeating Characters",
+      "leetcode_link": "https://leetcode.com/problems/longest-substring-without-repeating-characters/",
       "problem": "**Problem:** Given a string `s`, find the length of the longest substring without repeating characters.",
       "intuition": "",
       "code": "```java\nclass Solution {\n    public int lengthOfLongestSubstring(String s) {\n        // map stores: character → last seen index\n        Map<Character, Integer> map = new HashMap<>();\n        int left = 0, maxLen = 0;\n        for (int right = 0; right < s.length(); right++) {\n            char c = s.charAt(right);\n            // if c was seen AND its last position is inside current window [left, right]\n            // → move left past the duplicate so the window is valid again\n            if (map.containsKey(c) && map.get(c) >= left) {\n                left = map.get(c) + 1; // skip over the old occurrence\n            }\n            map.put(c, right); // record/update latest index of c\n            maxLen = Math.max(maxLen, right - left + 1); // update best window size\n        }\n        return maxLen;\n    }\n}\n// Time: O(n)  Space: O(min(n, alphabet))\n```",
@@ -17,6 +18,7 @@
     {
       "id": 2,
       "question": "🟡 Longest Repeating Character Replacement",
+      "leetcode_link": "https://leetcode.com/problems/longest-repeating-character-replacement/",
       "problem": "**Problem:** Given a string `s` and an integer `k`, you can replace at most `k` characters. Return the length of the longest substring containing the same letter after replacements.",
       "intuition": "",
       "code": "```java\nclass Solution {\n    public int characterReplacement(String s, int k) {\n        int[] freq = new int[26]; // frequency count of chars in current window\n        int left = 0, maxFreq = 0, maxLen = 0;\n        for (int right = 0; right < s.length(); right++) {\n            freq[s.charAt(right) - 'A']++; // expand window by including s[right]\n            // track the max frequency of any single char in the window\n            // → tells us how many chars we DON'T need to replace\n            maxFreq = Math.max(maxFreq, freq[s.charAt(right) - 'A']);\n            // window size - most frequent char count > k → shrink\n            // (window size - maxFreq) = chars that need replacing; if > k, window is invalid\n            if (right - left + 1 - maxFreq > k) {\n                freq[s.charAt(left) - 'A']--; // remove leftmost char from window\n                left++; // shrink from left\n            }\n            maxLen = Math.max(maxLen, right - left + 1); // update best window size\n        }\n        return maxLen;\n    }\n}\n// Time: O(n)  Space: O(1)\n```",
@@ -26,6 +28,7 @@
     {
       "id": 3,
       "question": "🔴 Minimum Window Substring",
+      "leetcode_link": "https://leetcode.com/problems/minimum-window-substring/",
       "problem": "**Problem:** Given strings `s` and `t`, return the minimum window substring of `s` that contains every character of `t`. If none exists, return `\"\"`.",
       "intuition": "",
       "code": "```java\nclass Solution {\n    public String minWindow(String s, String t) {\n        if (s.isEmpty() || t.isEmpty()) return \"\";\n        // need: how many of each char from t we still require\n        Map<Character, Integer> need = new HashMap<>();\n        for (char c : t.toCharArray()) need.merge(c, 1, Integer::sum);\n\n        int left = 0, formed = 0, required = need.size();\n        // formed = number of unique chars whose window count meets need count\n        // required = total unique chars we must satisfy\n        int minLen = Integer.MAX_VALUE, minLeft = 0;\n        Map<Character, Integer> window = new HashMap<>(); // counts in current window\n\n        for (int right = 0; right < s.length(); right++) {\n            char c = s.charAt(right);\n            window.merge(c, 1, Integer::sum); // add s[right] to window\n            // if this char is needed AND we just hit exact required count → one more char satisfied\n            if (need.containsKey(c) && window.get(c).equals(need.get(c))) formed++;\n\n            // when all required chars are satisfied → try to shrink from left\n            while (formed == required) {\n                // record this window if it's smaller than previous best\n                if (right - left + 1 < minLen) {\n                    minLen = right - left + 1;\n                    minLeft = left;\n                }\n                char lc = s.charAt(left++); // remove leftmost char from window\n                window.merge(lc, -1, Integer::sum);\n                // if removed char was needed and now count drops below need → window is invalid again\n                if (need.containsKey(lc) && window.get(lc) < need.get(lc)) formed--;\n            }\n        }\n        return minLen == Integer.MAX_VALUE ? \"\" : s.substring(minLeft, minLeft + minLen);\n    }\n}\n// Time: O(|s| + |t|)  Space: O(|s| + |t|)\n```",
@@ -35,6 +38,7 @@
     {
       "id": 4,
       "question": "🟡 Permutation in String",
+      "leetcode_link": "https://leetcode.com/problems/permutation-in-string/",
       "problem": "**Problem:** Given strings `s1` and `s2`, return `true` if `s2` contains a permutation of `s1`.",
       "intuition": "",
       "code": "```java\nclass Solution {\n    public boolean checkInclusion(String s1, String s2) {\n        if (s1.length() > s2.length()) return false;\n        int[] need = new int[26], window = new int[26];\n        for (char c : s1.toCharArray()) need[c - 'a']++; // build frequency map for s1\n        int k = s1.length(); // fixed window size = length of s1\n        for (int i = 0; i < s2.length(); i++) {\n            window[s2.charAt(i) - 'a']++; // add right char of window\n            // once window is larger than k, remove the leftmost char (slide the window)\n            if (i >= k) window[s2.charAt(i - k) - 'a']--;\n            // if frequency arrays match → current window is a permutation of s1\n            if (Arrays.equals(need, window)) return true;\n        }\n        return false;\n    }\n}\n// Time: O(|s1| + |s2|)  Space: O(1)\n```",
@@ -44,6 +48,7 @@
     {
       "id": 5,
       "question": "🟡 Find All Anagrams in a String",
+      "leetcode_link": "https://leetcode.com/problems/find-all-anagrams-in-a-string/",
       "problem": "**Problem:** Given strings `s` and `p`, return all start indices of `p`'s anagrams in `s`.",
       "intuition": "",
       "code": "```java\nclass Solution {\n    public List<Integer> findAnagrams(String s, String p) {\n        List<Integer> result = new ArrayList<>();\n        if (s.length() < p.length()) return result;\n        int[] need = new int[26], window = new int[26];\n        for (char c : p.toCharArray()) need[c - 'a']++; // frequency of each char in p\n        int k = p.length(); // fixed window size\n        for (int i = 0; i < s.length(); i++) {\n            window[s.charAt(i) - 'a']++; // slide right: add new char\n            // slide left: remove char that left the window\n            if (i >= k) window[s.charAt(i - k) - 'a']--;\n            // if window frequencies == p frequencies → anagram found at start index (i - k + 1)\n            if (Arrays.equals(need, window)) result.add(i - k + 1);\n        }\n        return result;\n    }\n}\n// Time: O(|s|)  Space: O(1)\n```",
@@ -53,6 +58,7 @@
     {
       "id": 6,
       "question": "🟡 Longest Substring with At Most K Distinct Characters",
+      "leetcode_link": "https://leetcode.com/problems/longest-substring-with-at-most-k-distinct-characters/",
       "problem": "**Problem:** Given a string `s` and integer `k`, return the length of the longest substring with at most `k` distinct characters.",
       "intuition": "",
       "code": "```java\nclass Solution {\n    public int lengthOfLongestSubstringKDistinct(String s, int k) {\n        // map stores: char → count in current window\n        Map<Character, Integer> map = new HashMap<>();\n        int left = 0, maxLen = 0;\n        for (int right = 0; right < s.length(); right++) {\n            char c = s.charAt(right);\n            map.merge(c, 1, Integer::sum); // add s[right] to window\n            // if we now have more than k distinct chars → window is invalid, shrink from left\n            while (map.size() > k) {\n                char lc = s.charAt(left++);\n                map.merge(lc, -1, Integer::sum); // reduce count of leftmost char\n                if (map.get(lc) == 0) map.remove(lc); // if count hits 0, remove it (reduces distinct count)\n            }\n            maxLen = Math.max(maxLen, right - left + 1); // valid window → update best\n        }\n        return maxLen;\n    }\n}\n// Time: O(n)  Space: O(k)\n```",
@@ -62,6 +68,7 @@
     {
       "id": 7,
       "question": "🟡 Group Anagrams",
+      "leetcode_link": "https://leetcode.com/problems/group-anagrams/",
       "problem": "**Problem:** Given an array of strings, group the anagrams together.",
       "intuition": "",
       "code": "```java\nclass Solution {\n    public List<List<String>> groupAnagrams(String[] strs) {\n        // key = sorted version of string (anagrams share the same sorted form)\n        Map<String, List<String>> map = new HashMap<>();\n        for (String s : strs) {\n            char[] ca = s.toCharArray();\n            Arrays.sort(ca); // sort chars → all anagrams produce identical sorted key\n            String key = new String(ca);\n            // if key not yet in map, create new list; then add original string to its group\n            map.computeIfAbsent(key, x -> new ArrayList<>()).add(s);\n        }\n        return new ArrayList<>(map.values()); // each map value is one anagram group\n    }\n}\n// Time: O(n * k log k)  Space: O(n * k)\n```",
@@ -71,6 +78,7 @@
     {
       "id": 8,
       "question": "🟢 Valid Anagram",
+      "leetcode_link": "https://leetcode.com/problems/valid-anagram/",
       "problem": "**Problem:** Given strings `s` and `t`, return `true` if `t` is an anagram of `s`.",
       "intuition": "",
       "code": "```java\nclass Solution {\n    public boolean isAnagram(String s, String t) {\n        if (s.length() != t.length()) return false; // different lengths → can't be anagrams\n        int[] count = new int[26]; // net frequency difference\n        for (int i = 0; i < s.length(); i++) {\n            count[s.charAt(i) - 'a']++; // +1 for each char in s\n            count[t.charAt(i) - 'a']--; // -1 for each char in t\n        }\n        // if every count is 0, both strings have identical char frequencies → anagram\n        for (int v : count) if (v != 0) return false;\n        return true;\n    }\n}\n// Time: O(n)  Space: O(1)\n```",
@@ -80,6 +88,7 @@
     {
       "id": 9,
       "question": "🟢 Isomorphic Strings",
+      "leetcode_link": "https://leetcode.com/problems/isomorphic-strings/",
       "problem": "**Problem:** Given strings `s` and `t`, determine if they are isomorphic (characters in `s` can be replaced to get `t`).",
       "intuition": "",
       "code": "```java\nclass Solution {\n    public boolean isIsomorphic(String s, String t) {\n        // sMap[c] = last index+1 where char c appeared in s\n        // tMap[c] = last index+1 where char c appeared in t\n        // Using i+1 so the default 0 means \"never seen\"\n        int[] sMap = new int[256], tMap = new int[256];\n        for (int i = 0; i < s.length(); i++) {\n            int sc = s.charAt(i), tc = t.charAt(i);\n            // if sMap[sc] != tMap[tc], the two chars last appeared at different positions\n            // → the mapping is inconsistent → not isomorphic\n            if (sMap[sc] != tMap[tc]) return false;\n            sMap[sc] = i + 1; // record when this s-char was last seen\n            tMap[tc] = i + 1; // record when this t-char was last seen\n        }\n        return true;\n    }\n}\n// Time: O(n)  Space: O(1)\n```",
@@ -89,6 +98,7 @@
     {
       "id": 10,
       "question": "🟢 Word Pattern",
+      "leetcode_link": "https://leetcode.com/problems/word-pattern/",
       "problem": "**Problem:** Given a pattern string and a string `s`, return `true` if `s` follows the same pattern (bijective mapping).",
       "intuition": "",
       "code": "```java\nclass Solution {\n    public boolean wordPattern(String pattern, String s) {\n        String[] words = s.split(\" \");\n        if (pattern.length() != words.length) return false; // mismatch count → false\n        Map<Character, String> p2w = new HashMap<>(); // pattern char → word\n        Map<String, Character> w2p = new HashMap<>(); // word → pattern char (bijective check)\n        for (int i = 0; i < pattern.length(); i++) {\n            char p = pattern.charAt(i);\n            String w = words[i];\n            // if pattern char p already maps to a DIFFERENT word → conflict\n            if (p2w.containsKey(p) && !p2w.get(p).equals(w)) return false;\n            // if word w already maps to a DIFFERENT pattern char → conflict (ensures bijection)\n            if (w2p.containsKey(w) && w2p.get(w) != p) return false;\n            p2w.put(p, w); // establish / confirm mapping p → w\n            w2p.put(w, p); // establish / confirm reverse mapping w → p\n        }\n        return true;\n    }\n}\n// Time: O(n)  Space: O(n)\n```",
@@ -98,6 +108,7 @@
     {
       "id": 11,
       "question": "🟡 Determine if Two Strings Are Close",
+      "leetcode_link": "https://leetcode.com/problems/determine-if-two-strings-are-close/",
       "problem": "**Problem:** Two strings are \"close\" if you can make one from the other using: (1) swap any two existing characters; (2) transform every occurrence of one character into another and vice versa. Return `true` if `word1` and `word2` are close.",
       "intuition": "",
       "code": "```java\nclass Solution {\n    public boolean closeStrings(String word1, String word2) {\n        if (word1.length() != word2.length()) return false; // must have same length\n        int[] f1 = new int[26], f2 = new int[26];\n        for (char c : word1.toCharArray()) f1[c - 'a']++; // frequency of each char in word1\n        for (char c : word2.toCharArray()) f2[c - 'a']++; // frequency of each char in word2\n        // Condition 1: both strings must use the SAME SET of characters\n        // (op 2 lets us swap frequencies but not introduce new characters)\n        // Same set of characters\n        for (int i = 0; i < 26; i++)\n            if ((f1[i] == 0) != (f2[i] == 0)) return false; // one has char, other doesn't\n        // Condition 2: the MULTISET of frequencies must match\n        // (op 1 lets us rearrange chars; op 2 lets us swap frequency values between chars)\n        // Same multiset of frequencies\n        Arrays.sort(f1);\n        Arrays.sort(f2);\n        return Arrays.equals(f1, f2); // sorted freq arrays equal → close\n    }\n}\n// Time: O(n)  Space: O(1)\n```",
@@ -107,6 +118,7 @@
     {
       "id": 12,
       "question": "🟢 Find the Difference",
+      "leetcode_link": "https://leetcode.com/problems/find-the-difference/",
       "problem": "**Problem:** You are given two strings `s` and `t` where `t` is generated by randomly shuffling `s` and then adding one more random character. Find the added character.",
       "intuition": "",
       "code": "```java\nclass Solution {\n    public char findTheDifference(String s, String t) {\n        int xor = 0;\n        // XOR all chars in s: each char cancels itself if it appears twice\n        for (char c : s.toCharArray()) xor ^= c;\n        // XOR all chars in t: the extra char in t won't cancel → it's left in xor\n        for (char c : t.toCharArray()) xor ^= c;\n        // xor now holds the ASCII value of the single added character\n        return (char) xor;\n    }\n}\n// Time: O(n)  Space: O(1)\n```",
@@ -116,6 +128,7 @@
     {
       "id": 13,
       "question": "🟡 Reverse Words in a String",
+      "leetcode_link": "https://leetcode.com/problems/reverse-words-in-a-string/",
       "problem": "**Problem:** Given a string `s`, reverse the order of words (words separated by spaces; leading/trailing/multiple spaces should be trimmed).",
       "intuition": "",
       "code": "```java\nclass Solution {\n    public String reverseWords(String s) {\n        // trim() removes leading/trailing spaces; \\\\s+ splits on any whitespace run\n        String[] words = s.trim().split(\"\\\\s+\");\n        StringBuilder sb = new StringBuilder();\n        // iterate from last word to first → builds reversed word order\n        for (int i = words.length - 1; i >= 0; i--) {\n            sb.append(words[i]);\n            if (i > 0) sb.append(' '); // add space between words (not after last)\n        }\n        return sb.toString();\n    }\n}\n// Time: O(n)  Space: O(n)\n```",
@@ -125,6 +138,7 @@
     {
       "id": 14,
       "question": "🟡 String Compression",
+      "leetcode_link": "https://leetcode.com/problems/string-compression/",
       "problem": "**Problem:** Compress the array of characters `chars` in-place. For each group of consecutive repeating characters, write the character followed by its count (if > 1). Return the new length.",
       "intuition": "",
       "code": "```java\nclass Solution {\n    public int compress(char[] chars) {\n        int write = 0, i = 0; // write = pointer to write compressed output in-place; i = read pointer\n        while (i < chars.length) {\n            char cur = chars[i]; // current group character\n            int count = 0;\n            // count how many consecutive identical chars starting at i\n            while (i < chars.length && chars[i] == cur) { i++; count++; }\n            chars[write++] = cur; // write the character itself\n            if (count > 1) {\n                // write the count as individual digit characters (e.g. 12 → '1','2')\n                for (char c : String.valueOf(count).toCharArray())\n                    chars[write++] = c;\n            }\n            // if count == 1, don't write any digit (per problem rules)\n        }\n        return write; // new length of compressed array\n    }\n}\n// Time: O(n)  Space: O(1)\n```",
@@ -134,6 +148,7 @@
     {
       "id": 15,
       "question": "🟡 Zigzag Conversion",
+      "leetcode_link": "https://leetcode.com/problems/zigzag-conversion/",
       "problem": "**Problem:** Write the string `s` in a zigzag pattern on a given number of rows, then read line by line.",
       "intuition": "",
       "code": "```java\nclass Solution {\n    public String convert(String s, int numRows) {\n        if (numRows == 1 || numRows >= s.length()) return s; // no zigzag needed\n        StringBuilder[] rows = new StringBuilder[numRows];\n        for (int i = 0; i < numRows; i++) rows[i] = new StringBuilder(); // one builder per row\n        int cur = 0, dir = -1; // cur = current row; dir = +1 (going down) or -1 (going up)\n        for (char c : s.toCharArray()) {\n            rows[cur].append(c); // place char in current row\n            // reverse direction at top row (0) or bottom row (numRows-1)\n            if (cur == 0 || cur == numRows - 1) dir = -dir;\n            cur += dir; // move to next row\n        }\n        StringBuilder sb = new StringBuilder();\n        for (StringBuilder row : rows) sb.append(row); // concatenate rows top to bottom\n        return sb.toString();\n    }\n}\n// Time: O(n)  Space: O(n)\n```",
@@ -143,6 +158,7 @@
     {
       "id": 16,
       "question": "🟡 Remove All Adjacent Duplicates in String II",
+      "leetcode_link": "https://leetcode.com/problems/remove-all-adjacent-duplicates-in-string-ii/",
       "problem": "**Problem:** Given a string `s` and an integer `k`, repeatedly remove `k` adjacent identical characters until no more can be removed. Return the final string.",
       "intuition": "",
       "code": "```java\nclass Solution {\n    public String removeDuplicates(String s, int k) {\n        Deque<int[]> stack = new ArrayDeque<>(); // stack stores [char_ascii, consecutive_count]\n        for (char c : s.toCharArray()) {\n            // if top of stack has same char, increment its run count\n            if (!stack.isEmpty() && stack.peek()[0] == c) {\n                stack.peek()[1]++;\n                // if run reaches k, pop it (those k chars are removed)\n                if (stack.peek()[1] == k) stack.pop();\n            } else {\n                // new char different from top → push with count 1\n                stack.push(new int[]{c, 1});\n            }\n        }\n        // Rebuild string from stack (stack is in reverse order, so reverse at end)\n        StringBuilder sb = new StringBuilder();\n        for (int[] pair : stack) {\n            for (int i = 0; i < pair[1]; i++) sb.append((char) pair[0]);\n        }\n        return sb.reverse().toString();\n    }\n}\n// Time: O(n)  Space: O(n)\n```",
@@ -152,6 +168,7 @@
     {
       "id": 17,
       "question": "🟡 Multiply Strings",
+      "leetcode_link": "https://leetcode.com/problems/multiply-strings/",
       "problem": "**Problem:** Given two non-negative integers `num1` and `num2` represented as strings, return their product as a string (cannot use BigInteger or convert directly to int).",
       "intuition": "",
       "code": "```java\nclass Solution {\n    public String multiply(String num1, String num2) {\n        int m = num1.length(), n = num2.length();\n        // Product of m-digit and n-digit numbers has at most m+n digits\n        int[] pos = new int[m + n];\n        // Multiply each digit pair, just like grade-school multiplication\n        for (int i = m - 1; i >= 0; i--) {\n            for (int j = n - 1; j >= 0; j--) {\n                int mul = (num1.charAt(i) - '0') * (num2.charAt(j) - '0');\n                // p1 is the carry position, p2 is the units position for this partial product\n                int p1 = i + j, p2 = i + j + 1;\n                int sum = mul + pos[p2]; // add existing carry-over in pos[p2]\n                pos[p2] = sum % 10;     // units digit goes to p2\n                pos[p1] += sum / 10;    // carry propagates to p1\n            }\n        }\n        StringBuilder sb = new StringBuilder();\n        // Skip leading zeros when building result string\n        for (int d : pos) if (!(sb.length() == 0 && d == 0)) sb.append(d);\n        return sb.length() == 0 ? \"0\" : sb.toString();\n    }\n}\n// Time: O(m*n)  Space: O(m+n)\n```",
@@ -161,6 +178,7 @@
     {
       "id": 18,
       "question": "🟢 Reverse Words in a String III",
+      "leetcode_link": "https://leetcode.com/problems/reverse-words-in-a-string-iii/",
       "problem": "**Problem:** Reverse each word in the string while preserving whitespace and word order.",
       "intuition": "",
       "code": "```java\nclass Solution {\n    public String reverseWords(String s) {\n        String[] words = s.split(\" \"); // split on single space (spaces preserved)\n        StringBuilder sb = new StringBuilder();\n        for (int i = 0; i < words.length; i++) {\n            // reverse each individual word and append to result\n            sb.append(new StringBuilder(words[i]).reverse());\n            if (i < words.length - 1) sb.append(' '); // preserve original spaces between words\n        }\n        return sb.toString();\n    }\n}\n// Time: O(n)  Space: O(n)\n```",
@@ -170,6 +188,7 @@
     {
       "id": 19,
       "question": "🟡 String to Integer (atoi)",
+      "leetcode_link": "https://leetcode.com/problems/string-to-integer/",
       "problem": "**Problem:** Implement `myAtoi(string s)` which converts a string to a 32-bit signed integer, handling leading whitespace, optional sign, and overflow.",
       "intuition": "",
       "code": "```java\nclass Solution {\n    public int myAtoi(String s) {\n        int i = 0, n = s.length(), sign = 1;\n        long result = 0;\n        // Step 1: skip leading whitespace\n        while (i < n && s.charAt(i) == ' ') i++;\n        // Step 2: read optional sign character\n        if (i < n && (s.charAt(i) == '+' || s.charAt(i) == '-')) {\n            sign = s.charAt(i++) == '-' ? -1 : 1;\n        }\n        // Step 3: read consecutive digit characters and build number\n        while (i < n && Character.isDigit(s.charAt(i))) {\n            result = result * 10 + (s.charAt(i++) - '0'); // shift left and add next digit\n            // Step 4: clamp to 32-bit signed int range before overflow\n            if (result * sign > Integer.MAX_VALUE) return Integer.MAX_VALUE;\n            if (result * sign < Integer.MIN_VALUE) return Integer.MIN_VALUE;\n        }\n        return (int)(result * sign);\n    }\n}\n// Time: O(n)  Space: O(1)\n```",
@@ -179,6 +198,7 @@
     {
       "id": 20,
       "question": "🟡 Decode String",
+      "leetcode_link": "https://leetcode.com/problems/decode-string/",
       "problem": "**Problem:** Given an encoded string, return its decoded form. The encoding rule is `k[encoded_string]` where `encoded_string` is repeated `k` times.",
       "intuition": "",
       "code": "```java\nclass Solution {\n    public String decodeString(String s) {\n        Deque<Integer> countStack = new ArrayDeque<>();    // stores repetition counts\n        Deque<StringBuilder> strStack = new ArrayDeque<>(); // stores strings built before '['\n        StringBuilder cur = new StringBuilder(); // current string being built\n        int k = 0; // accumulates multi-digit numbers\n        for (char c : s.toCharArray()) {\n            if (Character.isDigit(c)) {\n                k = k * 10 + (c - '0'); // build number digit by digit (handles multi-digit k)\n            } else if (c == '[') {\n                countStack.push(k);   // save current repeat count\n                strStack.push(cur);   // save current string (what was built before this '[')\n                cur = new StringBuilder(); // start fresh for the inner string\n                k = 0; // reset count for next number\n            } else if (c == ']') {\n                int repeat = countStack.pop(); // how many times to repeat inner string\n                StringBuilder prev = strStack.pop(); // the string built before this bracket\n                String inner = cur.toString();\n                // append inner string 'repeat' times to the previous context\n                for (int i = 0; i < repeat; i++) prev.append(inner);\n                cur = prev; // restore context\n            } else {\n                cur.append(c); // regular char: just append to current string\n            }\n        }\n        return cur.toString();\n    }\n}\n// Time: O(n * maxK)  Space: O(n)\n```",
@@ -188,6 +208,7 @@
     {
       "id": 21,
       "question": "🟡 Compare Version Numbers",
+      "leetcode_link": "https://leetcode.com/problems/compare-version-numbers/",
       "problem": "**Problem:** Compare two version numbers `version1` and `version2`. Return -1, 1, or 0 if version1 < version2, > version2, or == version2.",
       "intuition": "",
       "code": "```java\nclass Solution {\n    public int compareVersion(String version1, String version2) {\n        // split by escaped '.' to get individual revision tokens\n        String[] v1 = version1.split(\"\\\\.\");\n        String[] v2 = version2.split(\"\\\\.\");\n        int len = Math.max(v1.length, v2.length); // compare up to the longer version\n        for (int i = 0; i < len; i++) {\n            // missing revisions are treated as 0 (e.g. \"1.0\" vs \"1.0.0\")\n            int n1 = i < v1.length ? Integer.parseInt(v1[i]) : 0;\n            int n2 = i < v2.length ? Integer.parseInt(v2[i]) : 0;\n            if (n1 < n2) return -1; // version1 is smaller\n            if (n1 > n2) return 1;  // version1 is larger\n            // equal → move to next revision\n        }\n        return 0; // all revisions equal\n    }\n}\n// Time: O(n)  Space: O(n)\n```",
@@ -197,6 +218,7 @@
     {
       "id": 22,
       "question": "🟡 Simplify Path",
+      "leetcode_link": "https://leetcode.com/problems/simplify-path/",
       "problem": "**Problem:** Given an absolute Unix file path, simplify it (handle `.`, `..`, and multiple slashes).",
       "intuition": "",
       "code": "```java\nclass Solution {\n    public String simplifyPath(String path) {\n        Deque<String> stack = new ArrayDeque<>();\n        for (String part : path.split(\"/\")) {\n            // \"..\" means go up one directory: pop the stack if not empty\n            if (part.equals(\"..\")) { if (!stack.isEmpty()) stack.pop(); }\n            // skip empty parts (from leading/trailing/multiple slashes) and current dir \".\"\n            else if (!part.isEmpty() && !part.equals(\".\")) stack.push(part);\n        }\n        // Rebuild path: stack is LIFO so insert each component at front\n        StringBuilder sb = new StringBuilder();\n        for (String s : stack) sb.insert(0, \"/\" + s);\n        return sb.length() == 0 ? \"/\" : sb.toString(); // empty stack → root\n    }\n}\n// Time: O(n)  Space: O(n)\n```",
@@ -206,6 +228,7 @@
     {
       "id": 23,
       "question": "🟡 Restore IP Addresses",
+      "leetcode_link": "https://leetcode.com/problems/restore-ip-addresses/",
       "problem": "**Problem:** Given a string containing only digits, return all possible valid IP addresses that can be obtained from it.",
       "intuition": "",
       "code": "```java\nclass Solution {\n    public List<String> restoreIpAddresses(String s) {\n        List<String> result = new ArrayList<>();\n        backtrack(s, 0, new ArrayList<>(), result);\n        return result;\n    }\n\n    private void backtrack(String s, int start, List<String> parts, List<String> result) {\n        // base case: exactly 4 parts and we've consumed the whole string\n        if (parts.size() == 4 && start == s.length()) {\n            result.add(String.join(\".\", parts)); // valid IP address found\n            return;\n        }\n        // prune: too many parts already, or ran out of string with fewer than 4 parts\n        if (parts.size() == 4 || start == s.length()) return;\n        // try segments of length 1, 2, or 3\n        for (int len = 1; len <= 3; len++) {\n            if (start + len > s.length()) break;\n            String seg = s.substring(start, start + len);\n            if (seg.length() > 1 && seg.charAt(0) == '0') break; // no leading zeros\n            if (Integer.parseInt(seg) > 255) break; // octet must be 0-255\n            parts.add(seg);\n            backtrack(s, start + len, parts, result); // recurse with this segment chosen\n            parts.remove(parts.size() - 1); // backtrack: undo choice\n        }\n    }\n}\n// Time: O(1) (bounded by constant)  Space: O(1)\n```",
@@ -215,6 +238,7 @@
     {
       "id": 24,
       "question": "🟡 Basic Calculator II",
+      "leetcode_link": "https://leetcode.com/problems/basic-calculator-ii/",
       "problem": "**Problem:** Implement a basic calculator to evaluate a string expression with `+`, `-`, `*`, `/` (integer division). No parentheses.",
       "intuition": "",
       "code": "```java\nclass Solution {\n    public int calculate(String s) {\n        Deque<Integer> stack = new ArrayDeque<>();\n        int num = 0;\n        char op = '+'; // start with '+' so first number is pushed as-is\n        for (int i = 0; i < s.length(); i++) {\n            char c = s.charAt(i);\n            if (Character.isDigit(c)) num = num * 10 + (c - '0'); // build multi-digit number\n            // process when we hit an operator or end of string\n            if ((!Character.isDigit(c) && c != ' ') || i == s.length() - 1) {\n                switch (op) {\n                    case '+': stack.push(num);  break;  // push positive number\n                    case '-': stack.push(-num); break;  // push as negative number\n                    // for * and /, pop top, compute, push result (handles precedence)\n                    case '*': stack.push(stack.pop() * num); break;\n                    case '/': stack.push(stack.pop() / num); break;\n                }\n                op = c;  // update operator for next iteration\n                num = 0; // reset number accumulator\n            }\n        }\n        // sum all values on stack (additions/subtractions are already sign-encoded)\n        int result = 0;\n        while (!stack.isEmpty()) result += stack.pop();\n        return result;\n    }\n}\n// Time: O(n)  Space: O(n)\n```",
@@ -224,6 +248,7 @@
     {
       "id": 25,
       "question": "🟡 Longest Palindromic Substring",
+      "leetcode_link": "https://leetcode.com/problems/longest-palindromic-substring/",
       "problem": "**Problem:** Given a string `s`, return the longest palindromic substring.",
       "intuition": "",
       "code": "```java\nclass Solution {\n    private int start, maxLen;\n\n    public String longestPalindrome(String s) {\n        if (s.length() < 2) return s;\n        for (int i = 0; i < s.length(); i++) {\n            expand(s, i, i);     // odd-length palindromes centered at i\n            expand(s, i, i + 1); // even-length palindromes centered between i and i+1\n        }\n        return s.substring(start, start + maxLen);\n    }\n\n    private void expand(String s, int l, int r) {\n        // expand outward as long as characters match\n        while (l >= 0 && r < s.length() && s.charAt(l) == s.charAt(r)) { l--; r++; }\n        // after loop, [l+1, r-1] is the palindrome\n        // length = r - l - 1; update global best if this is longer\n        if (r - l - 1 > maxLen) {\n            maxLen = r - l - 1;\n            start = l + 1; // start index of this palindrome\n        }\n    }\n}\n// Time: O(n²)  Space: O(1)\n```",
@@ -233,6 +258,7 @@
     {
       "id": 26,
       "question": "🟡 Palindromic Substrings",
+      "leetcode_link": "https://leetcode.com/problems/palindromic-substrings/",
       "problem": "**Problem:** Given a string `s`, return the number of palindromic substrings in it.",
       "intuition": "",
       "code": "```java\nclass Solution {\n    private int count = 0;\n\n    public int countSubstrings(String s) {\n        for (int i = 0; i < s.length(); i++) {\n            expand(s, i, i);     // expand from single center (odd-length)\n            expand(s, i, i + 1); // expand from gap between i and i+1 (even-length)\n        }\n        return count;\n    }\n\n    private void expand(String s, int l, int r) {\n        // each successful expansion is a valid palindromic substring\n        while (l >= 0 && r < s.length() && s.charAt(l) == s.charAt(r)) {\n            count++; // found one palindrome\n            l--; r++; // try to expand further\n        }\n    }\n}\n// Time: O(n²)  Space: O(1)\n```",
@@ -242,6 +268,7 @@
     {
       "id": 27,
       "question": "🟢 Valid Palindrome II",
+      "leetcode_link": "https://leetcode.com/problems/valid-palindrome-ii/",
       "problem": "**Problem:** Given a string `s`, return `true` if it can become a palindrome after deleting at most one character.",
       "intuition": "",
       "code": "```java\nclass Solution {\n    public boolean validPalindrome(String s) {\n        int l = 0, r = s.length() - 1;\n        while (l < r) {\n            if (s.charAt(l) != s.charAt(r))\n                // mismatch found: try skipping either left or right character\n                // if either of the resulting substrings is a palindrome, we're good\n                return isPalin(s, l + 1, r) || isPalin(s, l, r - 1);\n            l++; r--; // characters match, move inward\n        }\n        return true; // no mismatch found → already a palindrome\n    }\n\n    private boolean isPalin(String s, int l, int r) {\n        while (l < r) {\n            if (s.charAt(l++) != s.charAt(r--)) return false; // mismatch → not palindrome\n        }\n        return true;\n    }\n}\n// Time: O(n)  Space: O(1)\n```",
@@ -251,6 +278,7 @@
     {
       "id": 28,
       "question": "🔴 Count Palindromic Subsequences",
+      "leetcode_link": "https://leetcode.com/problems/count-palindromic-subsequences/",
       "problem": "**Problem:** Given a string `s`, return the number of distinct, non-empty palindromic subsequences. Since the answer may be very large, return it modulo 10^9 + 7.",
       "intuition": "",
       "code": "```java\nclass Solution {\n    public int countPalindromicSubsequences(String s) {\n        int n = s.length();\n        long MOD = 1_000_000_007L;\n        long[][] dp = new long[n][n];\n        // dp[i][j] = number of distinct palindromic subsequences in s[i..j]\n        for (int i = 0; i < n; i++) dp[i][i] = 1; // each single char is 1 palindrome\n        for (int len = 2; len <= n; len++) {\n            for (int i = 0; i <= n - len; i++) {\n                int j = i + len - 1;\n                if (s.charAt(i) == s.charAt(j)) {\n                    // find innermost occurrences of the same char within (i, j)\n                    int lo = i + 1, hi = j - 1;\n                    while (lo <= hi && s.charAt(lo) != s.charAt(i)) lo++;\n                    while (lo <= hi && s.charAt(hi) != s.charAt(j)) hi--;\n                    if (lo > hi) {\n                        // char s[i] does NOT appear inside → add 2 new palindromes (s[i] alone and s[i]s[j])\n                        dp[i][j] = dp[i + 1][j - 1] * 2 + 2;\n                    } else if (lo == hi) {\n                        // char appears exactly once inside → add 1 new palindrome (s[i]s[j] wrap)\n                        dp[i][j] = dp[i + 1][j - 1] * 2 + 1;\n                    } else {\n                        // char appears at least twice inside → subtract duplicates (lo+1..hi-1 was counted twice)\n                        dp[i][j] = dp[i + 1][j - 1] * 2 - dp[lo + 1][hi - 1];\n                    }\n                } else {\n                    // chars differ: inclusion-exclusion to avoid double-counting\n                    dp[i][j] = dp[i + 1][j] + dp[i][j - 1] - dp[i + 1][j - 1];\n                }\n                dp[i][j] = ((dp[i][j] % MOD) + MOD) % MOD; // keep result positive mod\n            }\n        }\n        return (int) dp[0][n - 1];\n    }\n}\n// Time: O(n²)  Space: O(n²)\n```",
@@ -260,6 +288,7 @@
     {
       "id": 29,
       "question": "🟡 Partition Labels",
+      "leetcode_link": "https://leetcode.com/problems/partition-labels/",
       "problem": "**Problem:** Partition string `s` into as many parts as possible so that each letter appears in at most one part. Return the list of partition sizes.",
       "intuition": "",
       "code": "```java\nclass Solution {\n    public List<Integer> partitionLabels(String s) {\n        int[] last = new int[26];\n        // record the last occurrence index of each character\n        for (int i = 0; i < s.length(); i++) last[s.charAt(i) - 'a'] = i;\n        List<Integer> result = new ArrayList<>();\n        int start = 0, end = 0; // current partition boundaries\n        for (int i = 0; i < s.length(); i++) {\n            // extend the partition end to include the last occurrence of current char\n            end = Math.max(end, last[s.charAt(i) - 'a']);\n            // if we've reached the end of the partition → close it\n            if (i == end) {\n                result.add(end - start + 1); // record partition size\n                start = end + 1; // start next partition right after\n            }\n        }\n        return result;\n    }\n}\n// Time: O(n)  Space: O(1)\n```",
@@ -269,6 +298,7 @@
     {
       "id": 30,
       "question": "🟡 Remove Duplicate Letters",
+      "leetcode_link": "https://leetcode.com/problems/remove-duplicate-letters/",
       "problem": "**Problem:** Given a string `s`, remove duplicate letters so that every letter appears once and the result is the smallest in lexicographic order among all possible results.",
       "intuition": "",
       "code": "```java\nclass Solution {\n    public String removeDuplicateLetters(String s) {\n        int[] count = new int[26];    // remaining occurrences of each char\n        boolean[] inStack = new boolean[26]; // whether char is already in result stack\n        for (char c : s.toCharArray()) count[c - 'a']++;\n        Deque<Character> stack = new ArrayDeque<>(); // monotonic stack (result built here)\n        for (char c : s.toCharArray()) {\n            count[c - 'a']--; // one fewer occurrence remaining\n            if (inStack[c - 'a']) continue; // already in result, skip duplicate\n            // Pop chars that are: (a) larger than c [not smallest] AND\n            //                     (b) will appear again later [safe to remove now]\n            while (!stack.isEmpty() && stack.peek() > c && count[stack.peek() - 'a'] > 0) {\n                inStack[stack.pop() - 'a'] = false; // mark as no longer in stack\n            }\n            stack.push(c);          // add current char to result\n            inStack[c - 'a'] = true; // mark it as in stack\n        }\n        StringBuilder sb = new StringBuilder();\n        for (char c : stack) sb.append(c);\n        return sb.reverse().toString(); // stack is LIFO, reverse to get correct order\n    }\n}\n// Time: O(n)  Space: O(1)\n```",
@@ -278,6 +308,7 @@
     {
       "id": 31,
       "question": "Reorganize String",
+      "leetcode_link": "https://leetcode.com/problems/reorganize-string/",
       "problem": "**Problem:** Given a string `s`, rearrange the characters so that no two adjacent characters are the same. Return any valid arrangement, or `\"\"` if impossible.",
       "intuition": "",
       "code": "```java\nclass Solution {\n    public String reorganizeString(String s) {\n        int[] freq = new int[26];\n        for (char c : s.toCharArray()) freq[c - 'a']++; // count frequency of each char\n        // Max-heap: [frequency, character index] — always process most frequent char first\n        PriorityQueue<int[]> pq = new PriorityQueue<>((a, b) -> b[0] - a[0]);\n        for (int i = 0; i < 26; i++) if (freq[i] > 0) pq.offer(new int[]{freq[i], i});\n        StringBuilder sb = new StringBuilder();\n        // Always take top two most frequent chars and alternate them\n        while (pq.size() >= 2) {\n            int[] a = pq.poll(), b = pq.poll(); // two most frequent\n            sb.append((char)('a' + a[1])); // append char a\n            sb.append((char)('a' + b[1])); // append char b (different from a)\n            if (--a[0] > 0) pq.offer(a); // reinsert if still has remaining count\n            if (--b[0] > 0) pq.offer(b);\n        }\n        if (!pq.isEmpty()) {\n            // one char left: if it appears more than once we can't avoid adjacency\n            if (pq.peek()[0] > 1) return \"\";\n            sb.append((char)('a' + pq.poll()[1])); // safely append single remaining char\n        }\n        return sb.toString();\n    }\n}\n// Time: O(n log k)  Space: O(k)  where k=26\n```",
@@ -287,6 +318,7 @@
     {
       "id": 32,
       "question": "Partition String Into Substrings With Unique Characters",
+      "leetcode_link": "https://leetcode.com/problems/partition-string-into-substrings-with-unique-characters/",
       "problem": "**Problem:** Partition string `s` into one or more substrings such that the characters in each substring are unique. Return the minimum number of substrings in such a partition.",
       "intuition": "",
       "code": "```java\nclass Solution {\n    public int partitionString(String s) {\n        Set<Character> seen = new HashSet<>(); // chars in current partition\n        int parts = 1; // start with 1 partition\n        for (char c : s.toCharArray()) {\n            if (seen.contains(c)) {\n                // char already seen in this partition → start a new one\n                parts++;\n                seen.clear(); // reset for new partition\n            }\n            seen.add(c); // add char to current partition\n        }\n        return parts;\n    }\n}\n// Time: O(n)  Space: O(1)\n```",
@@ -296,6 +328,7 @@
     {
       "id": 33,
       "question": "Implement strStr()",
+      "leetcode_link": "https://leetcode.com/problems/implement-strstr/",
       "problem": "**Problem:** Return the index of the first occurrence of needle in haystack, or -1 if not present.",
       "intuition": "",
       "code": "```java\nclass Solution {\n    public int strStr(String haystack, String needle) {\n        if (needle.isEmpty()) return 0;\n        int[] lps = buildLPS(needle); // precompute LPS (Longest Prefix Suffix) array\n        int i = 0, j = 0; // i = haystack pointer, j = needle pointer\n        while (i < haystack.length()) {\n            if (haystack.charAt(i) == needle.charAt(j)) { i++; j++; } // chars match, advance both\n            if (j == needle.length()) return i - j; // full needle matched, return start index\n            else if (i < haystack.length() && haystack.charAt(i) != needle.charAt(j)) {\n                // mismatch: use LPS to skip redundant comparisons (don't reset j to 0)\n                if (j != 0) j = lps[j - 1]; // fall back to best matching prefix\n                else i++; // no prefix to fall back to, advance haystack\n            }\n        }\n        return -1;\n    }\n\n    private int[] buildLPS(String pat) {\n        // lps[i] = length of longest proper prefix of pat[0..i] which is also a suffix\n        int[] lps = new int[pat.length()];\n        int len = 0, i = 1; // len = current longest prefix-suffix length\n        while (i < pat.length()) {\n            if (pat.charAt(i) == pat.charAt(len)) lps[i++] = ++len; // extend prefix-suffix\n            else if (len != 0) len = lps[len - 1]; // mismatch: fall back\n            else lps[i++] = 0; // no prefix-suffix possible\n        }\n        return lps;\n    }\n}\n// Time: O(n + m)  Space: O(m)\n```",
@@ -305,6 +338,7 @@
     {
       "id": 34,
       "question": "Repeated DNA Sequences",
+      "leetcode_link": "https://leetcode.com/problems/repeated-dna-sequences/",
       "problem": "**Problem:** Given a DNA string `s`, find all 10-letter-long sequences that appear more than once.",
       "intuition": "",
       "code": "```java\nclass Solution {\n    public List<String> findRepeatedDnaSequences(String s) {\n        Set<String> seen = new HashSet<>(), repeated = new HashSet<>();\n        for (int i = 0; i + 10 <= s.length(); i++) {\n            String sub = s.substring(i, i + 10); // extract 10-char window\n            // if seen.add returns false, the substring was already in the set → it's repeated\n            if (!seen.add(sub)) repeated.add(sub);\n        }\n        return new ArrayList<>(repeated);\n    }\n}\n// Time: O(n)  Space: O(n)\n```",
@@ -314,6 +348,7 @@
     {
       "id": 35,
       "question": "Longest Happy Prefix",
+      "leetcode_link": "https://leetcode.com/problems/longest-happy-prefix/",
       "problem": "**Problem:** A string is a \"happy prefix\" if it is both a prefix and suffix (non-trivial). Return the longest such prefix of `s`.",
       "intuition": "",
       "code": "```java\nclass Solution {\n    public String longestPrefix(String s) {\n        int n = s.length();\n        // Build KMP failure function (LPS array) for the string itself\n        // lps[i] = length of longest proper prefix of s[0..i] that is also a suffix\n        int[] lps = new int[n];\n        int len = 0, i = 1;\n        while (i < n) {\n            if (s.charAt(i) == s.charAt(len)) lps[i++] = ++len; // extend prefix-suffix\n            else if (len != 0) len = lps[len - 1]; // fall back\n            else lps[i++] = 0;\n        }\n        // lps[n-1] gives the length of the longest happy prefix\n        return s.substring(0, lps[n - 1]);\n    }\n}\n// Time: O(n)  Space: O(n)\n```",
@@ -323,6 +358,7 @@
     {
       "id": 36,
       "question": "Word Break",
+      "leetcode_link": "https://leetcode.com/problems/word-break/",
       "problem": "**Problem:** Given a string `s` and a dictionary `wordDict`, return `true` if `s` can be segmented into space-separated dictionary words.",
       "intuition": "",
       "code": "```java\nclass Solution {\n    public boolean wordBreak(String s, List<String> wordDict) {\n        Set<String> set = new HashSet<>(wordDict); // O(1) lookup for each word\n        int n = s.length();\n        boolean[] dp = new boolean[n + 1];\n        dp[0] = true; // empty string is always segmentable\n        for (int i = 1; i <= n; i++) {\n            // try every possible last word ending at index i\n            for (int j = 0; j < i; j++) {\n                // if s[0..j-1] was segmentable AND s[j..i-1] is a dictionary word\n                if (dp[j] && set.contains(s.substring(j, i))) {\n                    dp[i] = true;\n                    break; // no need to check more splits for index i\n                }\n            }\n        }\n        return dp[n];\n    }\n}\n// Time: O(n²)  Space: O(n)\n```",
@@ -332,6 +368,7 @@
     {
       "id": 37,
       "question": "Decode Ways",
+      "leetcode_link": "https://leetcode.com/problems/decode-ways/",
       "problem": "**Problem:** A message encoded as digits where 'A'=1 ... 'Z'=26. Return the number of ways to decode it.",
       "intuition": "",
       "code": "```java\nclass Solution {\n    public int numDecodings(String s) {\n        int n = s.length();\n        int[] dp = new int[n + 1];\n        dp[0] = 1; // empty string → 1 way (base case)\n        dp[1] = s.charAt(0) != '0' ? 1 : 0; // single digit: 1 way if non-zero, else 0\n        for (int i = 2; i <= n; i++) {\n            int one = s.charAt(i - 1) - '0'; // last single digit\n            int two = Integer.parseInt(s.substring(i - 2, i)); // last two digits\n            // if single digit is valid (1-9), we can decode it as one character\n            if (one >= 1) dp[i] += dp[i - 1];\n            // if two-digit number is valid (10-26), we can decode it as one character\n            if (two >= 10 && two <= 26) dp[i] += dp[i - 2];\n        }\n        return dp[n];\n    }\n}\n// Time: O(n)  Space: O(n)\n```",
@@ -341,6 +378,7 @@
     {
       "id": 38,
       "question": "Interleaving String",
+      "leetcode_link": "https://leetcode.com/problems/interleaving-string/",
       "problem": "**Problem:** Given strings `s1`, `s2`, and `s3`, return `true` if `s3` is formed by an interleaving of `s1` and `s2`.",
       "intuition": "",
       "code": "```java\nclass Solution {\n    public boolean isInterleave(String s1, String s2, String s3) {\n        int m = s1.length(), n = s2.length();\n        if (m + n != s3.length()) return false; // total length must match\n        // dp[i][j] = true if s3[0..i+j-1] can be formed by interleaving s1[0..i-1] and s2[0..j-1]\n        boolean[][] dp = new boolean[m + 1][n + 1];\n        dp[0][0] = true; // empty strings trivially interleave to empty s3\n        // fill first column: use only s1\n        for (int i = 1; i <= m; i++) dp[i][0] = dp[i-1][0] && s1.charAt(i-1) == s3.charAt(i-1);\n        // fill first row: use only s2\n        for (int j = 1; j <= n; j++) dp[0][j] = dp[0][j-1] && s2.charAt(j-1) == s3.charAt(j-1);\n        for (int i = 1; i <= m; i++)\n            for (int j = 1; j <= n; j++)\n                // either take from s1 (if prev state valid and s1 char matches s3 char)\n                // or take from s2 (if prev state valid and s2 char matches s3 char)\n                dp[i][j] = (dp[i-1][j] && s1.charAt(i-1) == s3.charAt(i+j-1))\n                         || (dp[i][j-1] && s2.charAt(j-1) == s3.charAt(i+j-1));\n        return dp[m][n];\n    }\n}\n// Time: O(m*n)  Space: O(m*n)\n```",
@@ -350,6 +388,7 @@
     {
       "id": 39,
       "question": "Longest Common Subsequence",
+      "leetcode_link": "https://leetcode.com/problems/longest-common-subsequence/",
       "problem": "**Problem:** Given two strings `text1` and `text2`, return the length of their longest common subsequence.",
       "intuition": "",
       "code": "```java\nclass Solution {\n    public int longestCommonSubsequence(String text1, String text2) {\n        int m = text1.length(), n = text2.length();\n        // dp[i][j] = LCS length for text1[0..i-1] and text2[0..j-1]\n        int[][] dp = new int[m + 1][n + 1];\n        for (int i = 1; i <= m; i++)\n            for (int j = 1; j <= n; j++)\n                // if chars match → extend the LCS from diagonal (both shrink by 1)\n                // else → take the best of skipping one char from either string\n                dp[i][j] = text1.charAt(i-1) == text2.charAt(j-1)\n                          ? dp[i-1][j-1] + 1\n                          : Math.max(dp[i-1][j], dp[i][j-1]);\n        return dp[m][n];\n    }\n}\n// Time: O(m*n)  Space: O(m*n)\n```",
@@ -359,6 +398,7 @@
     {
       "id": 40,
       "question": "Word Ladder",
+      "leetcode_link": "https://leetcode.com/problems/word-ladder/",
       "problem": "**Problem:** Given `beginWord`, `endWord`, and a `wordList`, return the number of words in the shortest transformation sequence from `beginWord` to `endWord` (changing one letter at a time, each intermediate word must be in the list).",
       "intuition": "",
       "code": "```java\nclass Solution {\n    public int ladderLength(String beginWord, String endWord, List<String> wordList) {\n        Set<String> dict = new HashSet<>(wordList);\n        if (!dict.contains(endWord)) return 0;\n        Queue<String> queue = new LinkedList<>();\n        queue.offer(beginWord);\n        Set<String> visited = new HashSet<>();\n        visited.add(beginWord);\n        int steps = 1;\n        while (!queue.isEmpty()) {\n            int size = queue.size();\n            while (size-- > 0) {\n                String word = queue.poll();\n                char[] arr = word.toCharArray();\n                for (int i = 0; i < arr.length; i++) {\n                    char orig = arr[i];\n                    for (char c = 'a'; c <= 'z'; c++) {\n                        arr[i] = c;\n                        String next = new String(arr);\n                        if (next.equals(endWord)) return steps + 1;\n                        if (dict.contains(next) && !visited.contains(next)) {\n                            visited.add(next);\n                            queue.offer(next);\n                        }\n                    }\n                    arr[i] = orig;\n                }\n            }\n            steps++;\n        }\n        return 0;\n    }\n}\n// Time: O(n * L * 26)  Space: O(n)\n```",
@@ -368,6 +408,7 @@
     {
       "id": 41,
       "question": "Edit Distance",
+      "leetcode_link": "https://leetcode.com/problems/edit-distance/",
       "problem": "**Problem:** Given strings `word1` and `word2`, return the minimum number of operations (insert, delete, replace) to convert `word1` to `word2`.",
       "intuition": "",
       "code": "```java\nclass Solution {\n    public int minDistance(String word1, String word2) {\n        int m = word1.length(), n = word2.length();\n        // dp[i][j] = min edits to convert word1[0..i-1] to word2[0..j-1]\n        int[][] dp = new int[m + 1][n + 1];\n        // base cases: converting to/from empty string costs i or j deletions/insertions\n        for (int i = 0; i <= m; i++) dp[i][0] = i;\n        for (int j = 0; j <= n; j++) dp[0][j] = j;\n        for (int i = 1; i <= m; i++)\n            for (int j = 1; j <= n; j++)\n                // if chars match → no new operation needed (take diagonal)\n                // else → 1 op + min(replace dp[i-1][j-1], delete dp[i-1][j], insert dp[i][j-1])\n                dp[i][j] = word1.charAt(i-1) == word2.charAt(j-1)\n                          ? dp[i-1][j-1]\n                          : 1 + Math.min(dp[i-1][j-1], Math.min(dp[i-1][j], dp[i][j-1]));\n        return dp[m][n];\n    }\n}\n// Time: O(m*n)  Space: O(m*n)\n```",
@@ -377,6 +418,7 @@
     {
       "id": 42,
       "question": "Distinct Subsequences",
+      "leetcode_link": "https://leetcode.com/problems/distinct-subsequences/",
       "problem": "**Problem:** Given strings `s` and `t`, return the number of distinct subsequences of `s` that equals `t`.",
       "intuition": "",
       "code": "```java\nclass Solution {\n    public int numDistinct(String s, String t) {\n        int m = s.length(), n = t.length();\n        // dp[i][j] = number of ways s[0..i-1] contains t[0..j-1] as a subsequence\n        long[][] dp = new long[m + 1][n + 1];\n        for (int i = 0; i <= m; i++) dp[i][0] = 1; // empty t is always a subsequence: 1 way\n        for (int i = 1; i <= m; i++)\n            for (int j = 1; j <= n; j++) {\n                dp[i][j] = dp[i-1][j]; // always: don't use s[i-1] (skip it)\n                // if s[i-1] == t[j-1], also add the ways where we USE s[i-1] to match t[j-1]\n                if (s.charAt(i-1) == t.charAt(j-1)) dp[i][j] += dp[i-1][j-1];\n            }\n        return (int) dp[m][n];\n    }\n}\n// Time: O(m*n)  Space: O(m*n)\n```",
@@ -386,6 +428,7 @@
     {
       "id": 43,
       "question": "Word Search II",
+      "leetcode_link": "https://leetcode.com/problems/word-search-ii/",
       "problem": "**Problem:** Given an `m x n` board of characters and a list of strings `words`, return all words on the board (each cell used at most once per word).",
       "intuition": "",
       "code": "```java\nclass Solution {\n    class TrieNode {\n        TrieNode[] children = new TrieNode[26];\n        String word = null; // non-null if this node marks end of a word\n    }\n\n    public List<String> findWords(char[][] board, String[] words) {\n        // Step 1: Insert all words into Trie for efficient prefix matching\n        TrieNode root = new TrieNode();\n        for (String w : words) {\n            TrieNode node = root;\n            for (char c : w.toCharArray()) {\n                int i = c - 'a';\n                if (node.children[i] == null) node.children[i] = new TrieNode();\n                node = node.children[i];\n            }\n            node.word = w; // mark end of word\n        }\n        List<String> result = new ArrayList<>();\n        // Step 2: Start DFS from every cell on the board\n        for (int i = 0; i < board.length; i++)\n            for (int j = 0; j < board[0].length; j++)\n                dfs(board, i, j, root, result);\n        return result;\n    }\n\n    private void dfs(char[][] board, int i, int j, TrieNode node, List<String> result) {\n        if (i < 0 || i >= board.length || j < 0 || j >= board[0].length) return; // out of bounds\n        char c = board[i][j];\n        if (c == '#' || node.children[c - 'a'] == null) return; // visited or no trie path\n        node = node.children[c - 'a']; // descend into trie\n        if (node.word != null) { result.add(node.word); node.word = null; } // word found, dedup\n        board[i][j] = '#'; // mark cell as visited (avoid reuse in same word)\n        dfs(board, i+1, j, node, result); // explore all 4 directions\n        dfs(board, i-1, j, node, result);\n        dfs(board, i, j+1, node, result);\n        dfs(board, i, j-1, node, result);\n        board[i][j] = c; // restore cell (backtrack)\n    }\n}\n// Time: O(m*n*4^L)  Space: O(W*L)\n```",
@@ -395,6 +438,7 @@
     {
       "id": 44,
       "question": "Alien Dictionary",
+      "leetcode_link": "https://leetcode.com/problems/alien-dictionary/",
       "problem": "**Problem:** Given a sorted list of words in an alien language, derive the order of letters in the alien alphabet. Return any valid ordering, or `\"\"` if invalid.",
       "intuition": "",
       "code": "```java\nclass Solution {\n    public String alienOrder(String[] words) {\n        Map<Character, Set<Character>> graph = new HashMap<>();\n        Map<Character, Integer> inDegree = new HashMap<>();\n        // Initialize graph nodes for every unique character seen\n        for (String w : words) for (char c : w.toCharArray()) {\n            graph.putIfAbsent(c, new HashSet<>());\n            inDegree.putIfAbsent(c, 0);\n        }\n        // Compare adjacent words to extract ordering constraints\n        for (int i = 0; i < words.length - 1; i++) {\n            String w1 = words[i], w2 = words[i + 1];\n            int minLen = Math.min(w1.length(), w2.length());\n            // invalid: longer word is a prefix of shorter → bad ordering\n            if (w1.length() > w2.length() && w1.startsWith(w2)) return \"\";\n            for (int j = 0; j < minLen; j++) {\n                if (w1.charAt(j) != w2.charAt(j)) {\n                    // first differing char gives us an edge: w1[j] comes before w2[j]\n                    if (!graph.get(w1.charAt(j)).contains(w2.charAt(j))) {\n                        graph.get(w1.charAt(j)).add(w2.charAt(j));\n                        inDegree.merge(w2.charAt(j), 1, Integer::sum); // increment in-degree\n                    }\n                    break; // only first difference counts between adjacent words\n                }\n            }\n        }\n        // BFS topological sort (Kahn's algorithm)\n        Queue<Character> queue = new LinkedList<>();\n        for (char c : inDegree.keySet()) if (inDegree.get(c) == 0) queue.offer(c); // start with 0 in-degree\n        StringBuilder sb = new StringBuilder();\n        while (!queue.isEmpty()) {\n            char c = queue.poll();\n            sb.append(c); // add char to result order\n            for (char next : graph.get(c)) {\n                inDegree.merge(next, -1, Integer::sum); // remove edge\n                if (inDegree.get(next) == 0) queue.offer(next); // now processable\n            }\n        }\n        // if result has all chars → valid; else there's a cycle → invalid\n        return sb.length() == inDegree.size() ? sb.toString() : \"\";\n    }\n}\n// Time: O(C)  Space: O(1) — at most 26 chars\n```",
@@ -404,6 +448,7 @@
     {
       "id": 45,
       "question": "Text Justification",
+      "leetcode_link": "https://leetcode.com/problems/text-justification/",
       "problem": "**Problem:** Given words and a maximum line width `maxWidth`, format the text such that each line has exactly `maxWidth` characters (full justification, last line left-justified).",
       "intuition": "",
       "code": "```java\nclass Solution {\n    public List<String> fullJustify(String[] words, int maxWidth) {\n        List<String> result = new ArrayList<>();\n        int i = 0, n = words.length;\n        while (i < n) {\n            // Greedily pack words into current line\n            int lineLen = words[i].length(), j = i + 1;\n            while (j < n && lineLen + 1 + words[j].length() <= maxWidth) {\n                lineLen += 1 + words[j++].length(); // +1 for minimum 1 space between words\n            }\n            int numWords = j - i;\n            // numSpaces: total spaces needed (maxWidth minus actual word chars)\n            int numSpaces = maxWidth - lineLen + (numWords - 1);\n            StringBuilder sb = new StringBuilder(words[i]);\n            if (j == n || numWords == 1) {\n                // Last line or single word: left-justify (single space between, pad right)\n                for (int k = i + 1; k < j; k++) sb.append(' ').append(words[k]);\n                while (sb.length() < maxWidth) sb.append(' ');\n            } else {\n                // Full justification: distribute spaces as evenly as possible\n                int gaps = numWords - 1;\n                int spaceEach = numSpaces / gaps;   // base spaces per gap\n                int extra = numSpaces % gaps;         // first 'extra' gaps get one extra space\n                for (int k = i + 1; k < j; k++) {\n                    int sp = spaceEach + (k - i <= extra ? 1 : 0); // extra space for early gaps\n                    for (int s = 0; s < sp; s++) sb.append(' ');\n                    sb.append(words[k]);\n                }\n            }\n            result.add(sb.toString());\n            i = j; // move to next line\n        }\n        return result;\n    }\n}\n// Time: O(n * maxWidth)  Space: O(maxWidth)\n```",
@@ -413,6 +458,7 @@
     {
       "id": 46,
       "question": "Shortest Way to Form String",
+      "leetcode_link": "https://leetcode.com/problems/shortest-way-to-form-string/",
       "problem": "**Problem:** Return the minimum number of subsequences of `source` needed to form `target`, or -1 if impossible.",
       "intuition": "",
       "code": "```java\nclass Solution {\n    public int shortestWay(String source, String target) {\n        boolean[] inSource = new boolean[26];\n        for (char c : source.toCharArray()) inSource[c - 'a'] = true;\n        // if any target char doesn't exist in source → impossible\n        for (char c : target.toCharArray())\n            if (!inSource[c - 'a']) return -1;\n\n        int count = 1; // number of source subsequence passes used\n        int j = 0;     // pointer into source\n        for (int i = 0; i < target.length(); i++) {\n            boolean found = false;\n            // scan source from current position to find target[i]\n            while (j < source.length()) {\n                if (source.charAt(j++) == target.charAt(i)) { found = true; break; }\n            }\n            if (!found) {\n                // exhausted source without finding target[i] → start a new pass\n                count++; j = 0; i--; // retry target[i] from beginning of source\n            }\n        }\n        return count;\n    }\n}\n// Time: O(|source| * |target|)  Space: O(1)\n```",
@@ -422,6 +468,7 @@
     {
       "id": 47,
       "question": "Minimum Deletions to Make Character Frequencies Unique",
+      "leetcode_link": "https://leetcode.com/problems/minimum-deletions-to-make-character-frequencies-unique/",
       "problem": "**Problem:** A string is \"good\" if no two characters have the same frequency. Return the minimum number of deletions to make `s` good.",
       "intuition": "",
       "code": "```java\nclass Solution {\n    public int minDeletions(String s) {\n        int[] freq = new int[26];\n        for (char c : s.toCharArray()) freq[c - 'a']++; // count each char's frequency\n        Arrays.sort(freq); // sort ascending so we process from highest frequency downwards\n        int deletions = 0;\n        // iterate from second-highest to lowest (compare with its right neighbor)\n        for (int i = 24; i >= 0; i--) {\n            if (freq[i] == 0) break; // no more non-zero frequencies\n            if (freq[i] >= freq[i + 1]) {\n                // current freq must be strictly less than freq[i+1]; reduce it\n                int newFreq = Math.max(0, freq[i + 1] - 1); // target unique freq below right neighbor\n                deletions += freq[i] - newFreq; // deletions needed to go from freq[i] to newFreq\n                freq[i] = newFreq; // update so next left neighbor compares correctly\n            }\n        }\n        return deletions;\n    }\n}\n// Time: O(n)  Space: O(1)\n```",
@@ -431,6 +478,7 @@
     {
       "id": 48,
       "question": "Encode and Decode Strings",
+      "leetcode_link": "https://leetcode.com/problems/encode-and-decode-strings/",
       "problem": "**Problem:** Design an algorithm to encode a list of strings to a single string, and decode it back.",
       "intuition": "",
       "code": "```java\nclass Codec {\n    public String encode(List<String> strs) {\n        StringBuilder sb = new StringBuilder();\n        // Format: \"<length>#<string>\" for each string\n        // Using '#' as delimiter after length makes decoding unambiguous regardless of string content\n        for (String s : strs) sb.append(s.length()).append('#').append(s);\n        return sb.toString();\n    }\n\n    public List<String> decode(String s) {\n        List<String> result = new ArrayList<>();\n        int i = 0;\n        while (i < s.length()) {\n            int j = s.indexOf('#', i); // find '#' to locate the length prefix\n            int len = Integer.parseInt(s.substring(i, j)); // parse the length\n            result.add(s.substring(j + 1, j + 1 + len)); // extract exactly 'len' chars after '#'\n            i = j + 1 + len; // advance past this entry\n        }\n        return result;\n    }\n}\n// Time: O(n)  Space: O(n)\n```",
@@ -440,6 +488,7 @@
     {
       "id": 49,
       "question": "Find and Replace Pattern",
+      "leetcode_link": "https://leetcode.com/problems/find-and-replace-pattern/",
       "problem": "**Problem:** Given a list of strings `words` and a `pattern`, return every word that matches the pattern (same bijective mapping as isomorphic strings).",
       "intuition": "",
       "code": "```java\nclass Solution {\n    public List<String> findAndReplacePattern(String[] words, String pattern) {\n        List<String> result = new ArrayList<>();\n        // check each word against the pattern\n        for (String word : words) if (matches(word, pattern)) result.add(word);\n        return result;\n    }\n\n    private boolean matches(String word, String pattern) {\n        if (word.length() != pattern.length()) return false;\n        // w2p[c] = last index+1 where word char c was seen\n        // p2w[c] = last index+1 where pattern char c was seen\n        // same trick as Isomorphic Strings (problem 9)\n        int[] w2p = new int[256], p2w = new int[256];\n        for (int i = 0; i < word.length(); i++) {\n            char w = word.charAt(i), p = pattern.charAt(i);\n            // if the last-seen timestamps differ → inconsistent bijection\n            if (w2p[w] != p2w[p]) return false;\n            w2p[w] = i + 1; // update timestamps to current position\n            p2w[p] = i + 1;\n        }\n        return true;\n    }\n}\n// Time: O(n * L)  Space: O(1)\n```",
@@ -449,6 +498,7 @@
     {
       "id": 50,
       "question": "Shortest Palindrome",
+      "leetcode_link": "https://leetcode.com/problems/shortest-palindrome/",
       "problem": "**Problem:** Given a string `s`, find the shortest palindrome you can make by adding characters in front of it.",
       "intuition": "",
       "code": "```java\nclass Solution {\n    public String shortestPalindrome(String s) {\n        String rev = new StringBuilder(s).reverse().toString();\n        // Combine s + '#' + rev; '#' acts as sentinel to prevent prefix of s matching into rev\n        // We want: longest prefix of s that is a palindrome (= longest prefix that is also a suffix of rev)\n        String combined = s + \"#\" + rev;\n        int[] lps = new int[combined.length()];\n        for (int i = 1; i < combined.length(); i++) {\n            int j = lps[i - 1]; // start from last known prefix-suffix length\n            while (j > 0 && combined.charAt(i) != combined.charAt(j)) j = lps[j - 1];\n            if (combined.charAt(i) == combined.charAt(j)) j++;\n            lps[i] = j; // KMP failure function value\n        }\n        int overlap = lps[combined.length() - 1]; // length of longest palindromic prefix of s\n        // Prepend the reverse of the suffix that isn't part of the palindrome\n        return rev.substring(0, s.length() - overlap) + s;\n    }\n}\n// Time: O(n)  Space: O(n)\n```",
@@ -458,6 +508,7 @@
     {
       "id": 51,
       "question": "Longest Common Prefix",
+      "leetcode_link": "https://leetcode.com/problems/longest-common-prefix/",
       "problem": "**Problem:** Find the longest common prefix string amongst an array of strings. If none, return `\"\"`.",
       "intuition": "",
       "code": "```java\nclass Solution {\n    public String longestCommonPrefix(String[] strs) {\n        if (strs.length == 0) return \"\";\n        String prefix = strs[0]; // start with first string as the candidate prefix\n        for (int i = 1; i < strs.length; i++) {\n            // shrink prefix from the right until strs[i] starts with it\n            while (!strs[i].startsWith(prefix))\n                prefix = prefix.substring(0, prefix.length() - 1);\n            if (prefix.isEmpty()) return \"\"; // no common prefix possible\n        }\n        return prefix;\n    }\n}\n// Time: O(S) where S = sum of all characters  Space: O(1)\n```",
@@ -467,6 +518,7 @@
     {
       "id": 52,
       "question": "First Unique Character in a String",
+      "leetcode_link": "https://leetcode.com/problems/first-unique-character-in-a-string/",
       "problem": "**Problem:** Given a string `s`, find the first non-repeating character and return its index. If it doesn't exist, return -1.",
       "intuition": "",
       "code": "```java\nclass Solution {\n    public int firstUniqChar(String s) {\n        int[] count = new int[26];\n        for (char c : s.toCharArray()) count[c - 'a']++; // Step 1: count all char frequencies\n        // Step 2: scan again and return first index where count is exactly 1 (unique)\n        for (int i = 0; i < s.length(); i++)\n            if (count[s.charAt(i) - 'a'] == 1) return i;\n        return -1; // no unique character found\n    }\n}\n// Time: O(n)  Space: O(1)\n```",
@@ -476,6 +528,7 @@
     {
       "id": 53,
       "question": "Ransom Note",
+      "leetcode_link": "https://leetcode.com/problems/ransom-note/",
       "problem": "**Problem:** Return `true` if you can construct `ransomNote` using letters from `magazine` (each letter used at most once).",
       "intuition": "",
       "code": "```java\nclass Solution {\n    public boolean canConstruct(String ransomNote, String magazine) {\n        int[] count = new int[26];\n        for (char c : magazine.toCharArray()) count[c - 'a']++; // count available letters\n        for (char c : ransomNote.toCharArray()) {\n            // consume one of this letter; if it goes below 0 → not enough in magazine\n            if (--count[c - 'a'] < 0) return false;\n        }\n        return true;\n    }\n}\n// Time: O(n)  Space: O(1)\n```",
@@ -485,6 +538,7 @@
     {
       "id": 54,
       "question": "Check if a String Contains All Binary Codes of Size K",
+      "leetcode_link": "https://leetcode.com/problems/check-if-a-string-contains-all-binary-codes-of-size-k/",
       "problem": "**Problem:** Given a binary string `s` and integer `k`, return `true` if every binary code of length `k` is a substring of `s`.",
       "intuition": "",
       "code": "```java\nclass Solution {\n    public boolean hasAllCodes(String s, int k) {\n        if (s.length() < k) return false;\n        Set<String> seen = new HashSet<>();\n        int need = 1 << k; // total distinct binary codes of length k = 2^k\n        for (int i = 0; i + k <= s.length(); i++) {\n            seen.add(s.substring(i, i + k)); // add each k-length window\n            // early exit: once we've collected all 2^k codes, we're done\n            if (seen.size() == need) return true;\n        }\n        return false; // didn't collect all 2^k codes\n    }\n}\n// Time: O(n*k)  Space: O(2^k * k)\n```",
@@ -494,6 +548,7 @@
     {
       "id": 55,
       "question": "Maximum Number of Vowels in a Substring of Given Length",
+      "leetcode_link": "https://leetcode.com/problems/maximum-number-of-vowels-in-a-substring-of-given-length/",
       "problem": "**Problem:** Given a string `s` and integer `k`, return the maximum number of vowel letters in any substring of `s` with length `k`.",
       "intuition": "",
       "code": "```java\nclass Solution {\n    public int maxVowels(String s, int k) {\n        Set<Character> vowels = Set.of('a','e','i','o','u');\n        int count = 0, max = 0;\n        for (int i = 0; i < s.length(); i++) {\n            if (vowels.contains(s.charAt(i))) count++; // expand: add new right char if vowel\n            // shrink: once window exceeds k, remove the char that fell off the left\n            if (i >= k && vowels.contains(s.charAt(i - k))) count--;\n            max = Math.max(max, count); // update best vowel count seen\n        }\n        return max;\n    }\n}\n// Time: O(n)  Space: O(1)\n```",
@@ -503,6 +558,7 @@
     {
       "id": 56,
       "question": "Swap For Longest Repeated Character Substring",
+      "leetcode_link": "https://leetcode.com/problems/swap-for-longest-repeated-character-substring/",
       "problem": "**Problem:** Given a string `text`, swap two characters (possibly the same position) to maximize the length of the longest substring consisting of a single repeating character.",
       "intuition": "",
       "code": "```java\nclass Solution {\n    public int maxRepOpt1(String text) {\n        int[] freq = new int[26];\n        for (char c : text.toCharArray()) freq[c - 'a']++; // global freq of each char\n        int max = 0, n = text.length();\n        int i = 0;\n        while (i < n) {\n            int j = i;\n            // measure current run of same character\n            while (j < n && text.charAt(j) == text.charAt(i)) j++;\n            int left = j - i; // current run length\n            // skip one different char and check if next run is same character\n            int k = j + 1;\n            while (k < n && text.charAt(k) == text.charAt(i)) k++;\n            int right = k - j - 1; // length of run after the gap (0 if different char)\n            int total = left + right; // combined length if we swap in the gap char\n            // can extend by 1 more if there's another occurrence of this char elsewhere to swap in\n            if (total < freq[text.charAt(i) - 'a']) total++;\n            max = Math.max(max, total);\n            i = j; // move to next run\n        }\n        return max;\n    }\n}\n// Time: O(n)  Space: O(1)\n```",
@@ -512,6 +568,7 @@
     {
       "id": 57,
       "question": "Count and Say",
+      "leetcode_link": "https://leetcode.com/problems/count-and-say/",
       "problem": "**Problem:** The count-and-say sequence: `countAndSay(1) = \"1\"`, and each next term describes the previous one. Return the nth term.",
       "intuition": "",
       "code": "```java\nclass Solution {\n    public String countAndSay(int n) {\n        String result = \"1\"; // seed: first term is \"1\"\n        for (int i = 1; i < n; i++) {\n            StringBuilder sb = new StringBuilder();\n            int j = 0;\n            while (j < result.length()) {\n                char c = result.charAt(j); // current digit being described\n                int count = 0;\n                // count consecutive occurrences of digit c\n                while (j < result.length() && result.charAt(j) == c) { j++; count++; }\n                // say \"<count><digit>\" → describes the run\n                sb.append(count).append(c);\n            }\n            result = sb.toString(); // this term becomes input for next term\n        }\n        return result;\n    }\n}\n// Time: O(n * 2^n)  Space: O(2^n)\n```",
@@ -521,6 +578,7 @@
     {
       "id": 58,
       "question": "Remove Duplicate Letters to Obtain Lexicographically Smallest Result",
+      "leetcode_link": "https://leetcode.com/problems/remove-duplicate-letters-to-obtain-lexicographically-smallest-result/",
       "problem": "**Problem:** Same as problem 30 — given `s`, remove duplicate letters so every letter appears once and the result is the lexicographically smallest possible.",
       "intuition": "",
       "code": "",
@@ -530,6 +588,7 @@
     {
       "id": 59,
       "question": "Custom Sort String",
+      "leetcode_link": "https://leetcode.com/problems/custom-sort-string/",
       "problem": "**Problem:** Given `order` (a permutation of some characters) and string `s`, sort the characters of `s` such that they follow the order in `order`. Characters not in `order` can appear anywhere.",
       "intuition": "",
       "code": "```java\nclass Solution {\n    public String customSortString(String order, String s) {\n        int[] rank = new int[26];\n        // Assign rank 1..order.length() to chars in order; chars not in order get rank 0\n        for (int i = 0; i < order.length(); i++) rank[order.charAt(i) - 'a'] = i + 1;\n        char[] chars = s.toCharArray();\n        // Sort using custom comparator based on rank\n        // Chars with rank 0 (not in order) will group together at front but order among them is arbitrary\n        Integer[] idx = new Integer[chars.length];\n        for (int i = 0; i < idx.length; i++) idx[i] = i;\n        Arrays.sort(idx, (a, b) -> rank[chars[a] - 'a'] - rank[chars[b] - 'a']);\n        StringBuilder sb = new StringBuilder();\n        for (int i : idx) sb.append(chars[i]);\n        return sb.toString();\n    }\n}\n// Time: O(n log n)  Space: O(n)\n```",
@@ -539,6 +598,7 @@
     {
       "id": 60,
       "question": "Smallest Subsequence of Distinct Characters",
+      "leetcode_link": "https://leetcode.com/problems/smallest-subsequence-of-distinct-characters/",
       "problem": "**Problem:** Return the lexicographically smallest subsequence of `s` that contains all the distinct characters of `s` exactly once.\n\n**Note:** This is exactly the same problem as #30 / #58.",
       "intuition": "",
       "code": "",

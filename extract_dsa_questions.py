@@ -218,6 +218,18 @@ def body_after_first_heading(chunk):
     return "\n".join(body_lines)
 
 
+def generate_leetcode_link(question_text):
+    """Generate a LeetCode URL from the question text."""
+    # Remove text in parentheses
+    text = re.sub(r'\(.*?\)', '', question_text)
+    # Remove non-alphanumeric (keep spaces and hyphens)
+    text = re.sub(r'[^a-zA-Z0-9\s\-]', '', text)
+    # Lowercase and replace spaces with hyphens
+    text = text.strip().lower()
+    slug = re.sub(r'[\s\-]+', '-', text)
+    return f"https://leetcode.com/problems/{slug}/"
+
+
 def extract_questions_from_md(filepath):
     """Parse a markdown file and extract Q&A pairs using --- separators."""
     with open(filepath, "r", encoding="utf-8") as f:
@@ -264,6 +276,7 @@ def extract_questions_from_md(filepath):
         questions.append({
             "id": len(questions) + 1,
             "question": question_text,
+            "leetcode_link": generate_leetcode_link(question_text),
             "problem": nodes["problem"],
             "intuition": nodes["intuition"],
             "code": nodes["code"],

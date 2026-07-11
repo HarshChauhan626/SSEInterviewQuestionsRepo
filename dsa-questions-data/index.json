@@ -1,5 +1,13 @@
 [
   {
+    "file": "dsa-questions-data/dsaeasytomedium.json",
+    "topic": "DSA: Easy to Medium",
+    "description": "Core array, string, and common easy-to-medium interview problems",
+    "icon": "📊",
+    "accent": "#10b981",
+    "count": 115
+  },
+  {
     "file": "dsa-questions-data/backtracking.json",
     "topic": "DSA: Backtracking",
     "description": "N-Queens, combinations, permutations, and subsets",

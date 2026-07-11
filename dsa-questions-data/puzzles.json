@@ -8,6 +8,7 @@
     {
       "id": 1,
       "question": "Two Egg Drop Problem",
+      "leetcode_link": "https://leetcode.com/problems/two-egg-drop-problem/",
       "problem": "You have 2 eggs and a 100-floor building. Find the **highest floor** from which an egg can be dropped without breaking, using the **minimum number of trials** in the worst case.",
       "intuition": "- If you had 1 egg, you'd have to go floor-by-floor from bottom: worst case = 100 tries.\n- With 2 eggs, use the first egg to \"narrow down\" a range, then use the second egg linearly within that range.\n- The trick: let the first egg jump in **decreasing steps** so that total trials stay constant regardless of where it breaks.\n\nIf the first egg is dropped at floors: x, x+(x-1), x+(x-1)+(x-2), ... up to 100, and the total adds up to at least 100, then:\n`x(x+1)/2 >= 100` → `x = 14`",
       "code": "- Drop egg 1 from floors: **14, 27, 39, 50, 60, 69, 77, 84, 90, 95, 99, 100**\n- When egg 1 breaks at floor F, start egg 2 from the previous checkpoint and go one floor at a time.\n- **Answer: 14 trials** in the worst case.",
@@ -17,6 +18,7 @@
     {
       "id": 2,
       "question": "Three Switches and Three Bulbs",
+      "leetcode_link": "https://leetcode.com/problems/three-switches-and-three-bulbs/",
       "problem": "There are 3 light switches outside a room, each controlling one of 3 bulbs inside the room. You can flip switches however you like, but you may **enter the room only once**. Determine which switch controls which bulb.",
       "intuition": "With only one visit, you need more than on/off binary. **Heat** is the key — a bulb that was on for a while will be warm even after being turned off.",
       "code": "1. Turn **Switch 1 ON** for 10 minutes.\n2. Turn **Switch 1 OFF**, then turn **Switch 2 ON**.\n3. Enter the room.\n   - **Bulb that is ON** → controlled by Switch 2\n   - **Bulb that is OFF but warm** → controlled by Switch 1\n   - **Bulb that is OFF and cold** → controlled by Switch 3",
@@ -26,6 +28,7 @@
     {
       "id": 3,
       "question": "Bridge and Torch Problem",
+      "leetcode_link": "https://leetcode.com/problems/bridge-and-torch-problem/",
       "problem": "Four people must cross a bridge at night. They have **one torch** and the bridge holds only **2 people** at a time. Speeds: A=1 min, B=2 min, C=5 min, D=10 min. Two people walk at the **slower person's pace**. What is the minimum time to get everyone across?",
       "intuition": "Naively sending the fastest person back each time costs: 1+10+1+5+1+2 = 20 min.  \nBetter: pair the two slowest together, and use the two fastest to shuttle the torch.\n\n**Total = 2+1+10+2+2 = 17 minutes**",
       "code": "**Step 1:** A and B cross → 2 min  \n**Step 2:** A returns → 1 min  \n**Step 3:** C and D cross → 10 min  \n**Step 4:** B returns → 2 min  \n**Step 5:** A and B cross → 2 min",
@@ -35,6 +38,7 @@
     {
       "id": 4,
       "question": "Monty Hall Problem",
+      "leetcode_link": "https://leetcode.com/problems/monty-hall-problem/",
       "problem": "You're on a game show with 3 doors. Behind one is a car, behind the others are goats. You pick Door 1. The host (who knows what's behind each door) opens Door 3 revealing a goat. Should you **switch** to Door 2 or **stay** with Door 1?",
       "intuition": "Initially, your door has 1/3 chance of being right and the other two combined have 2/3. After the host reveals a goat (he always reveals a goat), all that 2/3 probability **collapses onto the one remaining door**. Switching wins 2/3 of the time.",
       "code": "- **Stay**: wins 1/3 of the time\n- **Switch**: wins 2/3 of the time\n- **Always switch!**",
@@ -44,6 +48,7 @@
     {
       "id": 5,
       "question": "Birthday Paradox",
+      "leetcode_link": "https://leetcode.com/problems/birthday-paradox/",
       "problem": "How many people do you need in a room before there's a **>50% chance** that two of them share a birthday?",
       "intuition": "We tend to think \"1 in 365\" per person, but we're comparing **every pair**, not just against one specific date. The number of pairs grows as n², so the probability rises much faster than expected.\n\n**Answer: 23 people**",
       "code": "P(no shared birthday among n people) = (365/365) × (364/365) × (363/365) × ... × ((365−n+1)/365)\n\nWe want this to fall below 0.5.\n\nAt **n = 23**: P(no match) ≈ 0.4927 → P(at least one match) ≈ **50.7%**",
@@ -53,6 +58,7 @@
     {
       "id": 6,
       "question": "Poisoned Bottle Puzzle",
+      "leetcode_link": "https://leetcode.com/problems/poisoned-bottle-puzzle/",
       "problem": "You have 1000 bottles of wine, exactly one is poisoned. You have 10 test strips. Poison kills a rat within 24 hours. You can test multiple strips simultaneously. Identify the poisoned bottle in **24 hours** using only 10 rats.",
       "intuition": "Use **binary encoding**. Number the bottles 1–1000. Each bottle's binary representation uses at most 10 bits. Each rat represents one bit. Give each rat a sip from every bottle whose binary number has a '1' in that rat's bit position.",
       "code": "- Number bottles 1 to 1000 (binary: up to 10 digits)\n- Rat 1 = bit 1, Rat 2 = bit 2, ..., Rat 10 = bit 10\n- Each rat drinks from all bottles that have a '1' in its bit position\n- After 24 hours, the pattern of dead rats forms a binary number → that's the poisoned bottle\n\n2^10 = **1024 ≥ 1000** ✓",
@@ -62,6 +68,7 @@
     {
       "id": 7,
       "question": "Water Jug Problem",
+      "leetcode_link": "https://leetcode.com/problems/water-jug-problem/",
       "problem": "You have a **3-liter** jug and a **5-liter** jug. No markings. Measure exactly **4 liters** of water.",
       "intuition": "Use Bezout's identity: gcd(3,5)=1, so any integer combination is achievable. Systematically fill and pour between jugs.\n\n**Method:**\n1. Fill 5L jug\n2. Pour into 3L jug (3L fills, 2L remains in 5L)\n3. Empty 3L jug\n4. Pour 2L from 5L into 3L\n5. Fill 5L jug again\n6. Pour from 5L into 3L (which already has 2L, needs 1L more)\n7. 5L jug now has **4L** ✓",
       "code": "",
@@ -71,6 +78,7 @@
     {
       "id": 8,
       "question": "100 Prisoners Problem",
+      "leetcode_link": "https://leetcode.com/problems/100-prisoners-problem/",
       "problem": "100 prisoners, each numbered 1–100. A room has 100 boxes, each containing a random number 1–100 (one each). Each prisoner may open **50 boxes**. If all find their own number, everyone is freed. Strategy?",
       "intuition": "Random guessing: (1/2)^100 ≈ 0. The brilliant strategy uses **cycles**: each prisoner starts at their own number box, then follows the chain of numbers inside.\n\n**Cycle-following strategy:**\n- Prisoner N opens box N\n- If it contains number M (≠N), opens box M\n- Continue following numbers until finding N or exhausting 50 tries\n- This works if the **longest cycle in the permutation ≤ 50**\n\nP(longest cycle ≤ 50) ≈ **31.18%** — vs near 0% random!",
       "code": "",
@@ -80,6 +88,7 @@
     {
       "id": 9,
       "question": "Counterfeit Coin Puzzle",
+      "leetcode_link": "https://leetcode.com/problems/counterfeit-coin-puzzle/",
       "problem": "You have 12 coins, one is counterfeit (either heavier or lighter). Find the counterfeit coin and determine if it's heavier or lighter in exactly **3 weighings** on a balance scale.",
       "intuition": "Each weighing has 3 outcomes (left heavy, right heavy, balanced). With 3 weighings: 3^3 = 27 possible outcomes, enough to distinguish 24 possibilities (12 coins × 2 states: heavier/lighter).",
       "code": "**Weighing 1:** Coins {1,2,3,4} vs {5,6,7,8}  \n**Case A (balanced):** Counterfeit is in {9,10,11,12}  \n  - Weighing 2: {9,10,11} vs {1,2,3} (known good)  \n  - Narrow down in weighing 3  \n**Case B (left heavy):** Counterfeit is in {1,2,3,4} (heavy) or {5,6,7,8} (light)  \n  - Use weighing 2 and 3 to isolate\n\nFull solution covers all cases with precise group swaps.",
@@ -89,6 +98,7 @@
     {
       "id": 10,
       "question": "Fox, Chicken, and Grain River Crossing",
+      "leetcode_link": "https://leetcode.com/problems/fox-chicken-and-grain-river-crossing/",
       "problem": "A farmer must cross a river with a **fox**, a **chicken**, and a **bag of grain**. The boat holds only the farmer + one item. Fox eats chicken if left alone; chicken eats grain if left alone. How does the farmer get all across safely?",
       "intuition": "The chicken is the problem (it can't be left with either). The key insight: you can **bring something back** — it's not wasted effort.",
       "code": "1. Take **chicken** across → return alone\n2. Take **fox** across → return with **chicken**\n3. Take **grain** across → return alone\n4. Take **chicken** across",
@@ -98,6 +108,7 @@
     {
       "id": 11,
       "question": "Blue Eyes Island Puzzle",
+      "leetcode_link": "https://leetcode.com/problems/blue-eyes-island-puzzle/",
       "problem": "On an island, 100 people have blue eyes, 100 have brown eyes. No mirrors; no one knows their own eye color. If you know your eye color, you **must leave** the next day. A visitor announces: **\"I see at least one person with blue eyes.\"** What happens?",
       "intuition": "The announcement adds **common knowledge** — everyone now knows that *everyone knows* there's at least one blue-eyed person. Use inductive reasoning.",
       "code": "- If 1 blue-eyed person: they see no others, know it's them → **leaves day 1**\n- If 2 blue-eyed: each sees 1 other, waits for day 1, no one leaves → each deduces they're blue-eyed → **both leave day 2**\n- If n blue-eyed: all leave on **day n**\n\nWith 100 blue-eyed people: all **100 leave on day 100**. Brown-eyed people never leave (no one announces brown eyes).",
@@ -107,6 +118,7 @@
     {
       "id": 12,
       "question": "Prisoners and Hats Puzzle",
+      "leetcode_link": "https://leetcode.com/problems/prisoners-and-hats-puzzle/",
       "problem": "10 prisoners stand in a line. Each gets a **black or white hat**. Starting from the back, each must say only \"black\" or \"white.\" If wrong, they're executed. The group can strategize beforehand. Guarantee saving at least **9 out of 10**.",
       "intuition": "The last person (who sees all others) can encode information in their guess using **parity**.",
       "code": "- **Prisoner 10** (back): counts total black hats visible. If odd, says \"black\"; if even, says \"white.\" (50% survival chance)\n- **Prisoner 9**: counts black hats visible ahead. Uses parity information from prisoner 10 to deduce own hat color.\n- Each subsequent prisoner updates the running parity to determine their own hat.\n- **Prisoners 1–9 are guaranteed to survive; prisoner 10 has 50% chance.**",
@@ -116,6 +128,7 @@
     {
       "id": 13,
       "question": "Truth Tellers and Liars (Two Guards)",
+      "leetcode_link": "https://leetcode.com/problems/truth-tellers-and-liars/",
       "problem": "Two guards stand before two doors: one to freedom, one to death. One guard **always lies**, one **always tells the truth**. You may ask **one question** to one guard to find the door to freedom.",
       "intuition": "Any single-guard question introduces uncertainty about which guard you asked. The trick: craft a question that yields the same answer from **both** a truth-teller and a liar.",
       "code": "Ask either guard: **\"If I asked the other guard which door leads to freedom, what would they say?\"**\n\n- If you ask the truth-teller: they truthfully report what the liar would say → **wrong door**\n- If you ask the liar: they lie about what the truth-teller would say → **wrong door**\n\nBoth point to the **wrong door** → go through the **other door**.",
@@ -125,6 +138,7 @@
     {
       "id": 14,
       "question": "Clock Angle Problem",
+      "leetcode_link": "https://leetcode.com/problems/clock-angle-problem/",
       "problem": "What is the angle between the hour and minute hands of a clock at **3:27**?",
       "intuition": "Both hands move continuously. Calculate each hand's position in degrees (0° at 12), then find the difference.",
       "code": "- **Minute hand:** 360° / 60 min × 27 min = **162°**\n- **Hour hand:** 360° / 12 hr × 3 hr + 360° / 12 hr / 60 min × 27 min  \n  = 90° + 13.5° = **103.5°**\n- **Difference:** |162° - 103.5°| = **58.5°**",
@@ -134,6 +148,7 @@
     {
       "id": 15,
       "question": "Train Crossing / Relative Speed Puzzle",
+      "leetcode_link": "https://leetcode.com/problems/train-crossing-relative-speed-puzzle/",
       "problem": "A man walks along a railway track. A train going the **same direction** passes him in **20 seconds**. A train of equal length going the **opposite direction** passes him in **5 seconds**. If trains are 100m long, find the train's speed.",
       "intuition": "Relative speed differs based on direction. Same direction: speeds subtract. Opposite direction: speeds add. Set up two equations.",
       "code": "Let train speed = T, man speed = M (both m/s), train length = 100m  \n- Same direction: 100 / (T - M) = 20 → T - M = 5\n- Opposite direction: 100 / (T + M) = 5 → T + M = 20\n\nSolving: **T = 12.5 m/s = 45 km/h**, **M = 7.5 m/s**",
@@ -143,6 +158,7 @@
     {
       "id": 16,
       "question": "Seating Arrangement Puzzle",
+      "leetcode_link": "https://leetcode.com/problems/seating-arrangement-puzzle/",
       "problem": "5 people (A, B, C, D, E) must sit in a row. A and B must not sit next to each other. How many valid arrangements are there?",
       "intuition": "Total arrangements minus arrangements where A and B **are** adjacent.",
       "code": "- **Total:** 5! = 120\n- **A and B adjacent:** treat AB as a unit → 4! arrangements × 2 (AB or BA) = 48\n- **Valid:** 120 - 48 = **72**",
@@ -152,6 +168,7 @@
     {
       "id": 17,
       "question": "Chessboard Domino Covering Puzzle",
+      "leetcode_link": "https://leetcode.com/problems/chessboard-domino-covering-puzzle/",
       "problem": "A standard 8×8 chessboard has two opposite corner squares removed (64 - 2 = 62 squares). Can you cover all 62 squares with **31 dominoes** (each covers 2 squares)?",
       "intuition": "Each domino covers one black and one white square. What color are the two removed corners?\n\n**Answer: No, it's impossible.**",
       "code": "Opposite corners of a chessboard are the **same color** (both black or both white). So after removing them, we have **30 of one color and 32 of the other**. A domino always covers 1 black + 1 white, so tiling 30+32 squares is **impossible** — you'd always have 2 squares of the same color uncovered.",
@@ -161,6 +178,7 @@
     {
       "id": 18,
       "question": "Matchstick Equation Puzzle",
+      "leetcode_link": "https://leetcode.com/problems/matchstick-equation-puzzle/",
       "problem": "Given the matchstick equation: **VI = VII + I** — move exactly one matchstick to make the equation correct.",
       "intuition": "Think laterally — you don't have to keep it as addition. Could also flip or rearrange.",
       "code": "Move one matchstick from the right side to turn the `+` into `-`:  \n**VII = VII - I** → wait, reframe:  \nMove one stick from the first `I` in `VII` on the right to make: **VI = VI + I**? No.\n\nBest answer: Move the `=` sign's top matchstick:  \n**VII - I = VI** → Move one stick from `+` to make it `-`:  \n**VI = VII - I** ✓  (6 = 7 - 1 ✓)",
@@ -170,6 +188,7 @@
     {
       "id": 19,
       "question": "Family Probability Puzzle",
+      "leetcode_link": "https://leetcode.com/problems/family-probability-puzzle/",
       "problem": "A family has two children. You're told at least one is a boy. What is the probability that **both are boys**?",
       "intuition": "The sample space isn't just {boy, girl} for the unknown child — it's conditional on what we know.\n\n**P = 1/3**",
       "code": "All possibilities: BB, BG, GB, GG (equal probability)  \n\"At least one boy\" eliminates GG → remaining: {BB, BG, GB}  \nOnly BB satisfies \"both boys\"",
@@ -179,6 +198,7 @@
     {
       "id": 20,
       "question": "Fermi Estimation: Piano Tuners in Chicago",
+      "leetcode_link": "https://leetcode.com/problems/fermi-estimation-piano-tuners-in-chicago/",
       "problem": "Estimate the number of **piano tuners** in Chicago.",
       "intuition": "Break into estimable sub-problems and multiply through.",
       "code": "1. Population of Chicago: ~3,000,000\n2. Average household size: 3 → 1,000,000 households\n3. Fraction with pianos: ~1 in 20 → **50,000 pianos**\n4. Piano tuned once/year; tuner does 4/day × 250 days = 1,000 pianos/year\n5. Tuners needed: 50,000 / 1,000 = **~50 piano tuners**\n\nActual answer: ~50–100. ✓",
@@ -188,6 +208,7 @@
     {
       "id": 21,
       "question": "Wolf, Goat, and Cabbage Puzzle",
+      "leetcode_link": "https://leetcode.com/problems/wolf-goat-and-cabbage-puzzle/",
       "problem": "A farmer must cross a river with a **wolf**, **goat**, and **cabbage**. The boat holds farmer + one item. Wolf eats goat; goat eats cabbage if left alone. Get all three across safely.",
       "intuition": "Same logic as Fox-Chicken-Grain (puzzle #10). The goat is the problem item — never leave it alone with either.",
       "code": "1. Take **goat** across → return\n2. Take **wolf** across → return with **goat**\n3. Take **cabbage** across → return\n4. Take **goat** across\n\n(Or: steps 2–3 swap wolf with cabbage — two valid solutions)",
@@ -197,6 +218,7 @@
     {
       "id": 22,
       "question": "Tower of Hanoi",
+      "leetcode_link": "https://leetcode.com/problems/tower-of-hanoi/",
       "problem": "Move **n disks** from peg A to peg C using peg B as auxiliary. Rules: move one disk at a time; never place a larger disk on a smaller one. Minimum moves?",
       "intuition": "To move n disks: move top n-1 to B (using C), move largest to C, move n-1 from B to C (using A). Recursive!\n\n**T(n) = 2·T(n-1) + 1**\nSolving: **T(n) = 2^n - 1**\n\nFor 3 disks: 2³ - 1 = **7 moves**",
       "code": "",
@@ -206,6 +228,7 @@
     {
       "id": 23,
       "question": "Burning Ropes Timing Puzzle",
+      "leetcode_link": "https://leetcode.com/problems/burning-ropes-timing-puzzle/",
       "problem": "You have **2 ropes**, each burns in exactly **1 hour** (but not uniformly). Measure exactly **45 minutes**.",
       "intuition": "Burning one rope from both ends halves its time (30 min). Combine with a full rope for the remaining 15 min.",
       "code": "1. Light **Rope 1 from both ends** and **Rope 2 from one end** simultaneously.\n2. After **30 min**, Rope 1 is done. At this moment, light **Rope 2's other end**.\n3. Rope 2 had 30 min remaining; burning from both ends → finishes in **15 more min**.\n4. Total: 30 + 15 = **45 minutes** ✓",
@@ -215,6 +238,7 @@
     {
       "id": 24,
       "question": "Heavy Pill Bottle Puzzle",
+      "leetcode_link": "https://leetcode.com/problems/heavy-pill-bottle-puzzle/",
       "problem": "You have 10 pill bottles, each with 100 pills. 9 bottles have pills weighing **10g** each; 1 bottle has pills weighing **11g** each. You have a **digital scale** (one use). Find the heavy bottle.",
       "intuition": "With one weighing, you need to encode which bottle is heavy in the total weight. Use a different count from each bottle.",
       "code": "- Take **1 pill** from bottle 1, **2 pills** from bottle 2, ..., **10 pills** from bottle 10\n- Total pills = 1+2+...+10 = 55\n- If all were 10g: expected weight = **550g**\n- Actual weight = 550 + k (where k = bottle number with heavy pills)",
@@ -224,6 +248,7 @@
     {
       "id": 25,
       "question": "Nine Balls Weight Puzzle",
+      "leetcode_link": "https://leetcode.com/problems/nine-balls-weight-puzzle/",
       "problem": "You have 9 balls, identical in appearance. One is **heavier**. Find it using a balance scale in **2 weighings**.",
       "intuition": "Each weighing has 3 outcomes. 3^2 = 9 — exactly enough to identify 1 among 9.",
       "code": "**Weighing 1:** Group into three groups of 3: {1,2,3}, {4,5,6}, {7,8,9}  \nWeigh {1,2,3} vs {4,5,6}:  \n- Left heavy → heavy ball in {1,2,3}  \n- Right heavy → heavy ball in {4,5,6}  \n- Balanced → heavy ball in {7,8,9}  \n\n**Weighing 2:** Take the identified group of 3. Weigh any 2 against each other:  \n- One side heavier → that's the heavy ball  \n- Balanced → the unweighed ball is heavy",
@@ -233,6 +258,7 @@
     {
       "id": 26,
       "question": "Five Pirates Gold Division Puzzle",
+      "leetcode_link": "https://leetcode.com/problems/five-pirates-gold-division-puzzle/",
       "problem": "5 pirates (ranked 1–5, with 1 being most senior) found 100 gold coins. The most senior proposes a split; all vote. If 50%+ agree, it passes; otherwise the proposer is thrown overboard and the next senior pirate proposes. Each pirate prefers: 1) survival, 2) more gold, 3) throwing others overboard. What does Pirate 1 propose?",
       "intuition": "Work **backwards** from the simplest case (2 pirates).\n\n**Pirate 1 proposes: P1=98, P2=0, P3=1, P4=0, P5=1**",
       "code": "- **2 pirates:** Pirate 2 takes all 100 (owns 50% of vote)\n- **3 pirates:** Pirate 3 must get Pirate 1's vote. Offer P1 = 1 coin (better than 0). P3 proposes: P3=99, P2=0, P1=1\n- **4 pirates:** P4 needs 2 votes. P2 gets 0 in 3-pirate scenario → offer P2=1. P4=99, P3=0, P2=1, P1=0\n- **5 pirates:** P5 needs 3 votes. P3 and P1 get 0 in 4-pirate scenario → offer them 1 each.",
@@ -242,6 +268,7 @@
     {
       "id": 27,
       "question": "Crossing Bridge with Different Speeds",
+      "leetcode_link": "https://leetcode.com/problems/crossing-bridge-with-different-speeds/",
       "problem": "*(See Puzzle #3 — Bridge and Torch Problem for the classic variant)*\n\nPersons A(1min), B(2min), C(7min), D(10min). Same torch, 2-person bridge. Minimum crossing time?",
       "intuition": "",
       "code": "",
@@ -251,6 +278,7 @@
     {
       "id": 28,
       "question": "Measure 4 Liters with 3L and 5L Jugs",
+      "leetcode_link": "https://leetcode.com/problems/measure-4-liters-with-3l-and-5l-jugs/",
       "problem": "*(See Puzzle #7 — Water Jug Problem — for full solution)*\n\n**Quick Answer:** Fill 5L, pour into 3L, empty 3L, pour remaining 2L into 3L, fill 5L, pour into 3L (needs 1L), **4L remains in 5L jug** ✓",
       "intuition": "",
       "code": "",
@@ -260,6 +288,7 @@
     {
       "id": 29,
       "question": "Camel and Banana Puzzle",
+      "leetcode_link": "https://leetcode.com/problems/camel-and-banana-puzzle/",
       "problem": "A camel must carry **3000 bananas** across a **1000-mile desert**. It can carry at most **1000 bananas** and eats **1 banana per mile**. Maximize bananas delivered.",
       "intuition": "The camel must make multiple trips. At the start with 3000 bananas, it must make 3 trips (5 legs: 3 forward, 2 back). As bananas decrease to 2000, only 2 trips needed. Use **\"caching\" at intermediate points**.",
       "code": "- **Phase 1 (0 to 200 miles):** 3 loads, 5 legs. Bananas consumed per mile = 5. Travel 200 miles: 5×200=1000 bananas used. Start: 3000, End: 2000 bananas at mile 200.\n- **Phase 2 (200 to 533.3 miles):** 2 loads, 3 legs. Bananas consumed per mile = 3. Travel 333.3 miles: 3×333.3=1000 bananas used. Start: 2000, End: 1000 bananas at mile 533.3.\n- **Phase 3 (533.3 to 1000 miles):** 1 load. Distance = 466.7 miles. Bananas consumed: 466.7. Delivered: 1000 - 466.7 = **533.3 bananas** (≈ 533 bananas)",
@@ -269,6 +298,7 @@
     {
       "id": 30,
       "question": "Coin Flip Strategy Puzzle",
+      "leetcode_link": "https://leetcode.com/problems/coin-flip-strategy-puzzle/",
       "problem": "Two players take turns flipping a fair coin. The first to flip **heads** wins. Player 1 goes first. What is Player 1's probability of winning?",
       "intuition": "Player 1 wins on turn 1, 3, 5, ... (odd rounds). Each round, both players must flip tails first.",
       "code": "P(P1 wins on round 1) = 1/2  \nP(P1 wins on round 2) = (1/2)(1/2)(1/2) = 1/8  \nP(P1 wins on round 3) = (1/4)³ × (1/2) = 1/32  \n\nP(P1 wins) = 1/2 + 1/8 + 1/32 + ... = (1/2) / (1 - 1/4) = (1/2)/(3/4) = **2/3**",
@@ -278,6 +308,7 @@
     {
       "id": 31,
       "question": "Elevator Puzzle",
+      "leetcode_link": "https://leetcode.com/problems/elevator-puzzle/",
       "problem": "You live on the 10th floor. Every morning you take the elevator **down to the ground floor**. When you return, you take the elevator to the **7th floor** and walk up the remaining 3 floors — except on rainy days. Why?",
       "intuition": "This is a lateral thinking puzzle, not math.\n\n**You are too short to reach the button above floor 7.**\nOn rainy days, you carry an **umbrella**, and use it to press the higher floor buttons.",
       "code": "",
@@ -287,6 +318,7 @@
     {
       "id": 32,
       "question": "Farmer River Crossing Variants",
+      "leetcode_link": "https://leetcode.com/problems/farmer-river-crossing-variants/",
       "problem": "A farmer has a **fox, 3 chickens, and a bag of grain**. The boat holds farmer + 2 items. Fox eats chicken; chicken eats grain. Get all across safely.",
       "intuition": "With capacity for 2 items, more combinations are possible. Carry the \"conflict pairs\" across together under supervision.",
       "code": "1. Take fox + chicken → return alone\n2. Take chicken + grain → return with fox\n3. Take fox + chicken → done\n\nOr many other valid sequences given the larger capacity.",
@@ -296,6 +328,7 @@
     {
       "id": 33,
       "question": "N-Queens Problem",
+      "leetcode_link": "https://leetcode.com/problems/n-queens-problem/",
       "problem": "Place **N queens** on an N×N chessboard so that no two queens attack each other (no shared row, column, or diagonal). How many solutions exist for N=8?",
       "intuition": "Use **backtracking**: place queens row by row, checking column and diagonal conflicts at each step.\n\n**Algorithm:**\n- For each row, try each column\n- Check: no queen in same column, no queen in same diagonal (|row_diff| == |col_diff|)\n- Recurse; backtrack if no valid position",
       "code": "For N=8: **92 solutions** (12 fundamental solutions excluding rotations/reflections).",
@@ -305,6 +338,7 @@
     {
       "id": 34,
       "question": "Sudoku Logic Puzzle",
+      "leetcode_link": "https://leetcode.com/problems/sudoku-logic-puzzle/",
       "problem": "Fill a 9×9 grid so every row, column, and 3×3 box contains digits **1–9** exactly once.",
       "intuition": "Use constraint propagation + backtracking. Humans use logical deductions; computers use systematic search.\n\n**Key Strategies**\n1. **Naked singles:** Only one digit possible in a cell\n2. **Hidden singles:** A digit can only go in one cell in a row/col/box\n3. **Naked pairs/triples:** Elimination by shared candidates\n4. **Backtracking:** For hard puzzles, guess and verify",
       "code": "",
@@ -314,6 +348,7 @@
     {
       "id": 35,
       "question": "Josephus Problem",
+      "leetcode_link": "https://leetcode.com/problems/josephus-problem/",
       "problem": "**N people** stand in a circle. Every **k-th person** is eliminated until one remains. Find the survivor's position.",
       "intuition": "Recursive structure: after the first elimination, the problem reduces to (N-1) people.",
       "code": "**J(n) = 2L + 1**, where n = 2^m + L, 0 ≤ L < 2^m\n\nFor **n=10**: 10 = 8 + 2 → L=2 → J(10) = 2×2+1 = **5**\n\nGeneral recursive formula:\n- J(1) = 1\n- J(n) = (J(n-1) + k - 1) mod n + 1",
@@ -323,6 +358,7 @@
     {
       "id": 36,
       "question": "Minimum Cuts to Divide Cake",
+      "leetcode_link": "https://leetcode.com/problems/minimum-cuts-to-divide-cake/",
       "problem": "What is the minimum number of straight cuts needed to divide a circular cake into **8 equal pieces**?",
       "intuition": "With 3 cuts (stacking), 8 pieces are possible!",
       "code": "- **Mathematically (flat cuts only):** 3 cuts through center → 6 pieces; you need **4 cuts** for 8 pieces with flat cuts arranged differently... \n- **With stacking:** Cut cake in half, stack, cut again, stack, cut again → **3 cuts = 8 pieces** ✓\n- **Without stacking:** Minimum is **3 cuts** (3 diameter cuts at 60° angles = 6 pieces or at 45° = 8 pieces) — 3 cuts through the center at equal angles gives **6 pieces**, so you need **3 cuts** specifically at 45° apart = **8 pieces** ✓\n\n**Answer: 3 cuts** (each cut through the center at 45° apart)",
@@ -332,6 +368,7 @@
     {
       "id": 37,
       "question": "Ants on a Triangle Problem",
+      "leetcode_link": "https://leetcode.com/problems/ants-on-a-triangle-problem/",
       "problem": "3 ants sit on the corners of an equilateral triangle. Each randomly picks a direction (CW or CCW) and walks. What is the probability that **no two ants collide**?",
       "intuition": "Collision is avoided only when all ants walk in the **same direction** (all CW or all CCW).\n\n**P(no collision) = 2/8 = 1/4**",
       "code": "Total outcomes: 2³ = 8 (each ant chooses CW or CCW)  \nSafe outcomes: all CW (1) + all CCW (1) = 2",
@@ -341,6 +378,7 @@
     {
       "id": 38,
       "question": "Handshake Problem",
+      "leetcode_link": "https://leetcode.com/problems/handshake-problem/",
       "problem": "In a room of **n people**, everyone shakes hands with everyone else exactly once. How many handshakes occur?",
       "intuition": "Each handshake involves 2 people. Count pairs.\n\n**C(n, 2) = n(n-1)/2**\nFor n=10: 10×9/2 = **45 handshakes**",
       "code": "Number of ways to choose 2 people from n:",
@@ -350,6 +388,7 @@
     {
       "id": 39,
       "question": "Sock Drawer Color Matching",
+      "leetcode_link": "https://leetcode.com/problems/sock-drawer-color-matching/",
       "problem": "A drawer has **10 red socks, 10 blue socks, 10 green socks** (30 total). You draw socks randomly in the dark. How many do you need to draw to **guarantee** a matching pair?",
       "intuition": "Worst case: you could draw one of each color (3 socks) before getting a pair. The 4th draw must match one of the 3 colors you already have.\n\n**Answer: 4 socks**",
       "code": "There are 3 colors. In the worst case, the first 3 draws give one of each color. The **4th sock must match one of them**.",
@@ -359,6 +398,7 @@
     {
       "id": 40,
       "question": "Poisonous Wine with Test Strips",
+      "leetcode_link": "https://leetcode.com/problems/poisonous-wine-with-test-strips/",
       "problem": "*(Variant of Puzzle #6 — Poisoned Bottle)*\n\n1000 bottles of wine, one is poisoned. You have 10 lab test strips. Each strip can test multiple samples simultaneously. Result in 1 hour. Identify the poisoned bottle.",
       "intuition": "",
       "code": "Binary encoding — identical to the Poisoned Bottle puzzle:  \n- 2^10 = 1024 ≥ 1000\n- Number bottles 1–1000 in binary\n- Strip i tests all bottles with bit i = 1\n- Positive strips form binary number = poisoned bottle\n\n*(Full dry run in Puzzle #6)*",
@@ -368,6 +408,7 @@
     {
       "id": 41,
       "question": "Calendar Day Calculation Puzzle",
+      "leetcode_link": "https://leetcode.com/problems/calendar-day-calculation-puzzle/",
       "problem": "What day of the week was **January 1, 2000**? (Or: given a date, find the day)",
       "intuition": "Use **Zeller's congruence** or the **Doomsday algorithm** to compute day of week from any date.",
       "code": "Key insight: Certain \"anchor\" dates always fall on the same day (the \"doomsday\") for a given year.\n\n**For 2000:** Doomsday = Saturday  \nAnchor dates: 4/4, 6/6, 8/8, 10/10, 12/12, and 5/9, 9/5, 7/11, 11/7 → all fall on Saturday  \nJan 1, 2000: Days from Jan 3 (doomsday-ish) = count back...  \nJanuary 4 = Saturday (known anchor for non-leap year Jan is 3rd)  \nJan 1 = Sat - 3 = **Saturday** ✓",
@@ -377,6 +418,7 @@
     {
       "id": 42,
       "question": "Manhole Cover Puzzle",
+      "leetcode_link": "https://leetcode.com/problems/manhole-cover-puzzle/",
       "problem": "Why are **manhole covers round**?",
       "intuition": "This is a classic geometry/engineering interview question. Think about when a shape can fall into its own hole.",
       "code": "A round cover **cannot fall through** a round hole of the same size — because a circle has the same diameter in every direction (it's a **curve of constant width**).\n\nA square cover, tilted diagonally, has a diagonal ~1.41× its side — it could fall through if tilted.\n\n**Other reasons:** Easier to roll/move, no need to align when replacing, handles stress more uniformly, standard manufacturing.",
@@ -386,6 +428,7 @@
     {
       "id": 43,
       "question": "Island Weighing Puzzle",
+      "leetcode_link": "https://leetcode.com/problems/island-weighing-puzzle/",
       "problem": "You're on an island with 3 boxes: one has apples, one has oranges, one has mixed. All labels are **wrong**. You may take **one fruit** from one box. Correctly label all three boxes.",
       "intuition": "Since ALL labels are wrong, the box labeled \"Mixed\" cannot be mixed. It must be apples or oranges. One sample tells you everything.",
       "code": "1. Pick one fruit from the box labeled **\"Mixed\"** (it's not mixed)\n2. If you get an **apple** → that box is \"Apples\"\n3. Now the box labeled \"Apples\" isn't apples → it's either oranges or mixed\n4. But \"Oranges\" box is also wrong → deduce by elimination",
@@ -395,6 +438,7 @@
     {
       "id": 44,
       "question": "Plane Fuel Transfer Puzzle",
+      "leetcode_link": "https://leetcode.com/problems/plane-fuel-transfer-puzzle/",
       "problem": "A plane must fly **around the world** (circumference = 1 unit). It can carry **1/2 unit of fuel** and can transfer fuel mid-air. All planes are identical. Minimum planes needed to get **one plane around the world**?",
       "intuition": "Planes can refuel each other from fuel caches along the route. By symmetry, use planes from both directions.",
       "code": "With **3 planes** total (including the circumnavigator):  \n- Two support planes fuel the main plane to the 1/4 mark, then return\n- Repeat from the other side for the last quarter\n- **Minimum: 3 planes**",
@@ -404,6 +448,7 @@
     {
       "id": 45,
       "question": "Rope Around Earth Puzzle",
+      "leetcode_link": "https://leetcode.com/problems/rope-around-earth-puzzle/",
       "problem": "A rope is tied tightly around the Earth's equator (~40,000 km). You add **1 meter** to the rope's length and distribute the slack uniformly. How high above the ground does the rope float?",
       "intuition": "Counter-intuitively, the answer doesn't depend on the Earth's size!",
       "code": "- Original: C = 2πR → R = C/2π\n- New: C + 1 = 2π(R + h) → R + h = (C+1)/2π\n- Subtracting: h = 1/(2π) ≈ **0.159 meters ≈ 16 cm**\n\nThe answer is always **~16 cm**, regardless of the size of the sphere!",
@@ -413,6 +458,7 @@
     {
       "id": 46,
       "question": "Light Bulb Toggle Puzzle",
+      "leetcode_link": "https://leetcode.com/problems/light-bulb-toggle-puzzle/",
       "problem": "100 bulbs in a row, all off. 100 students walk by. Student k toggles every k-th bulb (Student 1 toggles all, Student 2 toggles every 2nd, ...). Which bulbs are on at the end?",
       "intuition": "A bulb is toggled once for each divisor of its number. A bulb ends ON if it's toggled an **odd number** of times → if it has an **odd number of divisors** → only **perfect squares** (divisors pair up, except the square root).",
       "code": "Bulbs that are ON: **perfect squares from 1 to 100**  \n→ Bulbs **1, 4, 9, 16, 25, 36, 49, 64, 81, 100** (10 bulbs)",
@@ -422,6 +468,7 @@
     {
       "id": 47,
       "question": "25 Horses / 5 Tracks — Find the 3 Fastest",
+      "leetcode_link": "https://leetcode.com/problems/25-horses-5-tracks-find-the-3-fastest/",
       "problem": "You have **25 horses** and a track that can race **5 horses** at a time. No stopwatch. Find the **3 fastest horses** in the minimum number of races.",
       "intuition": "Use tournament-style elimination, then a smart final race.\n\n**Minimum: 7 races**\n1. Race 1–5: Race all horses in 5 groups of 5. (5 races)\n2. Race 6: Race the **5 group winners** → determines overall 1st place (the winner) and ranks the groups.\n3. Race 7: Take **top 2 from group-winner's group** + **top 2 from 2nd-place group** + **1st from 3rd-place group** (5 horses total). The top 2 finishers here complete the top 3 overall.\n\n**Total: 7 races**",
       "code": "",
@@ -431,6 +478,7 @@
     {
       "id": 48,
       "question": "Coin Change Logic Puzzle",
+      "leetcode_link": "https://leetcode.com/problems/coin-change-logic-puzzle/",
       "problem": "You need to make change for any amount from **1 to 99 cents** using the fewest coins. What is the minimum number of coins needed to make any value, and what denominations suffice?",
       "intuition": "Use a greedy approach with coins: 1, 5, 10, 25 (standard US coins). At most 1 quarter, 2 dimes, 1 nickel, 4 pennies = 9 coins needed for worst case (e.g., 99 cents).",
       "code": "99 cents: 3 quarters + 2 dimes + 4 pennies = **9 coins** (but 3Q+2D+0N+4P)  \nActually: 25+25+25+10+10+1+1+1+1 = 99 ✓ → **9 coins max**\n\nTo guarantee coverage of 1–99¢: use denominations {1, 5, 10, 25} with counts {4, 1, 2, 3} = **10 coins** carry all change.",
@@ -440,6 +488,7 @@
     {
       "id": 49,
       "question": "Rectangle Cutting Puzzle",
+      "leetcode_link": "https://leetcode.com/problems/rectangle-cutting-puzzle/",
       "problem": "A rectangle has a small rectangular piece cut out from its interior (not touching any edge). With **one straight cut**, can you divide the remaining piece into **two equal areas**?",
       "intuition": "Any line through the **center of both rectangles** bisects each rectangle equally. Since the two centers may differ, find one line through both.",
       "code": "**Yes!** Any line that passes through the **centers of both the large and small rectangles** will divide both rectangles into equal halves, thus dividing the remaining (donut-shaped) area into two equal parts.\n\n- Each rectangle is bisected by any line through its center\n- A line through both centers bisects both simultaneously",
@@ -449,6 +498,7 @@
     {
       "id": 50,
       "question": "Escape from Jail Logic Puzzle",
+      "leetcode_link": "https://leetcode.com/problems/escape-from-jail-logic-puzzle/",
       "problem": "A prisoner faces 3 doors. **Door 1:** leads to a 3-year tunnel. **Door 2:** leads to a 5-year tunnel (both tunnels loop back). **Door 3:** leads to freedom. The prisoner has no memory after exiting a tunnel. What is the expected number of years to escape?",
       "intuition": "Each attempt is independent (no memory). Set up an equation for expected time E.\n\n**E = 8 years**",
       "code": "Let E = expected years to escape.  \nEach attempt: 1/3 chance of each door.  \n\nE = (1/3)(3 + E) + (1/3)(5 + E) + (1/3)(0)  \nE = 1 + E/3 + 5/3 + E/3  \nE = 8/3 + 2E/3  \nE - 2E/3 = 8/3  \nE/3 = 8/3",
