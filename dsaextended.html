@@ -1016,6 +1016,43 @@
         }
         .sort-select option { background: #111318; }
 
+        /* Shimmer Loading Skeleton */
+        @keyframes shimmer {
+            0% { background-position: -800px 0; }
+            100% { background-position: 800px 0; }
+        }
+        .skeleton-card {
+            background: var(--surface);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            border: 1px solid var(--border);
+            height: 280px;
+            position: relative;
+            overflow: hidden;
+        }
+        .skeleton-card::after {
+            content: '';
+            position: absolute;
+            top: 0; right: 0; bottom: 0; left: 0;
+            background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.04) 50%, rgba(255,255,255,0) 100%);
+            background-size: 800px 100%;
+            animation: shimmer 2.5s infinite linear;
+        }
+        .skeleton-header {
+            width: 50%;
+            height: 28px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 6px;
+            margin-bottom: 28px;
+        }
+        .skeleton-item {
+            width: 100%;
+            height: 42px;
+            background: rgba(255,255,255,0.02);
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
         .empty-state {
             display: none;
             text-align: center;
@@ -1186,7 +1223,15 @@
             </div>
         </div>
 
-        <div class="topic-grid animate-in animate-delay-3" id="topicGrid"></div>
+        <div class="topic-grid animate-in animate-delay-3" id="topicGrid">
+            <!-- Shimmer placeholders -->
+            <div class="skeleton-card"><div class="skeleton-header"></div><div class="skeleton-item"></div><div class="skeleton-item"></div><div class="skeleton-item"></div></div>
+            <div class="skeleton-card"><div class="skeleton-header"></div><div class="skeleton-item"></div><div class="skeleton-item"></div><div class="skeleton-item"></div></div>
+            <div class="skeleton-card"><div class="skeleton-header"></div><div class="skeleton-item"></div><div class="skeleton-item"></div><div class="skeleton-item"></div></div>
+            <div class="skeleton-card"><div class="skeleton-header"></div><div class="skeleton-item"></div><div class="skeleton-item"></div><div class="skeleton-item"></div></div>
+            <div class="skeleton-card"><div class="skeleton-header"></div><div class="skeleton-item"></div><div class="skeleton-item"></div><div class="skeleton-item"></div></div>
+            <div class="skeleton-card"><div class="skeleton-header"></div><div class="skeleton-item"></div><div class="skeleton-item"></div><div class="skeleton-item"></div></div>
+        </div>
 
         <!-- Flat list view -->
         <div class="flat-list-container animate-in" id="flatListContainer">
@@ -1321,6 +1366,8 @@
             const topicGrid = document.getElementById('topicGrid');
             const topicJump = document.getElementById('topicJump');
             let totalProblems = 0;
+
+            topicGrid.innerHTML = ''; // Clear shimmer placeholders
 
             topics.forEach((topic, topicIndex) => {
                 totalProblems += topic.problems.length;
@@ -1739,9 +1786,9 @@
             return applySearch;
         }
 
-        window.onload = function() {
-            initData();
-        };
+        // Start loading immediately rather than waiting for window.onload
+        // to prevent perceived blank screens on first load.
+        initData();
     </script>
 </body>
 </html>
