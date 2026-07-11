@@ -9,6 +9,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300;0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;0,14..32,800;1,14..32,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
   <style>
     /* ═══════════════════════════════════════════
        DESIGN SYSTEM — Dev Notes Library
@@ -989,6 +991,8 @@
       card.style.display = 'block';
       done.style.display = 'none';
       nav.style.display = 'flex';
+      
+      applySyntaxHighlighting();
     }
 
     function toggleOboAnswer() {
@@ -1147,6 +1151,8 @@
         </div>
         `;
       }).join('');
+      
+      applySyntaxHighlighting();
     }
 
     function toggleAao(i) {
@@ -1170,6 +1176,14 @@
 
     function escapeHtml(str) {
       return (str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+    
+    function applySyntaxHighlighting() {
+      if (typeof hljs !== 'undefined') {
+        document.querySelectorAll('pre code:not(.hljs)').forEach((block) => {
+          hljs.highlightElement(block);
+        });
+      }
     }
 
     /* ═══════════════════════════════════════
