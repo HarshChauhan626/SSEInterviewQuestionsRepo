@@ -913,7 +913,12 @@
       // Render question
       const q = questions[idx];
       document.getElementById('obo-qlabel').textContent = `QUESTION ${idx + 1}`;
-      document.getElementById('obo-question').textContent = q.question;
+      
+      let questionHtml = escapeHtml(q.question);
+      if (q.leetcode_link) {
+          questionHtml += ` <a href="${q.leetcode_link}" target="_blank" title="View on LeetCode" style="color: var(--text-3); transition: color 0.2s;" onmouseover="this.style.color='var(--topic-accent)'" onmouseout="this.style.color='var(--text-3)'"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-top: -4px;"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a>`;
+      }
+      document.getElementById('obo-question').innerHTML = questionHtml;
 
       // Reset answer visibility
       const answerEl = document.getElementById('obo-answer');
@@ -1116,7 +1121,10 @@
         <div class="aao-card ${showAnswersByDefault ? 'open' : ''}" id="aao-card-${i}">
           <div class="aao-card-header" onclick="toggleAao(${i})">
             <div class="aao-qnum" style="background:rgba(16,185,129,0.08);border-color:rgba(16,185,129,0.2);color:var(--topic-accent)">Q${i+1}</div>
-            <div class="aao-q">${escapeHtml(q.question)}</div>
+            <div class="aao-q">
+              ${escapeHtml(q.question)}
+              ${q.leetcode_link ? `<a href="${q.leetcode_link}" target="_blank" title="View on LeetCode" onclick="event.stopPropagation()" style="color: var(--text-3); margin-left: 6px; transition: color 0.2s;" onmouseover="this.style.color='var(--topic-accent)'" onmouseout="this.style.color='var(--text-3)'"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-top: -2px;"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg></a>` : ''}
+            </div>
             <svg class="aao-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M6 9l6 6 6-6"/>
             </svg>
