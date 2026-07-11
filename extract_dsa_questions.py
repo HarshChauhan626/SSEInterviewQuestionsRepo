@@ -230,10 +230,44 @@ def generate_leetcode_link(question_text):
     return f"https://leetcode.com/problems/{slug}/"
 
 
+def extract_metadata_from_toc(content):
+    metadata = {}
+    for line in content.split('\n'):
+        line = line.strip()
+        if line.startswith('|') and line.endswith('|'):
+            parts = [p.strip() for p in line.split('|')[1:-1]]
+            if len(parts) >= 2:
+                q_text_raw = parts[1]
+                q_text = re.sub(r'\[(.*?)\]\(.*?\)', r'\1', q_text_raw).strip()
+                
+                level = None
+                priority = None
+                
+                for part in parts:
+                    part_lower = part.lower()
+                    if 'easy' in part_lower: level = 'Easy'
+                    elif 'medium' in part_lower: level = 'Medium'
+                    elif 'hard' in part_lower: level = 'Hard'
+                    
+                    if 'p1' in part_lower: priority = 'P0'
+                    elif 'p2' in part_lower: priority = 'P1'
+                    elif 'p3' in part_lower: priority = 'P2'
+                    elif 'p0' in part_lower: priority = 'P0'
+                
+                if q_text:
+                    metadata[q_text.lower()] = {
+                        'level': level,
+                        'priority': priority
+                    }
+    return metadata
+
+
 def extract_questions_from_md(filepath):
     """Parse a markdown file and extract Q&A pairs using --- separators."""
     with open(filepath, "r", encoding="utf-8") as f:
         content = f.read()
+
+    metadata = extract_metadata_from_toc(content)
 
     chunks = split_on_separator(content)
     questions = []
@@ -273,10 +307,34 @@ def extract_questions_from_md(filepath):
             
         nodes = parse_chunk_into_nodes(answer)
 
+        q_norm = question_text.lower()
+        level = None
+        priority = "P1"
+        
+        matched_meta = metadata.get(q_norm)
+        if not matched_meta:
+            for k, v in metadata.items():
+                if k in q_norm or q_norm in k:
+                    matched_meta = v
+                    break
+                    
+        if matched_meta:
+            if matched_meta['level']: level = matched_meta['level']
+            if matched_meta['priority']: priority = matched_meta['priority']
+            
+        if not level:
+            m = re.search(r'Difficulty\s*:\s*[\*\s]*(Easy|Medium|Hard)', nodes["problem"], re.IGNORECASE)
+            if m:
+                level = m.group(1).capitalize()
+            else:
+                level = "Medium"
+
         questions.append({
             "id": len(questions) + 1,
             "question": question_text,
             "leetcode_link": generate_leetcode_link(question_text),
+            "level": level,
+            "priority": priority,
             "problem": nodes["problem"],
             "intuition": nodes["intuition"],
             "code": nodes["code"],

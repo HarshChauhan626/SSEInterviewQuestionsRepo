@@ -1327,15 +1327,16 @@
                     const tData = await tRes.json();
                     
                     const problems = (tData.questions || []).map((q, i) => {
-                        let level = "Medium";
-                        if (q.problem && q.problem.match(/Difficulty:\s*\*?\s*(Easy|Medium|Hard)/i)) {
+                        let level = q.level || "Medium";
+                        let priority = q.priority || "P1";
+                        if (!q.level && q.problem && q.problem.match(/Difficulty:\s*\*?\s*(Easy|Medium|Hard)/i)) {
                             level = q.problem.match(/Difficulty:\s*\*?\s*(Easy|Medium|Hard)/i)[1];
                             level = level.charAt(0).toUpperCase() + level.slice(1).toLowerCase();
                         }
                         return {
                             name: q.question || ("Problem " + (i+1)),
                             level: level,
-                            priority: "P1",
+                            priority: priority,
                             q_index: i
                         };
                     });
