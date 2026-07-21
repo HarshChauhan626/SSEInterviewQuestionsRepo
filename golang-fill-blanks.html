@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Go Syntax Practice — Fill in the Blanks</title>
+  <meta name="description" content="Interactive fill-in-the-blanks syntax exercises to master Golang concurrency, channels, structs, interfaces, and syntax patterns.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300;0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;0,14..32,800;1,14..32,400&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    
+    :root {
+      --bg:          #0a0c10;
+      --surface:     #111318;
+      --surface2:    #181c23;
+      --surface3:    #1f242e;
+      --border:      rgba(255,255,255,0.07);
+      --border-hover: rgba(255,255,255,0.18);
+      --text:        #e8edf5;
+      --text-2:      #8b95a8;
+      --text-3:      #4e5668;
+      --accent:      #00add8; /* Go Blue */
+      --accent-glow: rgba(0,173,216,0.15);
+      --correct:     #22d3a6; /* Teal/Green */
+      --wrong:       #f87171; /* Red */
+      --warn:        #fbbf24; /* Amber */
+      --radius:      12px;
+      --radius-sm:   8px;
+      --radius-lg:   18px;
+      --mono:        'JetBrains Mono', monospace;
+      --sans:        'Inter', system-ui, sans-serif;
+    }
+
+    body {
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.6;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Noise texture overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.02;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+      background-size: 200px;
+    }
+
+    /* Ambient blobs */
+    .blob {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(100px);
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.3;
+    }
+    .blob-1 {
+      width: 600px; height: 500px;
+      top: -180px; left: -200px;
+      background: radial-gradient(circle, rgba(0,173,216,0.22) 0%, transparent 70%);
+    }
+    .blob-2 {
+      width: 500px; height: 400px;
+      bottom: -100px; right: -180px;
+      background: radial-gradient(circle, rgba(34,211,166,0.15) 0%, transparent 70%);
+    }
+
+    /* Sticky Navbar */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 clamp(16px, 5vw, 48px);
+      height: 60px;
+      background: rgba(10,12,16,0.85);
+      backdrop-filter: blur(20px) saturate(1.4);
+      -webkit-backdrop-filter: blur(20px) saturate(1.4);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .nav-back {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.8rem;
+      color: var(--text-2);
+      text-decoration: none;
+      font-family: var(--mono);
+      padding: 6px 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--surface);
+      transition: all 0.2s;
+    }
+    .nav-back:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      box-shadow: 0 0 12px var(--accent-glow);
+    }
+
+    .nav-title {
+      font-weight: 700;
+      font-size: 0.95rem;
+      letter-spacing: -0.01em;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .nav-logo-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 10px var(--accent);
+      animation: pulse 2.5s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.85); }
+    }
+
+    .nav-stats {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      font-family: var(--mono);
+    }
+    .stat-pill {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 4px 12px;
+      border-radius: 100px;
+      font-size: 0.78rem;
+      display: flex;
+      gap: 6px;
+    }
+    .stat-val {
+      font-weight: 700;
+    }
+    .stat-val.correct { color: var(--correct); }
+    .stat-val.pct { color: var(--accent); }
+
+    /* Main Container */
+    main {
+      position: relative;
+      z-index: 1;
+      max-width: 1300px;
+      margin: 0 auto;
+      padding: 32px 16px 80px;
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 32px;
+    }
+
+    /* Sidebar - Categories */
+    .sidebar {
+      position: sticky;
+      top: 92px;
+      height: calc(100vh - 124px);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      overflow-y: auto;
+      padding-right: 8px;
+    }
+
+    .sidebar::-webkit-scrollbar {
+      width: 4px;
+    }
+    .sidebar::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .sidebar::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 2px;
+    }
+
+    .sidebar-title {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--text-3);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 4px;
+      padding-left: 12px;
+    }
+
+    .category-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .category-btn {
+      width: 100%;
+      text-align: left;
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-2);
+      padding: 8px 12px;
+      font-family: var(--sans);
+      font-size: 0.85rem;
+      font-weight: 500;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: all 0.18s;
+    }
+    .category-btn:hover {
+      background: var(--surface);
+      color: var(--text);
+      border-color: var(--border);
+    }
+    .category-btn.active {
+      background: var(--accent-glow);
+      color: var(--accent);
+      border-color: rgba(0, 173, 216, 0.3);
+      font-weight: 600;
+    }
+    .category-count {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      background: rgba(255,255,255,0.04);
+      padding: 1px 6px;
+      border-radius: 4px;
+      color: var(--text-3);
+      transition: all 0.18s;
+    }
+    .category-btn.active .category-count {
+      background: rgba(0, 173, 216, 0.12);
+      color: var(--accent);
+    }
+
+    /* Content Area */
+    .content-area {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .content-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 16px;
+    }
+
+    .active-topic-name {
+      font-size: 1.35rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+
+    .search-wrapper {
+      position: relative;
+      width: 100%;
+      max-width: 320px;
+    }
+    .search-wrapper svg {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 15px; height: 15px;
+      color: var(--text-3);
+      pointer-events: none;
+    }
+    .search-input {
+      width: 100%;
+      height: 38px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 0 12px 0 36px;
+      color: var(--text);
+      font-family: var(--sans);
+      font-size: 0.85rem;
+      outline: none;
+      transition: all 0.2s;
+    }
+    .search-input:focus {
+      border-color: rgba(0, 173, 216, 0.5);
+      box-shadow: 0 0 10px rgba(0, 173, 216, 0.08);
+    }
+
+    /* Challenge Cards list */
+    .challenges-list {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .challenge-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      transition: all 0.25s;
+    }
+    .challenge-card:hover {
+      border-color: var(--border-hover);
+    }
+    .challenge-card.card-completed {
+      border-color: rgba(34, 211, 166, 0.25);
+      box-shadow: 0 4px 24px rgba(34, 211, 166, 0.03);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+    }
+
+    .card-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .card-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.01em;
+    }
+
+    .card-filepath {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      color: var(--text-3);
+    }
+
+    .card-status {
+      font-family: var(--mono);
+      font-size: 0.76rem;
+      font-weight: 600;
+    }
+    .status-correct { color: var(--correct); }
+    .status-wrong { color: var(--wrong); }
+    .status-revealed { color: var(--text-3); }
+
+    .card-desc {
+      font-size: 0.88rem;
+      color: var(--text-2);
+      line-height: 1.5;
+    }
+
+    /* Code Container & Blanks */
+    .code-container {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 18px;
+      overflow-x: auto;
+      position: relative;
+    }
+
+    .code-container pre {
+      margin: 0;
+      font-family: var(--mono);
+      font-size: 0.88rem;
+      line-height: 1.6;
+      tab-size: 4;
+      -moz-tab-size: 4;
+    }
+
+    /* Blank Inputs styled inside code block */
+    .blank-input {
+      background: var(--surface3);
+      border: none;
+      border-bottom: 2px dashed var(--text-3);
+      color: var(--accent);
+      font-family: var(--mono);
+      font-size: 0.86rem;
+      font-weight: 600;
+      padding: 0 4px;
+      text-align: center;
+      outline: none;
+      border-radius: 3px;
+      transition: all 0.2s;
+      margin: 0 2px;
+      display: inline-block;
+      vertical-align: middle;
+      height: 20px;
+    }
+    .blank-input:focus {
+      background: rgba(0, 173, 216, 0.1);
+      border-bottom-color: var(--accent);
+      box-shadow: 0 3px 6px rgba(0, 173, 216, 0.05);
+    }
+    .blank-input.correct {
+      background: rgba(34, 211, 166, 0.08);
+      border-bottom: 2px solid var(--correct);
+      color: var(--correct);
+    }
+    .blank-input.wrong {
+      background: rgba(248, 113, 113, 0.08);
+      border-bottom: 2px solid var(--wrong);
+      color: var(--wrong);
+    }
+
+    /* Actions row inside card */
+    .card-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 8px;
+    }
+
+    .btn {
+      font-family: var(--sans);
+      font-size: 0.78rem;
+      font-weight: 600;
+      padding: 8px 16px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.18s;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      border: 1px solid var(--accent);
+      color: #050608;
+    }
+    .btn-primary:hover {
+      background: #00beed;
+      border-color: #00beed;
+      box-shadow: 0 0 15px rgba(0, 173, 216, 0.25);
+    }
+
+    .btn-secondary {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-2);
+    }
+    .btn-secondary:hover {
+      border-color: var(--border-hover);
+      color: var(--text);
+      background: rgba(255,255,255,0.02);
+    }
+
+    /* Explanation Reveal Section */
+    .card-explanation {
+      background: rgba(0, 173, 216, 0.03);
+      border-left: 3px solid var(--accent);
+      padding: 12px 16px;
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+      display: none;
+      font-size: 0.82rem;
+      color: var(--text-2);
+    }
+    .card-explanation.show {
+      display: block;
+      animation: slideDown 0.3s ease both;
+    }
+
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Load more panel */
+    .load-more-container {
+      display: flex;
+      justify-content: center;
+      padding: 16px 0;
+    }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 64px 20px;
+      border: 1px dashed var(--border);
+      border-radius: var(--radius-lg);
+      color: var(--text-3);
+    }
+    .empty-state-icon {
+      font-size: 2rem;
+      margin-bottom: 12px;
+    }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      main {
+        grid-template-columns: 1fr;
+        padding-top: 16px;
+      }
+      .sidebar {
+        position: static;
+        height: auto;
+        padding-right: 0;
+      }
+      .category-list {
+        flex-direction: row;
+        overflow-x: auto;
+        padding-bottom: 8px;
+      }
+      .category-list::-webkit-scrollbar {
+        height: 3px;
+      }
+      .category-btn {
+        white-space: nowrap;
+        width: auto;
+        gap: 8px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Ambient Blobs -->
+  <div class="blob blob-1" aria-hidden="true"></div>
+  <div class="blob blob-2" aria-hidden="true"></div>
+
+  <!-- Navbar -->
+  <nav>
+    <div class="nav-left">
+      <a href="index.html" class="nav-back">← Dashboard</a>
+      <div class="nav-title">
+        <div class="nav-logo-dot"></div>
+        Go Syntax Practice
+      </div>
+    </div>
+    <div class="nav-stats">
+      <div class="stat-pill" title="Completed Exercises">
+        <span>Solved:</span>
+        <span class="stat-val correct" id="stats-solved">0</span>
+        <span style="color:var(--text-3)">/</span>
+        <span class="stat-val" id="stats-total">0</span>
+      </div>
+      <div class="stat-pill" title="Accuracy Rate">
+        <span>Accuracy:</span>
+        <span class="stat-val pct" id="stats-accuracy">0%</span>
+      </div>
+    </div>
+  </nav>
+
+  <main>
+    <!-- Sidebar / Topics Navigation -->
+    <div class="sidebar">
+      <div class="sidebar-title">Categories</div>
+      <ul class="category-list" id="category-sidebar">
+        <!-- Loaded via JS -->
+      </ul>
+    </div>
+
+    <!-- Content Panel -->
+    <div class="content-area">
+      <div class="content-header">
+        <h2 class="active-topic-name" id="selected-topic-title">All Topics</h2>
+        <div class="search-wrapper">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="11" cy="11" r="7"></circle>
+            <path d="m21 21-4.35-4.35"></path>
+          </svg>
+          <input type="search" class="search-input" id="search-bar" placeholder="Search exercises..." autocomplete="off">
+        </div>
+      </div>
+
+      <!-- Challenges List -->
+      <div class="challenges-list" id="challenges-container">
+        <!-- Loaded via JS -->
+      </div>
+
+      <!-- Load More Button -->
+      <div class="load-more-container" id="load-more-wrapper" style="display:none">
+        <button class="btn btn-secondary" id="btn-load-more">Load More Exercises</button>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    let allChallenges = [];
+    let activeTopic = "all";
+    let displayedCount = 0;
+    const itemsPerPage = 15;
+
+    // Progress State (loaded from localStorage)
+    let progress = {
+      solved: {}, // challengeId -> true (solved on first try) / false (solved after show sol/multiple attempts)
+      attempts: {} // challengeId -> num attempts
+    };
+
+    // Load progress from localStorage
+    function loadProgress() {
+      const stored = localStorage.getItem('go_blanks_progress');
+      if (stored) {
+        try {
+          progress = JSON.parse(stored);
+          if (!progress.solved) progress.solved = {};
+          if (!progress.attempts) progress.attempts = {};
+        } catch(e) {
+          console.error("Error reading progress from localStorage", e);
+        }
+      }
+    }
+
+    // Save progress to localStorage
+    function saveProgress() {
+      localStorage.setItem('go_blanks_progress', JSON.stringify(progress));
+      updateStatsPanel();
+    }
+
+    // Update the nav statistics
+    function updateStatsPanel() {
+      const totalChallenges = allChallenges.length;
+      const solvedIds = Object.keys(progress.solved);
+      const solvedCount = solvedIds.length;
+
+      document.getElementById('stats-total').textContent = totalChallenges;
+      document.getElementById('stats-solved').textContent = solvedCount;
+
+      // Accuracy: correct on first attempt vs total attempted
+      let totalAttempted = 0;
+      let solvedFirstTry = 0;
+      
+      for (const id in progress.attempts) {
+        totalAttempted++;
+        if (progress.solved[id] === true) {
+          solvedFirstTry++;
+        }
+      }
+
+      const accuracy = totalAttempted > 0 ? Math.round((solvedFirstTry / totalAttempted) * 100) : 0;
+      document.getElementById('stats-accuracy').textContent = accuracy + '%';
+    }
+
+    // Records when user attempts a challenge
+    function recordAttempt(challengeId) {
+      if (!progress.attempts[challengeId]) {
+        progress.attempts[challengeId] = 0;
+      }
+      progress.attempts[challengeId]++;
+      saveProgress();
+    }
+
+    // Records when user completes a challenge
+    function recordCompleted(challengeId, isCorrectOnFirstTry) {
+      if (progress.solved[challengeId] !== undefined) return; // already solved
+
+      const prevAttempts = progress.attempts[challengeId] || 0;
+      // It's a "first try" if they got it right, and their total attempts so far was <= 1 (meaning this check was their first action)
+      if (isCorrectOnFirstTry && prevAttempts <= 1) {
+        progress.solved[challengeId] = true;
+      } else {
+        progress.solved[challengeId] = false;
+      }
+      saveProgress();
+    }
+
+    // Format code block, escaping tags and embedding input fields
+    function renderCodeTemplate(challenge) {
+      let code = challenge.code_template;
+      // HTML Escape code template
+      code = code
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+      
+      const isAlreadySolved = progress.solved[challenge.id] !== undefined;
+
+      challenge.blanks.forEach((ans, idx) => {
+        const escapedAns = ans.replace(/"/g, '&quot;');
+        // Calculate appropriate input size (ensure it has at least 3 chars width for layout readability)
+        const sizeVal = Math.max(3, ans.length);
+        
+        let valueAttr = '';
+        let disabledAttr = '';
+        let extraClass = '';
+        
+        if (isAlreadySolved) {
+          valueAttr = `value="${escapedAns}"`;
+          disabledAttr = 'disabled';
+          extraClass = 'correct';
+        }
+
+        const inputHTML = `<input type="text" 
+          class="blank-input ${extraClass}" 
+          data-challenge-id="${challenge.id}" 
+          data-blank-idx="${idx}" 
+          data-answer="${escapedAns}" 
+          size="${sizeVal}" 
+          maxlength="${ans.length + 3}" 
+          ${valueAttr} 
+          ${disabledAttr} 
+          autocomplete="off" 
+          spellcheck="false" />`;
+          
+        code = code.replace(`[[blank${idx}]]`, inputHTML);
+      });
+
+      return code;
+    }
+
+    // Checks the inputs of a challenge card
+    window.checkChallenge = function(challengeId) {
+      const card = document.getElementById(`card-${challengeId}`);
+      if (!card) return;
+      const inputs = card.querySelectorAll('.blank-input');
+      const challenge = allChallenges.find(c => c.id === challengeId);
+      if (!challenge) return;
+
+      // Track attempt
+      recordAttempt(challengeId);
+
+      let allCorrect = true;
+      inputs.forEach(input => {
+        const userVal = input.value.trim();
+        const correctVal = input.dataset.answer;
+
+        if (userVal === correctVal) {
+          input.classList.remove('wrong');
+          input.classList.add('correct');
+          input.disabled = true;
+        } else {
+          input.classList.remove('correct');
+          input.classList.add('wrong');
+          allCorrect = false;
+        }
+      });
+
+      const statusEl = card.querySelector('.card-status');
+      const checkBtn = card.querySelector('.btn-check');
+      const showBtn = card.querySelector('.btn-show-sol');
+      const explanationEl = card.querySelector('.card-explanation');
+
+      if (allCorrect) {
+        card.classList.add('card-completed');
+        statusEl.innerHTML = '<span class="status-correct">✓ Correct</span>';
+        checkBtn.style.display = 'none';
+        showBtn.style.display = 'none';
+        if (explanationEl) explanationEl.classList.add('show');
+        
+        recordCompleted(challengeId, true);
+      } else {
+        statusEl.innerHTML = '<span class="status-wrong">✗ Incorrect</span>';
+      }
+    };
+
+    // Reveals correct answers for a challenge card
+    window.revealChallengeSolution = function(challengeId) {
+      const card = document.getElementById(`card-${challengeId}`);
+      if (!card) return;
+      const inputs = card.querySelectorAll('.blank-input');
+      const challenge = allChallenges.find(c => c.id === challengeId);
+      if (!challenge) return;
+
+      inputs.forEach(input => {
+        input.value = input.dataset.answer;
+        input.classList.remove('wrong');
+        input.classList.add('correct');
+        input.disabled = true;
+      });
+
+      const statusEl = card.querySelector('.card-status');
+      const checkBtn = card.querySelector('.btn-check');
+      const showBtn = card.querySelector('.btn-show-sol');
+      const explanationEl = card.querySelector('.card-explanation');
+
+      card.classList.add('card-completed');
+      statusEl.innerHTML = '<span class="status-revealed">— Solved (Revealed)</span>';
+      checkBtn.style.display = 'none';
+      showBtn.style.display = 'none';
+      if (explanationEl) explanationEl.classList.add('show');
+
+      recordCompleted(challengeId, false);
+    };
+
+    // Build sidebar category listing
+    function buildSidebar() {
+      const sidebarContainer = document.getElementById('category-sidebar');
+      sidebarContainer.innerHTML = '';
+
+      // Count occurrences of each category
+      const counts = { "all": allChallenges.length };
+      allChallenges.forEach(c => {
+        counts[c.category] = (counts[c.category] || 0) + 1;
+      });
+
+      // Extract unique categories
+      const categories = ["all", ...Object.keys(counts).filter(k => k !== "all").sort()];
+
+      categories.forEach(cat => {
+        const isSelected = activeTopic === cat;
+        const displayName = cat === "all" ? "All Topics" : cat;
+        
+        const li = document.createElement('li');
+        li.innerHTML = `
+          <button class="category-btn ${isSelected ? 'active' : ''}" onclick="selectCategory('${cat.replace(/'/g, "\\'")}')">
+            <span>${displayName}</span>
+            <span class="category-count">${counts[cat]}</span>
+          </button>
+        `;
+        sidebarContainer.appendChild(li);
+      });
+    }
+
+    // Set category active and trigger refresh
+    window.selectCategory = function(cat) {
+      activeTopic = cat;
+      document.getElementById('selected-topic-title').textContent = cat === "all" ? "All Topics" : cat;
+      
+      // Update active state in sidebar
+      const buttons = document.querySelectorAll('.category-btn');
+      buttons.forEach(btn => {
+        const text = btn.querySelector('span').textContent;
+        const targetText = cat === "all" ? "All Topics" : cat;
+        btn.classList.toggle('active', text === targetText);
+      });
+
+      // Clear search
+      document.getElementById('search-bar').value = '';
+
+      displayedCount = 0;
+      renderChallenges(true);
+    };
+
+    // Render list of challenge cards
+    function renderChallenges(clearExisting = false) {
+      const container = document.getElementById('challenges-container');
+      const loadMoreBtnWrapper = document.getElementById('load-more-wrapper');
+      
+      if (clearExisting) {
+        container.innerHTML = '';
+      }
+
+      const searchVal = document.getElementById('search-bar').value.toLowerCase().trim();
+
+      // Filter challenges by active topic and search filter
+      const filtered = allChallenges.filter(c => {
+        const matchesTopic = activeTopic === "all" || c.category === activeTopic;
+        const matchesSearch = !searchVal || 
+          c.title.toLowerCase().includes(searchVal) || 
+          c.description.toLowerCase().includes(searchVal) || 
+          c.code_template.toLowerCase().includes(searchVal);
+        return matchesTopic && matchesSearch;
+      });
+
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">🔍</div>
+            <div>No matching code challenges found. Try selecting another topic or clearing search filter.</div>
+          </div>
+        `;
+        loadMoreBtnWrapper.style.display = 'none';
+        return;
+      }
+
+      const startIdx = displayedCount;
+      const endIdx = Math.min(startIdx + itemsPerPage, filtered.length);
+      const batch = filtered.slice(startIdx, endIdx);
+
+      batch.forEach(c => {
+        const card = document.createElement('div');
+        card.className = `challenge-card ${progress.solved[c.id] !== undefined ? 'card-completed' : ''}`;
+        card.id = `card-${c.id}`;
+
+        const isSolved = progress.solved[c.id] !== undefined;
+        let statusHTML = '';
+        if (isSolved) {
+          const type = progress.solved[c.id] ? '✓ Correct' : '— Solved (Revealed)';
+          const cls = progress.solved[c.id] ? 'status-correct' : 'status-revealed';
+          statusHTML = `<span class="${cls}">${type}</span>`;
+        }
+
+        const isConcurrency = c.category.includes("Channel") || c.category.includes("Goroutine") || c.category.includes("Pool") || c.category.includes("Context") || c.category.includes("Mutex");
+        const badgeColor = isConcurrency ? '#22d3a6' : '#00add8';
+        const badgeGlow = isConcurrency ? 'rgba(34,211,166,0.1)' : 'rgba(0,173,216,0.1)';
+
+        card.innerHTML = `
+          <div class="card-header">
+            <div class="card-meta">
+              <div class="card-title">${c.title}</div>
+              <div class="card-filepath">${c.folder} / ${c.file}</div>
+            </div>
+            <div class="card-status">${statusHTML}</div>
+          </div>
+          <div class="card-desc">${c.description}</div>
+          <div class="code-container">
+            <pre><code>${renderCodeTemplate(c)}</code></pre>
+          </div>
+          <div class="card-explanation ${isSolved ? 'show' : ''}">
+            <strong>Syntax Concept:</strong> Inside folder <code>${c.folder}</code>, this code demonstrates standard idioms of Go. Verify you understand why these types/operators/keywords are placed here.
+          </div>
+          <div class="card-actions" style="${isSolved ? 'display:none' : ''}">
+            <button class="btn btn-primary btn-check" onclick="checkChallenge('${c.id}')">Check Answer</button>
+            <button class="btn btn-secondary btn-show-sol" onclick="revealChallengeSolution('${c.id}')">Show Solution</button>
+          </div>
+        `;
+
+        // Add Enter key handlers on blank inputs within this card
+        const inputs = card.querySelectorAll('.blank-input');
+        inputs.forEach((input, index) => {
+          input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              // Check if we can move focus to next input in this card
+              if (index < inputs.length - 1) {
+                inputs[index + 1].focus();
+              } else {
+                // If it's the last input, trigger check
+                checkChallenge(c.id);
+              }
+            }
+          });
+        });
+
+        container.appendChild(card);
+      });
+
+      displayedCount = endIdx;
+      loadMoreBtnWrapper.style.display = displayedCount < filtered.length ? 'flex' : 'none';
+    }
+
+    // Trigger searches
+    document.getElementById('search-bar').addEventListener('input', () => {
+      displayedCount = 0;
+      renderChallenges(true);
+    });
+
+    // Handle "Load More"
+    document.getElementById('btn-load-more').addEventListener('click', () => {
+      renderChallenges(false);
+    });
+
+    // Load data from file and start
+    async function init() {
+      loadProgress();
+      try {
+        const response = await fetch('golang-project/go-challenges.json');
+        if (!response.ok) {
+          throw new Error("HTTP error " + response.status);
+        }
+        allChallenges = await response.json();
+        
+        buildSidebar();
+        updateStatsPanel();
+        renderChallenges(true);
+      } catch (err) {
+        console.error("Error loading challenges data:", err);
+        document.getElementById('challenges-container').innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon" style="color:var(--wrong)">⚠️</div>
+            <div>Error loading Go exercises data. Please ensure <code>go-challenges.json</code> exists.</div>
+            <div style="font-size:0.75rem;margin-top:10px;color:var(--text-3);font-family:var(--mono)">${err.message}</div>
+          </div>
+        `;
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
