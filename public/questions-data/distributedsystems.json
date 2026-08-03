@@ -1,0 +1,915 @@
+{
+  "topic": "Distributed Systems",
+  "description": "Consistency, CAP theorem, consensus, replication, and distributed design",
+  "icon": "🌐",
+  "accent": "#f97316",
+  "source": "distributedsystems.md",
+  "questions": [
+    {
+      "id": 1,
+      "question": "When is eventual consistency acceptable?",
+      "answer": "Eventual consistency is acceptable when:\n\n- **Staleness is tolerable**: Social media likes/follower counts, product view counts, leaderboards. A user seeing \"1,203 likes\" instead of \"1,204\" is harmless.\n- **The data is user-specific and non-financial**: User preferences, theme settings, read receipts.\n- **Operations are naturally idempotent or commutative**: Shopping cart additions (with CRDT-style merging), tag additions.\n- **The business can absorb brief inconsistencies**: A product catalog showing an old price for 200ms is acceptable; a payment ledger is not.\n- **High availability is more critical than accuracy**: DNS propagation, CDN cache invalidation, notification delivery.\n\nA useful mental model: ask \"what is the business cost if two users see different values for 500ms?\" If the answer is \"minor annoyance,\" eventual consistency is fine. If the answer is \"double charge, oversell, or data corruption,\" it is not.",
+      "images": []
+    },
+    {
+      "id": 2,
+      "question": "What production issues can eventual consistency cause?",
+      "answer": "- **Lost updates**: Two clients read stale state, both make decisions based on it, and one's update is overwritten.\n- **Phantom reads**: A user sees a product as in-stock, adds it to cart, but inventory was already exhausted at another replica.\n- **Double-spending / overselling**: Critical in e-commerce and payments. A seat or item appears available on two replicas simultaneously.\n- **Confusing UX**: A user posts a comment, refreshes, and doesn't see it (because they're now routed to a replica that hasn't caught up).\n- **Cascading stale reads**: A downstream service reads from a stale replica and makes decisions (e.g., pricing, permissions) based on outdated data, propagating the staleness further.\n- **Difficult debugging**: Bugs that only manifest under high replication lag are non-deterministic and hard to reproduce.",
+      "images": []
+    },
+    {
+      "id": 3,
+      "question": "How would you explain read-after-write consistency?",
+      "answer": "Read-after-write (RAW) consistency is a specific guarantee: after a user performs a write, any subsequent reads *by that same user* will reflect that write. It does not guarantee that other users immediately see the write.\n\n**Example**: A user updates their profile photo. With RAW consistency, if they immediately navigate to their profile page, they see the new photo — even if other users still see the old one.\n\n**How it's implemented**:\n- After a write, route the user's reads to the primary/leader node for a short window (e.g., 1 minute).\n- Use sticky sessions or session tokens that encode \"last write timestamp\"; read replicas refuse to serve the request if their replication lag puts them behind that timestamp.\n- DynamoDB offers this as an optional \"strongly consistent read\" per-request.\n\nRAW consistency is often the minimum acceptable bar for user-facing applications — users find it disorienting to not see their own changes.",
+      "images": []
+    },
+    {
+      "id": 4,
+      "question": "How do DynamoDB Global Tables resolve conflicts?",
+      "answer": "DynamoDB Global Tables use **last-writer-wins (LWW)** conflict resolution based on wall-clock timestamps. Each write is tagged with a timestamp, and when replicas reconcile, the write with the latest timestamp wins.\n\n**Implications**:\n- Clock skew between regions can cause unexpected overwrites. A write at 12:00:00.001 in us-east-1 may be beaten by a write at 12:00:00.002 in eu-west-1, even if the us-east-1 write was \"later\" in causal terms.\n- There is no automatic merge of conflicting writes — one simply overwrites the other.\n- Applications that need causal consistency must implement their own versioning (e.g., conditional writes using `ConditionExpression` with version counters).\n\nFor most workloads with region-affinity (users in a region mostly write their own data), conflicts are rare and LWW is acceptable. For shared mutable state accessed globally, application-level conflict resolution is needed.",
+      "images": []
+    },
+    {
+      "id": 5,
+      "question": "How would you design a system needing strong consistency only for specific operations?",
+      "answer": "The key insight is that you don't need strong consistency everywhere — only at specific critical points.\n\n**Strategy: Selective strong consistency**\n\n- Identify operations where correctness is non-negotiable (inventory reservation, payment deduction, seat booking).\n- Route *those* operations to the primary/leader database with synchronous writes.\n- Route read-heavy, latency-sensitive operations (browsing, search, non-critical reads) to replicas with eventual consistency.\n\n**Implementation patterns**:\n- **Per-request consistency flags**: DynamoDB allows `ConsistentRead=true` on individual read operations.\n- **Optimistic locking with conditional writes**: Use version numbers; reject writes if the version has changed since the read.\n- **Fencing tokens**: Issue a monotonically increasing token when a resource is locked; any write with an older token is rejected.\n- **Two-tier storage**: Store critical state (balances, inventory) in a strongly consistent store (PostgreSQL, Spanner), and derive read models in an eventually consistent store (Elasticsearch, Redis).",
+      "images": []
+    },
+    {
+      "id": 6,
+      "question": "What is monotonic read consistency?",
+      "answer": "Monotonic read consistency guarantees that if a process has read a value at time T, it will never read an older value in a subsequent read. You can only move forward in time — you won't see a \"rollback\" of data.\n\n**Example of a violation**: A user reads their inbox and sees 5 messages. They refresh and only see 4, because they're now routed to a replica that is further behind.\n\n**Implementation**: Achieved by either:\n- Pinning a user's reads to a single replica for the duration of a session.\n- Tracking the user's last-read \"replication position\" (e.g., a log sequence number) and only serving reads from replicas that have reached at least that position.\n\nMonotonic reads are important for user-perceived correctness — users expect time to move forward, not backward.",
+      "images": []
+    },
+    {
+      "id": 7,
+      "question": "Explain quorum-based consistency.",
+      "answer": "In a distributed system with N replicas, a **quorum** is the minimum number of nodes that must agree for an operation to succeed.\n\nThe standard formulas:\n- **Write quorum (W)**: minimum nodes that must acknowledge a write.\n- **Read quorum (R)**: minimum nodes that must respond to a read.\n- **Strong consistency condition**: `R + W > N`\n\n**Example** with N=3:\n- W=2, R=2: Reads and writes overlap by at least 1 node, ensuring reads see the latest write.\n- W=1, R=3: Reads must check all 3 nodes, writes are fast.\n- W=3, R=1: Writes are slow (all must confirm), reads are fast.\n\n**Tunable consistency**: Cassandra and DynamoDB allow tuning W and R per-operation:\n- `QUORUM`/`QUORUM` = strong consistency.\n- `ONE`/`ONE` = fast but eventually consistent.\n- `ALL`/`ONE` = durable writes, fast reads (but writes fail if any node is down).\n\nQuorum-based systems gracefully handle node failures — with N=5, you can tolerate 2 node failures with W=R=3.",
+      "images": []
+    },
+    {
+      "id": 8,
+      "question": "How would you handle stale cache reads?",
+      "answer": "Several strategies, often used in combination:\n\n1. **TTL (Time-to-Live)**: Every cache entry expires after a fixed duration. Simple but coarse — you accept up to TTL seconds of staleness.\n\n2. **Cache invalidation on write**: When the source data changes, explicitly delete or update the cache entry. Requires coupling between write path and cache layer; can have race conditions.\n\n3. **Read-through with version check**: Cache stores a version hash alongside the data. Before serving, compare the hash against a cheap \"latest version\" check in the DB (e.g., a `last_modified` timestamp stored separately).\n\n4. **Write-through cache**: All writes go through the cache, keeping it always current. Adds write latency; cache is the source of truth.\n\n5. **Event-driven invalidation**: The write path publishes a cache-invalidation event to a message bus; cache consumers listen and invalidate. Decoupled but eventually consistent.\n\n6. **Probabilistic early expiration (PER)**: Cache entries are refreshed slightly before their TTL expires with some probability, preventing thundering herds where many items expire simultaneously.\n\nFor critical reads (inventory, pricing), bypass the cache or use a very short TTL. For content (product descriptions, user profiles), longer TTLs with explicit invalidation are acceptable.",
+      "images": []
+    },
+    {
+      "id": 9,
+      "question": "How would you test consistency issues in distributed systems?",
+      "answer": "Testing consistency bugs requires simulating real distributed failures:\n\n1. **Jepsen-style testing**: Inject network partitions, clock skew, node crashes, and packet loss while running concurrent reads and writes. Verify invariants (e.g., \"no two users should book the same seat\") after recovery.\n\n2. **Chaos engineering**: Tools like Chaos Monkey, Gremlin, or Litmus deliberately kill services, add latency, or corrupt messages in production-like environments.\n\n3. **Linearizability checkers**: Tools like Knossos or Elle analyze operation histories and verify they satisfy linearizability or other consistency models.\n\n4. **Integration tests with artificial lag**: In test environments, introduce artificial replication delays and verify that the application handles stale reads gracefully (e.g., doesn't double-book).\n\n5. **Property-based testing**: Generate random sequences of operations and assert invariants hold after each sequence.\n\n6. **Concurrent load tests**: Run multiple concurrent booking/payment flows with the same resource and assert no duplicates in the result.",
+      "images": []
+    },
+    {
+      "id": 10,
+      "question": "Replication & Replication Lag",
+      "answer": "### 11. What causes replication lag?\n\nReplication lag is the delay between a write being committed on the primary and being applied on replicas. Causes include:\n\n- **High write throughput**: If the primary is writing faster than replicas can apply changes, lag accumulates.\n- **Single-threaded replication**: Traditional MySQL replication applies binlog events serially; parallel replication reduces but doesn't eliminate this.\n- **Network latency / bandwidth**: Cross-region replication inherently has higher latency.\n- **Long-running queries on replicas**: Analytical queries or maintenance tasks on replicas block the replication thread.\n- **Large transactions**: A single large transaction (e.g., bulk INSERT of millions of rows) blocks replication until it fully applies.\n- **Disk I/O bottlenecks**: If the replica's disk is slower, applying WAL/binlog takes longer.\n- **Replica resource constraints**: Running replicas on smaller instances than the primary.",
+      "images": []
+    },
+    {
+      "id": 11,
+      "question": "How would you monitor replication lag?",
+      "answer": "- **Database-native metrics**: PostgreSQL exposes `pg_stat_replication` with `write_lag`, `flush_lag`, `replay_lag`. MySQL exposes `Seconds_Behind_Master` in `SHOW SLAVE STATUS`.\n- **Custom lag metrics**: Periodically write a heartbeat row with the current timestamp to the primary; measure how long it takes to appear on replicas.\n- **CloudWatch/Datadog metrics**: AWS RDS exposes `ReplicaLag` as a CloudWatch metric. Set alarms for lag > threshold (e.g., 30 seconds).\n- **Application-level monitoring**: Track read/write divergence by comparing reads from replicas against expected values from recent writes.\n- **Alerting tiers**: Warn at 10s lag, alert at 60s, page at 300s (tune per SLA).",
+      "images": []
+    },
+    {
+      "id": 12,
+      "question": "How can lag impact user experience?",
+      "answer": "- **Read-after-write failures**: User submits a form, is redirected to a confirmation page that reads from a lagged replica — they see stale or missing data.\n- **Inconsistent search results**: A user creates a listing; it doesn't appear in search (backed by a replica) for minutes.\n- **Stale inventory displays**: Product shows as available even though it was just purchased.\n- **Broken authorization**: A permissions change (e.g., user role update) takes time to propagate; the user still has old permissions.\n- **Phantom emails/notifications**: A downstream service reads from a lagged replica and sends duplicate or incorrect notifications.\n\nThe impact scales with how often users immediately query their own writes — interactive UIs suffer more than batch pipelines.",
+      "images": []
+    },
+    {
+      "id": 13,
+      "question": "How do read replicas improve scalability?",
+      "answer": "Read replicas offload read traffic from the primary, allowing it to dedicate resources to writes and strongly consistent reads. Benefits:\n\n- **Horizontal read scaling**: Add replicas to handle more read throughput without scaling the primary.\n- **Workload isolation**: Route analytics/reporting queries to dedicated replicas so they don't impact OLTP performance on the primary.\n- **Geographic distribution**: Place replicas in regions close to read-heavy users to reduce read latency.\n- **Primary protection**: Even if a misbehaving query causes a replica to crash, the primary is unaffected.\n\nLimits: Replicas don't help with write throughput (all writes still go to the primary). For write-heavy systems, sharding or a different data model is needed.",
+      "images": []
+    },
+    {
+      "id": 14,
+      "question": "Why can replicas return stale data?",
+      "answer": "Because replication is asynchronous by default. The primary acknowledges the write to the client immediately after committing locally, without waiting for replicas to apply it. The replica applies the change later (after network transit + disk write), during which time reads from that replica return the old value.\n\nThe staleness window equals the current replication lag. Under normal conditions this is milliseconds; under load or network issues it can be seconds to minutes.",
+      "images": []
+    },
+    {
+      "id": 15,
+      "question": "How would you decide which APIs can safely hit replicas?",
+      "answer": "A useful decision framework:\n\n**Safe for replicas (read your own writes not required)**:\n- Browsing/search endpoints (product catalog, listings, articles).\n- Aggregated stats (leaderboards, counters) where small inaccuracies are acceptable.\n- Non-personalized content (homepage recommendations, featured items).\n- Historical data (order history older than a few minutes).\n\n**Requires primary (or RAW-consistent replica)**:\n- Reading state immediately after a write (confirmation pages, post-creation views).\n- Any operation that informs a subsequent write (read-modify-write patterns like inventory check before booking).\n- Authorization/permission checks (user role, account status).\n- Financial operations (balance reads before deductions).\n\nImplementation tip: Use a routing layer that checks if the request is in a \"post-write window\" (tracked via session or token) and routes to primary or a designated RAW-consistent replica if so.",
+      "images": []
+    },
+    {
+      "id": 16,
+      "question": "How do asynchronous and synchronous replication differ?",
+      "answer": "**Asynchronous replication**: Primary commits and acknowledges the write to the client without waiting for replicas. Replicas catch up in the background. Low write latency, but replicas may lag; failover can lose recent writes.\n\n**Synchronous replication**: Primary waits for at least one replica to acknowledge the write before responding to the client. Guarantees zero data loss on failover (RPO = 0), but adds write latency equal to the round-trip to the replica.\n\n**Semi-synchronous** (MySQL's approach): Wait for at least one replica to receive the write (not necessarily apply it). A middle ground — low risk of data loss, moderate latency increase.",
+      "images": []
+    },
+    {
+      "id": 17,
+      "question": "What are the tradeoffs of synchronous replication?",
+      "answer": "**Pros**:\n- Zero data loss (RPO = 0) on primary failure.\n- Replicas are always up-to-date; immediate failover is safe.\n\n**Cons**:\n- Increased write latency proportional to replica round-trip time (especially painful cross-region).\n- Write availability depends on replica availability — if the replica goes down, writes block until timeout.\n- Limits write throughput because the primary can't pipeline as aggressively.\n\nIn practice, most systems use asynchronous replication with a small RPO tolerance and compensate with write-ahead logs (WAL archiving) to minimize data loss on failover.",
+      "images": []
+    },
+    {
+      "id": 18,
+      "question": "How would you fail over during primary DB outage?",
+      "answer": "1. **Detect failure**: Health check or heartbeat times out. Automated (RDS, Patroni) or manual detection.\n2. **Elect a new primary**: Choose the replica with the least replication lag (most up-to-date).\n3. **Fence the old primary**: Issue a STONITH (Shoot The Other Node In The Head) command or revoke its network access to prevent split-brain — the old primary must not accept writes.\n4. **Promote the new primary**: The selected replica becomes primary.\n5. **Update connection strings**: DNS failover (Route 53 with low TTL), or proxy layer (PgBouncer, ProxySQL) redirects traffic to the new primary.\n6. **Re-attach remaining replicas**: Other replicas now replicate from the new primary.\n7. **Handle lag gap**: Any data written to the old primary but not replicated is lost (in async setups). Decisions needed on how to reconcile or discard.\n\nTarget RTO (Recovery Time Objective) for modern managed databases: 30–60 seconds for automated failover.",
+      "images": []
+    },
+    {
+      "id": 19,
+      "question": "What problems occur during failback?",
+      "answer": "**Failback** is the process of restoring the original primary once it recovers.\n\nProblems:\n- **Data divergence**: The original primary may have processed writes (during the failure window) that were never replicated. These are in conflict with writes now on the new primary.\n- **Re-synchronization cost**: Catching up the old primary to the current state can take significant time during which it can't serve traffic.\n- **Split-brain risk**: If fencing was incomplete, the old primary may still believe it's the leader and accept writes.\n- **Application reconnection**: Clients that cached the old connection string need to be updated again.\n- **Unnecessary disruption**: Two failovers (to the replica, then back) cause two disruption windows. Many teams prefer to keep the promoted replica as the permanent primary and retire the old one.",
+      "images": []
+    },
+    {
+      "id": 20,
+      "question": "Explain 2PC (Two-Phase Commit).",
+      "answer": "2PC is a distributed coordination protocol ensuring all-or-nothing commits across multiple participants.\n\n**Phase 1 — Prepare (Voting)**:\n- The **coordinator** sends a `PREPARE` message to all participants.\n- Each participant checks if it can commit (validates constraints, acquires locks), writes the intent to its WAL, and responds `YES` or `NO`.\n\n**Phase 2 — Commit or Abort**:\n- If all participants voted `YES`: coordinator sends `COMMIT` to all; participants commit and release locks.\n- If any participant voted `NO`: coordinator sends `ABORT` to all; participants roll back.\n\n**Failure handling**:\n- If a participant crashes after voting `YES` but before receiving `COMMIT`, it checks its WAL on recovery and waits for the coordinator's decision.\n- If the **coordinator crashes** after Phase 1, participants are in a \"blocking\" state — they hold locks and cannot proceed until the coordinator recovers. This is the fundamental weakness of 2PC: it's a **blocking protocol**.",
+      "images": []
+    },
+    {
+      "id": 21,
+      "question": "Why is 2PC often avoided in microservices?",
+      "answer": "- **Tight coupling**: All participating services must implement the 2PC protocol interface and coordinate with the same coordinator. This violates service autonomy.\n- **Blocking on coordinator failure**: If the coordinator dies mid-protocol, all participants are stuck holding locks, degrading availability.\n- **Performance**: Multiple synchronous round trips across network boundaries add significant latency.\n- **Heterogeneous databases**: Microservices often use different databases (PostgreSQL, MongoDB, DynamoDB) that don't share a common transaction protocol.\n- **Long-held locks**: During 2PC, resources are locked for the entire protocol duration. In high-traffic systems, this causes contention and timeouts.\n\nInstead, microservices favor Saga patterns (compensating transactions) or outbox patterns that achieve eventual consistency without distributed locks.",
+      "images": []
+    },
+    {
+      "id": 22,
+      "question": "Saga pattern vs distributed transactions?",
+      "answer": "**Distributed transaction (2PC)**:\n- All-or-nothing atomicity via locking.\n- ACID properties maintained across services.\n- High coupling, blocking failures, performance overhead.\n\n**Saga pattern**:\n- A saga is a sequence of **local transactions**, each publishing events or calling next steps.\n- Each step has a corresponding **compensating transaction** that undoes its effect if a later step fails.\n- No global locks — each service commits locally.\n- Eventual consistency: briefly, the system may be in an intermediate state (order placed but payment not yet confirmed).\n\n**Tradeoff**: Sagas are harder to reason about (no global atomicity), require careful compensating transaction design, and the intermediate states must be handled gracefully (e.g., don't show \"order confirmed\" until the saga completes).",
+      "images": []
+    },
+    {
+      "id": 23,
+      "question": "Choreography vs orchestration saga?",
+      "answer": "**Choreography**:\n- Each service listens for events and reacts. No central coordinator.\n- Service A completes → publishes event → Service B listens → completes → publishes event → etc.\n- **Pros**: Loose coupling, no single point of failure in the coordinator.\n- **Cons**: Difficult to track overall saga state; debugging requires tracing events across multiple services; cyclic dependencies can emerge.\n\n**Orchestration**:\n- A central **orchestrator** (a saga controller) directs each step explicitly: \"Do this, then do that.\"\n- The orchestrator knows the entire workflow and handles compensation centrally.\n- **Pros**: Clear visibility into saga state; easier debugging and rollback logic.\n- **Cons**: Orchestrator becomes a central point of coupling and potential failure.\n\n**In practice**: Orchestration is often preferred for complex sagas (5+ steps) because it's easier to reason about. Choreography works well for simple 2–3 step flows.",
+      "images": []
+    },
+    {
+      "id": 24,
+      "question": "How would you rollback a partially completed booking?",
+      "answer": "Using the Saga pattern with compensating transactions:\n\n1. **Step 1**: Reserve inventory → compensating transaction: release reservation.\n2. **Step 2**: Charge payment → compensating transaction: issue refund.\n3. **Step 3**: Send confirmation email → compensating transaction: send cancellation email.\n\nIf Step 3 fails, execute Step 2's compensation (refund), then Step 1's (release reservation) in reverse order.\n\n**Implementation considerations**:\n- Compensating transactions must be **idempotent** — if the compensation itself fails and is retried, it shouldn't double-refund.\n- Some steps are **non-compensatable** (e.g., once an email is sent, it can't be unsent). Design to put non-compensatable steps last, or accept that they're \"best effort.\"\n- Track saga state in a durable store so that if the orchestrator crashes, it can resume on restart.",
+      "images": []
+    },
+    {
+      "id": 25,
+      "question": "How do you ensure idempotency in distributed workflows?",
+      "answer": "- **Idempotency keys**: Assign a unique ID to each workflow step. Before executing, check if the ID has already been processed. If yes, return the cached result without re-executing.\n- **Conditional writes**: Use database conditions like `WHERE status = 'PENDING'` so that a step only executes if the resource is in the expected state.\n- **Upsert semantics**: For state transitions, use UPSERT or conditional updates that are safe to retry.\n- **Event deduplication**: Message consumers track processed event IDs (in Redis or a DB) and skip duplicates.\n- **Saga state machine**: Model each saga step as a state transition; steps that have already happened transition the state forward — replaying the same step when already in a later state is a no-op.",
+      "images": []
+    },
+    {
+      "id": 26,
+      "question": "What happens if one service succeeds and another fails?",
+      "answer": "This is the \"partial failure\" problem — the system is left in an inconsistent intermediate state.\n\nApproaches:\n1. **Saga compensation**: Detect the failure, trigger compensating transactions to undo completed steps.\n2. **Retry with idempotency**: If the failure was transient, retry the failed step (idempotency ensures safe retries).\n3. **Dead letter queue (DLQ)**: Failed operations land in a DLQ for human review or automated retry with a different strategy.\n4. **Timeout and reconciliation**: Background jobs periodically scan for sagas stuck in intermediate states and either advance or compensate them.\n\nThe key is that the system must never silently swallow the failure — every partial failure must be handled explicitly (compensated or retried).",
+      "images": []
+    },
+    {
+      "id": 27,
+      "question": "How do retries create duplicate operations?",
+      "answer": "When an operation times out, the caller doesn't know if it failed before execution or during. Retrying executes the operation again, potentially twice:\n\n**Example**: A payment service calls a bank API. The API processes the charge but the response is lost in transit. The caller retries, and the bank charges the card twice.\n\nSolutions:\n- **Idempotency keys**: Include a client-generated unique key in every request. The server stores `(idempotency_key → result)` and returns the cached result on duplicates without re-executing.\n- **Exactly-once semantics**: Hard to achieve universally; usually approximated with at-least-once + idempotency.\n- **Transactional outbox**: Write the intent to a local table atomically with the business operation; a separate relay process sends it to the downstream service exactly once.",
+      "images": []
+    },
+    {
+      "id": 28,
+      "question": "How would you design payment + booking consistency?",
+      "answer": "A robust pattern using Saga + Outbox:\n\n1. **Create booking record** with status `PENDING` (local transaction).\n2. **Publish payment request** via the **Outbox pattern**: write a `payment_request` event to an outbox table in the same DB transaction as the booking creation. A relay process reads and publishes it to the payment service.\n3. **Payment service processes** and publishes a `payment_completed` or `payment_failed` event.\n4. **Booking service listens**: On `payment_completed`, transition booking to `CONFIRMED`. On `payment_failed`, transition to `CANCELLED` and release inventory.\n5. **Idempotency throughout**: The payment service uses an idempotency key (the booking ID) to prevent double charges on retry.\n\nThis ensures: no booking is confirmed without a successful payment, and no payment is taken without a corresponding booking.",
+      "images": []
+    },
+    {
+      "id": 29,
+      "question": "Event-Driven Architecture",
+      "answer": "### 31. Event-driven vs request-response architecture?\n\n**Request-response** (synchronous): Service A calls Service B and waits for a response. Simple, easy to debug, immediate feedback. Tightly coupled in time — if B is slow or down, A is affected.\n\n**Event-driven** (asynchronous): Service A publishes an event to a broker; Service B (and C, D...) consume it independently. Services are decoupled in time and space. A doesn't need to know about B.\n\n**When to use event-driven**:\n- Fan-out to multiple consumers (order placed → notify warehouse, email service, analytics).\n- Operations where immediate response isn't required (sending emails, generating reports).\n- Buffering against traffic spikes.\n\n**When request-response is better**:\n- Real-time UX that requires an immediate answer.\n- Simple request/reply where adding a broker is unnecessary complexity.\n- When you need the response to complete the current user flow.",
+      "images": []
+    },
+    {
+      "id": 30,
+      "question": "Benefits of async systems?",
+      "answer": "- **Temporal decoupling**: Producer and consumer don't need to be simultaneously available.\n- **Traffic absorption**: Queues buffer spikes, protecting downstream services from being overwhelmed.\n- **Independent scaling**: Producers and consumers scale independently based on their throughput.\n- **Resilience**: If a consumer fails, events accumulate in the queue and are processed once the consumer recovers — no data is lost.\n- **Fan-out**: A single event can be consumed by multiple independent services without the producer knowing about them.\n- **Retry and DLQ**: Failed processing can be retried automatically; unprocessable messages are quarantined for inspection.",
+      "images": []
+    },
+    {
+      "id": 31,
+      "question": "What is eventual consistency in event-driven systems?",
+      "answer": "In an event-driven system, after a write, downstream services update their state by consuming events — not instantly. During the propagation window, different services (or different views) reflect different states of the world.\n\n**Example**: An order is placed. The inventory service, analytics service, and notification service all consume the `order_placed` event. The inventory decrements a moment after the order is confirmed, the analytics dashboard updates a moment after that. For a brief window, these views are inconsistent with each other and with the source of truth.\n\nThis is acceptable when services have clearly defined ownership of their own state and don't need to query each other synchronously.",
+      "images": []
+    },
+    {
+      "id": 32,
+      "question": "Explain event ordering problems.",
+      "answer": "Events from the same producer may arrive out of order due to:\n- Network path differences.\n- Parallel consumer processing.\n- Retries of earlier events arriving after later events.\n- Partitioning across multiple queue shards.\n\n**Example**: `account_created` and `account_deleted` for the same user arrive out of order. Processing `deleted` first then `created` leaves a ghost account.\n\n**Solutions**:\n- **Partition by entity key**: In Kafka, partition by `user_id` so all events for a user go to the same partition and are processed in order.\n- **Sequence numbers / version checks**: Attach a version to each event; reject events with an older version than the current state.\n- **Event sourcing with sequence enforcement**: Consumers build state from an ordered event stream, replaying in order.\n- **Idempotent, commutative operations**: Design operations so order doesn't matter (e.g., SET operations instead of INCREMENT).",
+      "images": []
+    },
+    {
+      "id": 33,
+      "question": "What are dead letter queues?",
+      "answer": "A **dead letter queue (DLQ)** is a special queue where messages are automatically sent after failing to be processed successfully after N retries.\n\n**Purpose**:\n- Prevent poison messages (malformed, unexpected format) from blocking the main queue indefinitely.\n- Provide a quarantine for manual inspection and reprocessing.\n- Give operational visibility into processing failures.\n\n**Implementation**: In SQS, set `maxReceiveCount` on the main queue; after that many failed delivery attempts, the message moves to the DLQ. In Kafka, implement a \"dead letter topic\" in the consumer's exception handler.\n\n**Operations**: DLQs should be monitored and alerted on. Messages should not silently accumulate — they represent business failures (failed orders, lost events).",
+      "images": []
+    },
+    {
+      "id": 34,
+      "question": "How would you retry failed events?",
+      "answer": "**Immediate retry**: Retry immediately on transient failures (network timeouts). Limit to 1–2 attempts.\n\n**Exponential backoff with jitter**: Wait 2^n seconds between retries, with random jitter to prevent retry storms. E.g., 1s, 2s, 4s, 8s... up to a max.\n\n**Retry queues**: After initial failures, move the message to a \"retry queue\" with a delay. Process after the delay. Multiple tiers: retry-1m, retry-5m, retry-30m.\n\n**DLQ for final failure**: After exhausting all retry attempts, move to DLQ for manual intervention.\n\n**Idempotency is essential**: Retries only work safely if the operation is idempotent. Otherwise retries create duplicates.",
+      "images": []
+    },
+    {
+      "id": 35,
+      "question": "What is an idempotent consumer?",
+      "answer": "An idempotent consumer processes any given event exactly once, even if it receives it multiple times (due to broker redelivery or consumer crashes).\n\n**Implementation**:\n- Maintain a **processed event ID store** (Redis SET or DB table). Before processing, check if the event ID has been seen. If yes, skip. If no, process and mark as seen.\n- Use atomic check-and-set to prevent race conditions in concurrent consumer instances.\n- The store TTL should exceed the maximum message retention period of the broker.\n\n**Alternative**: Design the operation itself to be idempotent. E.g., `UPDATE inventory SET quantity = 10 WHERE sku = 'X'` is idempotent; `UPDATE inventory SET quantity = quantity - 1 WHERE sku = 'X'` is not.",
+      "images": []
+    },
+    {
+      "id": 36,
+      "question": "Kafka vs RabbitMQ vs SNS/SQS?",
+      "answer": "| Feature | Kafka | RabbitMQ | SNS/SQS |\n|---|---|---|---|\n| Model | Distributed log / pub-sub | Message broker (push/pull) | Managed pub-sub (SNS) + queue (SQS) |\n| Message retention | Configurable (days/forever) | Until consumed | SQS: 14 days; SNS: no retention |\n| Ordering | Per partition | Per queue | SQS FIFO: per message group |\n| Throughput | Very high (millions/sec) | High (hundreds of thousands/sec) | High (auto-scaled) |\n| Consumer model | Pull (consumer groups) | Push or Pull | Push (SNS→Lambda) or Pull (SQS) |\n| Replay | Yes (seek to offset) | No (once consumed, gone) | No |\n| Operational complexity | High (Zookeeper/KRaft, cluster tuning) | Medium | Low (fully managed) |\n| Best for | Event streaming, audit logs, analytics | Task queues, RPC patterns | Cloud-native AWS workloads |\n\n**Rule of thumb**: Use Kafka when you need replay, event sourcing, or very high throughput. Use SQS/SNS in AWS for simple task queues and fan-out. Use RabbitMQ for complex routing rules or when running on-premises.",
+      "images": []
+    },
+    {
+      "id": 37,
+      "question": "At-most-once vs at-least-once vs exactly-once delivery?",
+      "answer": "**At-most-once**: Messages may be lost, never duplicated. Fire-and-forget. Appropriate for metrics, logging where occasional loss is acceptable.\n\n**At-least-once**: Messages will be delivered, but may be duplicated. Default for most brokers (Kafka, SQS). Safe when consumers are idempotent.\n\n**Exactly-once**: Each message is delivered and processed exactly once. Very hard to achieve end-to-end. Kafka supports exactly-once semantics (EOS) within the Kafka ecosystem using transactional producers and idempotent consumers. End-to-end exactly-once (including the consumer's side effects) requires application-level idempotency.\n\nIn practice: Build for at-least-once delivery with idempotent consumers. This achieves the effect of exactly-once at lower complexity cost.",
+      "images": []
+    },
+    {
+      "id": 38,
+      "question": "How would you prevent duplicate event processing?",
+      "answer": "1. **Idempotency key in DB**: Store `(event_id)` in a processed-events table. Wrap event processing and the insert in a single transaction.\n2. **Redis SETNX**: Atomically set `event_id` in Redis; only process if the set succeeded.\n3. **Database unique constraints**: If the event creates a record, use a unique constraint on a natural key (e.g., `(order_id, status)`). Duplicate events trigger a constraint violation, which is caught and ignored.\n4. **Conditional state machine transitions**: Only process an event if the entity is in the expected state. E.g., only process `payment_completed` if the order is `PENDING`. A duplicate `payment_completed` finds the order already `CONFIRMED` and is ignored.",
+      "images": []
+    },
+    {
+      "id": 39,
+      "question": "Why is idempotency critical in payment systems?",
+      "answer": "Payment systems are particularly susceptible to duplicate operations due to:\n- **Network timeouts**: The client doesn't know if the charge succeeded.\n- **Client retries**: Retry logic re-submits the request.\n- **Infrastructure retries**: Load balancers and service meshes may retry internally.\n\nWithout idempotency, a user could be charged multiple times for a single purchase. A double charge is a severe business and trust failure — it causes chargebacks, customer complaints, and regulatory risk.\n\nWith idempotency keys, the payment service can safely tell a retrying client: \"I already processed this request, here is the result\" — without charging again.",
+      "images": []
+    },
+    {
+      "id": 40,
+      "question": "How would you design idempotent APIs?",
+      "answer": "1. **Require an idempotency key header**: `Idempotency-Key: <client-generated UUID>`. The client generates this once per logical operation and uses it for all retries.\n\n2. **Store the request and response**: On first receipt, process the request and store `{idempotency_key → response}` durably (in Redis or DB) with a TTL.\n\n3. **Return cached response on duplicates**: If the key is seen again, return the stored response without re-executing.\n\n4. **Handle concurrent requests with the same key**: Use a distributed lock or database unique constraint on the idempotency key to prevent races where two requests with the same key are processed simultaneously.\n\n5. **Include request fingerprint**: Optionally validate that the request body matches the original for the same key — prevents misuse (same key, different payload).",
+      "images": []
+    },
+    {
+      "id": 41,
+      "question": "Idempotency key implementation strategy?",
+      "answer": "```\n1. Client generates UUID v4 idempotency key before sending request.\n2. Server receives request with Idempotency-Key header.\n3. Server attempts to INSERT into idempotency_keys table:\n   (key, status='PROCESSING', created_at, expires_at)\n   Using a UNIQUE constraint on key.\n4. If INSERT succeeds: process the request, UPDATE with status='DONE', response=<result>.\n5. If INSERT fails (duplicate key): wait for status != 'PROCESSING', return stored response.\n6. If server crashes mid-processing: key remains PROCESSING. \n   On retry: check if expired; if yes, re-process; if no, wait.\n```\n\nCritical: Steps 3–4 must be in a transaction to prevent race conditions.",
+      "images": []
+    },
+    {
+      "id": 42,
+      "question": "What storage would you use for idempotency keys?",
+      "answer": "**Redis (most common)**:\n- Fast O(1) SET/GET operations.\n- TTL built-in — keys auto-expire.\n- Use `SET key value NX EX 86400` (set only if not exists, expire in 24h).\n- Risk: Redis is in-memory; if not persisted (RDB/AOF), keys can be lost on restart. Use `--appendonly yes` for durability.\n\n**Database (PostgreSQL/MySQL)**:\n- Durable by default.\n- Can be part of the same transaction as the business operation (atomic idempotency).\n- Slower than Redis but higher reliability.\n- Periodically clean up expired keys with a background job.\n\n**DynamoDB**:\n- Good middle ground: durable, fast, TTL support.\n- Conditional writes (`ConditionExpression: \"attribute_not_exists(idempotency_key)\"`) provide atomic check-and-set.\n\nFor payment systems: use a database for maximum durability. For lower-stakes operations: Redis with AOF persistence is sufficient.",
+      "images": []
+    },
+    {
+      "id": 43,
+      "question": "What happens if retries hit different servers?",
+      "answer": "If idempotency state is stored locally on a single server (e.g., in-memory), retries hitting a different server won't find the cached response and will re-execute the operation — defeating idempotency.\n\nSolution: **Idempotency state must be stored in a shared, distributed store** (Redis cluster, database) accessible by all server instances. This is why local caching alone is insufficient for idempotency.",
+      "images": []
+    },
+    {
+      "id": 44,
+      "question": "How would you prevent duplicate bookings?",
+      "answer": "Multiple layers of defense:\n\n1. **Optimistic locking**: Read the resource's version, attempt to write with `WHERE version = <read_version>`. If another booking was made concurrently, the version changes and the write fails — the user is told the resource is no longer available.\n\n2. **Database unique constraint**: `UNIQUE(resource_id, date, status='CONFIRMED')` ensures at the DB level that no two confirmed bookings exist for the same slot.\n\n3. **Pessimistic locking**: `SELECT ... FOR UPDATE` on the resource row before checking availability. Guarantees no concurrent booking can proceed while the lock is held.\n\n4. **Idempotency key on the booking request**: Prevents the same booking request from being submitted twice (network retry case).\n\n5. **Inventory reservation with atomic decrement**: Use Redis `DECR` or a DB atomic `UPDATE ... WHERE quantity > 0` to decrement inventory; only proceed if the decrement succeeded.",
+      "images": []
+    },
+    {
+      "id": 45,
+      "question": "What are race conditions in retries?",
+      "answer": "A race condition in retries occurs when multiple in-flight retries of the same operation execute concurrently, each believing they are the only one, leading to multiple executions.\n\n**Example**: A payment timeout causes the client to retry. But the original request was slow, not failed — both the original and the retry arrive at the server almost simultaneously. Without idempotency and distributed locking, both are processed.\n\nThe window for this race is the overlap between the original request's latency and the retry trigger time. If the original takes 5s and the retry fires at 3s, there's a 2s window of concurrent execution.\n\nMitigation: The idempotency key + distributed lock pattern: the first request to arrive acquires the lock, others wait and return the cached result.",
+      "images": []
+    },
+    {
+      "id": 46,
+      "question": "How do you safely retry failed distributed operations?",
+      "answer": "1. **Classify failures**: Is the error transient (network timeout, 503) or permanent (400 Bad Request, business logic error)? Only retry transient failures.\n\n2. **Exponential backoff**: Increase delay between retries: 1s, 2s, 4s, 8s... up to a cap (e.g., 60s).\n\n3. **Jitter**: Add random variation to backoff delays to prevent synchronized retry storms from multiple clients.\n\n4. **Idempotency keys**: Include the same idempotency key on all retries so the server can deduplicate.\n\n5. **Max retry limit**: Set a hard cap (e.g., 5 attempts) and move to a DLQ or surface the error after exhausting retries.\n\n6. **Circuit breaker**: If error rate exceeds a threshold, stop retrying for a period to give the downstream service time to recover.",
+      "images": []
+    },
+    {
+      "id": 47,
+      "question": "How long should idempotency keys live?",
+      "answer": "The key TTL should exceed the maximum realistic retry window — the time from the first request to the last possible retry.\n\n**Typical guideline**: 24 hours for most payment/booking systems.\n\nReasoning:\n- Automated retries typically exhaust within minutes.\n- Manual retries (user clicking \"retry\" on a failed page) may happen within hours.\n- After 24 hours, it's safe to assume the user has either moved on or the issue has been resolved through other means.\n\nFor very critical financial operations, keep keys for 7–30 days to handle delayed client-side retries from mobile apps with intermittent connectivity.\n\nCleanup: Use TTL in Redis, or a scheduled job for database-backed stores, to prevent unbounded storage growth.",
+      "images": []
+    },
+    {
+      "id": 48,
+      "question": "Why can't distributed systems guarantee all three?",
+      "answer": "During a network partition, two nodes can't communicate. If a write happens on one side:\n- To maintain **Consistency**: the other side must refuse reads (return an error) until the partition heals — sacrificing Availability.\n- To maintain **Availability**: the other side must respond with potentially stale data — sacrificing Consistency.\n\nThere is no third option. You cannot simultaneously guarantee \"every read sees the latest write\" AND \"every request gets a response\" when the nodes can't talk to each other.",
+      "images": []
+    },
+    {
+      "id": 49,
+      "question": "CP vs AP systems examples?",
+      "answer": "**CP (Consistency + Partition Tolerance)**:\n- **HBase, Zookeeper, etcd**: Refuse writes/reads if quorum can't be reached. Used for coordination, locks, leader election where correctness is critical.\n- **Google Spanner**: Achieves external consistency (strong) with TrueTime API.\n- **Traditional RDBMS in a cluster**: Will return errors rather than stale data.\n\n**AP (Availability + Partition Tolerance)**:\n- **Cassandra, CouchDB, DynamoDB (default)**: Continue accepting reads and writes during partitions; reconcile later.\n- **DNS**: Returns cached (potentially stale) responses; always available.\n- **Amazon S3**: Eventually consistent (historically); favors availability.",
+      "images": []
+    },
+    {
+      "id": 50,
+      "question": "Why is DynamoDB closer to AP?",
+      "answer": "DynamoDB uses **asynchronous replication** across its storage nodes. By default, it returns the response from any available node without waiting for all nodes to confirm — prioritizing low latency and availability. During a partition, it may return stale data rather than refusing the request.\n\nDynamoDB does offer **strongly consistent reads** (opt-in, per request), which provide CP-like guarantees but at slightly higher latency and cost. In its default configuration, it optimizes for availability and partition tolerance.",
+      "images": []
+    },
+    {
+      "id": 51,
+      "question": "Why are relational databases usually CP-oriented?",
+      "answer": "Relational databases are designed around ACID transactions, which require strong consistency. During a network partition:\n- A properly configured PostgreSQL HA cluster will refuse writes if the primary can't reach its synchronous replica (to prevent split-brain).\n- Reads requiring serializability will block or return errors rather than stale results.\n\nThis makes them CP: they sacrifice availability (return errors) to preserve consistency. The assumption is that for financial/transactional data, it is worse to return wrong data than to return an error.",
+      "images": []
+    },
+    {
+      "id": 52,
+      "question": "What happens during network partitions?",
+      "answer": "The network splits into isolated segments. Nodes in segment A cannot communicate with nodes in segment B.\n\n**For CP systems**: Nodes in the minority segment (fewer than quorum) stop accepting writes and may refuse reads. The majority segment continues operating. After partition heals, minority nodes catch up.\n\n**For AP systems**: Both segments continue operating independently. Writes to segment A and segment B diverge. When the partition heals, the system applies a conflict resolution strategy (LWW, vector clocks, CRDTs) to reconcile the diverged state.\n\n**In practice**: Most cloud providers have <0.1% partition events annually, but they do happen. Systems should be designed with the assumption that partitions will occur.",
+      "images": []
+    },
+    {
+      "id": 53,
+      "question": "How do systems prioritize consistency vs availability?",
+      "answer": "Through configuration and operational choices:\n\n- **Quorum settings** (Cassandra, DynamoDB): `QUORUM`/`QUORUM` = favor consistency. `ONE`/`ONE` = favor availability.\n- **Synchronous vs asynchronous replication**: Synchronous = favor consistency (lose availability if replica is down). Async = favor availability.\n- **Read preferences**: MongoDB `readPreference: primary` = consistent. `readPreference: nearest` = available/low latency.\n- **Timeout and failure behavior**: Does the system return a cached/stale result on timeout (AP) or return an error (CP)?\n\nThe decision is typically made at the system design level based on what failure mode is more acceptable for the use case.",
+      "images": []
+    },
+    {
+      "id": 54,
+      "question": "How would you explain CAP theorem using a booking system?",
+      "answer": "Imagine a flight booking system with servers in two regions, connected by a network link.\n\n**Normal operation**: A booking in New York is replicated to London. Both regions agree on seat availability.\n\n**Network partition**: The link goes down. A customer in New York books seat 14A. A customer in London also tries to book seat 14A.\n\n**CP choice**: London refuses the booking (\"cannot confirm at this time, please try again\") until the link is restored. Availability is sacrificed, but no double-booking occurs.\n\n**AP choice**: London accepts the booking. Now both customers have seat 14A confirmed. When the link restores, the system detects the conflict and must compensate (upgrade one customer, refund, etc.). Consistency is sacrificed for availability.\n\nThe airline's business rules determine which is worse: a temporary booking failure or an oversold seat.",
+      "images": []
+    },
+    {
+      "id": 55,
+      "question": "CAP theorem vs PACELC?",
+      "answer": "CAP theorem only addresses behavior during **network partitions**. PACELC extends it to cover normal operation:\n\n**PACELC**: \n- During a **P**artition: choose between **A**vailability and **C**onsistency (same as CAP).\n- **E**lse (normal operation): choose between **L**atency and **C**onsistency.\n\nIn normal operation, achieving strong consistency requires synchronous replication, which adds latency. PACELC acknowledges this latency/consistency tradeoff exists even without partitions.\n\n**Examples**:\n- DynamoDB: PA/EL (favors availability during partitions, low latency in normal operation).\n- Spanner: PC/EC (strongly consistent in both cases, accepts higher latency).\n- Cassandra (configurable): PA/EL by default, PC/EC with QUORUM settings.\n\nPACELC gives a more complete picture of real-world tradeoffs than CAP alone.",
+      "images": []
+    },
+    {
+      "id": 56,
+      "question": "Real-world tradeoff example from your projects?",
+      "answer": "**Example answer (booking/inventory context)**:\n\nIn designing a seat reservation system, we chose to make the **availability check** AP and the **reservation commit** CP.\n\nThe availability display (how many seats are left) read from a replica with eventual consistency — it was acceptable to briefly show \"3 seats left\" when there were actually 2, as it didn't commit anyone to a booking.\n\nHowever, the actual reservation used optimistic locking on the primary database: `UPDATE seats SET status='RESERVED' WHERE id=? AND status='AVAILABLE'`. This CP-style check prevented double-bookings, even at the cost of occasional reservation failures under contention.\n\nThe result: high availability for browsing (users almost never see errors) with strong consistency for the critical booking step (no overselling).",
+      "images": []
+    },
+    {
+      "id": 57,
+      "question": "Backpressure & Scaling",
+      "answer": "### 61. What is backpressure?\n\nBackpressure is a flow control mechanism where a downstream system signals to upstream producers to slow down when it's overwhelmed. It propagates the signal of \"I'm at capacity\" back through the call chain.\n\n**Example**: A database can handle 1,000 writes/second. If the application tier is sending 5,000 writes/second, without backpressure the database is overwhelmed. With backpressure, the database (or a queue in front of it) signals: \"slow down, I'm at capacity.\"\n\nBackpressure is the correct long-term solution. The wrong response is to silently drop requests or allow unbounded queue growth (which causes memory exhaustion and delayed failures).",
+      "images": []
+    },
+    {
+      "id": 58,
+      "question": "How do queues help absorb traffic spikes?",
+      "answer": "Queues act as **buffers** between producers and consumers. During a traffic spike:\n\n- Producers write to the queue quickly (queue writes are fast).\n- Consumers process at their sustainable rate, regardless of spike.\n- The queue accumulates messages during the spike and drains gradually.\n\nThis decouples the peak demand from the processing rate. A system that receives 10x its normal traffic for 30 seconds can handle it if the queue has capacity and the average throughput over the spike window doesn't exceed processing capacity.\n\n**Analogy**: A grocery store checkout queue during rush hour. Customers arrive in bursts, the queue absorbs the burst, and cashiers process at a steady rate. Without the queue, customers would be turned away.",
+      "images": []
+    },
+    {
+      "id": 59,
+      "question": "What happens when consumers are slower than producers?",
+      "answer": "Queue depth grows unboundedly. Consequences:\n- **Memory exhaustion**: If the queue is in-memory, the process runs out of RAM and crashes.\n- **Increased latency**: Messages sit in the queue longer, increasing end-to-end processing time. A 10-minute queue depth means 10-minute processing delay.\n- **Cascading failures**: Producers may time out waiting for queue writes, failing the operation upstream.\n- **Data loss risk**: If the queue is not durable, a restart loses all queued messages.\n\n**Detection**: Monitor queue depth (lag) and alert when it grows beyond acceptable bounds. In Kafka, monitor consumer group lag. In SQS, monitor `ApproximateNumberOfMessagesVisible`.\n\n**Resolution**: Scale out consumers, reduce message processing complexity, shed load (reject low-priority messages), or implement backpressure upstream.",
+      "images": []
+    },
+    {
+      "id": 60,
+      "question": "How would you protect downstream services?",
+      "answer": "1. **Rate limiting**: Cap the number of requests a caller can send per second.\n2. **Circuit breaker**: Stop sending requests to a service that's failing; fail fast to give it time to recover.\n3. **Bulkhead pattern**: Isolate resource pools so that exhaustion in one service doesn't exhaust shared resources for another.\n4. **Load shedding**: Deliberately drop low-priority requests under extreme load rather than accepting all and failing all.\n5. **Queues with bounded depth**: Enforce a maximum queue size; reject new messages when the limit is reached rather than accepting them into an unbounded queue.\n6. **Timeout + fallback**: Set aggressive timeouts on downstream calls; have a fallback (cached response, degraded response, or empty state) when the call times out.",
+      "images": []
+    },
+    {
+      "id": 61,
+      "question": "Rate limiting vs throttling?",
+      "answer": "**Rate limiting**: Enforces a maximum request rate per unit time (e.g., 100 requests/second per API key). Requests exceeding the limit are rejected with a 429 response. Protects the server from overload; implemented at the API gateway or service level.\n\n**Throttling**: Slows down requests rather than rejecting them — introduces artificial delays to pace the caller. Often used for fairness (preventing a single client from consuming all resources) rather than pure overload protection.\n\nIn practice the terms are often used interchangeably, but the distinction is: rate limiting rejects excess requests; throttling delays them.\n\nCommon algorithms: Token bucket (allows bursts), leaky bucket (smooth output), sliding window counter, fixed window counter.",
+      "images": []
+    },
+    {
+      "id": 62,
+      "question": "Circuit breaker pattern?",
+      "answer": "A circuit breaker wraps calls to an external service and monitors for failures. It has three states:\n\n- **Closed** (normal): Requests pass through. Failures are tracked.\n- **Open** (tripped): After failures exceed a threshold (e.g., 50% error rate over 10 seconds), the circuit opens. Requests fail immediately without attempting the downstream call — fast failure instead of slow failure.\n- **Half-open** (testing): After a cooldown period, a small number of probe requests are allowed. If they succeed, the circuit closes. If they fail, it opens again.\n\n**Benefits**: Prevents cascading failures, gives downstream services time to recover, reduces latency under failure (fast fail instead of waiting for timeout).\n\n**Implementation**: Netflix's Hystrix, Resilience4j (Java), Polly (.NET), or service mesh-level (Istio, Envoy).",
+      "images": []
+    },
+    {
+      "id": 63,
+      "question": "Bulkhead pattern?",
+      "answer": "Named after ship bulkheads that isolate compartments — if one floods, others remain intact.\n\nIn software: **isolate resource pools** (thread pools, connection pools, semaphores) for different downstream services. If Service A starts failing and exhausts its thread pool, Service B's thread pool is unaffected.\n\n**Example**: Without bulkheads, a shared HTTP client thread pool is used for all downstream calls. If Service A starts responding slowly, all threads get stuck waiting, and Service B (normally healthy) also becomes unavailable from the caller's perspective.\n\nWith bulkheads: Service A gets 10 threads, Service B gets 10 threads. Exhaustion in A doesn't affect B.",
+      "images": []
+    },
+    {
+      "id": 64,
+      "question": "Retry storm problem?",
+      "answer": "A **retry storm** (or thundering herd on retry) occurs when many clients simultaneously experience failures and all retry at the same time, creating a spike in requests that overwhelms the recovering service, causing further failures, which trigger more retries — a feedback loop.\n\n**Example**: A database restarts after a crash. 1,000 application servers, all experiencing connection errors, retry simultaneously. The database is hit with 1,000 reconnection attempts in milliseconds, which is worse than its normal load, causing it to fail again.\n\n**Solutions**:\n- **Exponential backoff with jitter**: Each client waits a random delay so retries are spread out over time.\n- **Circuit breaker**: After a threshold of failures, stop retrying. This prevents the retry storm from starting.\n- **Retry budgets**: Limit the total retry rate across all clients using a distributed rate limiter.",
+      "images": []
+    },
+    {
+      "id": 65,
+      "question": "Exponential backoff strategy?",
+      "answer": "Exponential backoff doubles the wait time between successive retries:\n\n```\nattempt 1: wait 1s\nattempt 2: wait 2s\nattempt 3: wait 4s\nattempt 4: wait 8s\nattempt 5: wait 16s (capped at max, e.g., 60s)\n```\n\n**With jitter**: Add random noise to prevent synchronized retries:\n```\nwait = min(cap, base * 2^attempt) + random(0, 1s)\n```\n\n**Decorrelated jitter** (AWS recommendation):\n```\nwait = random(base, previous_wait * 3)\n```\n\nThis distributes retry load more evenly. Without jitter, all clients on the same retry schedule hit the server simultaneously.\n\n**Max retries**: Set a hard cap (e.g., 5 retries). After that, fail permanently or send to DLQ.",
+      "images": []
+    },
+    {
+      "id": 66,
+      "question": "How would you prevent cascading failures?",
+      "answer": "Cascading failures occur when a failure in one service causes failures in dependent services, spreading throughout the system.\n\nPrevention strategy (defense in depth):\n\n1. **Timeouts everywhere**: Never wait indefinitely for a downstream response. Use aggressive timeouts.\n2. **Circuit breakers**: Stop calling failing services; fail fast.\n3. **Bulkheads**: Isolate thread/connection pools per downstream service.\n4. **Graceful degradation**: Return a cached/reduced response when a dependency fails, rather than propagating the error.\n5. **Shed load early**: Reject excess requests at the edge (load balancer/API gateway) before they penetrate deeper.\n6. **Rate limit downstream calls**: Don't let a surge in traffic translate into a proportional surge in downstream calls.\n7. **Chaos engineering**: Proactively test failure scenarios to find cascade paths before they occur in production.",
+      "images": []
+    },
+    {
+      "id": 67,
+      "question": "Explain index selectivity.",
+      "answer": "Selectivity measures the fraction of rows returned by a predicate. High selectivity = few rows returned = the index is useful. Low selectivity = many rows returned = a full scan may be better.\n\n**Formula**: Selectivity = (distinct values / total rows). A column with 1 million distinct values in 1 million rows has selectivity of 1 (very high). A boolean column has selectivity of ~0.5 (low).\n\n**Rule of thumb**: Indexes are typically beneficial when a query returns less than 5–10% of the table. Above that, the query planner often prefers a sequential scan.\n\nThe selectivity threshold varies by table size and hardware (SSD vs HDD), which is why planners use statistics to decide dynamically.",
+      "images": []
+    },
+    {
+      "id": 68,
+      "question": "What are covering indexes?",
+      "answer": "A covering index is an index that contains all columns needed to satisfy a query — both the filter condition and the SELECT columns. The database can answer the query entirely from the index without touching the base table (\"index-only scan\").\n\n**Example**:\n```sql\nSELECT email FROM users WHERE tenant_id = 5 ORDER BY created_at;\n```\nA covering index on `(tenant_id, created_at, email)` serves this query entirely from the index. Without `email` in the index, the DB must fetch each row from the table to retrieve it (expensive for large result sets).\n\n**Tradeoff**: Covering indexes are larger (include more columns) and have higher write overhead. Only create them for high-frequency, performance-critical queries.",
+      "images": []
+    },
+    {
+      "id": 69,
+      "question": "Why can ORDER BY break index optimization?",
+      "answer": "An index efficiently sorts data in its defined order. `ORDER BY` breaks index optimization when:\n\n- **Ordering by a non-indexed column**: The DB must sort the result set in memory or on disk.\n- **Mixed sort directions**: `ORDER BY A ASC, B DESC` — most B-Tree indexes only support a single sort direction; mixed directions require a filesort.\n- **ORDER BY on a non-leading index column**: For index `(A, B)`, `ORDER BY B` can't use the index for ordering without also filtering on A.\n- **LIMIT on a non-indexed sort**: `ORDER BY created_at DESC LIMIT 10` without an index on `created_at` requires sorting the entire table before taking 10 rows.\n\n**Fix**: Create an index on the ORDER BY column(s), matching the sort direction. For the last example: `CREATE INDEX ON orders(created_at DESC)`.",
+      "images": []
+    },
+    {
+      "id": 70,
+      "question": "Explain execution plans.",
+      "answer": "An execution plan is the step-by-step strategy the database will use to execute a query. Viewing it (via `EXPLAIN` in PostgreSQL, `EXPLAIN FORMAT=JSON` in MySQL) shows:\n\n- **Scan type**: Sequential scan vs index scan vs index-only scan.\n- **Join algorithm**: Nested loop join, hash join, merge join.\n- **Estimated row counts and costs**: The planner's estimates for how many rows each step will process.\n- **Actual vs estimated** (with `EXPLAIN ANALYZE`): Whether estimates were accurate; large discrepancies indicate stale statistics.\n\n**Key metrics to look for**:\n- High \"rows\" estimates that don't match actual (bad statistics).\n- Sequential scans on large tables (missing index).\n- Nested loop joins on large tables with no index (should be hash join).\n- High sort costs (missing index on ORDER BY column).\n\nUnderstanding execution plans is one of the most powerful tools for query optimization.",
+      "images": []
+    },
+    {
+      "id": 71,
+      "question": "Why can the same query suddenly become slow?",
+      "answer": "Several reasons:\n\n- **Table growth**: A query that was fast on 10K rows may be slow on 100M rows. The plan that worked before is no longer optimal.\n- **Stale statistics**: After a large data load, the planner's statistics don't reflect the new distribution. `ANALYZE` (PostgreSQL) updates them.\n- **Plan cache pollution**: The database cached a query plan that was optimal for one set of parameters but poor for another (parameter sniffing in SQL Server).\n- **Index bloat/fragmentation**: After heavy writes/deletes, index pages become fragmented, degrading scan performance.\n- **Lock contention**: A new, long-running transaction is holding locks, causing the query to wait.\n- **Changed data distribution**: A once-selective predicate (e.g., `status = 'PENDING'`) is no longer selective after a bulk status update.\n- **Vacuum/autovacuum failing**: In PostgreSQL, table bloat from dead tuples slows scans if autovacuum isn't keeping up.",
+      "images": []
+    },
+    {
+      "id": 72,
+      "question": "How do statistics affect query planners?",
+      "answer": "The query planner uses statistics to estimate the cost of different query plans and choose the cheapest one. Statistics include:\n\n- **Row count estimates** per table.\n- **Column value distribution**: Most common values (MCVs) and histogram of value ranges.\n- **Correlation**: How well the physical order of rows matches the logical order of an indexed column.\n- **Null fraction**: What percentage of values are null.\n\nIf statistics are stale (after bulk inserts, deletes, or updates), the planner uses wrong estimates. It may choose a nested loop join expecting 100 rows when there are 1 million, or skip an index because it thinks the selectivity is low when it's actually high.\n\n**Fix**: Run `ANALYZE` (PostgreSQL) or `UPDATE STATISTICS` (SQL Server) after significant data changes. Increase the statistics target for columns with unusual distributions: `ALTER TABLE t ALTER COLUMN c SET STATISTICS 500`.",
+      "images": []
+    },
+    {
+      "id": 73,
+      "question": "Explain cardinality estimation problems.",
+      "answer": "**Cardinality** = the number of rows the planner estimates a query step will produce. Estimation errors compound through multi-step plans.\n\n**Common sources of error**:\n- **Correlation between columns**: The planner assumes column predicates are independent. `WHERE city = 'New York' AND state = 'CA'` — the planner estimates based on each column separately, but city and state are correlated (NYC is in NY, not CA), leading to wildly wrong estimates.\n- **Non-uniform distributions**: Histograms bucket values into equal-frequency ranges; rare values or skewed distributions can mislead the planner.\n- **Join cardinality**: Estimating rows after multi-table joins compounds errors — errors multiply.\n- **Subqueries and CTEs**: Planners may not push statistics through CTEs, treating them as black boxes.\n\n**Fix**: Extended statistics in PostgreSQL (`CREATE STATISTICS`) can capture column correlations. For persistent bad plans, force a plan with hints (SQL Server) or pg_hint_plan (PostgreSQL).",
+      "images": []
+    },
+    {
+      "id": 74,
+      "question": "How do joins impact performance?",
+      "answer": "Joins combine rows from two tables based on a condition. Performance depends on:\n\n- **Table sizes**: Joining two large tables without indexes is very expensive.\n- **Join algorithm selected**:\n  - **Nested loop**: Good for small tables or when one side is small. O(N×M) worst case.\n  - **Hash join**: Good for large tables without sort order. Builds a hash table of one side, probes with the other. High memory usage.\n  - **Merge join**: Good when both sides are sorted on the join key (often via index scan). Very efficient but requires sorted input.\n- **Missing indexes on join columns**: Without an index on the join key, the planner may choose a nested loop over a full table scan — O(N×M).\n- **Data type mismatches**: Joining `INT` to `VARCHAR` requires implicit casting, disabling index use.\n- **Row count asymmetry**: Building the hash table from the smaller side is more efficient.",
+      "images": []
+    },
+    {
+      "id": 75,
+      "question": "Nested loop vs hash join vs merge join?",
+      "answer": "| Algorithm | Best when | Memory | Complexity |\n|---|---|---|---|\n| **Nested loop** | One side is small or heavily indexed | Low | O(N + N×M/B) with index |\n| **Hash join** | Large tables, no sort order available | High (builds hash table) | O(N + M) |\n| **Merge join** | Both sides sorted on join key | Low | O(N + M) if pre-sorted |\n\n**Decision logic** (simplified):\n- If the inner table has an index on the join key and the outer table is small → Nested loop.\n- If tables are large and unsorted → Hash join.\n- If there's an ORDER BY on the join columns or both sides come from index scans in the right order → Merge join.\n\nThe query planner chooses based on estimated costs. You can influence the choice by adding appropriate indexes or, rarely, using query hints.",
+      "images": []
+    },
+    {
+      "id": 76,
+      "question": "GIN index use cases?",
+      "answer": "**GIN (Generalized Inverted Index)** is optimized for composite values where each element needs to be searchable independently:\n\n- **Full-text search**: Index `tsvector` columns for fast text search (`@@` operator).\n- **Array columns**: Index elements of arrays for efficient `@>` (contains), `<@` (is contained by), `&&` (overlap) queries.\n- **JSONB columns**: Index keys/values within JSONB for fast JSON attribute queries.\n- **hstore**: Key-value store type in PostgreSQL.\n\n**Tradeoff**: GIN indexes have higher write overhead (each array element / text token gets an entry). They're ideal for read-heavy, search-heavy workloads. For heavy writes, consider `fastupdate` option or BRIN/partial indexes.",
+      "images": []
+    },
+    {
+      "id": 77,
+      "question": "Partial indexes?",
+      "answer": "A partial index only includes rows that satisfy a WHERE condition. It's smaller, faster to build, and more selective.\n\n**Example**:\n```sql\nCREATE INDEX idx_pending_orders ON orders(created_at) WHERE status = 'PENDING';\n```\n\nThis index only covers pending orders. If 95% of orders are `COMPLETED`, this index is 20x smaller than a full index on `created_at`. Queries filtering on `status = 'PENDING'` benefit enormously.\n\n**Other use cases**:\n- Index non-null values only: `WHERE email IS NOT NULL`.\n- Index active/non-deleted records: `WHERE deleted_at IS NULL`.\n- Index recent data: `WHERE created_at > '2024-01-01'`.\n\nPartial indexes are one of the most underused optimization tools. They dramatically reduce index size and write overhead.",
+      "images": []
+    },
+    {
+      "id": 78,
+      "question": "Composite index ordering importance?",
+      "answer": "A composite index `(A, B, C)` can be used for queries filtering on:\n- `A` alone\n- `A, B`\n- `A, B, C`\n\nBut NOT efficiently for:\n- `B` alone (no `A` prefix)\n- `B, C` (no `A` prefix)\n- `C` alone\n\nThe **leftmost prefix rule**: a query must use the leading columns of the index in order. Once a range predicate is used on a column (e.g., `A > 5`), the index cannot be used for filtering on subsequent columns (though it can still be used for the covered columns).\n\n**Design guidance**: Order columns in the index by:\n1. Equality predicates first (highest selectivity, used in WHERE).\n2. Range predicates second.\n3. Sort/ORDER BY columns last.",
+      "images": []
+    },
+    {
+      "id": 79,
+      "question": "Why do too many indexes hurt performance?",
+      "answer": "Every index is a separate data structure that must be maintained on every INSERT, UPDATE, and DELETE:\n\n- **Write overhead**: Each write to a table must update all its indexes. 10 indexes = 10× the write work.\n- **Storage overhead**: Indexes can easily be 2–5× the size of the table data itself.\n- **Query planner overhead**: More indexes = more potential plans = longer planning time.\n- **Index bloat**: Unused or rarely-used indexes accumulate dead pages, consuming storage and memory (buffer pool).\n- **Lock contention**: More indexes = more lock acquisitions per write.\n\n**Best practice**: Index only what you query. Regularly audit for unused indexes (see Q90) and drop them. For write-heavy tables (logs, events), be especially conservative with indexes.",
+      "images": []
+    },
+    {
+      "id": 80,
+      "question": "Explain write amplification caused by indexes.",
+      "answer": "Write amplification is the ratio of actual I/O written to the amount of data written by the application. Indexes multiply write amplification:\n\n- A single row insert into a table with 5 indexes results in 6 writes (1 table + 5 index pages).\n- For updates touching indexed columns, both the old and new index entries must be updated.\n- With B-Tree indexes, a single write may cascade into multiple page splits and rebalancing operations.\n\nFor LSM-tree based systems (like RocksDB/Cassandra), compaction multiplies write amplification further as data is merged across levels.\n\nHigh write amplification means slower writes, higher IOPS consumption, and faster SSD wear.",
+      "images": []
+    },
+    {
+      "id": 81,
+      "question": "How do indexes impact insert-heavy systems?",
+      "answer": "For insert-heavy workloads (logging, time-series, event ingestion):\n\n- Each insert must update all indexes synchronously before the transaction can commit.\n- Index page splits (when a B-Tree leaf page is full) are particularly expensive — they require acquiring locks and rewriting multiple pages.\n- If indexes are on monotonically increasing values (like timestamps), all inserts hit the rightmost page of the B-Tree, creating a hot spot.\n\n**Mitigation strategies**:\n- Use a **BRIN index** (Block Range Index) for insert-order data — tiny size, fast inserts, works for range scans on timestamp-ordered data.\n- Use **partial indexes** to cover only the queried subset.\n- Use **write-optimized storage engines** (LSM-tree based: ClickHouse, Cassandra) for very high write rates.\n- **Batch inserts**: Accumulate inserts in memory and write in large batches; reduces index update overhead.\n- **Defer index creation**: Drop indexes before a bulk load, then recreate them concurrently after.",
+      "images": []
+    },
+    {
+      "id": 82,
+      "question": "Clustered vs non-clustered indexes?",
+      "answer": "**Clustered index**: The table data is physically stored in the order of the index key. There can be only one clustered index per table (since data can only be ordered one way). In InnoDB (MySQL), the primary key is always the clustered index.\n\n**Benefits**: Range scans on the clustered key are very fast (physically sequential reads). No extra lookup needed to get the row data.\n\n**Non-clustered index** (all indexes in PostgreSQL; secondary indexes in MySQL):\n- A separate structure that stores the index key + a pointer to the row (heap tuple in PostgreSQL, primary key in InnoDB).\n- Range scans require random I/O to fetch each row separately (expensive for large result sets).\n\n**InnoDB implication**: Since secondary indexes store the primary key (not a physical pointer), keep primary keys small (INT vs UUID) to minimize secondary index size.",
+      "images": []
+    },
+    {
+      "id": 83,
+      "question": "What is index fragmentation?",
+      "answer": "Over time, as rows are inserted, updated, and deleted, index pages develop \"holes\" — pages that are partially empty or logically sequential pages that are not physically contiguous on disk.\n\n**Logical fragmentation**: Index pages are out of physical order on disk, causing random I/O on sequential scans.\n\n**Internal fragmentation**: Individual pages are partially empty (after deletions), wasting storage and reducing cache efficiency.\n\n**Effects**: Slower index scans (more I/O pages to read), larger index size, reduced buffer pool efficiency.\n\n**Fix**:\n- PostgreSQL: `VACUUM` reclaims space from dead tuples; `REINDEX` or `CLUSTER` rebuilds the index/table.\n- MySQL: `OPTIMIZE TABLE` or `ALTER TABLE ... ENGINE=InnoDB` rebuilds.\n- SQL Server: `ALTER INDEX REBUILD` (offline, locks table) or `ALTER INDEX REORGANIZE` (online, less disruptive).",
+      "images": []
+    },
+    {
+      "id": 84,
+      "question": "How do you identify unused indexes?",
+      "answer": "**PostgreSQL**:\n```sql\nSELECT schemaname, tablename, indexname, idx_scan, idx_tup_read\nFROM pg_stat_user_indexes\nWHERE idx_scan = 0\nORDER BY pg_relation_size(indexrelid) DESC;\n```\n`idx_scan = 0` means the index has never been used since the last statistics reset.\n\n**MySQL**:\n```sql\nSELECT * FROM sys.schema_unused_indexes;\n```\n\n**General approach**:\n- Monitor index usage statistics for 30–90 days (covering peak traffic periods and batch jobs).\n- Flag indexes with zero or very low scan counts.\n- Check if the index is needed for a specific scheduled job or report that runs infrequently.\n- Before dropping, consider creating the index in an equivalent database and monitoring — the pg_stat data resets on restarts, so a recently restarted DB shows all zeros.",
+      "images": []
+    },
+    {
+      "id": 85,
+      "question": "Partitioning & Sharding",
+      "answer": "### 91. Partitioning vs sharding?\n\n**Partitioning**: Dividing a single table into multiple physical segments within the **same database instance**. The database engine manages routing transparently. Queries can span all partitions via the same connection.\n\n**Sharding**: Distributing data across **multiple separate database instances** (different servers). The application (or a proxy layer) routes queries to the correct shard. Shards are fully independent.\n\n**Key difference**: Partitioning is vertical/horizontal decomposition within one node; sharding is distributing across many nodes. Sharding provides horizontal scale-out beyond what a single machine can handle.",
+      "images": []
+    },
+    {
+      "id": 86,
+      "question": "Horizontal vs vertical partitioning?",
+      "answer": "**Horizontal partitioning (most common)**: Splitting rows across partitions based on a partition key. Each partition has the same schema but a subset of rows.\n- Example: Partition an orders table by year: orders from 2023 in one partition, 2024 in another.\n\n**Vertical partitioning**: Splitting columns across separate tables or storage. A \"wide\" table with 50 columns might be split into a \"hot\" table with the 10 frequently-accessed columns and a \"cold\" table with the 40 rarely-accessed ones, joined by primary key.\n- Example: Split a `users` table into `users_core (id, email, name)` and `users_profile (id, bio, preferences, settings)`.\n\nVertical partitioning reduces I/O for queries that only need a few columns.",
+      "images": []
+    },
+    {
+      "id": 87,
+      "question": "Good shard key characteristics?",
+      "answer": "A good shard key:\n\n1. **High cardinality**: Many distinct values so data distributes evenly across shards. A boolean is a terrible shard key.\n2. **Even distribution**: Values should be uniformly distributed, avoiding hot spots where most data concentrates in one shard.\n3. **Query locality**: Queries should typically involve data from a single shard. Cross-shard queries are expensive.\n4. **Immutable**: Once a shard key is assigned to a row, it shouldn't change — changing it requires moving the row to a different shard.\n5. **Low fan-out**: Operations should touch as few shards as possible.\n\n**Common shard keys**: `user_id` (for user-centric data), `tenant_id` (for multi-tenant SaaS), `order_id` (hash-based).",
+      "images": []
+    },
+    {
+      "id": 88,
+      "question": "What causes hot partitions?",
+      "answer": "A hot partition receives a disproportionate share of read or write traffic. Causes:\n\n- **Sequential keys as shard key**: Using timestamps or auto-increment IDs means all new writes go to the \"latest\" partition. This is the most common cause.\n- **Skewed data distribution**: Certain partition key values are far more common (e.g., a viral user's content, a popular product category).\n- **Low cardinality shard key**: If there are only 10 distinct country values and one country has 80% of traffic, that partition is hot.\n- **Business patterns**: \"Flash sales\" create sudden traffic spikes on specific items; sporting events create spikes on specific team/event data.\n\n**Solutions**: Hash-based partitioning (distributes sequential keys evenly), composite shard keys (add randomness), read replicas for hot partitions, write buffering with fan-out.",
+      "images": []
+    },
+    {
+      "id": 89,
+      "question": "How would you rebalance shards?",
+      "answer": "Rebalancing moves data between shards, needed when shards become unevenly loaded or new shards are added.\n\n**Approaches**:\n\n1. **Consistent hashing**: New shards only take data from neighbors; minimal data movement. Used by Cassandra and DynamoDB.\n\n2. **Range splitting**: Split an overloaded shard's key range and migrate half to a new shard. Used by HBase, Bigtable.\n\n3. **Double-write migration**: \n   - Start writing to both old and new shard simultaneously.\n   - Backfill old data to new shard.\n   - Once caught up, switch reads to new shard.\n   - Stop writes to old shard.\n   \n4. **Proxy-based routing**: A routing layer abstracts shard topology from the application; it can reroute traffic during rebalancing without application changes.\n\n**Challenge**: Rebalancing must happen with minimal downtime and without data loss. Data consistency during migration requires careful sequencing and dual-write windows.",
+      "images": []
+    },
+    {
+      "id": 90,
+      "question": "Range vs hash partitioning?",
+      "answer": "**Range partitioning**: Partitions are defined by value ranges.\n- Example: `orders` by `created_at`: Jan–Mar in partition 1, Apr–Jun in partition 2.\n- **Pros**: Efficient range queries; easy partition pruning; archive/drop old partitions.\n- **Cons**: Hot spots on recent data (all new rows go to the \"current\" partition).\n\n**Hash partitioning**: Partition is determined by `hash(key) % N`.\n- Example: `orders` by `hash(order_id) % 8` → 8 shards.\n- **Pros**: Even distribution; eliminates sequential hot spots.\n- **Cons**: Range queries require hitting all partitions; can't prune based on key range.\n\n**Hybrid**: Hash-then-range (consistent hashing ring with virtual nodes). Used in Cassandra: rows are hash-partitioned across the ring, then physically range-sorted within each node.",
+      "images": []
+    },
+    {
+      "id": 91,
+      "question": "Why is userId often used as partition key?",
+      "answer": "- **High cardinality**: Typically millions of distinct user IDs — excellent distribution.\n- **Query locality**: User-centric applications mostly access data belonging to a specific user. Using `userId` as the partition key means a user's data is co-located on a single shard, enabling efficient single-shard queries.\n- **Even distribution**: User IDs (especially UUID or random-component IDs) distribute evenly via hashing.\n- **Scalability**: Adding users grows the dataset; `userId`-based sharding scales naturally as users are distributed across shards.\n\n**Caveat**: For highly popular users (celebrities, viral accounts), a single `userId` shard can become a hot spot. Mitigate with caching, read replicas, or activity sharding for specific high-traffic entities.",
+      "images": []
+    },
+    {
+      "id": 92,
+      "question": "Why can timestamp-based partitioning fail?",
+      "answer": "Timestamp-based partitioning causes **write hot spots**: all new writes go to the latest time partition.\n\n- In a write-heavy system, 99% of writes hit partition N (today's partition) while partitions 1 through N-1 are cold.\n- A single partition must handle the entire write load of the system.\n- In distributed databases (Cassandra, DynamoDB), this can overload specific nodes.\n\n**Additional issues**:\n- Clock skew: Out-of-order timestamps from different nodes can distribute across partition boundaries unexpectedly.\n- Backfill: Re-processing historical data writes to older partitions, causing unexpected load spikes.\n\n**Fix**: Use timestamp for range-based partitioning in analytical/archival contexts (where writes are distributed across time), but for OLTP hot-write scenarios, use hash partitioning or composite keys (e.g., `hash(user_id)` for primary distribution, timestamp for secondary sorting within a partition).",
+      "images": []
+    },
+    {
+      "id": 93,
+      "question": "Cross-shard query challenges?",
+      "answer": "Cross-shard queries require fetching data from multiple shards and aggregating it:\n\n- **Scatter-gather**: Query all N shards in parallel, collect results, merge. Latency = slowest shard. N shards = N×write queries.\n- **No global sort**: Ordering results from multiple shards requires a merge-sort step in the application or a gateway layer.\n- **No global transactions**: ACID transactions across shards require distributed transaction protocols (2PC or Saga).\n- **Aggregation complexity**: `GROUP BY`, `COUNT`, `SUM` across shards must be done in two phases: per-shard aggregate, then global merge.\n- **JOINs**: Joining data across shards requires either broadcasting one side or fetching from both and joining in application memory.\n\n**Mitigations**: Design the data model to minimize cross-shard access. For queries that are inherently global (analytics), use a separate read replica/data warehouse that consolidates all shards.",
+      "images": []
+    },
+    {
+      "id": 94,
+      "question": "How would you shard a booking system?",
+      "answer": "**Analysis**: \n- Bookings are created by users but reference resources (seats, rooms, time slots).\n- Most queries are by `user_id` (user's booking history) or by `resource_id + date` (availability check).\n\n**Shard by `user_id` (user-centric approach)**:\n- A user's booking history is co-located — fast for user-facing queries.\n- Availability checks (how many bookings for resource X on date Y?) require cross-shard scatter-gather.\n\n**Shard by `resource_id` (resource-centric approach)**:\n- Availability checks are fast (all bookings for a resource on the same shard).\n- User booking history requires scatter-gather across all resource shards.\n\n**Hybrid approach**:\n- Shard by `resource_id` for write path (inventory check, booking creation).\n- Maintain a separate user-indexed view (replicated from events) for the user booking history read path.\n\n**In practice**: Use a hash of `resource_id` for the primary shard, and build an async denormalized \"user's bookings\" projection for the user-centric view.",
+      "images": []
+    },
+    {
+      "id": 95,
+      "question": "What happens during checkpointing?",
+      "answer": "A **checkpoint** is a synchronization point where all dirty pages in the buffer pool are flushed to disk. After a checkpoint, the WAL before the checkpoint can be discarded (for recovery purposes) because all the data it describes is now safely on disk.\n\n**Checkpoint process**:\n1. PostgreSQL identifies all dirty buffer pool pages.\n2. Writes them to disk (spread out over `checkpoint_completion_target` to avoid I/O spikes).\n3. Writes a checkpoint record to WAL.\n4. Truncates WAL before the checkpoint (no longer needed for recovery).\n\n**Performance impact**: Checkpoints cause I/O bursts (flushing many dirty pages). Too-frequent checkpoints = high I/O; too-infrequent = more WAL to replay on crash recovery and more memory used by dirty pages.\n\n**Tuning**: `checkpoint_timeout` (max time between checkpoints), `max_wal_size` (triggers checkpoint if WAL grows beyond this), `checkpoint_completion_target` (fraction of timeout over which to spread checkpoint writes, default 0.9).",
+      "images": []
+    },
+    {
+      "id": 96,
+      "question": "Why are random writes expensive?",
+      "answer": "Random writes access non-contiguous locations on disk:\n\n**HDDs**: The read/write head must physically move (seek) to each new location. Seek time is ~5–10ms per random I/O. At 5ms/op, you can do ~200 random writes/second — catastrophically slow for modern workloads.\n\n**SSDs**: No mechanical movement, but random writes trigger **write amplification** internally. Flash cells must be erased before writing (erase block granularity is 256KB–1MB), so writing 4KB requires erasing and rewriting a 256KB block. Additionally, the FTL (Flash Translation Layer) maintains a page mapping table; random writes fragment this table and degrade performance over time due to garbage collection.\n\n**In databases**: Random writes occur when updating index pages, modifying B-Tree nodes, or writing to random positions in a table heap. Sequential writes (WAL, LSM memtable flushes) are far more efficient on both HDDs and SSDs.",
+      "images": []
+    },
+    {
+      "id": 97,
+      "question": "Explain LSM trees vs B-Trees.",
+      "answer": "**B-Tree (B+ Tree in practice)**:\n- In-place updates: modifications overwrite existing pages.\n- Read-optimized: single tree lookup, O(log n).\n- Write path: random writes to update tree nodes.\n- Used by: PostgreSQL, MySQL/InnoDB, SQLite.\n\n**LSM-Tree (Log-Structured Merge Tree)**:\n- Append-only writes: all writes go to an in-memory structure (memtable) + sequential WAL.\n- When memtable is full, it's flushed to an immutable sorted file (SSTable) on disk.\n- SSTables are periodically merged and compacted into larger files (reducing read overhead).\n- Read path: must check memtable + multiple SSTable levels (mitigated with bloom filters and indexes).\n- Used by: Cassandra, RocksDB, LevelDB, HBase.\n\n**Tradeoff**:\n| | B-Tree | LSM Tree |\n|---|---|---|\n| Writes | Slower (random I/O) | Faster (sequential) |\n| Reads | Faster (one lookup) | Slower (multiple levels) |\n| Space amplification | Low | Higher (compaction needed) |\n| Write amplification | Medium | Higher (compaction rewrites) |\n\nLSM-Trees excel in write-heavy workloads; B-Trees in read-heavy workloads.",
+      "images": []
+    },
+    {
+      "id": 98,
+      "question": "Why is DynamoDB optimized for key-value access?",
+      "answer": "DynamoDB is built on principles of:\n- **Fixed-time lookups**: Using the partition key, DynamoDB hashes it to locate the exact storage node and partition containing the data — O(1) lookup regardless of table size.\n- **No joins, no range scans across partitions**: DynamoDB doesn't support cross-partition queries, forcing all data for a logical entity under a single partition key (co-location pattern).\n- **Predictable performance**: By restricting access patterns to key-based lookups and within-partition range queries, DynamoDB can guarantee single-digit millisecond latency at any scale.\n\nComplex queries (joins, aggregations, full-text search) are offloaded to other systems (Elasticsearch, Redshift). DynamoDB is designed for the OLTP hot path, not ad-hoc analytics.",
+      "images": []
+    },
+    {
+      "id": 99,
+      "question": "How does MongoDB WiredTiger work?",
+      "answer": "WiredTiger is MongoDB's default storage engine (since 3.2). Key features:\n\n- **Document-level concurrency control**: Multiple clients can modify different documents in the same collection concurrently without collection-level locks.\n- **MVCC**: Readers don't block writers; each reader sees a snapshot of the data.\n- **Compression**: Documents and indexes are compressed by default (Snappy for data, prefix compression for indexes), reducing storage by 60–80%.\n- **Cache management**: WiredTiger maintains its own cache (separate from OS page cache), controllable via `wiredTigerCacheSizeGB`.\n- **Write path**: Writes go to an in-memory cache and a journal (WAL). Journal provides crash recovery. Dirty pages are flushed to disk during checkpoints.\n\nWiredTiger uses a B-Tree-like structure for collections and indexes, but with per-document locking rather than page-level locking.",
+      "images": []
+    },
+    {
+      "id": 100,
+      "question": "What are SSTables?",
+      "answer": "**SSTable (Sorted String Table)**: An immutable, sorted file containing key-value pairs, used in LSM-tree storage engines (Cassandra, RocksDB, LevelDB).\n\n**Structure**:\n- Key-value pairs sorted by key.\n- An index block at the end maps key ranges to block offsets (enables binary search).\n- A bloom filter per SSTable allows quickly checking if a key *might* exist without reading the file.\n- Compressed in blocks.\n\n**Immutability**: SSTables are never modified after creation — they're only merged (compacted) into new, larger SSTables and then deleted.\n\n**Why immutable?**: Immutability allows append-only writes (no random I/O), enables consistent snapshots, and simplifies concurrent access (no write locks needed for readers).",
+      "images": []
+    },
+    {
+      "id": 101,
+      "question": "Write amplification vs read amplification?",
+      "answer": "**Write amplification**: The ratio of data actually written to disk vs data logically written by the application.\n- Causes: B-Tree page splits (one write → multiple page rewrites), LSM compaction (data rewritten multiple times as it moves through levels), WAL writes.\n- High write amplification = faster SSD wear, higher I/O, lower write throughput.\n\n**Read amplification**: The number of disk I/O operations per logical read.\n- Causes: Multi-level LSM structure (must check memtable + L0 + L1 + ... + Ln), non-covering indexes (index read + heap fetch), fragmentation.\n- High read amplification = higher read latency.\n\n**Space amplification**: Amount of storage used vs logical data size.\n- Causes: LSM compaction (old and new data coexist until compaction), B-Tree page fragmentation, MVCC dead rows.\n\nLSM trees trade read/space amplification for low write amplification. B-Trees balance all three. Tuning involves shifting between these tradeoffs.",
+      "images": []
+    },
+    {
+      "id": 102,
+      "question": "How does compaction work?",
+      "answer": "**Compaction** (in LSM-tree engines) merges multiple SSTables into a larger, sorted SSTable, removing deleted and superseded entries.\n\n**Why necessary**:\n- Without compaction, the number of SSTables grows, increasing read amplification (must check every SSTable for a key).\n- Deleted keys (tombstones) continue to take up space.\n- Duplicate versions of a key accumulate across SSTables.\n\n**Types**:\n- **Size-tiered compaction** (Cassandra default for write-heavy): Group SSTables of similar size and merge them. Low write amplification, high space amplification (temporary double-space during compaction).\n- **Leveled compaction** (LevelDB, RocksDB): Organize SSTables into levels; each level is 10× the size of the previous. Lower space amplification, better read performance, higher write amplification.\n\n**Tradeoff**: Compaction consumes CPU and I/O, temporarily competing with normal operations. Under high sustained write load, compaction may fall behind, degrading read performance.",
+      "images": []
+    },
+    {
+      "id": 103,
+      "question": "Why are sequential writes faster?",
+      "answer": "**HDDs**: Sequential writes move the disk head along a track continuously — no seek time between writes. A sequential I/O can write thousands of sectors in one sweep; random I/O requires seeking for each.\n\n**SSDs**: Sequential writes map to naturally aligned flash erase blocks, minimizing write amplification in the FTL. Random writes trigger costly erase-and-rewrite cycles on out-of-place pages.\n\n**OS and hardware buffers**: Sequential I/O benefits from read-ahead, OS page cache batching, and write buffer coalescing — entire pages are submitted in one I/O operation.\n\n**In databases**: This is why WAL-first designs (PostgreSQL, InnoDB, LSM engines) achieve high durability and throughput — all committed data is written sequentially to the log. Random data page writes happen lazily in the background.",
+      "images": []
+    },
+    {
+      "id": 104,
+      "question": "Concurrency & Transactions",
+      "answer": "### 111. What causes deadlocks?\n\nA deadlock occurs when two or more transactions are each waiting for a lock held by another transaction in the set, creating a cycle:\n\n- Transaction A holds lock on row 1, waits for row 2.\n- Transaction B holds lock on row 2, waits for row 1.\n- Neither can proceed.\n\n**Common patterns**:\n- **Inconsistent lock ordering**: Transaction A locks rows in order (1, 2); Transaction B locks in order (2, 1). They meet in the middle.\n- **Gap lock + range conflicts**: In MySQL with repeatable read isolation, gap locks can create unexpected deadlocks.\n- **Application-level lock ordering**: Different code paths acquiring the same set of locks in different orders.\n- **Lock escalation**: An operation that starts with row locks escalates to a table lock, conflicting with existing row locks.",
+      "images": []
+    },
+    {
+      "id": 105,
+      "question": "How do you debug deadlocks?",
+      "answer": "**PostgreSQL**:\n- Deadlock details are logged automatically (at `LOG` level) with `DETAIL` showing which PIDs held/waited for which locks and the lock graph.\n- Enable `log_lock_waits = on` to see all waits (not just deadlocks).\n- Query `pg_locks` and `pg_stat_activity` to see current lock state.\n\n**MySQL**:\n- `SHOW ENGINE INNODB STATUS` → look for the \"LATEST DETECTED DEADLOCK\" section, showing the full transaction and lock state.\n- Enable `innodb_print_all_deadlocks` to log all deadlocks to the error log.\n\n**Analysis steps**:\n1. Identify the two (or more) transactions involved.\n2. Identify which rows/tables/locks each transaction held and waited for.\n3. Find the code paths that created those transactions.\n4. Determine why they acquired locks in conflicting orders.\n\n**Fix**: Standardize lock acquisition order in code. Use `SELECT ... FOR UPDATE` explicitly and consistently. Keep transactions short to reduce contention window.",
+      "images": []
+    },
+    {
+      "id": 106,
+      "question": "Explain optimistic vs pessimistic locking.",
+      "answer": "**Pessimistic locking**: Assume conflicts will occur. Lock the resource before reading it: `SELECT ... FOR UPDATE`. Holds the lock until transaction ends. Safe, but reduces concurrency and can cause deadlocks.\n\n**Best for**: High-contention scenarios where conflicts are likely (e.g., popular seat booking, shared inventory).\n\n**Optimistic locking**: Assume conflicts are rare. Read without locking; check at write time if the data has changed since the read.\n\nImplementation:\n```sql\n-- Read\nSELECT version, quantity FROM inventory WHERE id = 1;\n-- ... process ...\n-- Write (fails if version changed)\nUPDATE inventory SET quantity = ?, version = version + 1 \nWHERE id = 1 AND version = <read_version>;\n-- If 0 rows affected: conflict detected, retry\n```\n\n**Best for**: Low-contention scenarios where conflicts are infrequent. Avoids lock overhead in the common case at the cost of occasional retries.",
+      "images": []
+    },
+    {
+      "id": 107,
+      "question": "Row lock vs table lock?",
+      "answer": "**Row lock**: Locks a specific row. Other transactions can read/write other rows in the same table concurrently. Highest concurrency; higher overhead per lock (many lock objects for bulk operations).\n\n**Table lock**: Locks the entire table. Simple, low overhead, but completely serializes access to the table. Appropriate for bulk operations (ALTER TABLE, TRUNCATE) or very low-traffic tables.\n\n**Page lock** (intermediate, less common): Locks a disk page (typically 8KB, containing many rows). Intermediate granularity.\n\n**In practice**: Modern OLTP databases use row-level locking by default. Table locks are used for DDL operations. Explicit table locks (`LOCK TABLE`) are rarely needed and generally indicate a design problem.",
+      "images": []
+    },
+    {
+      "id": 108,
+      "question": "What is MVCC?",
+      "answer": "**MVCC (Multi-Version Concurrency Control)** allows readers and writers to operate concurrently without blocking each other by maintaining multiple versions of each row.\n\n**How it works (PostgreSQL)**:\n- Every row version has `xmin` (transaction that created it) and `xmax` (transaction that deleted/updated it).\n- When a transaction starts, it gets a snapshot of which transactions were committed.\n- Reads see the latest row version that was committed before their snapshot — not the current state being modified by concurrent transactions.\n- Writers create new row versions rather than modifying in place.\n\n**Benefits**:\n- Readers never block writers; writers never block readers.\n- Consistent reads throughout a transaction's duration (snapshot isolation).\n- No shared read locks needed.\n\n**Costs**:\n- Storage overhead from keeping multiple row versions.\n- Need for vacuum (PostgreSQL) or purge (MySQL) to clean up old versions.",
+      "images": []
+    },
+    {
+      "id": 109,
+      "question": "Phantom reads?",
+      "answer": "A phantom read occurs when a transaction re-executes a query and finds new rows that weren't there on the first execution, because another transaction committed an INSERT in between.\n\n**Example**:\n- Transaction A: `SELECT COUNT(*) FROM orders WHERE user_id = 5` → returns 3.\n- Transaction B: INSERTs a new order for user_id 5 and commits.\n- Transaction A: Re-runs the same query → returns 4. The new row is a \"phantom.\"\n\n**Isolation levels**:\n- **Read Committed, Repeatable Read**: Phantoms can occur (in most implementations).\n- **Serializable**: Phantoms are prevented. PostgreSQL uses Serializable Snapshot Isolation (SSI) with predicate locks to detect and block phantoms.\n\nFor booking systems: phantom reads can cause overselling — two transactions both read 0 conflicting bookings, both insert, resulting in a double booking. Serializable isolation or explicit locking prevents this.",
+      "images": []
+    },
+    {
+      "id": 110,
+      "question": "Serializable isolation performance tradeoff?",
+      "answer": "Serializable isolation guarantees transactions execute as if they ran one at a time (serially), even if they actually ran concurrently. This is the strongest isolation level.\n\n**Performance cost**:\n- **Traditional serializable (2PL)**: Uses strict two-phase locking. High lock contention; long lock hold times; deadlocks more frequent; significantly reduced concurrency.\n- **Serializable Snapshot Isolation (SSI in PostgreSQL)**: Optimistic — detects conflicts and aborts one transaction rather than pre-acquiring locks. Lower contention but adds CPU overhead and requires transaction retry logic.\n\n**Guideline**: Use serializable isolation for critical financial operations or complex invariants (booking, inventory). Use lower isolation levels (Read Committed — PostgreSQL default) for most read-heavy and less critical operations. The performance difference can be 3–10× under high contention.",
+      "images": []
+    },
+    {
+      "id": 111,
+      "question": "How do transactions impact scalability?",
+      "answer": "- **Lock contention**: Long transactions hold locks longer, blocking concurrent transactions. More concurrent transactions = more lock waits = lower throughput.\n- **Connection exhaustion**: Each transaction typically holds a database connection. Long transactions = fewer connections available for other operations.\n- **Replication lag**: Large transactions hold the write-ahead log open until commit, potentially delaying replication.\n- **Vacuum inefficiency** (PostgreSQL): Long-running transactions prevent VACUUM from cleaning dead tuples, causing table/index bloat.\n- **XID wraparound risk** (PostgreSQL): Very long-running transactions consume transaction IDs.\n\n**Best practices**: Keep transactions as short as possible. Don't do network calls inside a transaction. Don't hold transactions open waiting for user input. Use READ COMMITTED when REPEATABLE READ isn't needed.",
+      "images": []
+    },
+    {
+      "id": 112,
+      "question": "Long-running transaction problems?",
+      "answer": "- **Held locks block writes**: If a transaction holds a lock on a frequently-written row for minutes, all other writers queue behind it.\n- **Table bloat**: Dead tuples can't be reclaimed by VACUUM while any transaction that predates them is open.\n- **Replication slot lag**: If a logical replication slot is associated with a long-running transaction, WAL files accumulate and can fill up disk.\n- **Potential for stale reads**: A transaction that started an hour ago sees a snapshot from an hour ago, which may confuse application logic.\n- **Connection holding**: A sleeping transaction holds a database connection that could serve other requests.\n\n**Detection**: `SELECT pid, now() - xact_start AS duration, state, query FROM pg_stat_activity WHERE xact_start IS NOT NULL ORDER BY duration DESC;`\n\n**Mitigation**: Set `statement_timeout` and `idle_in_transaction_session_timeout` (PostgreSQL) to automatically terminate stuck transactions.",
+      "images": []
+    },
+    {
+      "id": 113,
+      "question": "How would you prevent double booking?",
+      "answer": "Multiple strategies depending on the scale and requirements:\n\n**1. Pessimistic locking (simplest)**:\n```sql\nBEGIN;\nSELECT id FROM seats WHERE id = ? AND status = 'AVAILABLE' FOR UPDATE;\n-- If row returned:\nUPDATE seats SET status = 'BOOKED', user_id = ? WHERE id = ?;\nCOMMIT;\n```\nThe `FOR UPDATE` lock prevents concurrent bookings of the same seat.\n\n**2. Optimistic locking**:\n```sql\nUPDATE seats SET status = 'BOOKED', user_id = ?, version = version + 1 \nWHERE id = ? AND status = 'AVAILABLE' AND version = ?;\n-- Check rows affected = 1; if 0, seat was taken\n```\n\n**3. Database unique constraint**:\n```sql\nCREATE UNIQUE INDEX idx_unique_booking ON bookings(seat_id, date) \nWHERE status != 'CANCELLED';\n```\nThe DB enforces uniqueness; concurrent inserts for the same seat/date fail with a constraint violation.\n\n**4. Redis atomic reservation** (for very high concurrency):\n```\nSETNX seat:123:date:20240615 user_456  (set if not exists)\n```\nReturns 1 (success) or 0 (already taken). Then persist to DB.",
+      "images": []
+    },
+    {
+      "id": 114,
+      "question": "Data Lifecycle & Evolution",
+      "answer": "### 121. How do you safely evolve schemas?\n\nSchema evolution is one of the highest-risk database operations. Safe evolution principles:\n\n1. **Never rename or drop columns directly** — old application code may still reference them.\n2. **Prefer additive changes**: Adding new columns (with defaults or nullable) is safe because old code ignores them.\n3. **Use the expand-contract pattern** (see Q124) for breaking changes.\n4. **Deploy schema changes before code changes**: The new column exists but old code doesn't use it yet — safe.\n5. **Deploy code changes after**: New code uses the new column — which now exists.\n6. **Clean up old columns last**: After all instances are running new code, drop the old column.\n7. **Test with production-like data**: Migration performance on small dev data doesn't predict behavior on 1B-row tables.",
+      "images": []
+    },
+    {
+      "id": 115,
+      "question": "Backward compatibility vs forward compatibility?",
+      "answer": "**Backward compatibility**: New code can read data written by old code. Old records (with old schema) are readable by new code.\n- Achieved by: Making new fields optional/nullable with defaults. Not removing fields old code may have written.\n\n**Forward compatibility**: Old code can read data written by new code. Records written by new code (with new fields) are safely handled by old code.\n- Achieved by: Old code ignores unknown fields (rather than erroring). New required fields have defaults.\n\n**Why both matter**: During a deployment, different instances run different code versions simultaneously (rolling deployment). During this window, both old and new code will read/write data. Both forward and backward compatibility ensure the window is safe.\n\n**Protobuf, Avro, JSON Schema**: Support backward/forward compatible evolution through field tagging, optional fields, and schema registries.",
+      "images": []
+    },
+    {
+      "id": 116,
+      "question": "Blue-green DB migrations?",
+      "answer": "A **blue-green database migration** runs two versions of the schema simultaneously — blue (current) and green (new) — while deploying the application.\n\n**Process**:\n1. Add the new \"green\" column/table alongside the old \"blue\" one.\n2. Write to both (dual-write in the application layer).\n3. Backfill the green column with data from blue.\n4. Verify green is consistent with blue.\n5. Switch reads to green.\n6. Stop writing to blue.\n7. Remove blue.\n\n**Benefits**: Zero-downtime migration; instant rollback by switching back to blue if issues arise.\n\n**Example**: Renaming column `user_name` → `full_name`:\n1. Add `full_name` column.\n2. Write to both `user_name` and `full_name`.\n3. Backfill `full_name` from `user_name`.\n4. Switch reads to `full_name`.\n5. Stop writing to `user_name`.\n6. Drop `user_name`.",
+      "images": []
+    },
+    {
+      "id": 117,
+      "question": "Expand-contract migration pattern?",
+      "answer": "A structured approach to zero-downtime schema changes in three phases:\n\n**Phase 1 — Expand**: Add new structures without removing old ones. Old and new code both work. New code writes to new structure; old code ignores it.\n\n**Phase 2 — Migrate**: Backfill data into new structure. Update all application instances to use new structure. Both old (during blue-green window) and new code work throughout.\n\n**Phase 3 — Contract**: Remove old structure once all code is updated and no instances reference the old structure.\n\n**Example** (splitting `full_name` into `first_name` + `last_name`):\n- Expand: Add `first_name` and `last_name` columns.\n- Migrate: Backfill from `full_name`; new code writes to both old and new.\n- Contract: Drop `full_name` once no code references it.",
+      "images": []
+    },
+    {
+      "id": 118,
+      "question": "How do you migrate terabytes of data?",
+      "answer": "**Key principles**: Never do it in one transaction; never take downtime for the migration itself.\n\n**Strategy**:\n1. **Batch migration**: Process rows in small batches (1,000–10,000 rows). Between batches, sleep briefly to reduce I/O impact on production.\n```sql\n-- Migrate in batches\nUPDATE table SET new_col = transform(old_col) \nWHERE id BETWEEN ? AND ? AND new_col IS NULL;\n```\n2. **Background job**: Run the migration as a continuous background process, not a one-time script. It can be paused, resumed, and rate-limited.\n3. **Track progress**: Record the last processed ID. Resumable from any point.\n4. **Dual-write**: While migrating, new writes populate both old and new columns to keep pace.\n5. **Verify consistency**: Compare row counts and sample checksums between old and new structures before cutting over.\n6. **Cutover**: Once migration is complete and verified, atomic switch (see blue-green pattern).\n\n**Tools**: `pt-online-schema-change` (MySQL), `pg_repack` or `pg_partman` (PostgreSQL).",
+      "images": []
+    },
+    {
+      "id": 119,
+      "question": "Online migration vs offline migration?",
+      "answer": "**Offline migration**: Take the database down, apply schema changes, bring it back up. Zero complexity, but requires downtime. Acceptable only for maintenance windows or non-critical systems.\n\n**Online migration**: Apply schema changes while the database serves traffic. Zero downtime. Much more complex.\n\nTechniques for online migrations:\n- `CREATE INDEX CONCURRENTLY` (PostgreSQL): Builds an index without locking the table.\n- `pt-online-schema-change` (Percona, MySQL): Creates a shadow table, copies data, swaps tables with minimal lock.\n- `gh-ost` (GitHub): Uses MySQL replication to perform online schema changes.\n- Expand-contract pattern: Phased additions and removals.\n\n**When each is appropriate**: Online for production systems with SLA requirements. Offline for development, staging, or systems tolerating maintenance windows.",
+      "images": []
+    },
+    {
+      "id": 120,
+      "question": "Feature flags during migrations?",
+      "answer": "Feature flags decouple code deployment from feature activation, enabling safe migrations:\n\n- **Deploy new code with feature disabled**: The new code path (using the new schema) is deployed but not activated. Old code path still runs.\n- **Activate gradually**: Enable the new code path for 1% of traffic, then 10%, then 100%. Monitor for errors.\n- **Instant rollback**: If issues arise, turn off the flag — no redeployment needed.\n- **Control dual-write window**: Flag enables writing to both old and new schema; once migration is verified, flag switches to new-only.\n\n**Example**: `use_new_user_profile_table` flag. When `false`, reads/writes go to old `users` table. When `true`, go to new `users_v2` table. Gradually ramp while monitoring error rates and latency.\n\n**Tools**: LaunchDarkly, Split.io, Unleash, homegrown Redis-based flag systems.",
+      "images": []
+    },
+    {
+      "id": 121,
+      "question": "How do you rollback DB schema changes?",
+      "answer": "Schema rollback is one of the hardest problems in database operations. Strategies:\n\n1. **Additive changes are easy to rollback**: Drop the new column/index/table. No data transformation needed.\n\n2. **Non-additive changes (renames, type changes, drops) require pre-planning**:\n   - Keep the old column until you're certain rollback won't be needed.\n   - In the expand-contract pattern, rollback means staying in \"expand\" phase longer.\n\n3. **Blue-green migration**: Keep the old structure until the new one is verified. Rollback = stop using new, continue using old.\n\n4. **Point-in-time recovery (PITR)**: Restore the database to a pre-migration snapshot. Works but restores all data to that point — loses all writes since the migration. Suitable only for catastrophic failures.\n\n5. **Logical rollback (event sourcing)**: If the system is event-sourced, project a new read model from events — no physical schema rollback needed.\n\n**Best practice**: Never deploy a migration that can't be reversed during the first 24 hours. Keep old columns alive until confidence is high.",
+      "images": []
+    },
+    {
+      "id": 122,
+      "question": "Versioned APIs vs versioned events?",
+      "answer": "**Versioned APIs** (`/api/v1/users`, `/api/v2/users`):\n- Breaking changes are isolated to new versions.\n- Multiple versions run simultaneously; clients migrate at their own pace.\n- Old versions are eventually deprecated and sunset.\n- Cons: Maintenance burden of running multiple versions; code duplication.\n\n**Versioned events** (schema evolution for event-driven systems):\n- Events carry a version field: `{\"version\": 2, \"type\": \"OrderPlaced\", \"data\": {...}}`.\n- Consumers handle multiple event versions or use a schema registry (Confluent Schema Registry with Avro/Protobuf).\n- Upcasters transform old event versions to new format before processing.\n- Cons: Consumers must handle all versions ever published; can accumulate over time.\n\n**Key difference**: API versioning is request-driven (client chooses version); event versioning is historical (events in logs can't be changed, so all consumers must handle past versions).",
+      "images": []
+    },
+    {
+      "id": 123,
+      "question": "Data archival strategy?",
+      "answer": "Old data that's rarely accessed but must be retained (compliance, auditing, historical analysis):\n\n**Tiered storage**:\n1. **Hot tier** (primary DB): Last 90 days. Full OLTP performance.\n2. **Warm tier** (cheaper DB/compressed): 91 days – 2 years. Slower, cheaper.\n3. **Cold tier** (object storage: S3 Glacier, Archival): 2+ years. Very cheap, minutes-to-hours retrieval.\n\n**Implementation**:\n- **Partition-based archival**: If data is range-partitioned by date, archiving is as simple as detaching an old partition and moving it.\n- **Batch move**: Background job moves rows older than threshold to archive table/database.\n- **Event replay archive**: Store raw events forever in S3 (cheap), rebuild any read model from them.\n\n**Compliance considerations**: GDPR requires the ability to delete user data even in archives — plan for this upfront.",
+      "images": []
+    },
+    {
+      "id": 124,
+      "question": "Stateless vs stateful services?",
+      "answer": "**Stateless**: Each request is self-contained. The service doesn't remember previous requests. Any instance can handle any request. Trivially horizontally scalable — add instances behind a load balancer.\n\n**Stateful**: The service retains state between requests (session data, connection state, cached data). Harder to scale — a request must go to the instance holding the relevant state, or state must be externalized to a shared store.\n\n**Best practice**: Push state to external stores (Redis for sessions, databases for persistent state). Keep application services stateless. This makes scaling, failover, and deployment much simpler.",
+      "images": []
+    },
+    {
+      "id": 125,
+      "question": "Bottlenecks in high-scale systems?",
+      "answer": "Common bottlenecks (in order of how frequently encountered):\n\n1. **Database write throughput**: A single primary DB has finite write capacity. Usually the first bottleneck.\n2. **Database connection limits**: Each DB connection consumes memory; connection pooling (PgBouncer) is essential.\n3. **Network bandwidth**: Cross-service calls, large response payloads, missing compression.\n4. **CPU saturation**: JSON serialization/deserialization, encryption, regex processing.\n5. **Memory**: In-memory state, large object allocation, cache size.\n6. **Lock contention**: Hot rows, long transactions.\n7. **External service rate limits**: Third-party API limits, payment processor limits.\n8. **Queue consumer lag**: Consumers can't keep up with producers.\n\n**Discovery method**: Load test, profile, measure, find the bottleneck, fix it, repeat.",
+      "images": []
+    },
+    {
+      "id": 126,
+      "question": "How do you identify scaling bottlenecks?",
+      "answer": "**Performance profiling**:\n- Application-level: APM tools (Datadog, New Relic, Jaeger) show latency distributions and slow traces.\n- Database: Slow query logs, `pg_stat_statements`, `EXPLAIN ANALYZE`.\n- Infrastructure: CPU, memory, disk I/O, network throughput metrics in CloudWatch/Grafana.\n\n**Load testing**: Tools like k6, Locust, or JMeter to generate realistic load and find where the system degrades.\n\n**Little's Law**: `L = λ × W`. If response time W increases, throughput L/W decreases. Measure W at each tier to find the slowest.\n\n**Flame graphs**: CPU profiling to identify hot code paths.\n\n**Queue depth monitoring**: Rising queue depth indicates consumers are the bottleneck.",
+      "images": []
+    },
+    {
+      "id": 127,
+      "question": "CPU-bound vs IO-bound systems?",
+      "answer": "**CPU-bound**: Processing time is limited by CPU speed. Characteristic of: encryption/decryption, complex computations, video encoding, ML inference, heavy JSON parsing.\n- **Scaling strategy**: Add CPU cores (vertical) or parallelize work across more machines (horizontal). Multi-threading helps up to the number of physical cores.\n\n**IO-bound**: Processing time is dominated by waiting for I/O (disk, network, database). Characteristic of: web servers, CRUD APIs, services with many downstream calls.\n- **Scaling strategy**: Async I/O (non-blocking), more connections/threads to overlap waits, caching to reduce I/O, faster storage (SSD vs HDD).\n\n**Identification**: CPU utilization stays low but throughput is also low → IO-bound. CPU at 100% → CPU-bound. Use `top`, `htop`, or profiling tools.",
+      "images": []
+    },
+    {
+      "id": 128,
+      "question": "How would you scale WebSockets?",
+      "answer": "WebSockets maintain long-lived stateful connections — a single client is connected to a specific server instance. This breaks horizontal scaling assumptions.\n\n**Challenge**: Client A is connected to Server 1. A message for Client A arrives at Server 2. How does Server 2 reach Client A?\n\n**Solution: Pub/Sub with a shared message broker**:\n- All server instances subscribe to a channel per client (e.g., Redis Pub/Sub channel `ws:user:123`).\n- When a message for user 123 arrives at any server, it publishes to `ws:user:123`.\n- The server instance holding that WebSocket connection delivers it to the client.\n\n**Sticky sessions**: Alternatively, use load balancer session affinity (sticky sessions) to route a client's requests to the same server instance. Simpler but complicates rolling deployments and uneven load distribution.\n\n**Dedicated WebSocket tier**: Separate the stateful WebSocket servers from the stateless API servers. Scale them independently.\n\n**Scale-out limit**: At very high connection counts (millions), use purpose-built services (Ably, Pusher, socket.io with Redis adapter) or cluster-aware frameworks.",
+      "images": []
+    },
+    {
+      "id": 129,
+      "question": "Scaling reads vs scaling writes?",
+      "answer": "**Scaling reads** is easier:\n- Add read replicas; distribute read traffic.\n- Add caching layers (Redis, CDN); serve cached data.\n- Read replicas are cheap and can scale to handle 10× or 100× reads.\n\n**Scaling writes** is harder:\n- All writes go to the primary (for consistency).\n- Limited by primary's write throughput (typically 10K–100K writes/sec for well-tuned systems).\n- Strategies: Write batching (buffer and batch-insert), queue-based write absorption, sharding (distribute writes across multiple primaries), CQRS (separate write and read models).\n\n**Asymmetry**: Most web applications read far more than they write. A 90/10 read/write split means read scaling buys 10× the benefit per unit of work compared to write scaling. Start with read scaling.",
+      "images": []
+    },
+    {
+      "id": 130,
+      "question": "Cache-aside vs write-through cache?",
+      "answer": "**Cache-aside (lazy loading)**:\n- On read: check cache. If hit, return. If miss, fetch from DB, store in cache, return.\n- On write: update DB directly, invalidate (or update) cache entry.\n- **Pros**: Cache only contains frequently-accessed data (no cold data wasting cache space). Simple to implement.\n- **Cons**: Cache miss causes latency (DB fetch + cache write). Risk of stale data if invalidation fails.\n\n**Write-through**:\n- All writes go through the cache. Cache and DB are always in sync.\n- On write: update cache, then write to DB.\n- **Pros**: Cache is always fresh; no stale data problem. Read-heavy workloads always hit cache.\n- **Cons**: Write latency includes cache write. Cache contains all written data, including rarely-read items.\n\n**Rule of thumb**: Cache-aside for read-heavy workloads with occasional writes. Write-through for workloads requiring always-fresh cache (session data, configuration).",
+      "images": []
+    },
+    {
+      "id": 131,
+      "question": "CDN vs backend caching?",
+      "answer": "**CDN (Content Delivery Network)**:\n- Edge caching of static assets (JS, CSS, images) and cacheable HTTP responses.\n- Geographically distributed — serves from a PoP close to the user, reducing latency.\n- Best for: static assets, public API responses, images, video.\n- Controlled via HTTP cache headers: `Cache-Control`, `Vary`, `ETag`.\n\n**Backend caching (Redis, Memcached)**:\n- In-memory caching of computed results, DB queries, session data.\n- Shared across all application instances.\n- Best for: expensive DB queries, session state, computed aggregates, frequently-read objects.\n- Controlled by application code.\n\n**Complementary, not competitive**: Use CDN for the outer caching layer (serving static and public content without reaching your servers) and backend caching for dynamic, personalized, or authenticated content.",
+      "images": []
+    },
+    {
+      "id": 132,
+      "question": "Redis vs DynamoDB caching?",
+      "answer": "| Dimension | Redis | DynamoDB |\n|---|---|---|\n| Latency | Sub-millisecond (~0.1ms) | Single-digit ms (~1–5ms) |\n| Data model | Rich (strings, hashes, sets, sorted sets, streams) | Key-value + nested attributes |\n| Persistence | Optional (RDB/AOF) | Always durable |\n| Durability | Not primary store (data loss risk without persistence) | Fully durable, replicated |\n| Cost | Per instance size (memory) | Per request + storage |\n| Max item size | 512MB (strings) | 400KB |\n| TTL | Native support | Native support |\n| Operations | Atomic operations (INCR, LPUSH, ZADD...) | ConditionalWrite |\n\n**Use Redis for**: Session caching, rate limiting (sliding windows), leaderboards (sorted sets), pub/sub, real-time counters.\n\n**Use DynamoDB for**: When you need durability + performance without managing Redis clusters, or when the data is too large/important to risk losing on Redis restart.",
+      "images": []
+    },
+    {
+      "id": 133,
+      "question": "Reliability & Resiliency",
+      "answer": "### 141. What is graceful degradation?\n\nGraceful degradation means the system continues to function with reduced capabilities when components fail, rather than failing completely.\n\n**Examples**:\n- Search service down → show popular/trending results instead of personalized recommendations.\n- Payment provider timeout → show \"try again shortly\" instead of crashing the checkout flow.\n- Database replicas lagging → serve cached content for non-critical reads rather than returning errors.\n- ML recommendation service down → fall back to rule-based recommendations.\n\n**Implementation**:\n- Define critical vs non-critical features.\n- For non-critical features, implement fallbacks.\n- Use circuit breakers with fallback behavior.\n- Return partial responses rather than complete errors when some dependencies fail.\n\nThe goal: users experience reduced quality, not complete outage.",
+      "images": []
+    },
+    {
+      "id": 134,
+      "question": "Explain retry storms.",
+      "answer": "See Q68 — expanded:\n\nA retry storm is a distributed feedback loop where failures trigger widespread retries that amplify load on already-struggling services.\n\n**Anatomy**:\n1. Service B starts responding slowly (DB latency spike).\n2. All clients to B time out and retry.\n3. Retry doubles the request volume hitting B.\n4. B gets more overwhelmed, slower still.\n5. More timeouts, more retries — the system spirals.\n\n**Why it's dangerous**: An otherwise survivable partial slowdown becomes a complete outage because the retry behavior multiplies the problem.\n\n**Prevention**:\n- Exponential backoff with full jitter (not synchronized retries).\n- Circuit breakers (stop retrying when failure rate is high).\n- Client-side rate limiting on retries.\n- Server-side load shedding (accept reduced load, reject excess).",
+      "images": []
+    },
+    {
+      "id": 135,
+      "question": "What is chaos engineering?",
+      "answer": "Chaos engineering is the practice of **intentionally introducing failures** in production (or production-like) environments to discover system weaknesses before they cause unplanned outages.\n\n**Origin**: Netflix's Chaos Monkey randomly terminates EC2 instances in production — forcing engineers to build systems resilient enough to survive instance loss.\n\n**Evolved practices**:\n- Kill random instances (original chaos monkey).\n- Inject network latency or packet loss between services.\n- Simulate regional outages.\n- Corrupt messages in queues.\n- Fill disks.\n- Kill database replicas.\n\n**Process**:\n1. Define \"steady state\" (normal behavior metrics).\n2. Hypothesize that the system will maintain steady state under failure X.\n3. Introduce failure X.\n4. Compare results to hypothesis.\n5. Fix vulnerabilities discovered.\n\n**Tools**: Gremlin, Chaos Mesh (Kubernetes), AWS Fault Injection Simulator (FIS), Netflix's Chaos Monkey.",
+      "images": []
+    },
+    {
+      "id": 136,
+      "question": "How do you design highly available systems?",
+      "answer": "High availability (HA) requires eliminating single points of failure and planning for component failures:\n\n1. **Redundancy at every tier**: Multiple app servers, multiple DB nodes (primary + replicas), multiple AZs/regions.\n2. **Automated failover**: No human action required to recover from component failure. Automated health checks, leader election, DNS failover.\n3. **Load balancing**: Distribute traffic across multiple instances; health-check-based removal of failed instances.\n4. **Stateless services**: Allows any instance to handle any request; failed instances are replaced seamlessly.\n5. **Circuit breakers and fallbacks**: Prevent cascading failures when dependencies degrade.\n6. **Regular failure drills**: Chaos engineering ensures the HA mechanisms actually work.\n7. **Multi-AZ deployment**: Primary and replicas in different availability zones. Single-AZ failures don't cause outages.\n8. **Health checks and self-healing**: Auto-scaling groups replace failed instances automatically.\n\nTarget: 99.99% availability = 52 minutes downtime/year.",
+      "images": []
+    },
+    {
+      "id": 137,
+      "question": "Single point of failure examples?",
+      "answer": "A single point of failure (SPOF) is a component whose failure causes the entire system to fail:\n\n- **Single database primary** with no replica or automated failover.\n- **Single load balancer** with no redundant pair.\n- **Single region deployment** — a cloud region outage takes down the whole system.\n- **Shared configuration service** (etcd, Consul) with no redundancy.\n- **Single authentication service** — if it's down, no user can log in.\n- **Shared external DNS** with a single provider and no failover.\n- **Single NAT gateway** in a VPC (all outbound traffic routes through it).\n- **Hard-coded external service dependency** with no timeout or fallback.\n\n**Discovery**: Draw a system diagram and trace: \"what happens if X fails?\" If the answer is \"everything breaks,\" X is a SPOF.",
+      "images": []
+    },
+    {
+      "id": 138,
+      "question": "Active-active vs active-passive?",
+      "answer": "**Active-passive (hot standby)**:\n- One primary handles all traffic; one (or more) standbys are ready to take over.\n- Standby is always synchronized but idle (or handling only reads).\n- On primary failure: failover to standby (seconds to minutes).\n- Simple, less complex, but wastes the standby's capacity.\n\n**Active-active**:\n- Multiple nodes all handle traffic simultaneously.\n- Higher resource utilization; lower latency (route to nearest node).\n- More complex: writes may hit different nodes, requiring conflict resolution or coordination.\n- On node failure: remaining nodes absorb the failed node's traffic.\n\n**Choosing**:\n- Active-passive: simpler, for systems where conflict resolution is too complex (financial systems with strong consistency requirements).\n- Active-active: for high-availability, latency-sensitive, geographically distributed systems where the complexity of conflict resolution is acceptable.",
+      "images": []
+    },
+    {
+      "id": 139,
+      "question": "Multi-region deployment challenges?",
+      "answer": "- **Data replication latency**: Cross-region replication adds 50–200ms of latency. Strong consistency across regions is impractical for most workloads.\n- **Data residency**: GDPR, CCPA, and local regulations may require data to remain in specific regions. User data from EU must stay in EU.\n- **Split-brain risk**: Active-active writes to multiple regions risk conflicting writes being applied independently.\n- **Failover complexity**: Routing DNS traffic, promoting a replica to primary, and draining existing connections must all happen automatically.\n- **Cost**: Cross-region data transfer is expensive in most cloud providers (~$0.02/GB).\n- **Consistency model choice**: Must explicitly choose CP (reject writes during partition → lower availability) or AP (accept potential inconsistency).\n- **Schema migration complexity**: Migrations must be applied to all regions, often requiring careful ordering to avoid regional inconsistency.",
+      "images": []
+    },
+    {
+      "id": 140,
+      "question": "Disaster recovery strategy?",
+      "answer": "A DR strategy defines how to recover from a catastrophic failure (regional outage, data corruption, ransomware):\n\n**Tiers** (by cost and recovery time):\n\n1. **Backup & Restore**: Periodic DB backups to S3/another region. RTO: hours. RPO: hours. Lowest cost.\n2. **Pilot Light**: Core infrastructure is always running in DR region (DB replica, minimal compute). RTO: 10–30 minutes. RPO: minutes.\n3. **Warm Standby**: A scaled-down but fully functional copy runs in DR region. RTO: minutes. RPO: seconds.\n4. **Multi-Site Active-Active**: Full capacity in multiple regions simultaneously. RTO: near-zero. RPO: near-zero. Highest cost.\n\n**Key activities**: Regular DR drills (test the plan, not just the theory), runbooks (step-by-step recovery procedures), automated failover where possible.",
+      "images": []
+    },
+    {
+      "id": 141,
+      "question": "RPO vs RTO?",
+      "answer": "**RPO (Recovery Point Objective)**: How much data can you afford to lose? The maximum acceptable age of data at recovery.\n- RPO = 0: No data loss (synchronous replication required).\n- RPO = 1 hour: Can lose up to 1 hour of data (hourly backups are sufficient).\n\n**RTO (Recovery Time Objective)**: How long can the system be down? The maximum acceptable time from failure to recovery.\n- RTO = 5 minutes: Must be back online within 5 minutes.\n- RTO = 4 hours: 4-hour outage is acceptable.\n\n**Relationship to cost**: Lower RPO/RTO = higher cost. Achieving RPO = 0 requires synchronous replication; RTO = 0 requires active-active deployment. Not every system needs this.\n\n**Setting targets**: Define per service, not globally. Your billing service may need RPO = 0 / RTO = 5 minutes. Your analytics dashboard may be fine with RPO = 24 hours / RTO = 4 hours.",
+      "images": []
+    },
+    {
+      "id": 142,
+      "question": "How would you handle regional outage?",
+      "answer": "**Preparation**:\n1. Multi-region deployment with automated failover.\n2. Read replicas in DR region already synchronized.\n3. DNS failover configured with low TTL (30–60 seconds).\n4. Runbooks documented and tested.\n\n**During outage**:\n1. Monitoring alerts fire: health checks failing for affected region.\n2. Automated failover (if configured): DNS updates to route to DR region; standby DB promoted.\n3. If manual: Execute runbook. Update DNS. Promote DR DB.\n4. Communicate via status page (hosted in a third region or CDN, not affected by the outage).\n\n**After outage**:\n1. Assess data loss (compare RPO to actual gap).\n2. Perform any reconciliation of data written during the failover window.\n3. Plan failback or operate from DR region long-term.\n4. Post-mortem: root cause analysis, what failed in the DR plan, improvements.",
+      "images": []
+    },
+    {
+      "id": 143,
+      "question": "Why are too many shards expensive?",
+      "answer": "Each Elasticsearch/OpenSearch shard is an independent Lucene index. Costs of too many shards:\n\n- **Memory overhead**: Each shard consumes ~10MB of heap regardless of data size. 10,000 shards = 100GB of heap just for overhead.\n- **Cluster state overhead**: Every shard's metadata is stored in cluster state, which all nodes must hold in memory. Large shard counts bloat cluster state.\n- **Search overhead**: A search query fans out to every shard. 1,000 shards = 1,000 concurrent Lucene searches per query. High CPU and coordination overhead.\n- **Indexing overhead**: Each shard has an independent write path (translog, refresh, merge). More shards = more parallel write overhead.\n\n**Guideline**: Target shard size of 10–50GB. Keep total shard count below ~1,000 per cluster for manageable overhead.",
+      "images": []
+    },
+    {
+      "id": 144,
+      "question": "DynamoDB cost optimization strategies?",
+      "answer": "DynamoDB charges for RCU (Read Capacity Units), WCU (Write Capacity Units), and storage:\n\n- **On-demand vs provisioned**: On-demand is convenient but 6–7× more expensive at steady traffic. For predictable workloads, use provisioned capacity.\n- **Auto-scaling**: Set min/max provisioned capacity with auto-scaling. Handles traffic variation without over-provisioning.\n- **Reserved capacity**: Purchase 1- or 3-year reserved capacity for 40–75% discount on predictable baseline load.\n- **Optimize item sizes**: DynamoDB rounds up to the nearest 4KB for reads. Keep items small; avoid storing large blobs. Compress large attributes (Base64-encoded gzip).\n- **Projection in GSIs**: Only project the attributes you query in each GSI. Unnecessary attribute projection wastes WCU on every write and storage.\n- **Sparse indexes**: Use sparse GSIs (only items with the indexed attribute get an entry). Reduces GSI storage and write cost.\n- **DAX (DynamoDB Accelerator)**: For read-heavy workloads, DAX caches reads in microseconds, dramatically reducing RCU consumption.\n- **Batch operations**: Use `BatchWrite` and `BatchGet` to reduce per-request overhead.",
+      "images": []
+    },
+    {
+      "id": 145,
+      "question": "Read-heavy vs write-heavy optimization?",
+      "answer": "**Read-heavy**:\n- Aggressive caching (Redis, CDN, application-level).\n- Read replicas to distribute load.\n- Denormalization: pre-compute and store query results to avoid expensive joins.\n- Materialized views.\n- Index everything that's queried.\n- CDN for static and semi-static content.\n\n**Write-heavy**:\n- Write buffering: batch multiple writes and apply in one operation.\n- Queue-based write absorption: decouple writes from processing.\n- Minimize indexes (each index adds write cost).\n- LSM-tree based storage (Cassandra, RocksDB) optimized for writes.\n- Write sharding: distribute writes across multiple primaries.\n- Async writes for non-critical data (fire-and-forget to queue, process later).",
+      "images": []
+    },
+    {
+      "id": 146,
+      "question": "Cold storage strategies?",
+      "answer": "**Data categorization**:\n- **Hot** (frequently accessed, low latency required): Primary DB, Redis.\n- **Warm** (occasionally accessed): Secondary DB, compressed DB, warm-tier object storage (S3 Intelligent Tiering).\n- **Cold** (rarely accessed, access measured in hours): S3 Glacier, S3 Glacier Deep Archive.\n\n**Implementation**:\n- **Time-based tiering**: Automatically move data based on age (ILM in Elasticsearch, S3 lifecycle policies, custom DB archival jobs).\n- **Access-frequency tiering**: S3 Intelligent Tiering automatically moves objects between tiers based on actual access patterns.\n- **Data format**: On transition to cold storage, convert to a more efficient format (Parquet, ORC) for compressed columnar storage.\n\n**Cost example**: S3 Standard: ~$0.023/GB/month. S3 Glacier: ~$0.004/GB/month. Glacier Deep Archive: ~$0.00099/GB/month. A 10TB cold dataset costs ~$10/month instead of $230/month.",
+      "images": []
+    },
+    {
+      "id": 147,
+      "question": "How do caches reduce infra cost?",
+      "answer": "Caching reduces expensive operations:\n\n- **Fewer DB reads**: Each DB query costs compute (CPU, IOPS). Cache hits cost a fraction — Redis reads are 100× cheaper than DB reads.\n- **Reduced DB instances needed**: Fewer DB reads = DB can handle more traffic with the same hardware.\n- **CDN offload**: A CDN serving 80% of requests means 80% fewer requests reaching your backend — directly proportional cost reduction.\n- **DynamoDB RCU reduction**: DAX caches reduce DynamoDB RCU consumption, directly reducing cost.\n- **Compute savings**: Less time spent on DB queries means application instances process more requests per second, reducing the number of instances needed.\n\n**Cache cost vs savings**: A Redis cache (~$0.05/GB/hr) typically saves 10–100× its cost in reduced DB and compute spend for read-heavy workloads.",
+      "images": []
+    },
+    {
+      "id": 148,
+      "question": "Why can over-indexing increase cloud bills?",
+      "answer": "- **Storage cost**: Each index is stored on disk (or SSDs). 20 indexes on a table can mean 5–10× the storage cost of the raw data.\n- **Write IOPS**: Every write to a table updates all indexes. More indexes = more IOPS consumed per write = more I/O throughput purchased.\n- **RDS instance sizing**: High write IOPS from index maintenance requires larger (more expensive) instance types with more I/O capacity.\n- **Aurora storage billing**: Aurora charges for storage consumed. Indexes are included in storage billing.\n- **Elasticsearch/OpenSearch**: Over-indexed fields inflate shard size, increasing node count needed and therefore cost.\n- **DynamoDB GSIs**: Every GSI doubles write cost for the indexed attribute (WCU consumed for both the main table and the GSI).",
+      "images": []
+    },
+    {
+      "id": 149,
+      "question": "Compression tradeoffs?",
+      "answer": "**Storage compression** (zstd, gzip, snappy, lz4):\n\n| Algorithm | Ratio | CPU cost | Decompression speed | Use case |\n|---|---|---|---|---|\n| Snappy | 2–3× | Low | Very fast | General purpose, real-time |\n| LZ4 | 2–3× | Very low | Fastest | High-throughput, low latency |\n| Zstd | 3–5× | Medium | Fast | Storage efficiency |\n| gzip | 3–5× | High | Slower | Static content, cold data |\n| Brotli | 4–6× | Very high | Medium | HTTP assets |\n\n**Tradeoffs**:\n- Better compression ratio = more CPU at write time (and read time).\n- Lower CPU cost = lower compression ratio (more storage).\n- Compressing cached data saves memory but adds decompression latency on cache reads.\n- Compressing DB storage reduces I/O at the cost of CPU for each read/write.\n\n**When to compress**: Always compress cold data (high ratio, access is rare so decompression latency doesn't matter). Use lightweight compression (LZ4/Snappy) for hot data where decompression latency matters.",
+      "images": []
+    },
+    {
+      "id": 150,
+      "question": "Spot instances vs reserved instances?",
+      "answer": "**Spot instances** (AWS/GCP equivalent):\n- Spare cloud capacity at 60–90% discount.\n- Can be terminated with 2-minute notice when capacity is reclaimed.\n- Best for: fault-tolerant workloads (batch jobs, ML training, stateless web workers, CI/CD).\n- Not suitable for: databases, stateful services, jobs requiring guaranteed completion.\n\n**Reserved instances (RIs)**:\n- Commit to 1 or 3 years in exchange for 30–70% discount vs on-demand.\n- No interruption risk — capacity is guaranteed.\n- Best for: stable, predictable workloads (production databases, core application servers).\n\n**Savings Plans** (AWS): More flexible than RIs — commit to $/hr of compute usage rather than specific instance types. Applies across instance families and regions.\n\n**Strategy**: Reserved for production steady-state capacity; spot for batch/variable workloads; on-demand for spikes beyond reserved capacity.",
+      "images": []
+    },
+    {
+      "id": 151,
+      "question": "How do you estimate infra cost before launch?",
+      "answer": "**Step 1 — Capacity modeling**:\n- Estimate expected requests per second (RPS) at launch and at target scale.\n- Estimate data size: rows × average row size = storage needed.\n- Model read/write ratio.\n\n**Step 2 — Per-component sizing**:\n- **Compute**: RPS × average CPU time per request ÷ CPU core capacity = cores needed. Add 30–40% headroom.\n- **Database**: Write RPS × avg write size = I/O throughput. Peak connections = max concurrent users / connection pool size.\n- **Cache**: Working set size (hot data that fits in cache) determines Redis instance size.\n- **Network**: Estimate ingress/egress bandwidth. P99 payload size × RPS = throughput.\n\n**Step 3 — Cloud pricing calculators**:\n- AWS Pricing Calculator, GCP Pricing Calculator.\n- Build out the architecture with estimated sizes and get monthly estimates.\n\n**Step 4 — Load test validation**:\n- Run a load test at target scale (even at 10% scale and extrapolate).\n- Measure actual CPU, memory, DB connections, IOPS under load.\n- Adjust estimates based on actual profiling data.\n\n**Step 5 — Add headroom and error margin**:\n- Build in 2× headroom for auto-scaling lag.\n- Add 20–30% contingency for unknown unknowns.\n- Model steady-state vs peak (use reserved for steady-state, on-demand/spot for peak overhead).",
+      "images": []
+    }
+  ]
+}

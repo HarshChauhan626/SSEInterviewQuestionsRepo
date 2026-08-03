@@ -4,19 +4,34 @@
 
 @layer base {
   :root {
-    --bg: #0b0e14;
+    /* Astro design tokens */
+    --bg: #0a0c10;
     --bg-elev: #11151d;
     --bg-card: #141925;
-    --border: #222a38;
+    --surface: #111318;
+    --surface2: #181c23;
+    --surface3: #1e2330;
+    --border: rgba(255,255,255,0.08);
     --border-soft: #1a212e;
-    --text: #dde3ee;
+    --text: #e8edf5;
+    --text-2: #8b95a8;
+    --text-3: #4e5668;
     --text-dim: #8c96a8;
     --text-faint: #5c6577;
+    --accent: #6c8cff;
     --accent-gql: #e535ab;
     --accent-grpc: #3fa7ff;
     --accent-good: #33d6a6;
     --accent-warn: #ffb347;
     --accent-bad: #ff5d6c;
+    --correct: #22d3a6;
+    --wrong: #f87171;
+    --warn: #fbbf24;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --radius-lg: 18px;
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'Inter', system-ui, sans-serif;
   }
 
   * {
@@ -198,7 +213,7 @@
   }
 
   .card-grid {
-    @apply grid grid-cols-1 md:grid-cols-2 gap-4.5 my-5;
+    @apply grid grid-cols-1 md:grid-cols-2 gap-4 my-5;
   }
 
   .callout {

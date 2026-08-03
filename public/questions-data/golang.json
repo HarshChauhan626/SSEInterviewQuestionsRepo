@@ -1,0 +1,639 @@
+{
+  "topic": "Golang",
+  "description": "Go language fundamentals, goroutines, channels, interfaces, and idioms",
+  "icon": "🐹",
+  "accent": "#34d399",
+  "source": "golang.md",
+  "questions": [
+    {
+      "id": 1,
+      "question": "What are the advantages of Go?",
+      "answer": "- **Fast compilation** — entire programs compile in seconds\n- **Static typing with type inference** — catches bugs at compile time, less ceremony than Java\n- **Built-in concurrency** — goroutines and channels are first-class\n- **Garbage collected** — no manual memory management\n- **Single binary output** — no runtime dependencies, trivial deployment\n- **Standard library** is rich — HTTP server, JSON, crypto, testing all built-in\n- **Cross-compilation** — `GOOS=linux GOARCH=amd64 go build` from any machine\n- **Low memory footprint** — goroutines start at ~2KB stack (vs ~1MB for OS threads)\n- **Simplicity** — no inheritance, no generics overload, intentionally small language spec",
+      "images": []
+    },
+    {
+      "id": 2,
+      "question": "Difference between Go and Java/.NET?",
+      "answer": "| Aspect | Go | Java / .NET |\n|---|---|---|\n| Runtime | Compiles to native binary | JVM / CLR virtual machine |\n| Memory | GC, no JIT warmup | GC with JIT compilation |\n| Concurrency | Goroutines (M:N scheduling) | OS threads (1:1 or thread pools) |\n| OOP | Composition via embedding, interfaces | Full OOP with inheritance |\n| Startup time | Milliseconds | Seconds (JVM warmup) |\n| Binary | Single static binary | Requires installed runtime |\n| Verbosity | Very concise | More boilerplate |\n| Generics | Added in Go 1.18 (limited) | Mature generics |\n| Error handling | Explicit `error` return values | Exceptions (try/catch) |",
+      "images": []
+    },
+    {
+      "id": 3,
+      "question": "Why is Go fast?",
+      "answer": "- **Compiled to native machine code** — no interpreter or bytecode VM\n- **Efficient goroutine scheduler** — M:N threading avoids OS thread overhead\n- **Low GC pause times** — concurrent, tri-color mark-and-sweep GC\n- **Cache-friendly data structures** — structs laid out contiguously in memory\n- **No JIT warmup** — peak performance from the first request\n- **Inlining and escape analysis** — compiler aggressively optimizes allocations\n- **Minimal runtime** — small, focused runtime compared to JVM",
+      "images": []
+    },
+    {
+      "id": 4,
+      "question": "What is a Goroutine?",
+      "answer": "A goroutine is a **lightweight, cooperatively-scheduled thread of execution** managed by the Go runtime, not the OS.\n\n```go\ngo func() {\n    fmt.Println(\"I run concurrently\")\n}()\n```\n\nKey properties:\n- Initial stack of ~2KB (grows/shrinks dynamically, up to 1GB default)\n- Scheduled by Go's runtime scheduler (M:N model — many goroutines on few OS threads)\n- Cheap to create — you can have millions simultaneously\n- Communicate via channels (CSP model) rather than shared memory",
+      "images": []
+    },
+    {
+      "id": 5,
+      "question": "What is a Channel?",
+      "answer": "A channel is a **typed conduit** for sending and receiving values between goroutines. Channels provide safe communication and synchronization.\n\n```go\nch := make(chan int)       // unbuffered\nch := make(chan int, 10)   // buffered with capacity 10\n\nch <- 42      // send\nval := <-ch   // receive\n```\n\nChannels enforce the Go philosophy: *\"Do not communicate by sharing memory; instead, share memory by communicating.\"*",
+      "images": []
+    },
+    {
+      "id": 6,
+      "question": "Difference between buffered and unbuffered channels?",
+      "answer": "**Unbuffered channel** (`make(chan T)`):\n- Sender **blocks** until a receiver is ready\n- Receiver **blocks** until a sender sends\n- Provides synchronization — both goroutines meet at the channel\n- Use for: handoffs, synchronization points\n\n**Buffered channel** (`make(chan T, N)`):\n- Sender blocks only when the buffer is **full**\n- Receiver blocks only when the buffer is **empty**\n- Decouples producer and consumer timing\n- Use for: rate limiting, worker pools, avoiding goroutine leaks\n\n```go\n// Unbuffered — will deadlock without a goroutine receiving\nch := make(chan int)\ngo func() { ch <- 1 }()\nfmt.Println(<-ch)\n\n// Buffered — send doesn't block immediately\nch := make(chan int, 3)\nch <- 1; ch <- 2; ch <- 3  // all succeed without a receiver\n```",
+      "images": []
+    },
+    {
+      "id": 7,
+      "question": "What is `select`?",
+      "answer": "`select` lets a goroutine **wait on multiple channel operations**, executing the first one that's ready.\n\n```go\nselect {\ncase msg := <-ch1:\n    fmt.Println(\"from ch1:\", msg)\ncase msg := <-ch2:\n    fmt.Println(\"from ch2:\", msg)\ncase ch3 <- value:\n    fmt.Println(\"sent to ch3\")\ndefault:\n    fmt.Println(\"no channel ready\")\n}\n```\n\n- If multiple cases are ready simultaneously, Go picks one **at random** (uniform pseudo-random)\n- `default` makes it non-blocking\n- Common use: timeouts (`case <-time.After(1*time.Second)`), context cancellation",
+      "images": []
+    },
+    {
+      "id": 8,
+      "question": "What are Go interfaces?",
+      "answer": "An interface is a **set of method signatures**. Any type that implements all the methods satisfies the interface — implicitly, without declaring it.\n\n```go\ntype Animal interface {\n    Sound() string\n    Move()\n}\n\ntype Dog struct{}\nfunc (d Dog) Sound() string { return \"Woof\" }\nfunc (d Dog) Move()         { fmt.Println(\"runs\") }\n\n// Dog implicitly satisfies Animal\nvar a Animal = Dog{}\n```\n\nThis is **structural typing** (duck typing with compile-time checking). No `implements` keyword needed.",
+      "images": []
+    },
+    {
+      "id": 9,
+      "question": "Difference between struct and interface?",
+      "answer": "| Aspect | Struct | Interface |\n|---|---|---|\n| Nature | Concrete type — holds data and methods | Abstract type — defines behavior |\n| Memory | Holds actual values | Holds (type, pointer) pair |\n| Instantiation | `Dog{}` | Cannot instantiate directly |\n| Usage | Define data + implement methods | Define contracts / polymorphism |\n| Nil | A nil pointer to struct | A nil interface vs interface holding nil pointer (subtle!) |",
+      "images": []
+    },
+    {
+      "id": 10,
+      "question": "What is embedding in Go?",
+      "answer": "Embedding lets you **include one type inside another**, promoting its methods and fields to the outer type. It's Go's way of achieving code reuse without inheritance.\n\n```go\ntype Base struct {\n    ID int\n}\nfunc (b Base) Describe() string { return fmt.Sprintf(\"ID: %d\", b.ID) }\n\ntype User struct {\n    Base          // embedded — not named field\n    Name string\n}\n\nu := User{Base: Base{ID: 1}, Name: \"Alice\"}\nfmt.Println(u.Describe())  // promoted method\nfmt.Println(u.ID)          // promoted field\n```\n\nYou can also embed interfaces in structs (useful for mocking).",
+      "images": []
+    },
+    {
+      "id": 11,
+      "question": "What is composition over inheritance?",
+      "answer": "Go deliberately has **no inheritance**. Instead, you build complex types by composing simpler ones via embedding and interfaces.\n\n```go\n// Instead of: class Manager extends Employee { ... }\ntype Employee struct { Name string }\nfunc (e Employee) Work() { fmt.Println(e.Name, \"works\") }\n\ntype Manager struct {\n    Employee         // compose\n    Reports []Employee\n}\n// Manager gets Work() for free, can override it if needed\n```\n\nBenefits:\n- Avoids fragile base class problems\n- No diamond inheritance issues\n- Easier to test (inject interfaces, not concrete types)\n- Clearer dependencies",
+      "images": []
+    },
+    {
+      "id": 12,
+      "question": "What is zero value?",
+      "answer": "Every Go variable is initialized to its **zero value** if not explicitly assigned. There's no \"undefined\" or \"null\" surprise.\n\n| Type | Zero Value |\n|---|---|\n| `int`, `float64` | `0` |\n| `bool` | `false` |\n| `string` | `\"\"` (empty string) |\n| `pointer`, `slice`, `map`, `chan`, `func` | `nil` |\n| `struct` | each field set to its zero value |\n\n```go\nvar i int        // 0\nvar s string     // \"\"\nvar p *int       // nil\nvar sl []int     // nil (but len(sl)==0, cap(sl)==0)\n```\n\nZero values make Go code safer — you rarely need constructors for simple initialization.",
+      "images": []
+    },
+    {
+      "id": 13,
+      "question": "What are pointers in Go?",
+      "answer": "A pointer holds the **memory address** of a value. Use `&` to get an address, `*` to dereference.\n\n```go\nx := 42\np := &x      // p is *int, holds address of x\n*p = 100     // modifies x through the pointer\nfmt.Println(x) // 100\n```\n\nGo has pointers but **no pointer arithmetic** (unlike C). You cannot do `p++`.\n\nWhen to use pointers:\n- Mutate a value in a function\n- Avoid copying large structs\n- Share state between goroutines (with synchronization)\n- Optional/nullable values (nil pointer = absent)",
+      "images": []
+    },
+    {
+      "id": 14,
+      "question": "Arrays vs Slices?",
+      "answer": "**Array**: Fixed-size, value type — copying an array copies all elements.\n```go\nvar a [5]int          // [0 0 0 0 0]\nb := [3]string{\"a\",\"b\",\"c\"}\n```\n\n**Slice**: Dynamic, reference type — backed by an array, holds (pointer, length, capacity).\n```go\ns := []int{1, 2, 3}\ns = append(s, 4)      // may allocate new backing array\n```\n\nKey differences:\n\n| | Array | Slice |\n|---|---|---|\n| Size | Fixed at compile time | Dynamic |\n| Type | `[5]int` and `[6]int` are different types | `[]int` for any length |\n| Passing | Copied by value (full copy) | Passes header (pointer+len+cap) |\n| Common use | Rarely used directly | The standard collection type |",
+      "images": []
+    },
+    {
+      "id": 15,
+      "question": "How do slices work internally?",
+      "answer": "A slice is a **three-field struct** in the runtime:\n\n```go\ntype slice struct {\n    array unsafe.Pointer  // pointer to backing array\n    len   int             // number of elements\n    cap   int             // capacity of backing array from this pointer\n}\n```\n\n```go\ns := make([]int, 3, 5)\n// backing array: [0, 0, 0, _, _]\n// s.len = 3, s.cap = 5\n```\n\nWhen `append` exceeds capacity, Go allocates a **new, larger backing array** (typically doubles capacity up to 1024, then grows by ~1.25x) and copies data over. The original slice is unaffected.\n\n```go\na := []int{1, 2, 3}\nb := a[1:]         // shares same backing array!\nb[0] = 99\nfmt.Println(a)     // [1 99 3] — mutation visible through a\n```",
+      "images": []
+    },
+    {
+      "id": 16,
+      "question": "Difference between length and capacity?",
+      "answer": "- **`len(s)`** — number of elements currently in the slice\n- **`cap(s)`** — number of elements in the backing array from the slice's start pointer\n\n```go\ns := make([]int, 3, 10)\nfmt.Println(len(s)) // 3 — you can access s[0] through s[2]\nfmt.Println(cap(s)) // 10 — appending up to 7 more won't reallocate\n```\n\n`cap` matters for performance: pre-allocating with `make([]T, 0, n)` avoids repeated reallocations.",
+      "images": []
+    },
+    {
+      "id": 17,
+      "question": "What is a map internally?",
+      "answer": "Go maps are implemented as a **hash table with chaining buckets**. Internally:\n\n- Array of buckets, each holding up to 8 key-value pairs\n- Hash of key determines which bucket\n- On collision within a bucket, overflow buckets are chained\n- When load factor (~6.5 entries/bucket) is exceeded, the map **grows** (doubles bucket count) and rehashes incrementally\n\n```go\nm := make(map[string]int)\nm[\"a\"] = 1\nv, ok := m[\"b\"]  // ok is false if key absent — always use the two-value form\n```\n\nMap iteration order is **intentionally randomized** per run to prevent reliance on ordering.",
+      "images": []
+    },
+    {
+      "id": 18,
+      "question": "Are maps thread-safe?",
+      "answer": "**No.** Concurrent reads are safe, but concurrent read+write or write+write causes a **runtime panic** (\"concurrent map read and map write\").\n\nSolutions:\n```go\n// Option 1: sync.RWMutex\nvar mu sync.RWMutex\nmu.RLock(); v := m[k]; mu.RUnlock()\nmu.Lock(); m[k] = v; mu.Unlock()\n\n// Option 2: sync.Map (optimized for high read, low write)\nvar sm sync.Map\nsm.Store(\"key\", \"value\")\nv, ok := sm.Load(\"key\")\n```\n\nUse `sync.Map` when reads heavily dominate writes. Use a mutex-protected plain map when writes are frequent — it's often faster due to less indirection.",
+      "images": []
+    },
+    {
+      "id": 19,
+      "question": "What is a rune?",
+      "answer": "A `rune` is an alias for `int32` representing a **Unicode code point**.\n\n```go\nvar r rune = '日'      // 0x65E5 — a single Unicode character\ns := \"Hello, 世界\"\nfmt.Println(len(s))          // 13 — bytes, not characters!\nfmt.Println(len([]rune(s)))  // 9  — Unicode code points\n```\n\nGo source files are UTF-8. A `string` is a sequence of **bytes**, not characters. Iterating with `range` over a string yields runes (decoding UTF-8 automatically):\n\n```go\nfor i, r := range \"日本語\" {\n    fmt.Printf(\"%d: %c\\n\", i, r)  // byte index, rune\n}\n```",
+      "images": []
+    },
+    {
+      "id": 20,
+      "question": "Goroutine vs thread?",
+      "answer": "| Aspect | Goroutine | OS Thread |\n|---|---|---|\n| Stack size | Starts ~2KB, grows dynamically | Fixed ~1–8MB |\n| Creation cost | Microseconds | Milliseconds |\n| Switching | Cooperative + preemptive (Go scheduler) | OS context switch (expensive) |\n| Count | Millions feasible | Thousands max (limited by OS) |\n| Managed by | Go runtime | Operating system kernel |\n| Communication | Channels (preferred) | Shared memory + locks |",
+      "images": []
+    },
+    {
+      "id": 21,
+      "question": "How does the Go scheduler work?",
+      "answer": "Go uses an **M:N scheduler** — M goroutines multiplexed onto N OS threads.\n\nThe **GMP model**:\n- **G** — Goroutine (the unit of work)\n- **M** — Machine (OS thread)\n- **P** — Processor (logical CPU, holds a run queue of goroutines)\n\nEach P has a local run queue. M picks goroutines from its P's queue. When a goroutine blocks on a syscall, M detaches from P so another M can pick up P's goroutines — no CPU waste.\n\nThe scheduler is **work-stealing**: an idle P can steal goroutines from another P's queue to balance load.\n\nScheduling is cooperative (goroutine yields at function calls, channel ops, syscalls) plus preemptive (since Go 1.14, goroutines can be preempted at safe points even in tight loops).",
+      "images": []
+    },
+    {
+      "id": 22,
+      "question": "What is GOMAXPROCS?",
+      "answer": "`GOMAXPROCS` sets the **number of OS threads (P's) that can execute Go code simultaneously**. Defaults to the number of CPU cores.\n\n```go\nruntime.GOMAXPROCS(4)  // use 4 CPUs\nfmt.Println(runtime.GOMAXPROCS(0))  // query current value\n```\n\n- Setting to 1 effectively makes goroutines run sequentially (useful for debugging races)\n- Setting higher than CPU cores rarely helps — CPU-bound work is limited by hardware\n- For I/O-bound workloads, GOMAXPROCS matters less since goroutines block on I/O",
+      "images": []
+    },
+    {
+      "id": 23,
+      "question": "What is channel deadlock?",
+      "answer": "A **deadlock** occurs when all goroutines are blocked waiting — typically because a channel send or receive has no corresponding partner.\n\n```go\n// Deadlock: nobody to receive\nch := make(chan int)\nch <- 1  // blocks forever — fatal error: all goroutines are asleep\n```\n\nCommon causes:\n- Sending to an unbuffered channel with no receiver goroutine\n- Receiving from an empty channel with no sender\n- Two goroutines each waiting for the other to send first\n- Forgetting to close a channel that a `range` loop is reading\n\nGo's runtime detects total deadlock (all goroutines sleeping) and panics with `fatal error: all goroutines are asleep - deadlock!`",
+      "images": []
+    },
+    {
+      "id": 24,
+      "question": "What is a race condition?",
+      "answer": "A race condition occurs when **two goroutines access shared data concurrently and at least one writes**, without synchronization — the result depends on scheduling order.\n\n```go\nvar counter int\ngo func() { counter++ }()  // read-modify-write: not atomic!\ngo func() { counter++ }()\n```\n\n`counter++` compiles to: read, add 1, write — three operations that can interleave.\n\nDetect races with: `go run -race main.go` or `go test -race ./...`",
+      "images": []
+    },
+    {
+      "id": 25,
+      "question": "How do you prevent race conditions?",
+      "answer": "```go\n// 1. Mutex\nvar mu sync.Mutex\nmu.Lock()\ncounter++\nmu.Unlock()\n\n// 2. Atomic operations (for simple numeric ops)\nvar counter int64\natomic.AddInt64(&counter, 1)\n\n// 3. Channels (send ownership, don't share memory)\nch := make(chan int, 1)\nch <- readAndIncrement(<-ch)\n\n// 4. sync.Map for concurrent maps\n\n// 5. Confine data to one goroutine (no sharing = no race)\n```\n\nAlways run `go test -race` in CI.",
+      "images": []
+    },
+    {
+      "id": 26,
+      "question": "What is `sync.WaitGroup`?",
+      "answer": "`WaitGroup` waits for a collection of goroutines to finish.\n\n```go\nvar wg sync.WaitGroup\n\nfor i := 0; i < 5; i++ {\n    wg.Add(1)\n    go func(id int) {\n        defer wg.Done()\n        fmt.Println(\"worker\", id)\n    }(i)\n}\n\nwg.Wait()  // blocks until all Done() calls balance Add() calls\nfmt.Println(\"all done\")\n```\n\nRules:\n- Call `Add` **before** starting the goroutine (not inside it)\n- Always use `defer wg.Done()` to avoid forgetting it on error paths\n- Don't copy a WaitGroup after first use",
+      "images": []
+    },
+    {
+      "id": 27,
+      "question": "What is a Mutex?",
+      "answer": "A `Mutex` (mutual exclusion lock) ensures only **one goroutine at a time** accesses a critical section.\n\n```go\ntype SafeCounter struct {\n    mu sync.Mutex\n    v  map[string]int\n}\n\nfunc (c *SafeCounter) Inc(key string) {\n    c.mu.Lock()\n    defer c.mu.Unlock()\n    c.v[key]++\n}\n```\n\nAlways use `defer mu.Unlock()` so the lock is released even if the function panics or returns early.",
+      "images": []
+    },
+    {
+      "id": 28,
+      "question": "Difference between Mutex and RWMutex?",
+      "answer": "| | `sync.Mutex` | `sync.RWMutex` |\n|---|---|---|\n| Write lock | `Lock()` / `Unlock()` | `Lock()` / `Unlock()` |\n| Read lock | Same exclusive lock | `RLock()` / `RUnlock()` |\n| Concurrent reads | Blocked | Allowed (multiple readers) |\n| Read + write | Blocked | Writer waits for all readers |\n| Use case | Write-heavy or equal R/W | Read-heavy workloads |\n\n```go\nvar mu sync.RWMutex\n\n// Multiple goroutines can RLock simultaneously\nmu.RLock()\nval := cache[key]\nmu.RUnlock()\n\n// Only one goroutine can Lock at a time, and blocks all readers\nmu.Lock()\ncache[key] = newVal\nmu.Unlock()\n```",
+      "images": []
+    },
+    {
+      "id": 29,
+      "question": "What is `sync.Once`?",
+      "answer": "`sync.Once` ensures a function is executed **exactly once**, regardless of how many goroutines call it — used for lazy initialization.\n\n```go\nvar (\n    instance *DB\n    once     sync.Once\n)\n\nfunc GetDB() *DB {\n    once.Do(func() {\n        instance = connectToDB()  // called only once, ever\n    })\n    return instance\n}\n```\n\nThread-safe singleton pattern. Once `Do` completes, subsequent calls return immediately without executing the function.",
+      "images": []
+    },
+    {
+      "id": 30,
+      "question": "What is the worker pool pattern?",
+      "answer": "A fixed number of goroutines (workers) process jobs from a shared channel, bounding resource usage.\n\n```go\nfunc workerPool(numWorkers int, jobs <-chan Job, results chan<- Result) {\n    var wg sync.WaitGroup\n    for i := 0; i < numWorkers; i++ {\n        wg.Add(1)\n        go func() {\n            defer wg.Done()\n            for job := range jobs {\n                results <- process(job)\n            }\n        }()\n    }\n    go func() {\n        wg.Wait()\n        close(results)\n    }()\n}\n\njobs := make(chan Job, 100)\nresults := make(chan Result, 100)\nworkerPool(5, jobs, results)\n\nfor _, j := range allJobs { jobs <- j }\nclose(jobs)\n\nfor r := range results { fmt.Println(r) }\n```",
+      "images": []
+    },
+    {
+      "id": 31,
+      "question": "Fan-in and fan-out patterns?",
+      "answer": "**Fan-out**: Distribute work from one channel to multiple goroutines.\n```go\nfunc fanOut(in <-chan Work, n int) []<-chan Result {\n    channels := make([]<-chan Result, n)\n    for i := 0; i < n; i++ {\n        channels[i] = worker(in)  // each reads from same input\n    }\n    return channels\n}\n```\n\n**Fan-in**: Merge multiple channels into one.\n```go\nfunc fanIn(channels ...<-chan Result) <-chan Result {\n    merged := make(chan Result)\n    var wg sync.WaitGroup\n    for _, ch := range channels {\n        wg.Add(1)\n        go func(c <-chan Result) {\n            defer wg.Done()\n            for v := range c { merged <- v }\n        }(ch)\n    }\n    go func() { wg.Wait(); close(merged) }()\n    return merged\n}\n```",
+      "images": []
+    },
+    {
+      "id": 32,
+      "question": "How does `context.Context` work?",
+      "answer": "`context.Context` carries **deadlines, cancellation signals, and request-scoped values** across API boundaries and goroutines.\n\n```go\nctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)\ndefer cancel()  // always cancel to release resources\n\nresp, err := http.Get(req.WithContext(ctx), url)\n```\n\nFour constructors:\n- `context.Background()` — root context, never cancelled\n- `context.TODO()` — placeholder when unsure which context to use\n- `context.WithCancel(parent)` — returns a cancellable context\n- `context.WithTimeout(parent, d)` / `WithDeadline` — auto-cancels after duration/time",
+      "images": []
+    },
+    {
+      "id": 33,
+      "question": "Context cancellation?",
+      "answer": "When a context is cancelled (by calling `cancel()` or timeout expiry), all child contexts derived from it are also cancelled. Goroutines check `ctx.Done()`:\n\n```go\nfunc doWork(ctx context.Context) error {\n    for {\n        select {\n        case <-ctx.Done():\n            return ctx.Err()  // context.Canceled or context.DeadlineExceeded\n        default:\n            // do a unit of work\n        }\n    }\n}\n```\n\nPass context as the **first parameter** of every function that does I/O or long computation. Never store contexts in structs.",
+      "images": []
+    },
+    {
+      "id": 34,
+      "question": "What causes goroutine leaks?",
+      "answer": "A goroutine leak occurs when a goroutine is started but **never terminates** — it stays blocked forever, consuming memory.\n\nCommon causes:\n```go\n// 1. Nobody reads from a channel\nch := make(chan int)\ngo func() { ch <- 1 }()  // if nobody reads, goroutine stuck forever\n\n// 2. Nobody closes a channel being ranged over\ngo func() {\n    for v := range ch { process(v) }  // stuck if ch never closed\n}()\n\n// 3. Goroutine waiting on a mutex that's never unlocked\n\n// 4. Context never cancelled / no timeout\n\n// 5. HTTP server handler goroutine waiting for a slow client\n```\n\nFix: always ensure goroutines have an exit path — pass a context, close channels when done, use select with done channel.",
+      "images": []
+    },
+    {
+      "id": 35,
+      "question": "How do you debug goroutine leaks?",
+      "answer": "```go\n// 1. At test time: use goleak\nimport \"go.uber.org/goleak\"\nfunc TestFoo(t *testing.T) {\n    defer goleak.VerifyNone(t)\n    // ... test code\n}\n\n// 2. Print goroutine count\nfmt.Println(runtime.NumGoroutine())\n\n// 3. Expose pprof endpoint and inspect\nimport _ \"net/http/pprof\"\n// then: go tool pprof http://localhost:6060/debug/pprof/goroutine\n\n// 4. runtime/debug stack dump\nbuf := make([]byte, 1<<20)\nn := runtime.Stack(buf, true)  // all goroutines\nfmt.Printf(\"%s\", buf[:n])\n```",
+      "images": []
+    },
+    {
+      "id": 36,
+      "question": "Buffered vs unbuffered channel use cases?",
+      "answer": "**Use unbuffered when:**\n- You need guaranteed synchronization (sender knows receiver got the value)\n- Implementing rendezvous / handoff patterns\n- Signaling events (done channels: `close(done)`)\n\n**Use buffered when:**\n- Smoothing bursty producers (batch inserts, event queues)\n- Worker pools (jobs channel with buffer = backpressure)\n- Preventing goroutine leaks when the receiver might not read\n- Rate limiting (semaphore pattern: `sem := make(chan struct{}, maxConcurrency)`)",
+      "images": []
+    },
+    {
+      "id": 37,
+      "question": "What happens when a channel closes?",
+      "answer": "```go\nclose(ch)\n\n// Receiving from a closed channel:\nv, ok := <-ch   // ok is false when closed and empty\nv := <-ch       // returns zero value immediately when closed+empty\n\n// Ranging over a closed channel:\nfor v := range ch { }  // exits cleanly when channel is closed+empty\n\n// Sending to a closed channel: PANICS\nch <- 1  // panic: send on closed channel\n```\n\nRules:\n- Only the **sender** should close a channel (never the receiver)\n- Closing signals \"no more values\" — used to unblock `range` loops\n- Multiple receivers are all unblocked when a channel closes",
+      "images": []
+    },
+    {
+      "id": 38,
+      "question": "What is select starvation?",
+      "answer": "When multiple channels are ready in a `select`, Go picks **uniformly at random**. Starvation can still occur in practice if one channel is always ready, statistically getting picked more.\n\n```go\n// This can starve the 'quit' case if 'jobs' is always ready\nselect {\ncase job := <-jobs:\n    process(job)\ncase <-quit:\n    return\n}\n```\n\nFix with **priority select** pattern:\n```go\n// Check quit first with a non-blocking select\nselect {\ncase <-quit:\n    return\ndefault:\n}\n// Then the full select\nselect {\ncase job := <-jobs:\n    process(job)\ncase <-quit:\n    return\n}\n```",
+      "images": []
+    },
+    {
+      "id": 39,
+      "question": "Stack vs heap in Go?",
+      "answer": "**Stack:**\n- Per-goroutine, starts at 2KB, grows/shrinks dynamically (up to 1GB)\n- Allocation/deallocation is O(1) — just move stack pointer\n- Automatically reclaimed when function returns\n- No GC involvement\n\n**Heap:**\n- Shared across all goroutines\n- GC manages it\n- Slower allocation (needs to find free memory, update GC metadata)\n\nGo tries to put variables on the stack for performance. Variables **escape to the heap** when:\n- A pointer to a local variable is returned\n- A variable is too large for the stack\n- Size is unknown at compile time (e.g., interface boxing)",
+      "images": []
+    },
+    {
+      "id": 40,
+      "question": "Escape analysis?",
+      "answer": "The compiler's **escape analysis** determines whether a variable can live on the stack or must escape to the heap.\n\n```go\nfunc newFoo() *Foo {\n    f := Foo{}   // f escapes to heap — pointer returned\n    return &f\n}\n\nfunc noEscape() {\n    f := Foo{}   // f stays on stack — doesn't outlive function\n    use(f)\n}\n```\n\nInspect with: `go build -gcflags=\"-m\" ./...`\n\n```\n./main.go:5:2: &f escapes to heap\n./main.go:10:2: f does not escape\n```\n\nReducing heap allocations (keeping things on stack) reduces GC pressure and improves performance.",
+      "images": []
+    },
+    {
+      "id": 41,
+      "question": "How are interfaces implemented internally?",
+      "answer": "An interface value is a **two-word pair**:\n- `(type, pointer)` — also called `(itab, data)`\n\n```\ninterface{} or any:\n  word 1: *_type (pointer to type descriptor)\n  word 2: unsafe.Pointer (pointer to data, or data itself if it fits)\n\nNon-empty interface (with methods):\n  word 1: *itab (type descriptor + method table)\n  word 2: unsafe.Pointer (data)\n```\n\nAn `itab` contains:\n- Pointer to the concrete type info\n- Pointer to the interface type\n- Method function pointers for dispatch\n\nThis is why interface method calls have a small overhead (pointer indirection to method table), and why a nil interface ≠ an interface holding a nil pointer.",
+      "images": []
+    },
+    {
+      "id": 42,
+      "question": "Slice internals?",
+      "answer": "*(Covered in Language Basics Q16 — see \"How do slices work internally\")*\n\nBriefly: `struct { ptr *T; len, cap int }`. Append may reallocate backing array. Slicing shares the backing array. Use `copy()` for an independent slice.",
+      "images": []
+    },
+    {
+      "id": 43,
+      "question": "String immutability?",
+      "answer": "Go strings are **immutable byte sequences**. You cannot change a byte in a string:\n\n```go\ns := \"hello\"\n// s[0] = 'H'  // compile error: cannot assign to s[0]\ns = \"Hello\"    // OK — creates a new string header\n```\n\nBenefits:\n- Strings can be safely shared between goroutines with no copying\n- String constants are deduplicated in the binary\n- Slicing a string (`s[1:3]`) shares the underlying bytes — O(1)\n\nConvert to `[]byte` to mutate, then back to string (makes a copy):\n```go\nb := []byte(s)\nb[0] = 'H'\ns = string(b)\n```",
+      "images": []
+    },
+    {
+      "id": 44,
+      "question": "Why are strings UTF-8?",
+      "answer": "Go source code and `string` type are **UTF-8 encoded** because:\n- UTF-8 is ASCII-compatible (ASCII strings require no change)\n- Memory-efficient (common ASCII chars are 1 byte)\n- No endianness issues\n- Ken Thompson and Rob Pike co-invented UTF-8\n\n`len(s)` returns byte count. Use `utf8.RuneCountInString(s)` or `len([]rune(s))` for character count.",
+      "images": []
+    },
+    {
+      "id": 45,
+      "question": "What is memory alignment?",
+      "answer": "Processors read memory most efficiently when data is at addresses that are multiples of its size. Go's compiler automatically **pads structs** to satisfy alignment.\n\n```go\ntype Bad struct {\n    A bool    // 1 byte\n    // 7 bytes padding\n    B int64   // 8 bytes\n    C bool    // 1 byte\n    // 7 bytes padding\n}  // 24 bytes total\n\ntype Good struct {\n    B int64   // 8 bytes\n    A bool    // 1 byte\n    C bool    // 1 byte\n    // 6 bytes padding\n}  // 16 bytes total\n```\n\nOrder struct fields from largest to smallest alignment to minimize padding. Use `unsafe.Sizeof` and `unsafe.Alignof` to inspect.",
+      "images": []
+    },
+    {
+      "id": 46,
+      "question": "What causes memory leaks in Go?",
+      "answer": "Even with GC, Go programs can leak memory:\n\n1. **Goroutine leaks** — goroutine holds references, keeping objects alive\n2. **Global variables / caches** accumulating unboundedly\n3. **Slice sub-slicing** — `s = s[1:]` retains backing array; `s = append([]T{}, s[1:]...)` to release\n4. **Strings sliced from large strings** share backing bytes\n5. **Timers not stopped** — `time.After` in a loop creates a new timer each iteration\n6. **Finalizers** — objects with finalizers are not collected in the same GC cycle\n7. **CGo** memory not freed (Go GC doesn't manage C heap)",
+      "images": []
+    },
+    {
+      "id": 47,
+      "question": "How do you profile Go applications?",
+      "answer": "```go\n// 1. pprof HTTP endpoint\nimport _ \"net/http/pprof\"\ngo http.ListenAndServe(\":6060\", nil)\n\n// Endpoints:\n// /debug/pprof/heap     — heap allocations\n// /debug/pprof/goroutine — goroutine stacks\n// /debug/pprof/cpu      — CPU profile (add ?seconds=30)\n// /debug/pprof/mutex    — mutex contention\n\n// 2. CPU profile in code\nf, _ := os.Create(\"cpu.prof\")\npprof.StartCPUProfile(f)\ndefer pprof.StopCPUProfile()\n\n// 3. Analyze\ngo tool pprof cpu.prof\ngo tool pprof -http=:8080 http://localhost:6060/debug/pprof/heap\n\n// 4. Benchmarks\ngo test -bench=. -benchmem -cpuprofile=cpu.out ./...\ngo tool pprof cpu.out\n\n// 5. Trace\nimport \"runtime/trace\"\nf, _ := os.Create(\"trace.out\")\ntrace.Start(f); defer trace.Stop()\ngo tool trace trace.out\n```",
+      "images": []
+    },
+    {
+      "id": 48,
+      "question": "Which router/framework have you used?",
+      "answer": "**Gin** — most popular, fast, minimal overhead, good middleware ecosystem\n```go\nr := gin.Default()\nr.GET(\"/users/:id\", func(c *gin.Context) {\n    c.JSON(200, gin.H{\"id\": c.Param(\"id\")})\n})\nr.Run(\":8080\")\n```\n\n**Fiber** — Express.js-inspired, built on fasthttp, very fast, familiar for Node devs\n```go\napp := fiber.New()\napp.Get(\"/users/:id\", func(c *fiber.Ctx) error {\n    return c.JSON(fiber.Map{\"id\": c.Params(\"id\")})\n})\napp.Listen(\":8080\")\n```\n\n**Echo** — clean API, built-in data binding and validation, good for REST APIs\n```go\ne := echo.New()\ne.GET(\"/users/:id\", getUser)\ne.Logger.Fatal(e.Start(\":8080\"))\n```\n\nFor most new projects, **Gin** or the standard library (Go 1.22+) are solid choices.",
+      "images": []
+    },
+    {
+      "id": 49,
+      "question": "Middleware implementation?",
+      "answer": "```go\n// Standard library\nfunc loggingMiddleware(next http.Handler) http.Handler {\n    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {\n        start := time.Now()\n        next.ServeHTTP(w, r)\n        log.Printf(\"%s %s %v\", r.Method, r.URL.Path, time.Since(start))\n    })\n}\nmux.Handle(\"/\", loggingMiddleware(myHandler))\n\n// Gin\nfunc AuthMiddleware() gin.HandlerFunc {\n    return func(c *gin.Context) {\n        token := c.GetHeader(\"Authorization\")\n        if !isValid(token) {\n            c.AbortWithStatus(401)\n            return\n        }\n        c.Next()\n    }\n}\nr.Use(AuthMiddleware())\n```\n\nCommon middleware: logging, auth/JWT validation, rate limiting, CORS, recovery (panic → 500), request ID injection.",
+      "images": []
+    },
+    {
+      "id": 50,
+      "question": "How do you structure large Go projects?",
+      "answer": "A common structure following the **Standard Go Project Layout**:\n\n```\nmyservice/\n├── cmd/\n│   └── server/main.go       # entrypoint\n├── internal/\n│   ├── handler/             # HTTP handlers\n│   ├── service/             # business logic\n│   ├── repository/          # DB access\n│   └── domain/              # domain types/interfaces\n├── pkg/                     # reusable public packages\n├── configs/                 # config files\n├── migrations/              # SQL migrations\n├── docker/\n└── Makefile\n```\n\nKey principles:\n- `internal/` is enforced by Go — cannot be imported by external packages\n- Depend on interfaces, not concrete types (enables testing)\n- Separate layers: handler → service → repository\n- Avoid circular imports (Go enforces this)",
+      "images": []
+    },
+    {
+      "id": 51,
+      "question": "Dependency injection in Go?",
+      "answer": "Go favors **manual constructor injection** — no magic frameworks needed for most services.\n\n```go\n// Define interfaces\ntype UserRepo interface {\n    GetUser(ctx context.Context, id int) (*User, error)\n}\n\n// Service depends on interface\ntype UserService struct {\n    repo UserRepo\n    log  *slog.Logger\n}\nfunc NewUserService(repo UserRepo, log *slog.Logger) *UserService {\n    return &UserService{repo: repo, log: log}\n}\n\n// Wire in main.go\ndb := connectDB()\nrepo := repository.NewUserRepo(db)\nsvc := service.NewUserService(repo, logger)\nhandler := handler.NewUserHandler(svc)\n```\n\nFor large projects, **Wire** (Google) generates the wiring code at compile time. **Uber Fx** provides a runtime DI container.",
+      "images": []
+    },
+    {
+      "id": 52,
+      "question": "How do you validate requests?",
+      "answer": "```go\n// Using validator package (github.com/go-playground/validator/v10)\ntype CreateUserRequest struct {\n    Name  string `json:\"name\"  validate:\"required,min=2,max=100\"`\n    Email string `json:\"email\" validate:\"required,email\"`\n    Age   int    `json:\"age\"   validate:\"gte=0,lte=130\"`\n}\n\nvar validate = validator.New()\n\nfunc createUser(c *gin.Context) {\n    var req CreateUserRequest\n    if err := c.ShouldBindJSON(&req); err != nil {\n        c.JSON(400, gin.H{\"error\": err.Error()}); return\n    }\n    if err := validate.Struct(req); err != nil {\n        c.JSON(400, gin.H{\"error\": err.Error()}); return\n    }\n    // proceed\n}\n```",
+      "images": []
+    },
+    {
+      "id": 53,
+      "question": "How do you handle configuration?",
+      "answer": "```go\n// Using viper (github.com/spf13/viper)\nviper.SetDefault(\"server.port\", 8080)\nviper.SetConfigName(\"config\")\nviper.SetConfigType(\"yaml\")\nviper.AddConfigPath(\".\")\nviper.AutomaticEnv()  // override with env vars\n\nif err := viper.ReadInConfig(); err != nil { ... }\n\nport := viper.GetInt(\"server.port\")\n\n// Or simple env-based config with envconfig\ntype Config struct {\n    DBHost string `envconfig:\"DB_HOST\" required:\"true\"`\n    Port   int    `envconfig:\"PORT\"    default:\"8080\"`\n}\nvar cfg Config\nenvconfig.MustProcess(\"\", &cfg)\n```\n\n12-factor app: prefer **environment variables** for production secrets, config files for defaults.",
+      "images": []
+    },
+    {
+      "id": 54,
+      "question": "Logging best practices?",
+      "answer": "```go\n// Use structured logging (slog — stdlib since Go 1.21)\nlogger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{\n    Level: slog.LevelInfo,\n}))\n\nlogger.Info(\"request processed\",\n    slog.String(\"method\", r.Method),\n    slog.String(\"path\", r.URL.Path),\n    slog.Int(\"status\", 200),\n    slog.Duration(\"latency\", time.Since(start)),\n)\n```\n\nBest practices:\n- Use structured/JSON logging (not `fmt.Println`) for machine parseability\n- Include request ID / trace ID in every log line\n- Never log secrets, PII, or passwords\n- Use log levels (DEBUG, INFO, WARN, ERROR) appropriately\n- Zap (Uber) or zerolog for high-performance logging when slog isn't enough",
+      "images": []
+    },
+    {
+      "id": 55,
+      "question": "Graceful shutdown implementation?",
+      "answer": "```go\nsrv := &http.Server{Addr: \":8080\", Handler: mux}\n\n// Start server\ngo func() {\n    if err := srv.ListenAndServe(); err != http.ErrServerClosed {\n        log.Fatalf(\"server error: %v\", err)\n    }\n}()\n\n// Wait for interrupt signal\nquit := make(chan os.Signal, 1)\nsignal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)\n<-quit\nlog.Println(\"shutting down...\")\n\nctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)\ndefer cancel()\n\nif err := srv.Shutdown(ctx); err != nil {\n    log.Fatalf(\"forced shutdown: %v\", err)\n}\nlog.Println(\"server stopped\")\n```\n\n`Shutdown` stops accepting new connections and waits for in-flight requests to complete.",
+      "images": []
+    },
+    {
+      "id": 56,
+      "question": "How do you implement health checks?",
+      "answer": "```go\n// Liveness: is the process alive?\nmux.HandleFunc(\"GET /healthz\", func(w http.ResponseWriter, r *http.Request) {\n    w.WriteHeader(http.StatusOK)\n    w.Write([]byte(\"ok\"))\n})\n\n// Readiness: is the service ready to serve traffic?\nmux.HandleFunc(\"GET /readyz\", func(w http.ResponseWriter, r *http.Request) {\n    if err := db.PingContext(r.Context()); err != nil {\n        http.Error(w, \"db unhealthy\", http.StatusServiceUnavailable)\n        return\n    }\n    w.WriteHeader(http.StatusOK)\n    json.NewEncoder(w).Encode(map[string]string{\"status\": \"ok\"})\n})\n```\n\nKubernetes uses liveness (restart if failing) and readiness (remove from service endpoints if failing) probes separately.",
+      "images": []
+    },
+    {
+      "id": 57,
+      "question": "API versioning?",
+      "answer": "Common strategies:\n\n```go\n// 1. URL path versioning (most common)\nmux.Handle(\"/v1/users\", v1.UsersHandler)\nmux.Handle(\"/v2/users\", v2.UsersHandler)\n\n// 2. Header versioning\nfunc versionMiddleware(next http.Handler) http.Handler {\n    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {\n        version := r.Header.Get(\"API-Version\")\n        // route based on version\n    })\n}\n\n// 3. Content-type versioning\n// Accept: application/vnd.myapi.v2+json\n```\n\nURL path versioning is most explicit and visible in logs. Use it for major breaking changes; for minor additions, make APIs backward compatible.",
+      "images": []
+    },
+    {
+      "id": 58,
+      "question": "JWT authentication in Go?",
+      "answer": "```go\nimport \"github.com/golang-jwt/jwt/v5\"\n\n// Generate\ntoken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{\n    \"sub\": userID,\n    \"exp\": time.Now().Add(24 * time.Hour).Unix(),\n})\nsigned, err := token.SignedString([]byte(secret))\n\n// Validate in middleware\nfunc jwtMiddleware(next http.Handler) http.Handler {\n    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {\n        tokenStr := strings.TrimPrefix(r.Header.Get(\"Authorization\"), \"Bearer \")\n        token, err := jwt.Parse(tokenStr, func(t *jwt.Token) (interface{}, error) {\n            if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {\n                return nil, fmt.Errorf(\"unexpected signing method\")\n            }\n            return []byte(secret), nil\n        })\n        if err != nil || !token.Valid {\n            http.Error(w, \"unauthorized\", 401); return\n        }\n        // inject claims into context\n        next.ServeHTTP(w, r)\n    })\n}\n```",
+      "images": []
+    },
+    {
+      "id": 59,
+      "question": "Rate limiting?",
+      "answer": "```go\n// Token bucket using golang.org/x/time/rate\nlimiter := rate.NewLimiter(rate.Every(time.Second), 10)  // 10 req/sec\n\nfunc rateLimitMiddleware(next http.Handler) http.Handler {\n    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {\n        if !limiter.Allow() {\n            http.Error(w, \"too many requests\", http.StatusTooManyRequests)\n            return\n        }\n        next.ServeHTTP(w, r)\n    })\n}\n\n// Per-IP rate limiting with sync.Map\nvar limiters sync.Map\nfunc getLimiter(ip string) *rate.Limiter {\n    v, _ := limiters.LoadOrStore(ip, rate.NewLimiter(rate.Every(time.Second), 5))\n    return v.(*rate.Limiter)\n}\n```\n\nFor distributed rate limiting, use Redis with a sliding window or token bucket algorithm.",
+      "images": []
+    },
+    {
+      "id": 60,
+      "question": "WebSocket implementation?",
+      "answer": "```go\nimport \"github.com/gorilla/websocket\"\n\nvar upgrader = websocket.Upgrader{\n    CheckOrigin: func(r *http.Request) bool { return true },\n}\n\nfunc wsHandler(w http.ResponseWriter, r *http.Request) {\n    conn, err := upgrader.Upgrade(w, r, nil)\n    if err != nil { return }\n    defer conn.Close()\n\n    for {\n        messageType, p, err := conn.ReadMessage()\n        if err != nil { break }\n        // echo back\n        conn.WriteMessage(messageType, p)\n    }\n}\n```\n\nFor a production chat system: use a hub pattern where a central goroutine manages connections and broadcasts, with channels for message passing between connections and the hub.",
+      "images": []
+    },
+    {
+      "id": 61,
+      "question": "gRPC vs REST?",
+      "answer": "| | REST | gRPC |\n|---|---|---|\n| Protocol | HTTP/1.1, JSON | HTTP/2, Protocol Buffers |\n| Performance | Slower (text, HTTP/1) | Faster (binary, multiplexing) |\n| Contract | OpenAPI (optional) | `.proto` file (required) |\n| Streaming | Limited (SSE/WebSocket) | Native bidirectional streaming |\n| Browser support | Universal | Requires grpc-web proxy |\n| Code generation | Optional | Built-in (`protoc`) |\n| Human readable | Yes | No (binary) |\n| Use case | Public APIs, browser | Internal microservices |\n\n```go\n// gRPC server\ns := grpc.NewServer(grpc.UnaryInterceptor(loggingInterceptor))\npb.RegisterUserServiceServer(s, &UserServer{})\ns.Serve(lis)\n```",
+      "images": []
+    },
+    {
+      "id": 62,
+      "question": "ORM vs raw SQL?",
+      "answer": "**ORM (GORM)**:\n- Pros: rapid development, auto migrations, associations\n- Cons: N+1 queries easy to introduce, harder to optimize, abstraction leaks\n\n**Raw SQL (database/sql or sqlx)**:\n- Pros: full control, predictable performance, learn actual SQL\n- Cons: more boilerplate, manual mapping\n\n**Recommendation**: Use raw SQL with `sqlx` or `pgx` for performance-critical services. Use GORM for CRUD-heavy apps where dev speed matters more.",
+      "images": []
+    },
+    {
+      "id": 63,
+      "question": "GORM vs sqlx?",
+      "answer": "| | GORM | sqlx |\n|---|---|---|\n| Type | Full ORM | SQL extension library |\n| Queries | Generated from structs | You write SQL |\n| Learning curve | Medium | Low (just adds `StructScan`, named queries) |\n| Performance | More overhead | Near-native |\n| Migrations | Built-in auto-migrate | External tool (goose, migrate) |\n| Control | Less | Full |\n\n```go\n// sqlx\nvar user User\nerr := db.GetContext(ctx, &user, \"SELECT * FROM users WHERE id=$1\", id)\n\n// GORM\ndb.First(&user, id)\n```",
+      "images": []
+    },
+    {
+      "id": 64,
+      "question": "Connection pooling?",
+      "answer": "`database/sql` provides built-in connection pooling:\n\n```go\ndb.SetMaxOpenConns(25)       // max open connections to DB\ndb.SetMaxIdleConns(10)       // max idle connections in pool\ndb.SetConnMaxLifetime(5 * time.Minute)  // max connection age\ndb.SetConnMaxIdleTime(1 * time.Minute)  // max idle connection age\n```\n\nPool sizing rule of thumb: `MaxOpenConns ≈ (num_cpu_cores * 2) + effective_spindle_count`. For PostgreSQL, stay well under `max_connections` (default 100); use PgBouncer for hundreds of application instances.",
+      "images": []
+    },
+    {
+      "id": 65,
+      "question": "Transactions handling?",
+      "answer": "```go\ntx, err := db.BeginTx(ctx, nil)\nif err != nil { return err }\ndefer tx.Rollback()  // no-op after Commit\n\n_, err = tx.ExecContext(ctx, \"INSERT INTO orders ...\")\nif err != nil { return err }\n\n_, err = tx.ExecContext(ctx, \"UPDATE inventory ...\")\nif err != nil { return err }\n\nreturn tx.Commit()\n```\n\nAlways `defer tx.Rollback()` — it's a no-op after `Commit()` succeeds, but ensures rollback on any error path.",
+      "images": []
+    },
+    {
+      "id": 66,
+      "question": "How do you prevent SQL injection?",
+      "answer": "**Always use parameterized queries / prepared statements:**\n\n```go\n// WRONG — SQL injection vulnerable\nquery := fmt.Sprintf(\"SELECT * FROM users WHERE name='%s'\", userInput)\n\n// CORRECT — parameterized\nrow := db.QueryRowContext(ctx, \"SELECT * FROM users WHERE name=$1\", userInput)\n\n// Named parameters with sqlx\ndb.NamedExecContext(ctx, \"INSERT INTO users (name) VALUES (:name)\", user)\n```\n\nGo's `database/sql` enforces separation of query structure and data. Never concatenate user input into SQL strings.",
+      "images": []
+    },
+    {
+      "id": 67,
+      "question": "How do you optimize DB-heavy APIs?",
+      "answer": "1. **Use indexes** on WHERE, JOIN, ORDER BY columns\n2. **Connection pooling** tuned appropriately\n3. **Avoid N+1** — use JOIN or batch queries instead of per-row queries\n4. **Use EXPLAIN ANALYZE** to inspect query plans\n5. **Pagination** — keyset pagination over OFFSET for large datasets\n6. **Caching** — Redis for read-heavy, slowly-changing data\n7. **Read replicas** — route read queries to replicas\n8. **Query timeout** — always use `context.WithTimeout` for DB calls\n9. **Batch inserts** — `INSERT INTO t VALUES ($1,$2), ($3,$4), ...`\n10. **Select only needed columns** — avoid `SELECT *`",
+      "images": []
+    },
+    {
+      "id": 68,
+      "question": "How do you implement the repository pattern?",
+      "answer": "```go\n// Interface definition\ntype UserRepository interface {\n    GetByID(ctx context.Context, id int64) (*User, error)\n    Create(ctx context.Context, user *User) error\n    Update(ctx context.Context, user *User) error\n    Delete(ctx context.Context, id int64) error\n}\n\n// Implementation\ntype postgresUserRepo struct {\n    db *sqlx.DB\n}\n\nfunc (r *postgresUserRepo) GetByID(ctx context.Context, id int64) (*User, error) {\n    var u User\n    err := r.db.GetContext(ctx, &u, \"SELECT * FROM users WHERE id=$1\", id)\n    return &u, err\n}\n\n// Service uses the interface (testable with mock repo)\ntype UserService struct {\n    repo UserRepository\n}\n```",
+      "images": []
+    },
+    {
+      "id": 69,
+      "question": "What is the N+1 query problem?",
+      "answer": "You fetch N parent records, then issue a separate query for each one's children — totaling N+1 queries.\n\n```go\n// N+1 problem\nusers, _ := db.QueryContext(ctx, \"SELECT * FROM users\")  // 1 query\nfor _, u := range users {\n    orders, _ := db.QueryContext(ctx,  // N queries!\n        \"SELECT * FROM orders WHERE user_id=$1\", u.ID)\n}\n\n// Fix: JOIN in one query\ndb.QueryContext(ctx, `\n    SELECT u.*, o.*\n    FROM users u\n    LEFT JOIN orders o ON o.user_id = u.id\n`)\n\n// Or: batch query with IN\ndb.QueryContext(ctx,\n    \"SELECT * FROM orders WHERE user_id = ANY($1)\", pq.Array(userIDs))\n```",
+      "images": []
+    },
+    {
+      "id": 70,
+      "question": "Database migrations in Go?",
+      "answer": "```go\n// Using golang-migrate\nimport \"github.com/golang-migrate/migrate/v4\"\nimport _ \"github.com/golang-migrate/migrate/v4/database/postgres\"\nimport _ \"github.com/golang-migrate/migrate/v4/source/file\"\n\nm, err := migrate.New(\"file://migrations\", dbURL)\nm.Up()    // apply all pending migrations\nm.Down()  // rollback one migration\nm.Steps(2) // apply 2 migrations\n```\n\nMigration files:\n```\nmigrations/\n  000001_create_users.up.sql\n  000001_create_users.down.sql\n  000002_add_email_index.up.sql\n  000002_add_email_index.down.sql\n```\n\nOther tools: **goose** (supports Go migrations alongside SQL), **Atlas** (schema-as-code with drift detection).",
+      "images": []
+    },
+    {
+      "id": 71,
+      "question": "Why is Go popular for distributed systems?",
+      "answer": "- **Concurrency model** maps naturally to network servers (one goroutine per connection)\n- **Low overhead** — can handle 100K+ concurrent connections with modest RAM\n- **Fast startup** — critical for horizontal scaling and rolling deploys\n- **Static binaries** — simple deployment, small Docker images\n- **Strong standard library** — HTTP, TLS, JSON, gRPC out of the box\n- **Battle-tested at scale** — Docker, Kubernetes, Prometheus, etcd, Consul all written in Go",
+      "images": []
+    },
+    {
+      "id": 72,
+      "question": "How would you design a chat system?",
+      "answer": "```\nClient ──WebSocket──► Gateway Service (Go)\n                          │\n                     Message Bus (Kafka/Redis Pub-Sub)\n                          │\n              ┌───────────┼───────────┐\n           Room Svc    User Svc    Presence Svc\n              │\n         Message DB (Cassandra/PostgreSQL)\n```\n\n- **WebSocket gateway** — maintains connections, routes messages\n- **Hub pattern** per room — goroutine managing subscribers via channels\n- **Pub/Sub** (Redis or Kafka) — fan-out to gateways serving recipients on other nodes\n- **Message persistence** — append-only store (Cassandra for high write throughput)\n- **Presence** — Redis with TTL for online/offline status",
+      "images": []
+    },
+    {
+      "id": 73,
+      "question": "How do you scale WebSockets?",
+      "answer": "Single node: hub pattern (central goroutine with a map of `connID → chan Message`).\n\nMulti-node: each node publishes to Redis Pub/Sub, all nodes subscribe to channels for their rooms. When a message arrives on a subscription, the node broadcasts to its local connections.\n\n```go\n// Simplified multi-node fan-out\nfunc (h *Hub) publishMessage(roomID string, msg Message) {\n    // persist to DB\n    // publish to Redis channel \"room:{roomID}\"\n    rdb.Publish(ctx, \"room:\"+roomID, msg.JSON())\n}\n\n// Each node subscribes and forwards locally\nsub := rdb.Subscribe(ctx, \"room:\"+roomID)\ngo func() {\n    for msg := range sub.Channel() {\n        h.broadcastToLocalConns(roomID, msg.Payload)\n    }\n}()\n```",
+      "images": []
+    },
+    {
+      "id": 74,
+      "question": "Kafka integration in Go?",
+      "answer": "```go\nimport \"github.com/segmentio/kafka-go\"\n\n// Producer\nwriter := &kafka.Writer{\n    Addr:  kafka.TCP(\"localhost:9092\"),\n    Topic: \"orders\",\n}\nwriter.WriteMessages(ctx, kafka.Message{\n    Key:   []byte(orderID),\n    Value: orderJSON,\n})\n\n// Consumer\nreader := kafka.NewReader(kafka.ReaderConfig{\n    Brokers: []string{\"localhost:9092\"},\n    Topic:   \"orders\",\n    GroupID: \"order-processor\",\n})\nfor {\n    msg, err := reader.ReadMessage(ctx)\n    process(msg.Value)\n}\n```\n\nLibraries: `segmentio/kafka-go` (pure Go), `confluent-kafka-go` (wraps librdkafka, higher throughput).",
+      "images": []
+    },
+    {
+      "id": 75,
+      "question": "Redis caching strategies?",
+      "answer": "```go\n// Cache-aside (lazy loading)\nfunc GetUser(ctx context.Context, id string) (*User, error) {\n    val, err := rdb.Get(ctx, \"user:\"+id).Result()\n    if err == nil {\n        var u User; json.Unmarshal([]byte(val), &u); return &u, nil\n    }\n    u, err := repo.GetUser(ctx, id)\n    if err != nil { return nil, err }\n    data, _ := json.Marshal(u)\n    rdb.Set(ctx, \"user:\"+id, data, 5*time.Minute)\n    return u, nil\n}\n```\n\nStrategies:\n- **Cache-aside** — app manages cache; cache miss hits DB\n- **Write-through** — write to cache and DB on every write\n- **Write-behind** — write to cache, async flush to DB\n- **TTL-based** — always expire; staleness bounded by TTL\n- **Cache invalidation** — delete on update (hard: \"two hard things in CS\")",
+      "images": []
+    },
+    {
+      "id": 76,
+      "question": "Event-driven architecture?",
+      "answer": "Services communicate via **events** (Kafka, NATS, RabbitMQ) rather than synchronous RPC.\n\n```\nOrder Service → publishes \"OrderPlaced\" event\n                ↓ Kafka\nInventory Svc ← subscribes, reserves stock → publishes \"StockReserved\"\nPayment Svc   ← subscribes to \"StockReserved\" → charges card\nEmail Svc     ← subscribes to \"OrderPlaced\" → sends confirmation\n```\n\nBenefits: loose coupling, independent scaling, resilience (consumer can retry). Challenges: eventual consistency, debugging event chains, duplicate event handling (must be idempotent).",
+      "images": []
+    },
+    {
+      "id": 77,
+      "question": "CQRS in Go?",
+      "answer": "Command Query Responsibility Segregation separates read (query) and write (command) models.\n\n```go\n// Command side — optimized for writes\ntype CreateOrderCommand struct {\n    UserID    string\n    ProductID string\n    Quantity  int\n}\nfunc (h *OrderCommandHandler) Handle(ctx context.Context, cmd CreateOrderCommand) error {\n    // validate, apply business rules, persist to write DB\n    // publish OrderCreated event\n}\n\n// Query side — optimized for reads (denormalized projections)\ntype OrderQuery struct {\n    UserID string\n}\nfunc (h *OrderQueryHandler) GetOrdersByUser(ctx context.Context, q OrderQuery) ([]OrderView, error) {\n    // read from read-optimized DB/cache (Redis, Elasticsearch)\n}\n```\n\nOften combined with Event Sourcing. Useful when read and write throughput or models diverge significantly.",
+      "images": []
+    },
+    {
+      "id": 78,
+      "question": "Circuit breaker implementation?",
+      "answer": "```go\nimport \"github.com/sony/gobreaker\"\n\ncb := gobreaker.NewCircuitBreaker(gobreaker.Settings{\n    Name:        \"payment-service\",\n    MaxRequests: 3,                   // allowed requests in half-open\n    Interval:    10 * time.Second,    // reset counts after\n    Timeout:     30 * time.Second,    // time in open state before half-open\n    ReadyToTrip: func(counts gobreaker.Counts) bool {\n        return counts.ConsecutiveFailures > 5\n    },\n})\n\nresult, err := cb.Execute(func() (interface{}, error) {\n    return paymentSvc.Charge(ctx, amount)\n})\n// If open: returns ErrOpenState immediately without calling the function\n```\n\nStates: **Closed** (normal) → **Open** (failing, reject all) → **Half-Open** (test a few requests) → Closed or Open.",
+      "images": []
+    },
+    {
+      "id": 79,
+      "question": "Retry mechanism?",
+      "answer": "```go\nfunc withRetry(ctx context.Context, maxAttempts int, fn func() error) error {\n    var err error\n    for attempt := 0; attempt < maxAttempts; attempt++ {\n        err = fn()\n        if err == nil { return nil }\n\n        // Exponential backoff with jitter\n        wait := time.Duration(math.Pow(2, float64(attempt))) * 100 * time.Millisecond\n        wait += time.Duration(rand.Intn(100)) * time.Millisecond\n\n        select {\n        case <-ctx.Done():\n            return ctx.Err()\n        case <-time.After(wait):\n        }\n    }\n    return fmt.Errorf(\"after %d attempts: %w\", maxAttempts, err)\n}\n```\n\nAlways retry only **idempotent operations**. Don't retry on `400 Bad Request` — only on transient errors (network errors, `503`, `429`).",
+      "images": []
+    },
+    {
+      "id": 80,
+      "question": "Idempotency?",
+      "answer": "An operation is idempotent if calling it multiple times has the same effect as calling it once. Critical for safe retries.\n\n```go\n// Client sends Idempotency-Key header\n// Server stores result keyed by idempotency key\n\nfunc createOrder(ctx context.Context, req CreateOrderReq) (*Order, error) {\n    existing, err := idempotencyStore.Get(ctx, req.IdempotencyKey)\n    if err == nil { return existing, nil }  // return cached result\n\n    order, err := createOrderInternal(ctx, req)\n    if err != nil { return nil, err }\n\n    idempotencyStore.Set(ctx, req.IdempotencyKey, order, 24*time.Hour)\n    return order, nil\n}\n```",
+      "images": []
+    },
+    {
+      "id": 81,
+      "question": "Distributed locking?",
+      "answer": "```go\nimport \"github.com/go-redsync/redsync/v4\"\n\nrs := redsync.New(pool)\nmutex := rs.NewMutex(\"order-lock:\"+orderID,\n    redsync.WithExpiry(10*time.Second),\n    redsync.WithTries(3),\n)\n\nif err := mutex.LockContext(ctx); err != nil {\n    return ErrLockNotAcquired\n}\ndefer mutex.UnlockContext(ctx)\n\n// critical section\n```\n\nRedsync implements Redlock algorithm across multiple Redis nodes. For stronger guarantees, use etcd or ZooKeeper (Raft consensus).",
+      "images": []
+    },
+    {
+      "id": 82,
+      "question": "How do you implement observability?",
+      "answer": "The three pillars:\n\n```go\n// Logs — structured with slog/zap\nlogger.Info(\"order created\", slog.String(\"order_id\", id), slog.Int(\"amount\", amt))\n\n// Metrics — Prometheus\nvar requestDuration = prometheus.NewHistogramVec(\n    prometheus.HistogramOpts{Name: \"http_request_duration_seconds\"},\n    []string{\"method\", \"path\", \"status\"},\n)\nrequestDuration.WithLabelValues(\"POST\", \"/orders\", \"200\").Observe(dur.Seconds())\n\n// Traces — OpenTelemetry\nctx, span := tracer.Start(ctx, \"createOrder\")\ndefer span.End()\nspan.SetAttributes(attribute.String(\"order.id\", orderID))\n```\n\nConnect to: Grafana + Loki (logs), Prometheus + Grafana (metrics), Jaeger or Tempo (traces).",
+      "images": []
+    },
+    {
+      "id": 83,
+      "question": "Tracing with OpenTelemetry?",
+      "answer": "```go\nimport (\n    \"go.opentelemetry.io/otel\"\n    \"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc\"\n)\n\n// Setup exporter\nexporter, _ := otlptracegrpc.New(ctx,\n    otlptracegrpc.WithEndpoint(\"otel-collector:4317\"))\ntp := trace.NewTracerProvider(\n    trace.WithBatcher(exporter),\n    trace.WithResource(resource.NewWithAttributes(\n        semconv.ServiceNameKey.String(\"order-service\"),\n    )),\n)\notel.SetTracerProvider(tp)\n\n// Instrument\ntracer := otel.Tracer(\"order-service\")\nctx, span := tracer.Start(ctx, \"processOrder\")\ndefer span.End()\n\n// Auto-instrument HTTP, gRPC, DB with contrib packages\nimport \"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp\"\nmux.Handle(\"/orders\", otelhttp.NewHandler(handler, \"orders\"))\n```",
+      "images": []
+    },
+    {
+      "id": 84,
+      "question": "How do you deploy Go apps on Kubernetes?",
+      "answer": "```dockerfile\n# Multi-stage Dockerfile\nFROM golang:1.22-alpine AS builder\nWORKDIR /app\nCOPY go.mod go.sum ./\nRUN go mod download\nCOPY . .\nRUN CGO_ENABLED=0 GOOS=linux go build -o server ./cmd/server\n\nFROM gcr.io/distroless/static-debian11\nCOPY --from=builder /app/server /server\nEXPOSE 8080\nENTRYPOINT [\"/server\"]\n```\n\n```yaml\n# Kubernetes deployment\nresources:\n  requests: { cpu: \"100m\", memory: \"64Mi\" }\n  limits: { cpu: \"500m\", memory: \"128Mi\" }\nlivenessProbe:\n  httpGet: { path: /healthz, port: 8080 }\nreadinessProbe:\n  httpGet: { path: /readyz, port: 8080 }\n```",
+      "images": []
+    },
+    {
+      "id": 85,
+      "question": "Why are Go Docker images small?",
+      "answer": "- Go compiles to a **single static binary** with no external dependencies\n- No runtime (JVM, interpreter) to bundle\n- No shared libraries needed (with `CGO_ENABLED=0`)\n- `scratch` base image is literally 0 bytes; `distroless/static` is ~2MB\n- Comparison: Go ~10MB vs Java Spring Boot ~200–500MB",
+      "images": []
+    },
+    {
+      "id": 86,
+      "question": "Multi-stage Docker builds?",
+      "answer": "Multi-stage builds separate the build environment from the runtime environment:\n\n```dockerfile\n# Stage 1: Build (large image with compiler)\nFROM golang:1.22-alpine AS builder\n# ... compile ...\n\n# Stage 2: Runtime (tiny image, just the binary)\nFROM scratch\nCOPY --from=builder /app/server /server\nCOPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/\nENTRYPOINT [\"/server\"]\n```\n\nThe final image contains only what the binary needs at runtime. SSL certs are needed for HTTPS calls.",
+      "images": []
+    },
+    {
+      "id": 87,
+      "question": "CI/CD for Go services?",
+      "answer": "```yaml\n# GitHub Actions example\n- name: Test\n  run: go test -race -coverprofile=coverage.out ./...\n\n- name: Lint\n  uses: golangci/golangci-lint-action@v4\n\n- name: Build\n  run: |\n    CGO_ENABLED=0 go build -ldflags=\"-s -w\" -o server ./cmd/server\n\n- name: Docker build & push\n  run: |\n    docker build -t myrepo/service:${{ github.sha }} .\n    docker push myrepo/service:${{ github.sha }}\n\n- name: Deploy to Kubernetes\n  run: kubectl set image deployment/service server=myrepo/service:${{ github.sha }}\n```\n\nUse `-ldflags=\"-s -w\"` to strip debug info (reduces binary size ~30%).",
+      "images": []
+    },
+    {
+      "id": 88,
+      "question": "Kubernetes probes?",
+      "answer": "```yaml\nlivenessProbe:   # If this fails: restart the pod\n  httpGet:\n    path: /healthz\n    port: 8080\n  initialDelaySeconds: 10\n  periodSeconds: 10\n  failureThreshold: 3\n\nreadinessProbe:  # If this fails: remove from load balancer\n  httpGet:\n    path: /readyz\n    port: 8080\n  initialDelaySeconds: 5\n  periodSeconds: 5\n\nstartupProbe:    # Gives slow-starting apps time before liveness kicks in\n  httpGet:\n    path: /healthz\n    port: 8080\n  failureThreshold: 30\n  periodSeconds: 10\n```",
+      "images": []
+    },
+    {
+      "id": 89,
+      "question": "How do you monitor Go services?",
+      "answer": "```go\n// Expose Prometheus metrics\nimport \"github.com/prometheus/client_golang/prometheus/promhttp\"\nhttp.Handle(\"/metrics\", promhttp.Handler())\n\n// Custom metrics\nvar (\n    httpReqs = prometheus.NewCounterVec(\n        prometheus.CounterOpts{Name: \"http_requests_total\"},\n        []string{\"method\", \"status\"},\n    )\n    httpDuration = prometheus.NewHistogramVec(\n        prometheus.HistogramOpts{\n            Name:    \"http_request_duration_seconds\",\n            Buckets: prometheus.DefBuckets,\n        },\n        []string{\"method\", \"path\"},\n    )\n)\n```\n\nDashboards: Grafana with prebuilt Go dashboards (dashboard ID 6671 on Grafana.com). Alert on: p99 latency, error rate, goroutine count, heap usage, GC pause time.",
+      "images": []
+    },
+    {
+      "id": 90,
+      "question": "Prometheus integration?",
+      "answer": "```go\nprometheus.MustRegister(httpReqs, httpDuration)\n\nfunc metricsMiddleware(next http.Handler) http.Handler {\n    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {\n        start := time.Now()\n        rec := statusRecorder{ResponseWriter: w, Status: 200}\n        next.ServeHTTP(&rec, r)\n        \n        httpReqs.WithLabelValues(r.Method, strconv.Itoa(rec.Status)).Inc()\n        httpDuration.WithLabelValues(r.Method, r.URL.Path).\n            Observe(time.Since(start).Seconds())\n    })\n}\n```\n\nGo runtime exposes GC, goroutine, memory metrics automatically via `promhttp` when you import `prometheus/collectors`.",
+      "images": []
+    },
+    {
+      "id": 91,
+      "question": "Structured logging?",
+      "answer": "```go\n// slog (stdlib, Go 1.21+) — recommended default\nlogger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{\n    Level:     slog.LevelInfo,\n    AddSource: true,\n}))\nslog.SetDefault(logger)\n\n// Output: {\"time\":\"2024-...\",\"level\":\"INFO\",\"source\":\"main.go:42\",\"msg\":\"request\",\"method\":\"GET\",\"path\":\"/users\",\"latency_ms\":12}\n\n// Zap — when you need maximum performance\nlogger, _ := zap.NewProduction()\nlogger.Info(\"request processed\",\n    zap.String(\"method\", \"GET\"),\n    zap.Int(\"status\", 200),\n    zap.Duration(\"latency\", 12*time.Millisecond),\n)\n```\n\nInclude `trace_id` and `request_id` in every log line for correlation.",
+      "images": []
+    },
+    {
+      "id": 92,
+      "question": "How do you debug production crashes?",
+      "answer": "```go\n// 1. Panic recovery in HTTP middleware\ndefer func() {\n    if r := recover(); r != nil {\n        buf := make([]byte, 64<<10)\n        n := runtime.Stack(buf, false)\n        logger.Error(\"panic recovered\", \"error\", r, \"stack\", string(buf[:n]))\n        http.Error(w, \"internal server error\", 500)\n    }\n}()\n\n// 2. Core dumps (GOTRACEBACK=crash go run ...)\n// 3. Delve debugger: dlv attach <pid>\n// 4. pprof: continuous profiling with Pyroscope\n// 5. Read structured logs + traces in Grafana\n// 6. GOTRACEBACK=all prints all goroutine stacks on crash\n```",
+      "images": []
+    },
+    {
+      "id": 93,
+      "question": "Blue-green deployment?",
+      "answer": "Two identical production environments (Blue = current, Green = new version):\n\n1. Deploy new version to Green environment\n2. Run smoke tests against Green\n3. Switch load balancer to point traffic at Green\n4. Blue becomes the new standby (instant rollback: switch LB back)\n\nIn Kubernetes, implement with two Deployments and a Service selector switch, or use ArgoCD with blue-green strategy. Canary deployments (gradual traffic shift) are more common in practice — use Argo Rollouts or Flagger.",
+      "images": []
+    },
+    {
+      "id": 94,
+      "question": "GMP model explained",
+      "answer": "**G (Goroutine)**: The unit of concurrent execution. Contains its stack, program counter, goroutine ID, and status (running, runnable, waiting, dead).\n\n**M (Machine)**: An OS thread. Executes Go code. Each M needs a P to run goroutines. Can exist without P (in syscall).\n\n**P (Processor)**: A logical \"CPU\" for Go code. Holds a local run queue of runnable goroutines. The number of Ps = GOMAXPROCS. P is the bridge between M and runnable Gs.\n\n```\nGlobal Run Queue\n      │\nP0 ──►│◄── M0 (OS Thread)\nP1 ──►│◄── M1 (OS Thread)\n      │\n    Goroutines (G) waiting in P's local run queues\n```\n\nWork stealing: idle M picks a P, steals half of another P's run queue.",
+      "images": []
+    },
+    {
+      "id": 95,
+      "question": "What is work stealing?",
+      "answer": "When a P's local run queue is empty, it doesn't idle — it **steals** goroutines from other Ps:\n\n1. Check own local run queue → empty\n2. Check global run queue → take goroutines if any\n3. Check netpoller → take network-ready goroutines\n4. **Steal half** the goroutines from a random other P's local queue\n\nThis keeps all Ps busy and balances load automatically without explicit load balancing code.",
+      "images": []
+    },
+    {
+      "id": 96,
+      "question": "How do channel internals work?",
+      "answer": "A channel is a `runtime.hchan` struct:\n\n```go\ntype hchan struct {\n    qcount   uint           // current elements in queue\n    dataqsiz uint           // capacity (0 for unbuffered)\n    buf      unsafe.Pointer // circular buffer\n    elemsize uint16\n    closed   uint32\n    sendx    uint           // send index in circular buffer\n    recvx    uint           // receive index\n    recvq    waitq          // goroutines waiting to receive\n    sendq    waitq          // goroutines waiting to send\n    lock     mutex\n}\n```\n\nOn send to a full buffered channel (or unbuffered with no receiver):\n1. Current goroutine is packaged into a `sudog` struct\n2. Added to `sendq`\n3. Goroutine is parked (taken off run queue)\n4. When a receiver arrives, it copies the value and unparks the sender\n\nDirect send optimization: if a receiver is already waiting, the value is copied directly from sender's stack to receiver's stack, skipping the buffer.",
+      "images": []
+    },
+    {
+      "id": 97,
+      "question": "How does interface nil work?",
+      "answer": "An interface value is `nil` only when **both its type and value are nil**:\n\n```go\nvar err error = nil          // type=nil, value=nil → nil interface ✓\nfmt.Println(err == nil)      // true\n\nvar p *MyError = nil\nvar err error = p            // type=*MyError, value=nil → NOT nil interface!\nfmt.Println(err == nil)      // false ← surprising!\n```\n\nThis is the most common Go gotcha. When you assign a typed nil pointer to an interface, the interface is non-nil because the type field is set.",
+      "images": []
+    },
+    {
+      "id": 98,
+      "question": "Nil interface vs nil pointer?",
+      "answer": "```go\n// Nil interface: both type and value fields are nil\nvar i interface{} = nil   // i == nil: true\n\n// Interface holding a nil pointer: type is set, value is nil\nvar p *int = nil\nvar i interface{} = p     // i == nil: FALSE!\n// i.(type) == *int, i.(*int) == nil\n\n// Real-world problem\nfunc mayFail() error {\n    var err *MyError = nil\n    if condition { return err }  // returns non-nil error!\n    return nil                   // this is the correct way\n}\n```\n\nFix: never return a typed nil from a function returning an interface. Return `nil` directly.",
+      "images": []
+    },
+    {
+      "id": 99,
+      "question": "Why can interface comparisons panic?",
+      "answer": "Interface comparison with `==` panics at runtime if the underlying **dynamic type is not comparable** (e.g., slices, maps, functions):\n\n```go\nvar a, b interface{} = []int{1, 2}, []int{1, 2}\nfmt.Println(a == b)  // panic: runtime error: comparing uncomparable type []int\n```\n\nSafe comparison: use `reflect.DeepEqual` (slower) or type-assert to a concrete type before comparing. The compiler can't catch this because the type is only known at runtime.",
+      "images": []
+    },
+    {
+      "id": 100,
+      "question": "What are memory barriers?",
+      "answer": "A memory barrier (memory fence) is a CPU/compiler instruction that **prevents reordering** of memory operations across it.\n\nIn Go, you rarely deal with memory barriers directly — the `sync/atomic` package and channel operations include implicit barriers. For example, `atomic.Store` has a full barrier: all prior writes are visible to any core that subsequently calls `atomic.Load` on the same variable.\n\nWithout barriers, the CPU or compiler can reorder loads/stores for performance, breaking concurrent code that relies on ordering guarantees.\n\nGo's **memory model** guarantees: \"Within a single goroutine, reads and writes must behave as if they executed in the order specified by the program.\" Cross-goroutine ordering is only guaranteed via synchronization primitives (channels, mutexes, atomics).",
+      "images": []
+    },
+    {
+      "id": 101,
+      "question": "How does select choose cases?",
+      "answer": "When multiple cases in a `select` are ready simultaneously:\n\n1. All ready cases are collected\n2. One is chosen **uniformly at random** (using Go's internal pseudo-random generator seeded per goroutine)\n3. Its channel operation is performed\n\nThis prevents starvation of any single case in a statistical sense, but doesn't guarantee fairness over short periods (see select starvation above).\n\nInternally, `select` is compiled to a call to `runtime.selectgo`, which shuffles the cases array, locks all channel mutexes in a consistent order (to avoid deadlock), finds ready cases, picks one, then unlocks all.",
+      "images": []
+    },
+    {
+      "id": 102,
+      "question": "What is `sync.Pool`?",
+      "answer": "`sync.Pool` is a **cache of temporary, reusable objects** that reduces GC pressure by recycling allocations.\n\n```go\nvar bufPool = sync.Pool{\n    New: func() interface{} {\n        return new(bytes.Buffer)\n    },\n}\n\nfunc handler(w http.ResponseWriter, r *http.Request) {\n    buf := bufPool.Get().(*bytes.Buffer)\n    buf.Reset()\n    defer bufPool.Put(buf)\n\n    // use buf for JSON encoding, formatting, etc.\n    json.NewEncoder(buf).Encode(response)\n    w.Write(buf.Bytes())\n}\n```\n\nImportant: Pool objects **may be garbage collected at any time** (cleared each GC cycle). Don't use Pool for objects that must persist. Great for: buffers, encoder/decoder instances, temporary byte slices.",
+      "images": []
+    },
+    {
+      "id": 103,
+      "question": "Atomic operations?",
+      "answer": "`sync/atomic` provides low-level, lock-free operations that execute as single CPU instructions:\n\n```go\nvar counter int64\n\n// Atomic increment (no mutex needed)\natomic.AddInt64(&counter, 1)\n\n// Atomic load/store\nval := atomic.LoadInt64(&counter)\natomic.StoreInt64(&counter, 0)\n\n// Compare-and-swap (CAS) — the building block of lock-free algorithms\nold, new := int64(0), int64(1)\nswapped := atomic.CompareAndSwapInt64(&counter, old, new)\n\n// Go 1.19+: typed atomics\nvar v atomic.Int64\nv.Add(1)\nv.Load()\nv.Store(42)\nv.CompareAndSwap(42, 100)\n```\n\nUse atomics for simple counters and flags. For anything more complex, use a mutex — lock-free code is easy to get wrong.",
+      "images": []
+    },
+    {
+      "id": 104,
+      "question": "How does the garbage collector pause work?",
+      "answer": "Go's GC has two very short **stop-the-world (STW)** pauses:\n\n**STW 1 — Mark Setup** (~100µs):\n- Enable write barriers (so mutators don't break the tri-color invariant)\n- Scan goroutine stacks (very fast due to goroutine stack scanning)\n\n**STW 2 — Mark Termination** (~100µs):\n- Disable write barriers\n- Flush any remaining work\n- Finalize the mark phase\n\nEverything else (scanning heap, most stack scanning) runs **concurrently** with the application on dedicated GC goroutines using 25% of GOMAXPROCS.\n\nSince Go 1.14, even STW pauses of a handful of microseconds are common. Use `GODEBUG=gctrace=1` to log GC events.",
+      "images": []
+    },
+    {
+      "id": 105,
+      "question": "How do you reduce GC pressure?",
+      "answer": "```go\n// 1. Reuse allocations with sync.Pool\n// 2. Pre-allocate slices/maps with known capacity\nusers := make([]User, 0, expectedCount)\nm := make(map[string]int, expectedSize)\n\n// 3. Use value types instead of pointers where possible\n// (pointers = more GC scanning work)\n\n// 4. Reduce interface boxing — use concrete types in hot paths\n\n// 5. Avoid small, frequent allocations in hot loops\n// ❌ for _, item := range items { go process(&item) }  // alloc per item\n// ✅ worker pool + channel\n\n// 6. Use []byte buffers instead of string concatenation\nvar b strings.Builder\nb.WriteString(\"hello\"); b.WriteString(\" world\")\n\n// 7. Tune GOGC\n// GOGC=200 means GC runs when heap doubles to 200% of live data\n// (lower GC frequency, higher peak memory)\n\n// 8. Use arena allocator (experimental in Go 1.20+) for batch allocations\n```\n\nProfile first with `go tool pprof`: fix the allocations the profiler shows, not guesses.",
+      "images": []
+    }
+  ]
+}

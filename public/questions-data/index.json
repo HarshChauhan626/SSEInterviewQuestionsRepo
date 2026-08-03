@@ -1,0 +1,162 @@
+[
+  {
+    "file": "questions-data/agenticai.json",
+    "topic": "Agentic AI",
+    "description": "Autonomous agents, multi-agent systems, tool calling & LLM orchestration",
+    "icon": "🤖",
+    "accent": "#a78bfa",
+    "count": 50
+  },
+  {
+    "file": "questions-data/architecturalpatterns.json",
+    "topic": "Architecture Patterns",
+    "description": "Clean, Hexagonal, Repository, CQRS, Event Sourcing and more",
+    "icon": "🏗️",
+    "accent": "#6c8cff",
+    "count": 12
+  },
+  {
+    "file": "questions-data/databases.json",
+    "topic": "Databases",
+    "description": "PostgreSQL, MySQL, indexing, transactions, sharding, and DB internals",
+    "icon": "🗄️",
+    "accent": "#22d3a6",
+    "count": 100
+  },
+  {
+    "file": "questions-data/distributedsystems.json",
+    "topic": "Distributed Systems",
+    "description": "Consistency, CAP theorem, consensus, replication, and distributed design",
+    "icon": "🌐",
+    "accent": "#f97316",
+    "count": 151
+  },
+  {
+    "file": "questions-data/dotnet.json",
+    "topic": ".NET / C#",
+    "description": "C# fundamentals, ASP.NET, async/await, LINQ, and .NET internals",
+    "icon": "🔷",
+    "accent": "#60a5fa",
+    "count": 74
+  },
+  {
+    "file": "questions-data/golang.json",
+    "topic": "Golang",
+    "description": "Go language fundamentals, goroutines, channels, interfaces, and idioms",
+    "icon": "🐹",
+    "accent": "#34d399",
+    "count": 105
+  },
+  {
+    "file": "questions-data/golangcodequestions.json",
+    "topic": "Go Code Questions",
+    "description": "Hands-on Go coding challenges and code-reading questions",
+    "icon": "💻",
+    "accent": "#10b981",
+    "count": 5
+  },
+  {
+    "file": "questions-data/kafka.json",
+    "topic": "Kafka",
+    "description": "Kafka fundamentals, partitions, consumers, producers, and delivery guarantees",
+    "icon": "📨",
+    "accent": "#f59e0b",
+    "count": 87
+  },
+  {
+    "file": "questions-data/kubernetes.json",
+    "topic": "Kubernetes",
+    "description": "Pods, deployments, services, networking, storage, and K8s internals",
+    "icon": "☸️",
+    "accent": "#38bdf8",
+    "count": 120
+  },
+  {
+    "file": "questions-data/networkingessentials.json",
+    "topic": "Networking",
+    "description": "TCP/IP, HTTP, DNS, TLS, CDN, load balancing, and network protocols",
+    "icon": "🔌",
+    "accent": "#fb7185",
+    "count": 70
+  },
+  {
+    "file": "questions-data/nodejs.json",
+    "topic": "Node.js",
+    "description": "Event loop, V8, streams, modules, async patterns, and Node internals",
+    "icon": "🟢",
+    "accent": "#84cc16",
+    "count": 121
+  },
+  {
+    "file": "questions-data/observability.json",
+    "topic": "Observability",
+    "description": "Logging, metrics, tracing, OpenTelemetry, alerting, and incident response",
+    "icon": "📊",
+    "accent": "#c084fc",
+    "count": 130
+  },
+  {
+    "file": "questions-data/postgresql.json",
+    "topic": "PostgreSQL",
+    "description": "PostgreSQL internals, indexing, MVCC, query planning, and performance",
+    "icon": "🐘",
+    "accent": "#60a5fa",
+    "count": 62
+  },
+  {
+    "file": "questions-data/react.json",
+    "topic": "React / Next.js",
+    "description": "React hooks, state management, rendering, Next.js, and Redux",
+    "icon": "⚛️",
+    "accent": "#38bdf8",
+    "count": 9
+  },
+  {
+    "file": "questions-data/securityrelatedtopics.json",
+    "topic": "Security",
+    "description": "Auth, OAuth2, JWT, RBAC, API security, secrets management, and more",
+    "icon": "🔐",
+    "accent": "#f87171",
+    "count": 27
+  },
+  {
+    "file": "questions-data/systemdesigneventdrivenetc.json",
+    "topic": "System Design: Events",
+    "description": "Event-driven systems, microservices, messaging patterns, and reliability",
+    "icon": "⚡",
+    "accent": "#fbbf24",
+    "count": 130
+  },
+  {
+    "file": "questions-data/systemdesigninterviewdesigncheatsheet.json",
+    "topic": "System Design: Cheatsheet",
+    "description": "System design interview frameworks, patterns, and cheatsheet reference",
+    "icon": "📋",
+    "accent": "#f97316",
+    "count": 45
+  },
+  {
+    "file": "questions-data/systemdesignterminology.json",
+    "topic": "System Design: Terms",
+    "description": "Core system design vocabulary and terminology explained in depth",
+    "icon": "📖",
+    "accent": "#e879f9",
+    "count": 21
+  },
+  {
+    "file": "questions-data/websocket.json",
+    "topic": "WebSockets",
+    "description": "WebSocket protocol, scaling, security, reliability, and system design",
+    "icon": "🔄",
+    "accent": "#67e8f9",
+    "count": 60
+  },
+  {
+    "file": "questions-data/a2arag.json",
+    "topic": "A2A & RAG",
+    "description": "Agent-to-Agent communication and Retrieval Augmented Generation patterns",
+    "icon": "🔗",
+    "accent": "#a78bfa",
+    "count": 56
+  }
+]

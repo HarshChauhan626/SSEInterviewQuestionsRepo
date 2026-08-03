@@ -1,0 +1,735 @@
+{
+  "topic": "Node.js",
+  "description": "Event loop, V8, streams, modules, async patterns, and Node internals",
+  "icon": "🟢",
+  "accent": "#84cc16",
+  "source": "nodejs.md",
+  "questions": [
+    {
+      "id": 1,
+      "question": "Why is Node.js single-threaded?",
+      "answer": "Node.js was designed to handle many concurrent connections without the overhead of multi-threading. Traditional servers spawn a new thread per connection, which consumes memory and CPU for context switching. Node.js uses a **single main thread** with an event loop to handle concurrency through asynchronous, non-blocking I/O — making it lightweight and efficient.",
+      "images": []
+    },
+    {
+      "id": 2,
+      "question": "How does Node.js work internally?",
+      "answer": "1. Your JS code runs on the **V8 engine** (single-threaded).\n2. When an async operation (file read, network call) is encountered, it's handed off to **libuv**.\n3. libuv manages the **event loop** and uses a **thread pool** (or OS async APIs) to handle I/O.\n4. Once the operation completes, the callback is pushed to the appropriate queue.\n5. The event loop picks up the callback and runs it on the main thread.",
+      "images": []
+    },
+    {
+      "id": 3,
+      "question": "What is the V8 engine?",
+      "answer": "V8 is Google's open-source **JavaScript engine**, written in C++. It compiles JavaScript directly to native machine code using **JIT (Just-In-Time) compilation** rather than interpreting it, making execution extremely fast. Node.js embeds V8 to execute JS outside the browser.",
+      "images": []
+    },
+    {
+      "id": 4,
+      "question": "What makes Node.js fast?",
+      "answer": "- **V8 JIT compilation** — JS compiled to machine code at runtime.\n- **Non-blocking I/O** — threads aren't blocked waiting for I/O.\n- **Event loop** — handles thousands of concurrent connections on a single thread.\n- **libuv** — efficient async I/O with OS-level primitives (epoll, kqueue, IOCP).\n- **Minimal overhead** — no heavy thread management per request.",
+      "images": []
+    },
+    {
+      "id": 5,
+      "question": "Difference between Node.js and browser JavaScript",
+      "answer": "| Feature | Node.js | Browser JS |\n|---|---|---|\n| Environment | Server-side | Client-side |\n| Global object | `global` | `window` |\n| DOM access | ❌ No | ✅ Yes |\n| File system access | ✅ Yes (fs module) | ❌ No |\n| Module system | CommonJS / ESM | ESM (or bundlers) |\n| APIs | `http`, `fs`, `os`, `path` | `fetch`, `localStorage`, `document` |",
+      "images": []
+    },
+    {
+      "id": 6,
+      "question": "When should you use Node.js?",
+      "answer": "- Real-time applications (chat, gaming, live notifications)\n- REST APIs and microservices\n- Streaming applications (audio/video)\n- I/O-heavy workloads\n- CLI tools\n- Proxy servers\n- Anywhere JavaScript is used full-stack (sharing code between client and server)",
+      "images": []
+    },
+    {
+      "id": 7,
+      "question": "When should you NOT use Node.js?",
+      "answer": "- **CPU-intensive tasks** (image processing, ML, video encoding) — blocks the event loop.\n- Applications requiring heavy computation or complex numerical algorithms.\n- When a mature, battle-tested language ecosystem is more appropriate (e.g., Python for data science, Java for enterprise).",
+      "images": []
+    },
+    {
+      "id": 8,
+      "question": "Event Loop & Async",
+      "answer": "### 9. What is the event loop?\nThe event loop is the mechanism that allows Node.js to perform **non-blocking I/O** despite being single-threaded. It continuously checks if the call stack is empty, then picks up callbacks from queues and pushes them onto the stack for execution. It is the heart of Node.js's async model.",
+      "images": []
+    },
+    {
+      "id": 9,
+      "question": "Explain each phase of the event loop",
+      "answer": "The event loop has these phases (in order):\n\n1. **timers** — Executes callbacks from `setTimeout` and `setInterval` whose delay has expired.\n2. **pending callbacks** — Executes I/O callbacks deferred from the previous iteration.\n3. **idle, prepare** — Internal use only.\n4. **poll** — Retrieves new I/O events; executes I/O-related callbacks. Blocks here if no timers are pending.\n5. **check** — Executes `setImmediate` callbacks.\n6. **close callbacks** — Executes close event callbacks (e.g., `socket.on('close', ...)`).\n\nBetween each phase, Node.js processes **microtask queues**: `process.nextTick` first, then Promise `.then` callbacks.",
+      "images": []
+    },
+    {
+      "id": 10,
+      "question": "What are blocking and non-blocking operations?",
+      "answer": "- **Blocking**: The execution waits for the operation to complete before moving to the next line. Example: `fs.readFileSync()`.\n- **Non-blocking**: The operation is initiated and control is returned immediately. A callback is invoked when the operation completes. Example: `fs.readFile()`.",
+      "images": []
+    },
+    {
+      "id": 11,
+      "question": "What is asynchronous programming?",
+      "answer": "Asynchronous programming allows a program to **start a task and move on** without waiting for it to finish. When the task completes, the program is notified (via a callback, Promise, or event). This prevents blocking and enables handling multiple operations concurrently.",
+      "images": []
+    },
+    {
+      "id": 12,
+      "question": "Difference between synchronous and asynchronous code",
+      "answer": "| | Synchronous | Asynchronous |\n|---|---|---|\n| Execution | Sequential, blocking | Non-blocking, concurrent |\n| Performance | Poor under I/O load | Excellent under I/O load |\n| Error handling | try/catch | Callbacks, `.catch()`, try/await |\n| Example | `fs.readFileSync()` | `fs.readFile()` |",
+      "images": []
+    },
+    {
+      "id": 13,
+      "question": "What are callbacks?",
+      "answer": "A callback is a **function passed as an argument** to another function, to be called when an asynchronous operation completes.\n\n```js\nfs.readFile('file.txt', 'utf8', (err, data) => {\n  if (err) throw err;\n  console.log(data);\n});\n```",
+      "images": []
+    },
+    {
+      "id": 14,
+      "question": "What is callback hell?",
+      "answer": "Callback hell (also called the \"pyramid of doom\") is when callbacks are **nested inside each other** multiple levels deep, making code hard to read, debug, and maintain.\n\n```js\ngetUser(id, (user) => {\n  getOrders(user, (orders) => {\n    getDetails(orders[0], (details) => {\n      // deeply nested...\n    });\n  });\n});\n```",
+      "images": []
+    },
+    {
+      "id": 15,
+      "question": "How do Promises solve callback hell?",
+      "answer": "Promises allow chaining with `.then()` instead of nesting, making the code **flat and readable**:\n\n```js\ngetUser(id)\n  .then(user => getOrders(user))\n  .then(orders => getDetails(orders[0]))\n  .then(details => console.log(details))\n  .catch(err => console.error(err));\n```",
+      "images": []
+    },
+    {
+      "id": 16,
+      "question": "What are async/await?",
+      "answer": "`async/await` is syntactic sugar over Promises that makes async code look and behave like synchronous code:\n\n```js\nasync function main() {\n  try {\n    const user = await getUser(id);\n    const orders = await getOrders(user);\n    const details = await getDetails(orders[0]);\n    console.log(details);\n  } catch (err) {\n    console.error(err);\n  }\n}\n```\n\nA function marked `async` always returns a Promise. `await` pauses execution within that function until the Promise resolves.",
+      "images": []
+    },
+    {
+      "id": 17,
+      "question": "What is the difference between Promise and async/await?",
+      "answer": "They are functionally equivalent — `async/await` is built on Promises. The difference is **syntax and readability**. `async/await` is cleaner for sequential async flows; Promises with `.then()` can be more natural for parallel operations or when you don't need `await`.",
+      "images": []
+    },
+    {
+      "id": 18,
+      "question": "What is Promise chaining?",
+      "answer": "Promise chaining is linking multiple `.then()` calls where **each handler returns a new value or Promise**, passing results down the chain:\n\n```js\nfetch(url)\n  .then(res => res.json())\n  .then(data => processData(data))\n  .then(result => saveResult(result))\n  .catch(handleError);\n```",
+      "images": []
+    },
+    {
+      "id": 19,
+      "question": "What is Promise.all()?",
+      "answer": "`Promise.all(iterable)` takes an array of Promises and returns a single Promise that:\n- **Resolves** when **all** input Promises resolve (returns array of results).\n- **Rejects** immediately if **any** input Promise rejects (fail-fast).\n\n```js\nconst [users, posts] = await Promise.all([fetchUsers(), fetchPosts()]);\n```",
+      "images": []
+    },
+    {
+      "id": 20,
+      "question": "Difference between Promise.all, allSettled, race, and any",
+      "answer": "| Method | Resolves when | Rejects when |\n|---|---|---|\n| `Promise.all` | All resolve | Any rejects (fail-fast) |\n| `Promise.allSettled` | All settle (resolve or reject) | Never rejects |\n| `Promise.race` | First settles (resolve or reject) | First rejects |\n| `Promise.any` | First resolves | All reject |",
+      "images": []
+    },
+    {
+      "id": 21,
+      "question": "What happens when a Promise fails?",
+      "answer": "If a Promise rejects and there is no `.catch()` handler or `try/catch` with `await`, it results in an **UnhandledPromiseRejection** warning (and in newer Node.js versions, crashes the process). Always handle rejections.",
+      "images": []
+    },
+    {
+      "id": 22,
+      "question": "What are microtasks in Node.js?",
+      "answer": "Microtasks are high-priority tasks that run **before the event loop moves to the next phase**. They include:\n- `process.nextTick()` callbacks\n- Promise `.then()` / `.catch()` / `.finally()` callbacks\n\nMicrotasks are processed after every phase transition of the event loop.",
+      "images": []
+    },
+    {
+      "id": 23,
+      "question": "What are macrotasks?",
+      "answer": "Macrotasks (also called tasks) are processed **one per event loop iteration**. They include:\n- `setTimeout` callbacks\n- `setInterval` callbacks\n- `setImmediate` callbacks\n- I/O callbacks",
+      "images": []
+    },
+    {
+      "id": 24,
+      "question": "Difference between setTimeout and setImmediate",
+      "answer": "- `setTimeout(fn, 0)` — schedules callback in the **timers phase**. Even with 0ms delay, it's subject to OS timer resolution (~1ms minimum).\n- `setImmediate(fn)` — schedules callback in the **check phase**, which runs after the poll phase.\n\nIn I/O callbacks, `setImmediate` always runs before `setTimeout(fn, 0)`. Outside I/O, order is non-deterministic.",
+      "images": []
+    },
+    {
+      "id": 25,
+      "question": "What is process.nextTick()?",
+      "answer": "`process.nextTick(fn)` schedules a callback to run **at the end of the current operation**, before the event loop continues to the next phase. It has higher priority than Promise microtasks.\n\n```js\nprocess.nextTick(() => console.log('nextTick'));\nPromise.resolve().then(() => console.log('promise'));\n// Output: nextTick, then promise\n```",
+      "images": []
+    },
+    {
+      "id": 26,
+      "question": "Execution order of nextTick, Promise, setTimeout, and setImmediate",
+      "answer": "```js\nsetTimeout(() => console.log('setTimeout'), 0);\nsetImmediate(() => console.log('setImmediate'));\nPromise.resolve().then(() => console.log('promise'));\nprocess.nextTick(() => console.log('nextTick'));\n```\n\n**Output:**\n```\nnextTick\npromise\nsetTimeout  (or setImmediate — non-deterministic outside I/O)\nsetImmediate\n```\n\nOrder: `nextTick` → Promise microtasks → timers/setImmediate (phase-dependent).",
+      "images": []
+    },
+    {
+      "id": 27,
+      "question": "What is the call stack?",
+      "answer": "The call stack is a **LIFO (Last In, First Out) data structure** that tracks function execution. When a function is called, it's pushed onto the stack. When it returns, it's popped off. Node.js's single-threaded execution means only one function runs at a time on the call stack.",
+      "images": []
+    },
+    {
+      "id": 28,
+      "question": "What is the callback queue?",
+      "answer": "The callback queue (task queue) holds **callbacks from async operations** (timers, I/O) that are ready to execute. The event loop picks from this queue only when the call stack is empty.",
+      "images": []
+    },
+    {
+      "id": 29,
+      "question": "What is the event queue?",
+      "answer": "The event queue is essentially the same as the callback queue/task queue — it holds ready-to-execute callbacks that the event loop processes. In Node.js's context, there are multiple queues per event loop phase (timers queue, poll queue, check queue, etc.) plus microtask queues.",
+      "images": []
+    },
+    {
+      "id": 30,
+      "question": "Node.js Architecture",
+      "answer": "### 31. Explain Node.js architecture\nNode.js architecture has these layers:\n- **JavaScript code** — Your application code.\n- **Node.js core APIs** — Built-in modules (`fs`, `http`, `path`, etc.).\n- **Node.js bindings (C/C++)** — Bridges JS and the underlying C++ libraries.\n- **V8** — Executes JavaScript.\n- **libuv** — Provides the event loop, thread pool, and async I/O abstraction.\n- **OS** — System-level I/O (file system, networking, DNS).",
+      "images": []
+    },
+    {
+      "id": 31,
+      "question": "What is libuv?",
+      "answer": "libuv is a **cross-platform C library** that provides:\n- The **event loop** implementation.\n- **Thread pool** (default 4 threads) for blocking operations.\n- Async TCP/UDP sockets, DNS resolution, file system operations, timers, and child processes.\n- OS-specific async mechanisms (epoll on Linux, kqueue on macOS, IOCP on Windows).",
+      "images": []
+    },
+    {
+      "id": 32,
+      "question": "How does Node.js achieve concurrency?",
+      "answer": "Through the **event loop** and **non-blocking I/O**:\n- Async operations are offloaded to libuv (thread pool or OS async APIs).\n- The main thread remains free to handle other requests.\n- Callbacks are queued and executed when operations complete.\n- This achieves **concurrency without multi-threading** in application code.",
+      "images": []
+    },
+    {
+      "id": 33,
+      "question": "Difference between concurrency and parallelism",
+      "answer": "- **Concurrency**: Multiple tasks are in progress at the same time, but not necessarily executing simultaneously. They interleave on one or more processors (Node.js event loop model).\n- **Parallelism**: Tasks are executing literally at the same instant on multiple CPU cores (worker threads, cluster module).",
+      "images": []
+    },
+    {
+      "id": 34,
+      "question": "What operations are handled by thread pool?",
+      "answer": "libuv's thread pool handles operations that don't have async OS support:\n- File system operations (`fs` module)\n- DNS lookups (`dns.lookup`)\n- CPU-intensive crypto operations (`crypto` module — hashing, pbkdf2)\n- Compression (`zlib`)\n- User-defined C++ addon async work\n\nNetwork I/O (TCP, UDP) uses OS async primitives and does **not** use the thread pool.",
+      "images": []
+    },
+    {
+      "id": 35,
+      "question": "What is the default thread pool size?",
+      "answer": "The default thread pool size is **4 threads** (`UV_THREADPOOL_SIZE = 4`).",
+      "images": []
+    },
+    {
+      "id": 36,
+      "question": "How can you increase thread pool size?",
+      "answer": "Set the environment variable before starting Node.js:\n\n```bash\nUV_THREADPOOL_SIZE=16 node app.js\n```\n\nOr in code (must be set before any libuv calls):\n\n```js\nprocess.env.UV_THREADPOOL_SIZE = 16;\n```\n\nMaximum value is 1024.",
+      "images": []
+    },
+    {
+      "id": 37,
+      "question": "What is the worker thread module?",
+      "answer": "`worker_threads` is a Node.js module that enables **true parallel JavaScript execution** across multiple threads. Each worker runs in its own V8 instance and event loop, with communication via `MessageChannel`. Ideal for CPU-intensive tasks.\n\n```js\nconst { Worker } = require('worker_threads');\nconst worker = new Worker('./heavy-task.js');\nworker.on('message', result => console.log(result));\n```",
+      "images": []
+    },
+    {
+      "id": 38,
+      "question": "Difference between worker threads and child processes",
+      "answer": "| | Worker Threads | Child Processes |\n|---|---|---|\n| Memory | Shared (`SharedArrayBuffer`) | Separate memory spaces |\n| Startup | Lightweight | Heavier (new process) |\n| Communication | Fast (shared memory / messages) | IPC (slower) |\n| Use case | CPU-intensive JS tasks | Running separate programs |\n| Isolation | Low | High |",
+      "images": []
+    },
+    {
+      "id": 39,
+      "question": "What are child processes?",
+      "answer": "Child processes allow Node.js to **spawn new OS processes** to run commands or other Node.js scripts. Useful for running shell commands, scripts, or CPU-heavy tasks in isolation. Communication happens via IPC (stdin/stdout/stderr).",
+      "images": []
+    },
+    {
+      "id": 40,
+      "question": "Types of child processes in Node.js",
+      "answer": "The `child_process` module provides:\n- `spawn` — Stream-based; launches a command.\n- `exec` — Buffers output; runs command in a shell.\n- `execFile` — Like `exec` but directly executes a file (no shell).\n- `fork` — Special `spawn` for Node.js scripts with built-in IPC channel.",
+      "images": []
+    },
+    {
+      "id": 41,
+      "question": "Difference between spawn, exec, execFile, and fork",
+      "answer": "| Method | Shell | Output | Use Case |\n|---|---|---|---|\n| `spawn` | No | Streaming | Large output, long-running |\n| `exec` | Yes | Buffered | Short commands with shell features |\n| `execFile` | No | Buffered | Execute binary files directly |\n| `fork` | No | IPC messages | Run Node.js child with IPC |",
+      "images": []
+    },
+    {
+      "id": 42,
+      "question": "What is CommonJS?",
+      "answer": "CommonJS (CJS) is the **original module system** for Node.js. Files use `.js` extension, `require()` for imports, and `module.exports` for exports. It loads modules **synchronously**.\n\n```js\n// math.js\nmodule.exports = { add: (a, b) => a + b };\n\n// app.js\nconst { add } = require('./math');\n```",
+      "images": []
+    },
+    {
+      "id": 43,
+      "question": "What is require()?",
+      "answer": "`require()` is a built-in function in CommonJS that **loads and caches a module**. It resolves the path, loads the file, wraps it in a function, executes it, and returns `module.exports`. Subsequent calls return the cached module.",
+      "images": []
+    },
+    {
+      "id": 44,
+      "question": "What is module.exports?",
+      "answer": "`module.exports` is the **object returned by `require()`** when loading a module. You assign what you want to export to it.\n\n```js\nmodule.exports = function greet(name) {\n  return `Hello, ${name}`;\n};\n```",
+      "images": []
+    },
+    {
+      "id": 45,
+      "question": "Difference between exports and module.exports",
+      "answer": "- `exports` is a **shorthand reference** to `module.exports`.\n- You can add properties to `exports`: `exports.foo = bar` (works fine).\n- But if you **reassign** `exports = something`, you break the reference — `require()` still returns the original `module.exports`.\n- Always use `module.exports` when exporting a single value or replacing the entire export.",
+      "images": []
+    },
+    {
+      "id": 46,
+      "question": "What are ES Modules?",
+      "answer": "ES Modules (ESM) is the **official ECMAScript module standard**. Uses `import`/`export` syntax, files use `.mjs` extension or `\"type\": \"module\"` in `package.json`. Loads **asynchronously** and supports static analysis.\n\n```js\n// math.mjs\nexport const add = (a, b) => a + b;\n\n// app.mjs\nimport { add } from './math.mjs';\n```",
+      "images": []
+    },
+    {
+      "id": 47,
+      "question": "Difference between CommonJS and ES Modules",
+      "answer": "| Feature | CommonJS | ES Modules |\n|---|---|---|\n| Syntax | `require` / `module.exports` | `import` / `export` |\n| Loading | Synchronous | Asynchronous |\n| Execution | Runtime | Static (parse time) |\n| Default in Node.js | Yes (legacy) | With `.mjs` or `\"type\":\"module\"` |\n| Tree shaking | No | Yes |\n| `__dirname` / `__filename` | Available | Not available (use `import.meta.url`) |",
+      "images": []
+    },
+    {
+      "id": 48,
+      "question": "What is dynamic import()?",
+      "answer": "`import()` is an **async function** that loads a module at runtime (works in both CJS and ESM):\n\n```js\nconst module = await import('./heavy-module.js');\nmodule.doSomething();\n```\n\nUseful for **lazy loading** and conditional imports.",
+      "images": []
+    },
+    {
+      "id": 49,
+      "question": "How does module caching work?",
+      "answer": "After a module is first `require()`d, it is **cached** in `require.cache` (keyed by resolved filename). Subsequent `require()` calls return the cached `module.exports` without re-executing the file. This means modules are singletons.",
+      "images": []
+    },
+    {
+      "id": 50,
+      "question": "How do you clear module cache?",
+      "answer": "```js\ndelete require.cache[require.resolve('./myModule')];\n```\n\nAfter deletion, the next `require('./myModule')` re-executes the file. Used in testing or hot-reload scenarios.",
+      "images": []
+    },
+    {
+      "id": 51,
+      "question": "What is circular dependency in modules?",
+      "answer": "Circular dependency occurs when **Module A requires Module B, and Module B requires Module A**. Node.js handles this by returning a **partially populated `module.exports`** at the point of the circular reference, which can cause unexpected `undefined` values if not handled carefully.",
+      "images": []
+    },
+    {
+      "id": 52,
+      "question": "File System (fs)",
+      "answer": "### 54. What is the fs module?\nThe `fs` (File System) module is a **built-in Node.js module** that provides APIs to interact with the file system — reading, writing, deleting, renaming files and directories, watching for changes, and more.",
+      "images": []
+    },
+    {
+      "id": 53,
+      "question": "Difference between synchronous and asynchronous fs methods",
+      "answer": "- **Synchronous** (`fs.readFileSync`) — Blocks the event loop until complete. Use only in startup scripts or CLI tools.\n- **Asynchronous** (`fs.readFile`) — Non-blocking; callback/Promise is called when done. Use in servers and production code.",
+      "images": []
+    },
+    {
+      "id": 54,
+      "question": "How do you read files in Node.js?",
+      "answer": "```js\n// Async (callback)\nfs.readFile('file.txt', 'utf8', (err, data) => console.log(data));\n\n// Async (Promise)\nconst data = await fs.promises.readFile('file.txt', 'utf8');\n\n// Sync\nconst data = fs.readFileSync('file.txt', 'utf8');\n```",
+      "images": []
+    },
+    {
+      "id": 55,
+      "question": "How do you write files?",
+      "answer": "```js\n// Async\nfs.writeFile('file.txt', 'Hello', (err) => { if (err) throw err; });\n\n// Append\nfs.appendFile('file.txt', '\\nMore data', (err) => {});\n\n// Sync\nfs.writeFileSync('file.txt', 'Hello');\n```",
+      "images": []
+    },
+    {
+      "id": 56,
+      "question": "Difference between readFile and createReadStream",
+      "answer": "- `readFile` — Reads the **entire file into memory** before returning. Fine for small files.\n- `createReadStream` — Reads the file in **chunks** (as a stream). Memory-efficient for large files. Allows processing data as it arrives.",
+      "images": []
+    },
+    {
+      "id": 57,
+      "question": "What are streams?",
+      "answer": "Streams are **objects that handle reading/writing data sequentially** in chunks, rather than all at once. They're ideal for large data (files, network responses) because they process data piece by piece without loading everything into memory.",
+      "images": []
+    },
+    {
+      "id": 58,
+      "question": "Types of streams in Node.js",
+      "answer": "1. **Readable** — Data can be read from (e.g., `fs.createReadStream`, `http.IncomingMessage`).\n2. **Writable** — Data can be written to (e.g., `fs.createWriteStream`, `http.ServerResponse`).\n3. **Duplex** — Both readable and writable (e.g., TCP sockets).\n4. **Transform** — Duplex stream that modifies data as it passes through (e.g., `zlib.createGzip`).",
+      "images": []
+    },
+    {
+      "id": 59,
+      "question": "What is piping in streams?",
+      "answer": "Piping connects a **Readable stream to a Writable stream**, automatically forwarding data chunks and handling backpressure:\n\n```js\nconst readable = fs.createReadStream('input.txt');\nconst writable = fs.createWriteStream('output.txt');\nreadable.pipe(writable);\n```",
+      "images": []
+    },
+    {
+      "id": 60,
+      "question": "What is backpressure?",
+      "answer": "Backpressure occurs when a **Writable stream can't consume data as fast as a Readable produces it**. The Readable should pause until the Writable drains. Node.js streams handle this automatically via `pipe()`. If ignored, it leads to excessive memory usage.",
+      "images": []
+    },
+    {
+      "id": 61,
+      "question": "How does stream buffering work?",
+      "answer": "Each stream has an internal buffer with a **highWaterMark** (default 16KB for byte streams). Data is buffered until consumed. For Readable streams, if the buffer fills and isn't consumed, the stream pauses. For Writable streams, `write()` returns `false` when the buffer is full (signal to pause the source).",
+      "images": []
+    },
+    {
+      "id": 62,
+      "question": "What are buffers?",
+      "answer": "Buffers are **fixed-size chunks of memory** in Node.js (outside the V8 heap) for handling binary data. Used when dealing with raw bytes — TCP streams, file I/O, image data, etc.\n\n```js\nconst buf = Buffer.from('Hello', 'utf8');\nconsole.log(buf); // <Buffer 48 65 6c 6c 6f>\n```",
+      "images": []
+    },
+    {
+      "id": 63,
+      "question": "Difference between buffer and stream",
+      "answer": "- **Buffer**: A fixed-size, in-memory container for binary data. Holds data statically.\n- **Stream**: A continuous flow of data chunks over time. Uses buffers internally but processes data incrementally.\n\nA stream uses buffers to temporarily hold chunks as they flow through.",
+      "images": []
+    },
+    {
+      "id": 64,
+      "question": "How does event-driven programming work?",
+      "answer": "In event-driven programming, the flow of the program is determined by **events** (user input, I/O completion, messages). Producers emit events; consumers register listeners. The event loop drives execution — no polling, just waiting and reacting. This decouples components and enables async, reactive behavior.",
+      "images": []
+    },
+    {
+      "id": 65,
+      "question": "Difference between emit and on",
+      "answer": "- `emitter.on(event, listener)` — **Registers** a listener for the event (persistent).\n- `emitter.emit(event, ...args)` — **Triggers** the event, calling all registered listeners synchronously.",
+      "images": []
+    },
+    {
+      "id": 66,
+      "question": "What is once() in EventEmitter?",
+      "answer": "`emitter.once(event, listener)` registers a listener that is **automatically removed after being called once**:\n\n```js\nemitter.once('connect', () => console.log('Connected!'));\n```",
+      "images": []
+    },
+    {
+      "id": 67,
+      "question": "How do you remove listeners?",
+      "answer": "```js\nfunction handler() { console.log('event'); }\n\nemitter.on('event', handler);\nemitter.off('event', handler);         // or\nemitter.removeListener('event', handler);\nemitter.removeAllListeners('event');   // remove all\n```",
+      "images": []
+    },
+    {
+      "id": 68,
+      "question": "What causes memory leak warnings in EventEmitter?",
+      "answer": "By default, Node.js warns when more than **10 listeners** are added to a single event. This is a safeguard against accidentally adding listeners in loops without removing them, causing a memory leak. Warning: `MaxListenersExceededWarning`.",
+      "images": []
+    },
+    {
+      "id": 69,
+      "question": "What is the max listener limit?",
+      "answer": "Default is **10**. Change it with:\n\n```js\nemitter.setMaxListeners(20);\nEventEmitter.defaultMaxListeners = 20; // globally\n```\n\nSet to `0` for unlimited (use with caution).",
+      "images": []
+    },
+    {
+      "id": 70,
+      "question": "How does setInterval work?",
+      "answer": "`setInterval(fn, interval)` repeatedly schedules a callback every `interval` milliseconds. Internally, after each execution, the next timer is re-registered. If the callback takes longer than the interval, executions may stack up (though Node.js won't call it again until the current one finishes).",
+      "images": []
+    },
+    {
+      "id": 71,
+      "question": "Difference between setImmediate and setTimeout(fn, 0)",
+      "answer": "Both execute \"soon,\" but in different event loop phases:\n- `setTimeout(fn, 0)` — Runs in the **timers phase** (subject to min ~1ms delay).\n- `setImmediate(fn)` — Runs in the **check phase**, after I/O events.\n\nInside an I/O callback, `setImmediate` **always** runs first. Outside, the order is non-deterministic.",
+      "images": []
+    },
+    {
+      "id": 72,
+      "question": "What is clearTimeout?",
+      "answer": "`clearTimeout(id)` cancels a timer before it fires. `setTimeout` returns a `Timeout` object (or integer ID) that you pass to `clearTimeout`:\n\n```js\nconst id = setTimeout(() => console.log('fired'), 5000);\nclearTimeout(id); // cancelled\n```\n\nSimilarly, `clearInterval` cancels `setInterval`, and `clearImmediate` cancels `setImmediate`.",
+      "images": []
+    },
+    {
+      "id": 73,
+      "question": "What keeps Node.js process alive?",
+      "answer": "Node.js stays alive as long as there are:\n- Pending callbacks (timers, I/O, `setImmediate`)\n- Active server listeners (e.g., `http.createServer().listen()`)\n- Active handles (sockets, file watchers)\n- Worker threads running\n\nOnce all queues are empty and no handles are active, Node.js exits.",
+      "images": []
+    },
+    {
+      "id": 74,
+      "question": "Process & OS",
+      "answer": "### 78. What is the process object?\n`process` is a **global object** in Node.js providing information and control over the current Node.js process — environment variables, command-line args, stdin/stdout, exit codes, memory usage, and lifecycle events.",
+      "images": []
+    },
+    {
+      "id": 75,
+      "question": "Commonly used process methods/properties",
+      "answer": "- `process.argv` — Command-line arguments.\n- `process.env` — Environment variables.\n- `process.cwd()` — Current working directory.\n- `process.exit(code)` — Exit with a status code.\n- `process.pid` — Process ID.\n- `process.platform` — OS platform (linux, darwin, win32).\n- `process.memoryUsage()` — Memory usage stats.\n- `process.uptime()` — Process uptime in seconds.\n- `process.nextTick(fn)` — Schedule microtask.\n- `process.on('uncaughtException', fn)` — Handle uncaught errors.",
+      "images": []
+    },
+    {
+      "id": 76,
+      "question": "What is process.env?",
+      "answer": "`process.env` is an object containing the **environment variables** of the process. Used to store configuration (database URLs, API keys, feature flags) outside the codebase:\n\n```js\nconst port = process.env.PORT || 3000;\nconst dbUrl = process.env.DATABASE_URL;\n```",
+      "images": []
+    },
+    {
+      "id": 77,
+      "question": "What is process.cwd()?",
+      "answer": "`process.cwd()` returns the **current working directory** — the directory from which the Node.js process was launched. Can change if `process.chdir()` is called.",
+      "images": []
+    },
+    {
+      "id": 78,
+      "question": "Difference between __dirname and process.cwd()",
+      "answer": "- `__dirname` — The **directory of the current file** (the module). Fixed, regardless of where the process was started.\n- `process.cwd()` — The **directory where `node` was run from**. Can be different from `__dirname`.\n\nUse `__dirname` for file paths relative to the source file. Use `process.cwd()` for paths relative to the working directory.",
+      "images": []
+    },
+    {
+      "id": 79,
+      "question": "What is process.exit()?",
+      "answer": "`process.exit(code)` immediately **terminates the Node.js process** with the given exit code. Code `0` = success; non-zero = error. Pending async operations are abandoned (no cleanup).",
+      "images": []
+    },
+    {
+      "id": 80,
+      "question": "What are exit codes?",
+      "answer": "Exit codes are integer values returned by a process to the OS on exit:\n- `0` — Success.\n- `1` — Uncaught fatal exception.\n- `2` — Misuse of shell built-ins.\n- `3-10` — Various internal Node.js error codes.\n- User-defined codes can be set via `process.exitCode` or `process.exit(code)`.",
+      "images": []
+    },
+    {
+      "id": 81,
+      "question": "How do you handle uncaught exceptions?",
+      "answer": "```js\nprocess.on('uncaughtException', (err) => {\n  console.error('Uncaught:', err);\n  // Perform cleanup\n  process.exit(1); // Always exit after uncaughtException\n});\n\nprocess.on('unhandledRejection', (reason, promise) => {\n  console.error('Unhandled Rejection:', reason);\n});\n```\n\n> **Warning**: After `uncaughtException`, the process is in an undefined state. Always exit after logging/cleanup.",
+      "images": []
+    },
+    {
+      "id": 82,
+      "question": "What is process.memoryUsage()?",
+      "answer": "Returns an object with memory stats (in bytes):\n```js\n{\n  rss: 30720000,        // Resident Set Size (total memory)\n  heapTotal: 7159808,   // Total heap allocated by V8\n  heapUsed: 4914392,    // Heap actually used\n  external: 915416,     // Memory used by C++ objects\n  arrayBuffers: 9386    // Memory for ArrayBuffers/SharedArrayBuffers\n}\n```",
+      "images": []
+    },
+    {
+      "id": 83,
+      "question": "How do you monitor CPU and memory usage?",
+      "answer": "- `process.memoryUsage()` — Memory snapshot.\n- `process.cpuUsage()` — CPU time used.\n- **External tools**: `clinic.js`, `0x`, `heapdump`, `node --prof`.\n- **APM**: New Relic, Datadog, PM2 monitoring.\n- **Built-in**: `--inspect` flag + Chrome DevTools / VS Code debugger.",
+      "images": []
+    },
+    {
+      "id": 84,
+      "question": "How do you handle async errors?",
+      "answer": "- **Callbacks**: Check the first `err` argument.\n- **Promises**: Use `.catch()`.\n- **async/await**: Wrap in `try/catch`.\n- **Global**: `process.on('unhandledRejection', ...)`.",
+      "images": []
+    },
+    {
+      "id": 85,
+      "question": "What is try-catch limitation with async code?",
+      "answer": "`try/catch` **cannot catch errors in callbacks** or un-awaited Promises:\n\n```js\ntry {\n  setTimeout(() => { throw new Error('oops'); }, 100); // NOT caught!\n} catch (e) {\n  console.log('caught'); // Never runs\n}\n```\n\n`try/catch` only works with `await` in async functions or synchronous code.",
+      "images": []
+    },
+    {
+      "id": 86,
+      "question": "What is unhandledPromiseRejection?",
+      "answer": "When a Promise is rejected and **no `.catch()` or `try/catch` handles it**, Node.js emits `unhandledRejection`. In Node.js 15+, this **crashes the process** by default (same as an uncaught exception). Handle via `process.on('unhandledRejection', ...)`.",
+      "images": []
+    },
+    {
+      "id": 87,
+      "question": "Difference between operational and programmer errors",
+      "answer": "- **Operational errors**: Expected, runtime problems a program must handle gracefully (file not found, network timeout, invalid input). Recover from them.\n- **Programmer errors**: Bugs — accessing `.length` on `undefined`, wrong argument types. These should crash the process (fix the code, not catch the error).",
+      "images": []
+    },
+    {
+      "id": 88,
+      "question": "What is custom error handling?",
+      "answer": "Creating custom error classes for domain-specific errors:\n\n```js\nclass ValidationError extends Error {\n  constructor(message, field) {\n    super(message);\n    this.name = 'ValidationError';\n    this.field = field;\n  }\n}\n\nthrow new ValidationError('Invalid email', 'email');\n```\n\nAllows `instanceof` checks and structured error handling.",
+      "images": []
+    },
+    {
+      "id": 89,
+      "question": "What causes memory leaks?",
+      "answer": "Memory leaks occur when objects are **unintentionally kept in memory** and never garbage collected:\n- Forgotten timers/intervals with references.\n- Unbounded caches (Maps/arrays that grow forever).\n- Event listeners not removed.\n- Closures holding references to large objects.\n- Global variables accumulating data.",
+      "images": []
+    },
+    {
+      "id": 90,
+      "question": "Common memory leak scenarios",
+      "answer": "1. `setInterval` holding references without `clearInterval`.\n2. Accumulating event listeners on EventEmitter without removing them.\n3. Module-level arrays/maps used as caches with no eviction.\n4. Closures capturing large objects longer than necessary.\n5. Storing user session data in global scope.",
+      "images": []
+    },
+    {
+      "id": 91,
+      "question": "How do closures cause memory leaks?",
+      "answer": "Closures retain references to their **outer scope's variables**. If a closure is stored (e.g., as a callback or event listener) and the outer scope holds a reference to a large object, that object is kept alive even if no longer needed:\n\n```js\nfunction init() {\n  const bigData = new Array(1000000).fill('*');\n  return () => console.log('using closure'); // bigData stays in memory!\n}\nconst fn = init(); // bigData never GC'd as long as fn exists\n```",
+      "images": []
+    },
+    {
+      "id": 92,
+      "question": "How do global variables affect memory?",
+      "answer": "Global variables are **never garbage collected** during the process lifetime. Accumulating data in globals (caches, logs, session data) causes steady memory growth. Always prefer scoped variables and bounded data structures.",
+      "images": []
+    },
+    {
+      "id": 93,
+      "question": "How do you debug memory leaks?",
+      "answer": "1. `--inspect` flag + Chrome DevTools Memory tab (heap snapshots, allocation timelines).\n2. `node --heap-prof` — Generate V8 heap profile.\n3. `heapdump` npm package — Capture heap snapshots programmatically.\n4. `clinic.js` / `0x` — Flame graphs and profiling.\n5. Monitor `process.memoryUsage().heapUsed` over time.\n6. Look for steady growth in RSS after requests.",
+      "images": []
+    },
+    {
+      "id": 94,
+      "question": "What is heap memory?",
+      "answer": "The **heap** is where V8 dynamically allocates memory for objects, closures, and arrays. It's managed by the garbage collector. The heap has a default size limit (around 1.5GB on 64-bit). Increase with `--max-old-space-size=4096` (MB).",
+      "images": []
+    },
+    {
+      "id": 95,
+      "question": "Difference between stack and heap",
+      "answer": "| | Stack | Heap |\n|---|---|---|\n| Stores | Primitive values, function call frames | Objects, arrays, closures |\n| Management | Automatic (LIFO) | Garbage collected |\n| Size | Small, fixed | Large, dynamic |\n| Speed | Very fast | Slower |\n| Scope | Local to function | Reference-based lifetime |",
+      "images": []
+    },
+    {
+      "id": 96,
+      "question": "Why are streams memory efficient?",
+      "answer": "Streams process data **chunk by chunk** rather than loading everything into memory. For a 1GB file, `readFile` loads the whole GB into RAM, while `createReadStream` only ever holds one chunk (~16KB) in memory at a time. This allows processing files larger than available RAM and keeps heap usage flat.",
+      "images": []
+    },
+    {
+      "id": 97,
+      "question": "What is clustering?",
+      "answer": "Clustering spawns **multiple Node.js processes** (workers), each on a separate CPU core, all sharing the same server port. The master process distributes incoming connections among workers, utilizing multi-core CPUs.",
+      "images": []
+    },
+    {
+      "id": 98,
+      "question": "How does cluster module work?",
+      "answer": "```js\nconst cluster = require('cluster');\nconst os = require('os');\n\nif (cluster.isPrimary) {\n  for (let i = 0; i < os.cpus().length; i++) {\n    cluster.fork(); // Spawn a worker per CPU\n  }\n} else {\n  require('./server'); // Each worker runs the server\n}\n```\n\nWorkers share the same port; the OS distributes connections (or the master with explicit IPC).",
+      "images": []
+    },
+    {
+      "id": 99,
+      "question": "Difference between cluster and worker threads",
+      "answer": "| | Cluster | Worker Threads |\n|---|---|---|\n| Unit | Separate OS processes | Threads in the same process |\n| Memory | Independent | Shareable (`SharedArrayBuffer`) |\n| Use case | Scale HTTP servers across CPUs | CPU-intensive JS computation |\n| Fault isolation | High (crash one worker, others live) | Lower |\n| Communication | IPC (serialized) | Fast (shared memory or messages) |",
+      "images": []
+    },
+    {
+      "id": 100,
+      "question": "What is load balancing in Node.js?",
+      "answer": "Load balancing distributes incoming requests across multiple server instances/workers to prevent overload. In Node.js:\n- **Cluster module** — OS-level round-robin across worker processes.\n- **PM2** — Process manager with built-in load balancing.\n- **Nginx / HAProxy** — External reverse proxy distributing across Node.js instances.",
+      "images": []
+    },
+    {
+      "id": 101,
+      "question": "CPU-bound vs I/O-bound tasks",
+      "answer": "- **I/O-bound**: Performance limited by input/output speed (database queries, file reads, network calls). Node.js excels here — async I/O lets it handle thousands concurrently.\n- **CPU-bound**: Performance limited by processor speed (image encoding, encryption, sorting large datasets). These block the event loop — use worker threads or offload to a separate service.",
+      "images": []
+    },
+    {
+      "id": 102,
+      "question": "Why is Node.js not ideal for CPU-intensive tasks?",
+      "answer": "Node.js runs JS on a **single thread**. A CPU-intensive operation blocks the event loop — no other requests can be handled until it completes. This kills throughput. Solutions: worker threads, child processes, or dedicated microservices in a CPU-optimized language.",
+      "images": []
+    },
+    {
+      "id": 103,
+      "question": "How do you profile Node.js applications?",
+      "answer": "- `node --inspect app.js` + Chrome DevTools (`chrome://inspect`) — CPU profiles, heap snapshots.\n- `node --prof app.js` → `node --prof-process isolate-*.log` — V8 profiler.\n- `clinic.js` — All-in-one profiling (Doctor, Flame, Bubbleprof).\n- `0x` — Flamegraph profiler.\n- `autocannon` / `wrk` — Load testing to identify bottlenecks.\n- `perf_hooks` module — Custom performance measurements.",
+      "images": []
+    },
+    {
+      "id": 104,
+      "question": "How do you create a server using core Node.js?",
+      "answer": "```js\nconst http = require('http');\n\nconst server = http.createServer((req, res) => {\n  res.writeHead(200, { 'Content-Type': 'text/plain' });\n  res.end('Hello, World!\\n');\n});\n\nserver.listen(3000, () => {\n  console.log('Server running on port 3000');\n});\n```",
+      "images": []
+    },
+    {
+      "id": 105,
+      "question": "What happens internally when a request hits a Node.js server?",
+      "answer": "1. OS receives a TCP connection and notifies libuv.\n2. libuv adds the connection event to the event loop.\n3. Node.js's `http` module parses the HTTP request (headers, method, URL).\n4. The `request` event is emitted on the server.\n5. Your callback runs on the main thread.\n6. The response is sent back through the TCP socket.\n7. The connection is closed or kept alive (keep-alive).",
+      "images": []
+    },
+    {
+      "id": 106,
+      "question": "What are sockets?",
+      "answer": "Sockets are **endpoints for communication** between two machines over a network. A socket has an IP address and port number. In Node.js, the `net` module provides TCP sockets and the `dgram` module provides UDP sockets. `socket.io` builds real-time bidirectional communication over WebSockets.",
+      "images": []
+    },
+    {
+      "id": 107,
+      "question": "What is TCP?",
+      "answer": "TCP (Transmission Control Protocol) is a **connection-oriented, reliable transport protocol**. It guarantees:\n- Data is delivered in order.\n- No data is lost (retransmission).\n- Error detection.\n- Flow and congestion control.\nUsed for HTTP, HTTPS, databases, SSH. Node.js's `net` module provides raw TCP.",
+      "images": []
+    },
+    {
+      "id": 108,
+      "question": "Difference between TCP and UDP",
+      "answer": "| | TCP | UDP |\n|---|---|---|\n| Connection | Connection-oriented | Connectionless |\n| Reliability | Guaranteed delivery | Best-effort |\n| Order | In-order | No guarantee |\n| Speed | Slower (overhead) | Faster |\n| Use case | HTTP, email, databases | DNS, video streaming, gaming |",
+      "images": []
+    },
+    {
+      "id": 109,
+      "question": "What is DNS lookup in Node.js?",
+      "answer": "`dns.lookup(hostname, callback)` resolves a hostname to an IP address using the OS's resolver (same as `getaddrinfo`). It uses libuv's **thread pool**. `dns.resolve()` uses Node.js's own async DNS resolver (no thread pool, faster under load).\n\n```js\nconst dns = require('dns');\ndns.lookup('google.com', (err, address) => console.log(address));\n```",
+      "images": []
+    },
+    {
+      "id": 110,
+      "question": "What are environment variables?",
+      "answer": "Environment variables are **key-value pairs** set in the OS environment, accessible in Node.js via `process.env`. They externalize configuration (secrets, URLs, feature flags) from code. Typically managed via `.env` files (loaded with `dotenv` package) in development.\n\n```bash\nDATABASE_URL=postgres://localhost:5432/mydb node app.js\n```",
+      "images": []
+    },
+    {
+      "id": 111,
+      "question": "What is middleware conceptually in Node.js?",
+      "answer": "Middleware is a **function that sits in the request-response pipeline**, processing requests before they reach the final handler. Each middleware can:\n- Execute code.\n- Modify `req`/`res`.\n- End the request-response cycle.\n- Call the next middleware (`next()`).\n\nConceptually: `request → middleware1 → middleware2 → handler → response`.",
+      "images": []
+    },
+    {
+      "id": 112,
+      "question": "What is dependency injection?",
+      "answer": "Dependency injection (DI) is a pattern where a function or class **receives its dependencies** from the outside rather than creating them internally:\n\n```js\n// Without DI (hard to test)\nclass UserService { constructor() { this.db = new Database(); } }\n\n// With DI (testable)\nclass UserService { constructor(db) { this.db = db; } }\n```\n\nThis decouples components, improves testability, and makes code more flexible.",
+      "images": []
+    },
+    {
+      "id": 113,
+      "question": "What is hot reloading?",
+      "answer": "Hot reloading automatically **restarts or updates the application** when source files change, without manual restarts. Tools:\n- `nodemon` — Watches files and restarts the Node.js process.\n- `node --watch` — Built-in (Node.js 18+).\n- `ts-node-dev` — For TypeScript projects.",
+      "images": []
+    },
+    {
+      "id": 114,
+      "question": "What is graceful shutdown?",
+      "answer": "Graceful shutdown means **cleanly stopping the server** without dropping active connections:\n1. Stop accepting new requests.\n2. Wait for in-flight requests to complete.\n3. Close database connections and other resources.\n4. Exit.\n\n```js\nprocess.on('SIGTERM', () => {\n  server.close(() => {\n    db.disconnect();\n    process.exit(0);\n  });\n});\n```",
+      "images": []
+    },
+    {
+      "id": 115,
+      "question": "What are signals like SIGINT and SIGTERM?",
+      "answer": "Unix signals are **OS-level notifications** sent to a process:\n- `SIGINT` — Interrupt (Ctrl+C). Default: terminate.\n- `SIGTERM` — Termination request (e.g., `kill <pid>`, Docker stop). Default: terminate.\n- `SIGKILL` — Forceful kill (cannot be caught or ignored).\n- `SIGHUP` — Terminal hangup (often used to reload config).\n\nHandle in Node.js: `process.on('SIGTERM', handler)`.",
+      "images": []
+    },
+    {
+      "id": 116,
+      "question": "What is stdin, stdout, stderr?",
+      "answer": "- `process.stdin` — Readable stream for **standard input** (keyboard, pipe).\n- `process.stdout` — Writable stream for **standard output** (`console.log` writes here).\n- `process.stderr` — Writable stream for **standard error** (`console.error` writes here).\n\nThese are the three standard I/O streams every Unix process has.",
+      "images": []
+    },
+    {
+      "id": 117,
+      "question": "How does Node.js handle large concurrent connections?",
+      "answer": "Via the **event loop and non-blocking I/O**:\n- Each connection doesn't get a dedicated thread.\n- Connections are handled as events.\n- libuv uses OS mechanisms (epoll, kqueue) to monitor thousands of sockets simultaneously.\n- Only when I/O is ready does the callback run on the main thread.\n- This allows a single Node.js process to handle **tens of thousands of concurrent connections** with minimal memory.",
+      "images": []
+    },
+    {
+      "id": 118,
+      "question": "What are native addons in Node.js?",
+      "answer": "Native addons are **C/C++ modules** compiled to `.node` files and loaded via `require()`. They allow:\n- Using existing C/C++ libraries.\n- Performing CPU-intensive tasks in native code.\n- Accessing low-level OS APIs.\n\nBuilt with `node-gyp`. Modern alternative: **NAPI (Node-API)** for ABI-stable addons. Examples: `bcrypt`, `sharp`, `better-sqlite3`.",
+      "images": []
+    },
+    {
+      "id": 119,
+      "question": "What is the difference between Node.js and Deno?",
+      "answer": "| Feature | Node.js | Deno |\n|---|---|---|\n| Created by | Ryan Dahl (2009) | Ryan Dahl (2018) |\n| Language | JS / C++ | JS/TS / Rust |\n| Module system | CommonJS / ESM | ESM only (URLs) |\n| TypeScript | Via transpiler | Native support |\n| Security | Full access by default | Sandboxed (explicit permissions) |\n| Package manager | npm | Built-in (URL imports, `deno.land/x`) |\n| Standard library | Third-party (`lodash`, etc.) | Built-in, vetted |",
+      "images": []
+    },
+    {
+      "id": 120,
+      "question": "What is the purpose of package.json?",
+      "answer": "`package.json` is the **manifest file** for a Node.js project. It contains:\n- `name`, `version` — Package identity.\n- `main` / `exports` — Entry points.\n- `scripts` — npm scripts (`start`, `test`, `build`).\n- `dependencies` — Runtime packages.\n- `devDependencies` — Development-only packages.\n- `engines` — Required Node.js/npm versions.\n- Metadata: `description`, `license`, `author`, `keywords`.",
+      "images": []
+    },
+    {
+      "id": 121,
+      "question": "What happens during npm install internally?",
+      "answer": "1. `package.json` is read; the dependency tree is resolved.\n2. `package-lock.json` is consulted (or generated) to **lock exact versions**.\n3. npm checks the local cache (`~/.npm`) for packages.\n4. Missing packages are fetched from the **npm registry** (registry.npmjs.org).\n5. Packages are extracted to `node_modules/`.\n6. Lifecycle scripts (`preinstall`, `install`, `postinstall`) are run.\n7. `package-lock.json` is updated.",
+      "images": []
+    }
+  ]
+}

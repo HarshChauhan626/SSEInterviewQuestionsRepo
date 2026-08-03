@@ -1,0 +1,429 @@
+{
+  "topic": "Networking",
+  "description": "TCP/IP, HTTP, DNS, TLS, CDN, load balancing, and network protocols",
+  "icon": "🔌",
+  "accent": "#fb7185",
+  "source": "networkingessentials.md",
+  "questions": [
+    {
+      "id": 1,
+      "question": "Module 1: Networking Fundamentals",
+      "answer": "### The OSI Model\n\nThe **Open Systems Interconnection (OSI) model** is a conceptual framework that standardizes how different network systems communicate with each other. Developed by the International Organization for Standardization (ISO) in 1984, it divides network communication into seven distinct layers, each with a specific responsibility.\n\nUnderstanding the OSI model is not just academic. When you're debugging a production issue, you mentally walk up and down these layers: \"Is the physical link up? Is the IP reachable? Is TCP connecting? Is the application responding?\" The model gives you a systematic mental map.\n\n| Layer | Number | Name         | PDU     | Examples                        |\n|-------|--------|--------------|---------|---------------------------------|\n| 7     | Top    | Application  | Data    | HTTP, SMTP, DNS, FTP, SSH       |\n| 6     |        | Presentation | Data    | SSL/TLS, JPEG, MPEG, ASCII      |\n| 5     |        | Session      | Data    | NetBIOS, RPC, SQL sessions      |\n| 4     |        | Transport    | Segment | TCP, UDP, SCTP                  |\n| 3     |        | Network      | Packet  | IP, ICMP, OSPF, BGP             |\n| 2     |        | Data Link    | Frame   | Ethernet, Wi-Fi (802.11), ARP   |\n| 1     | Bottom | Physical     | Bits    | Cables, fiber, radio waves, NICs|\n\n**Layer 1 – Physical:** Responsible for the actual physical transmission of raw bits over a medium. This layer defines voltages, timing, physical connectors, cable types, and signal modulation. Think of it as the actual wire or radio frequency carrying the 1s and 0s.\n\n**Layer 2 – Data Link:** Responsible for node-to-node delivery on the same network segment. It packages raw bits from Layer 1 into frames, handles MAC addressing, and provides error detection (but not necessarily correction). Ethernet operates here. The Data Link layer is further subdivided into the MAC (Medium Access Control) and LLC (Logical Link Control) sublayers.\n\n**Layer 3 – Network:** Responsible for logical addressing and routing between different networks. IP (Internet Protocol) lives here. Routers operate at this layer, making decisions about how to forward packets toward their destination based on IP addresses.\n\n**Layer 4 – Transport:** Responsible for end-to-end communication between processes on different hosts. TCP provides reliable, ordered delivery; UDP provides fast, unreliable delivery. This layer introduces the concept of ports, which allow multiple services to coexist on a single IP address.\n\n**Layer 5 – Session:** Manages sessions (connections) between applications. Handles session establishment, maintenance, and teardown. In practice, this layer's responsibilities are often absorbed by Layer 4 or Layer 7 protocols.\n\n**Layer 6 – Presentation:** Responsible for data translation, encryption, and compression. Ensures data from one system can be read by another regardless of internal data representation. TLS/SSL encryption is conceptually placed here.\n\n**Layer 7 – Application:** The topmost layer, closest to the user. Provides network services directly to end-user applications. HTTP, HTTPS, DNS, FTP, SMTP, and SSH all operate at this layer.\n\n**A practical note:** In real-world engineering, you rarely think about Layers 5 and 6 independently. They are either handled transparently by the OS or absorbed by Layer 7 protocols.",
+      "images": []
+    },
+    {
+      "id": 2,
+      "question": "The TCP/IP Model",
+      "answer": "The **TCP/IP model** (also called the Internet model or DoD model) is the practical model that the actual Internet is built on. It predates OSI and was developed by DARPA. It has four layers that map roughly to the OSI model:\n\n| TCP/IP Layer    | Maps to OSI Layers | Examples               |\n|-----------------|--------------------|------------------------|\n| Application     | 5, 6, 7            | HTTP, DNS, SMTP, SSH   |\n| Transport       | 4                  | TCP, UDP               |\n| Internet        | 3                  | IP, ICMP               |\n| Network Access  | 1, 2               | Ethernet, Wi-Fi        |\n\nThe TCP/IP model is what engineers work with day-to-day. When you write a web server, you're writing an Application layer application. When you open a socket, you're working with Transport. When you configure IP addresses, you're working with Internet. The Network Access layer is handled by your NIC and driver.\n\n**Why both models exist:** OSI is the theoretical reference model — it's useful for understanding and teaching concepts. TCP/IP is the implementation model — it's what actually runs the internet. Most protocol documentation and networking tools reference both.",
+      "images": []
+    },
+    {
+      "id": 3,
+      "question": "Encapsulation and Decapsulation",
+      "answer": "**Encapsulation** is the process of wrapping data with protocol-specific headers (and sometimes trailers) as it moves down the protocol stack from the application layer to the physical layer.\n\n**Decapsulation** is the reverse: as data travels up the stack on the receiving end, each layer strips off its corresponding header.\n\n**How encapsulation works (sending side):**\n\n```\nApplication Data: \"GET / HTTP/1.1\\r\\n...\"\n      ↓ [Transport Layer adds TCP header: src port, dst port, seq num, ack num...]\nTCP Segment: [TCP Header | Application Data]\n      ↓ [Network Layer adds IP header: src IP, dst IP, TTL, protocol...]\nIP Packet:   [IP Header | TCP Header | Application Data]\n      ↓ [Data Link Layer adds Ethernet header + trailer: src MAC, dst MAC, CRC]\nEthernet Frame: [Eth Header | IP Header | TCP Header | App Data | Eth Trailer]\n      ↓ [Physical Layer converts to bits and transmits]\nBits: 0101001100101...\n```\n\n**How decapsulation works (receiving side):**\n\n```\nBits arrive at NIC\n      ↓ Physical layer reconstructs frame\nEthernet Frame is processed — MAC addresses checked, CRC verified, header stripped\n      ↓ IP packet handed to network layer\nIP Packet processed — destination IP checked, TTL decremented, header stripped\n      ↓ TCP segment handed to transport layer\nTCP Segment processed — checksum verified, sequence numbers managed, header stripped\n      ↓ Application data handed to the application\nApplication reads \"GET / HTTP/1.1\\r\\n...\"\n```\n\nEach layer only reads its own header; it treats everything else as opaque payload. This is the principle of **layer independence** — the IP layer doesn't care what's inside the TCP segment, and the TCP layer doesn't care what application data it's carrying.",
+      "images": []
+    },
+    {
+      "id": 4,
+      "question": "Packet vs Frame vs Segment",
+      "answer": "These terms are often used interchangeably in casual conversation, but they have precise meanings based on which OSI layer they belong to:\n\n**Segment** (Layer 4 – Transport): A Transport layer PDU. A TCP segment contains a TCP header plus the application data. The header includes source/destination port, sequence number, acknowledgment number, flags, window size, and checksum. UDP's PDU is technically called a **datagram**.\n\n**Packet** (Layer 3 – Network): A Network layer PDU. An IP packet contains an IP header (source IP, destination IP, TTL, protocol, etc.) plus the Transport layer segment as its payload.\n\n**Frame** (Layer 2 – Data Link): A Data Link layer PDU. An Ethernet frame contains an Ethernet header (source MAC, destination MAC, EtherType), an IP packet as payload, and an Ethernet trailer (Frame Check Sequence/CRC).\n\n**Summary:**\n- Application sends **data**\n- Transport wraps it into a **segment**\n- Network wraps that into a **packet**\n- Data Link wraps that into a **frame**\n- Physical transmits **bits**\n\nWhen debugging with `tcpdump` or Wireshark, you're capturing frames at the Data Link layer and then dissecting them layer by layer.",
+      "images": []
+    },
+    {
+      "id": 5,
+      "question": "Bandwidth, Throughput, Latency, and Jitter",
+      "answer": "These four metrics together define the quality of a network connection. Understanding their differences is critical for performance analysis and capacity planning.\n\n**Bandwidth** is the theoretical maximum amount of data that can be transmitted over a network link per unit time. It's like the width of a pipe — it defines the upper limit of what's possible. Measured in bits per second (bps, Mbps, Gbps).\n\n- A 1 Gbps Ethernet link has 1 Gbps of bandwidth\n- Bandwidth is a property of the link itself\n- You can't exceed bandwidth, but you often won't reach it due to protocol overhead and other factors\n\n**Throughput** is the actual amount of data successfully transferred per unit time. It's always less than or equal to bandwidth. Real-world throughput is affected by:\n- Protocol overhead (TCP/IP headers, retransmissions)\n- Network congestion\n- Application-level bottlenecks\n- TCP flow control and congestion control\n- Hardware limitations (CPU, disk I/O)\n\n**Latency** (also called **Round-Trip Time or RTT**) is the time it takes for a signal to travel from source to destination and back. Latency is composed of:\n- **Propagation delay:** Time for the signal to physically travel across the medium (bounded by the speed of light). New York to London is roughly 70ms propagation.\n- **Transmission delay:** Time to push all bits onto the wire = packet size / bandwidth\n- **Processing delay:** Time routers spend processing packet headers\n- **Queuing delay:** Time spent waiting in router buffers when the network is congested\n\nLatency is especially important for:\n- Interactive applications (gaming, video calls, trading)\n- Many small requests (REST API calls, database queries)\n- TCP's performance (high latency multiplies the effect of slow-start)\n\n**Jitter** is the variation in latency over time. In a perfect network, every packet would arrive with the same delay. In reality, packets may arrive with varying delays depending on queuing, routing decisions, and load. Jitter is particularly problematic for:\n- Real-time audio/video (VoIP, video conferencing)\n- Streaming media\n- Gaming\n\nHigh jitter can be mitigated with **jitter buffers**, which add a fixed delay to smooth out variations, at the cost of increased overall latency.\n\n**The Bandwidth-Latency Product** is an important concept: it represents the amount of data \"in flight\" in the network at any given time.\n\n```\nBandwidth-Latency Product = Bandwidth × RTT\nExample: 1 Gbps link with 100ms RTT = 100 Mb \"in flight\"\n```\n\nThis matters for TCP performance — the TCP window size must be large enough to fill the pipe. A small window on a high-latency, high-bandwidth link severely limits throughput.",
+      "images": []
+    },
+    {
+      "id": 6,
+      "question": "Module 2: IP Addressing",
+      "answer": "### IPv4\n\n**IPv4 (Internet Protocol version 4)** uses 32-bit addresses, written in dotted-decimal notation: four octets (8-bit groups), each ranging from 0 to 255, separated by dots.\n\n```\nExample: 192.168.1.100\nBinary:  11000000.10101000.00000001.01100100\n```\n\nIPv4 provides 2^32 = ~4.3 billion unique addresses. This seemed plenty in the 1970s, but address exhaustion became a real problem. IANA allocated the last blocks of IPv4 addresses to regional registries in 2011. Today, the internet runs on a combination of IPv4 (with NAT) and the gradual deployment of IPv6.\n\n**Address Classes (historical, mostly replaced by CIDR):**\n\n| Class | Range                       | Default Mask  | Usage                        |\n|-------|-----------------------------|---------------|------------------------------|\n| A     | 1.0.0.0 – 126.0.0.0        | /8            | Large organizations          |\n| B     | 128.0.0.0 – 191.255.0.0    | /16           | Medium organizations         |\n| C     | 192.0.0.0 – 223.255.255.0  | /24           | Small organizations          |\n| D     | 224.0.0.0 – 239.255.255.255| N/A           | Multicast                    |\n| E     | 240.0.0.0 – 255.255.255.255| N/A           | Experimental/Reserved        |\n\n**Special addresses:**\n- `0.0.0.0` — \"This host\" or \"all interfaces\" (used in binding)\n- `127.0.0.1` — Loopback (localhost)\n- `255.255.255.255` — Limited broadcast\n- `169.254.x.x` — Link-local (APIPA, assigned when DHCP fails)",
+      "images": []
+    },
+    {
+      "id": 7,
+      "question": "Public vs Private IP Addresses",
+      "answer": "**Private IP addresses** are reserved for use within private networks and are not routable on the public internet. Defined in RFC 1918:\n\n| Range                         | CIDR Notation | Common Usage                    |\n|-------------------------------|---------------|---------------------------------|\n| 10.0.0.0 – 10.255.255.255    | 10.0.0.0/8    | Large enterprise networks       |\n| 172.16.0.0 – 172.31.255.255  | 172.16.0.0/12 | Medium networks, Docker default |\n| 192.168.0.0 – 192.168.255.255| 192.168.0.0/16| Home and small office networks  |\n\nPrivate addresses are free to use and can be reused across different private networks without conflict, since they never appear on the public internet (NAT handles translation).\n\n**Public IP addresses** are globally unique addresses assigned by IANA through regional registries (ARIN, RIPE, APNIC, etc.) to organizations. Any device with a public IP is directly addressable from anywhere on the internet (firewalls permitting).\n\n**Why this matters in practice:**\n- Your home router has one public IP (from your ISP) and uses NAT to share it across all your devices with private IPs\n- In AWS, EC2 instances in private subnets have private IPs and reach the internet through a NAT Gateway\n- Services that need to receive inbound traffic require either a public IP or port forwarding through NAT",
+      "images": []
+    },
+    {
+      "id": 8,
+      "question": "NAT (Network Address Translation)",
+      "answer": "**NAT** is the mechanism by which a router or gateway translates between private IP addresses (used internally) and public IP addresses (used on the internet). It allows many devices with private IPs to share a single public IP.\n\n**How NAT works (NAPT/PAT — Port Address Translation):**\n\n1. Client at `192.168.1.100:54231` sends a packet to `93.184.216.34:80`\n2. NAT router receives the packet, replaces source IP/port: `203.0.113.1:10001`\n3. NAT router records the mapping in its NAT table: `192.168.1.100:54231 ↔ 203.0.113.1:10001`\n4. Server at `93.184.216.34` receives packet from `203.0.113.1:10001`, responds back\n5. NAT router receives response on port `10001`, looks up the mapping\n6. Translates destination back to `192.168.1.100:54231` and forwards to the internal client\n\n**NAT table entry:**\n```\nProtocol | Internal IP:Port    | External IP:Port     | Remote IP:Port\nTCP      | 192.168.1.100:54231 | 203.0.113.1:10001    | 93.184.216.34:80\n```\n\n**Types of NAT:**\n- **Static NAT:** One-to-one mapping between private and public IP (for servers that need to receive inbound connections)\n- **Dynamic NAT:** Pool of public IPs shared among private hosts\n- **PAT/NAPT:** Many private IPs share one public IP using different ports (most common)\n\n**NAT and applications:** NAT breaks the end-to-end connectivity model of the original internet design. Some protocols embed IP addresses in their payload (like FTP's active mode, SIP for VoIP), which breaks through NAT without special ALG (Application Layer Gateway) support. This is one reason why protocols like WebRTC require ICE/STUN/TURN to establish peer-to-peer connections through NAT.\n\n**AWS NAT Gateway:** In AWS, a NAT Gateway allows instances in private subnets to initiate outbound connections to the internet while preventing inbound connections from the internet.",
+      "images": []
+    },
+    {
+      "id": 9,
+      "question": "Module 3: Routing",
+      "answer": "### Routing Tables\n\nA **routing table** is a data structure stored in a router (or host) that contains a list of rules for deciding where to forward packets. Each entry in the routing table contains:\n\n- **Destination network:** The network prefix this entry matches (e.g., `10.0.1.0/24`)\n- **Next hop:** The IP address of the next router to send the packet to\n- **Interface:** The network interface to use for sending the packet\n- **Metric:** A cost value used to compare routes to the same destination\n\n```bash\n# View routing table on Linux\nip route show\n# or\nroute -n   # legacy command\n\n# Example output:\n# Destination     Gateway         Genmask         Flags Metric Ref Use Iface\n# 0.0.0.0         10.0.0.1        0.0.0.0         UG    100    0   0   eth0\n# 10.0.0.0        0.0.0.0         255.255.255.0   U     100    0   0   eth0\n# 172.17.0.0      0.0.0.0         255.255.0.0     U     0      0   0   docker0\n```\n\nWhen a packet arrives, the router looks through its routing table to find the best matching entry.",
+      "images": []
+    },
+    {
+      "id": 10,
+      "question": "Module 4: TCP",
+      "answer": "### TCP Overview\n\n**TCP (Transmission Control Protocol)** is the workhorse of the internet. It operates at Layer 4 and provides:\n- **Reliable delivery:** Guarantees that data arrives, in order, without duplicates\n- **Connection-oriented:** Establishes a connection before data transfer\n- **Flow control:** Prevents the sender from overwhelming the receiver\n- **Congestion control:** Prevents the sender from overwhelming the network\n- **Full duplex:** Both sides can send and receive simultaneously\n\nTCP achieves reliability through sequence numbers, acknowledgements, and retransmission of lost segments.",
+      "images": []
+    },
+    {
+      "id": 11,
+      "question": "Three-Way Handshake",
+      "answer": "Before any data is exchanged, TCP establishes a connection using the **three-way handshake**. This synchronizes sequence numbers and ensures both sides are ready.\n\n```\nClient                          Server\n  |                               |\n  |-------- SYN (seq=x) -------->|   Step 1: Client sends SYN\n  |                               |          (x = random initial seq num)\n  |<---- SYN-ACK (seq=y,ack=x+1)-|   Step 2: Server responds with SYN-ACK\n  |                               |          (y = server's random seq num)\n  |-------- ACK (ack=y+1) ------>|   Step 3: Client acknowledges\n  |                               |\n  |====== DATA TRANSFER ==========|\n```\n\n**Step 1 – SYN:** The client sends a segment with the SYN flag set. It includes the client's **Initial Sequence Number (ISN)**, chosen randomly to prevent TCP injection attacks.\n\n**Step 2 – SYN-ACK:** The server responds with both SYN and ACK flags set. It acknowledges the client's ISN (client_ISN + 1) and sends its own ISN.\n\n**Step 3 – ACK:** The client acknowledges the server's ISN (server_ISN + 1). The connection is now established and data can flow.\n\n**Why random ISNs?** Random initial sequence numbers prevent an attacker from injecting forged TCP segments into an existing connection (they would need to guess the correct sequence number).\n\n**SYN cookies:** When a server receives more SYN packets than it can handle (SYN flood attack), it can use SYN cookies — encoding connection state into the ISN so it doesn't need to allocate memory for half-open connections until the handshake completes.\n\nThe handshake adds at minimum **1.5 RTT** of latency before the first byte of data can be sent. This is a key motivation for HTTP/2 connection multiplexing and QUIC's 0-RTT/1-RTT handshakes.",
+      "images": []
+    },
+    {
+      "id": 12,
+      "question": "Four-Way Termination",
+      "answer": "TCP connections are terminated using a **four-way handshake** (also called four-way teardown). Each side independently closes its half of the connection.\n\n```\nClient                          Server\n  |                               |\n  |-------- FIN (seq=u) -------->|   Step 1: Client done sending, sends FIN\n  |<------- ACK (ack=u+1) -------|   Step 2: Server acknowledges\n  |                               |          (server can still send data here)\n  |<------- FIN (seq=v) ---------|   Step 3: Server done sending, sends FIN\n  |-------- ACK (ack=v+1) ------>|   Step 4: Client acknowledges\n  |                               |\n  [Client waits in TIME_WAIT state]\n```\n\nSteps 2 and 3 are sometimes combined into a single FIN-ACK if the server has no more data to send, making it effectively a three-way termination.\n\n**Half-close:** Between steps 2 and 3, the server can still send data to the client even though the client has closed its sending side. This is useful for protocols like HTTP where the server may still be sending a response.",
+      "images": []
+    },
+    {
+      "id": 13,
+      "question": "Sequence Numbers and Acknowledgements",
+      "answer": "**Sequence numbers** track the order of bytes in a TCP stream. The sequence number in a segment indicates the position of the first byte of data in that segment.\n\n**Acknowledgement numbers** tell the sender which byte the receiver expects next. An ACK number of N means \"I have received everything up to byte N-1, please send byte N next.\"\n\n```\nSender transmits:\n  Segment 1: seq=1000, data=\"Hello\" (5 bytes) → occupies bytes 1000-1004\n  Segment 2: seq=1005, data=\" World\" (6 bytes) → occupies bytes 1005-1010\n\nReceiver acknowledges:\n  ACK: ack=1005  (received bytes up to 1004)\n  ACK: ack=1011  (received bytes up to 1010)\n```\n\nIf segment 2 is lost:\n```\nReceiver sends: ACK: ack=1005  (still waiting for byte 1005)\n                ACK: ack=1005  (duplicate ACK — signal of loss)\n                ACK: ack=1005  (three duplicate ACKs = fast retransmit trigger)\n```\n\nTCP uses **cumulative acknowledgements** — a single ACK acknowledges all data up to that point, not individual segments. **Selective Acknowledgements (SACK)** is a TCP extension that allows a receiver to acknowledge non-contiguous ranges, helping the sender retransmit only the missing segments rather than everything after the loss.",
+      "images": []
+    },
+    {
+      "id": 14,
+      "question": "Keep-Alive",
+      "answer": "**TCP Keep-Alive** is a mechanism to detect dead connections. If no data is exchanged for a period, TCP sends small probe packets to check if the other side is still alive.\n\nBy default on Linux:\n- `tcp_keepalive_time = 7200` seconds (2 hours before first probe)\n- `tcp_keepalive_intvl = 75` seconds (interval between probes)\n- `tcp_keepalive_probes = 9` (number of probes before declaring dead)\n\nThese defaults are very conservative. Applications that need faster detection of dead connections should either:\n1. Set socket-level `SO_KEEPALIVE` with custom values via `TCP_KEEPIDLE`, `TCP_KEEPINTVL`, `TCP_KEEPCNT`\n2. Implement application-level heartbeats (more portable and reliable)\n\n```bash\n# Enable keep-alive on a socket in Python\nimport socket\nsock.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)\nsock.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPIDLE, 60)\nsock.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPINTVL, 10)\nsock.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPCNT, 3)\n```",
+      "images": []
+    },
+    {
+      "id": 15,
+      "question": "RST (Reset)",
+      "answer": "The **RST flag** in a TCP segment is used to abruptly terminate a connection without a graceful four-way handshake.\n\nReasons TCP sends RST:\n- Connection request to a closed port (no service listening)\n- Receiving a segment that doesn't belong to any known connection\n- Application calls `SO_LINGER` with timeout=0 and then closes the socket\n- Firewall/load balancer terminating a connection forcefully\n\nWhen you see RST in a packet capture:\n- **RST from server:** Port closed, or server forcefully rejected the connection\n- **RST from firewall:** Often seen when firewall rules drop an existing connection\n- **RST from load balancer:** Connection drained or health check failed",
+      "images": []
+    },
+    {
+      "id": 16,
+      "question": "Module 5: UDP",
+      "answer": "### UDP Basics\n\n**UDP (User Datagram Protocol)** provides a minimal, connectionless transport service. It takes application data, adds a tiny 8-byte header (source port, destination port, length, checksum), and sends it as a datagram. There is no handshake, no acknowledgement, no retransmission, and no ordering guarantee.\n\n```\nUDP Header (8 bytes):\n| Source Port (16 bits) | Destination Port (16 bits) |\n| Length (16 bits)      | Checksum (16 bits)         |\n| Data...                                              |\n```\n\nThe UDP checksum covers the UDP header and data (and a pseudo-header including IP addresses). It's optional in IPv4 but mandatory in IPv6.\n\n**What UDP provides:**\n- **Multiplexing:** Port numbers allow multiple services on the same host\n- **Checksum:** Basic data integrity check\n- **Speed:** Minimal overhead, no connection establishment\n\n**What UDP does NOT provide:**\n- Reliability (no ACK, retransmission)\n- Ordering (datagrams may arrive out of order)\n- Flow control\n- Congestion control\n- Connection state",
+      "images": []
+    },
+    {
+      "id": 17,
+      "question": "Module 6: DNS",
+      "answer": "### DNS Resolution\n\n**DNS (Domain Name System)** translates human-readable domain names (like `www.example.com`) into IP addresses (`93.184.216.34`). It's a globally distributed, hierarchical database.\n\n**Full DNS resolution flow:**\n\n```\nBrowser requests: www.example.com\n\n1. Browser checks local DNS cache → not found\n2. OS checks /etc/hosts → not found\n3. OS queries configured recursive resolver (e.g., 8.8.8.8)\n\n4. Recursive resolver checks its cache → not found\n5. Resolver queries a Root Name Server:\n   \"Who knows about .com?\"\n   Root server responds: \"Ask the .com TLD servers at 192.5.6.30\"\n\n6. Resolver queries .com TLD server:\n   \"Who knows about example.com?\"\n   TLD server responds: \"Ask example.com's authoritative servers at 205.251.196.1\"\n\n7. Resolver queries example.com's authoritative server:\n   \"What is the IP of www.example.com?\"\n   Authoritative server responds: \"93.184.216.34, TTL=3600\"\n\n8. Resolver caches the answer and returns it to the client\n9. Client connects to 93.184.216.34\n```\n\nThis full resolution takes multiple round trips but is only done occasionally due to caching.",
+      "images": []
+    },
+    {
+      "id": 18,
+      "question": "Root and TLD Servers",
+      "answer": "**Root servers:** The 13 logical root name servers (A through M) are the starting point for all DNS resolution. They don't know the answer to queries but know where to find the authoritative servers for each TLD. There are actually hundreds of physical servers behind these 13 logical addresses, distributed globally using anycast.\n\n**TLD (Top-Level Domain) servers:** Maintained by registries (Verisign manages `.com`, IANA manages `.org`, country registries manage ccTLDs). They know which authoritative servers are responsible for each second-level domain.\n\n**Delegation chain:**\n```\n. (root)\n└── .com (TLD)\n    └── example.com (authoritative)\n        └── www.example.com (A record)\n```",
+      "images": []
+    },
+    {
+      "id": 19,
+      "question": "DNS Caching and TTL",
+      "answer": "**DNS caching** is what makes DNS practical. Without it, every DNS query would require a full traversal of the hierarchy, adding hundreds of milliseconds to every request.\n\n**TTL (Time To Live)** is set by the domain owner on each DNS record. It tells resolvers (and clients) how long to cache the answer, in seconds.\n\n```\nwww.example.com.  3600  IN  A  93.184.216.34\n                  ^^^^\n                  TTL = 3600 seconds = 1 hour\n```\n\n**TTL trade-offs:**\n- **Low TTL (60-300 seconds):** Changes propagate quickly. Good for deployments, failover. More DNS queries = more load on DNS servers.\n- **High TTL (3600-86400 seconds):** Fewer queries, lower latency. Changes take longer to propagate.\n\n**Best practices:**\n- Lower TTL before planned migrations (e.g., to 60 seconds, wait for cache to expire, then change the record)\n- Use 300-3600 seconds for stable records\n- Route 53 minimum TTL is 0 (though very low TTLs increase cost and query volume)\n\n**DNS cache poisoning:** An attack where a malicious resolver inserts false records into a victim resolver's cache. DNSSEC was designed to prevent this by cryptographically signing DNS responses.",
+      "images": []
+    },
+    {
+      "id": 20,
+      "question": "Module 7: HTTP",
+      "answer": "### HTTP Request Lifecycle\n\nHTTP (HyperText Transfer Protocol) is a stateless, application-layer protocol for distributed information systems. The full lifecycle of an HTTP request:\n\n```\n1. DNS Resolution: resolve api.example.com → 93.184.216.34\n2. TCP Connection: three-way handshake with 93.184.216.34:443\n3. TLS Handshake: negotiate cipher suite, exchange certificates\n4. HTTP Request: send GET /users HTTP/1.1\n5. Server Processing: route, authenticate, query DB, build response\n6. HTTP Response: receive 200 OK with JSON body\n7. Connection: keep alive (reuse) or close\n```",
+      "images": []
+    },
+    {
+      "id": 21,
+      "question": "Authentication and Authorization",
+      "answer": "**Authentication** (\"AuthN\") is the process of verifying *who* you are — proving your identity.\n**Authorization** (\"AuthZ\") is the process of verifying *what* you're allowed to do — checking permissions.\n\nThese are distinct concepts that are often conflated:\n- A valid JWT proves authentication but doesn't grant specific access\n- A user authenticated as \"alice\" may not be authorized to delete records\n\n**Common authentication mechanisms:**\n- **Basic Auth:** Base64-encoded `username:password` in the `Authorization: Basic` header. Simple but insecure without HTTPS.\n- **API Keys:** A token in headers or query string. Simple, but hard to rotate and often long-lived.\n- **Bearer Tokens (JWT):** `Authorization: Bearer <token>`. Token contains signed claims.\n- **OAuth 2.0:** Delegation framework — users grant third-party apps access to their resources without sharing credentials.\n- **OIDC (OpenID Connect):** Authentication layer on top of OAuth 2.0. Returns an ID token (JWT) with user identity claims.\n- **mTLS:** Both client and server present certificates.",
+      "images": []
+    },
+    {
+      "id": 22,
+      "question": "Idempotency and Safe Methods",
+      "answer": "**Safe methods** have no side effects — they don't change server state. GET, HEAD, OPTIONS, TRACE are safe. Clients can freely retry safe methods.\n\n**Idempotent methods** can be called multiple times and produce the same result as calling once. GET, HEAD, PUT, DELETE, OPTIONS are idempotent. POST is not.\n\n| Method  | Safe | Idempotent |\n|---------|------|------------|\n| GET     | Yes  | Yes        |\n| HEAD    | Yes  | Yes        |\n| OPTIONS | Yes  | Yes        |\n| PUT     | No   | Yes        |\n| DELETE  | No   | Yes        |\n| POST    | No   | No         |\n| PATCH   | No   | No*        |\n\n*PATCH can be made idempotent if designed carefully.\n\n**Why idempotency matters in distributed systems:** Network failures mean you don't know if your request was received. With idempotent operations, you can safely retry. With non-idempotent POST (e.g., charge a credit card), retrying without an idempotency key could charge twice. The solution is **idempotency keys**: the client generates a unique request ID, the server stores the result keyed by this ID, and subsequent retries with the same ID return the cached result.",
+      "images": []
+    },
+    {
+      "id": 23,
+      "question": "Keep-Alive and Connection Pooling",
+      "answer": "**HTTP Keep-Alive** (persistent connections) allows multiple HTTP requests to be sent over a single TCP connection, avoiding the overhead of establishing a new TCP connection (and TLS handshake) for each request.\n\nIn HTTP/1.1, persistent connections are the default. To close: `Connection: close`.\n\n**Connection pooling** is the practice of maintaining a pool of established connections to a server, reusing them for multiple requests rather than creating new ones each time.\n\n**Why pooling matters:**\n- TCP handshake: ~1 RTT (typically 10-100ms)\n- TLS handshake: additional 1-2 RTT\n- Creating connections is expensive and slow\n- A connection pool amortizes this cost across many requests\n\n**Chunked Transfer Encoding:** Used when the response size is not known in advance. The body is sent in chunks, each preceded by the chunk size in hex. The response ends with a zero-size chunk.\n\n```\nHTTP/1.1 200 OK\nTransfer-Encoding: chunked\n\n1a\\r\\n          (26 bytes in this chunk)\nThis is the first chunk\\r\\n\n...\\r\\n\n0\\r\\n           (final zero-size chunk)\n\\r\\n\n```",
+      "images": []
+    },
+    {
+      "id": 24,
+      "question": "Module 8: HTTP Versions",
+      "answer": "### HTTP/1.1\n\nHTTP/1.1 (1997) is the workhorse of the early web. Key features:\n- Persistent connections (keep-alive) by default\n- Pipelining (send multiple requests without waiting for responses — poorly supported)\n- Chunked transfer encoding\n- Host header (allows virtual hosting)\n- Range requests (partial content)\n\n**HTTP/1.1 limitations:**\n- **Head-of-line blocking:** On a single connection, requests are processed in order. A slow response blocks subsequent requests.\n- **Limited parallelism:** Browsers work around this by opening 6 concurrent connections per host, but this is wasteful.\n- **Header overhead:** Headers are sent as plaintext on every request, including large and repetitive headers like `Cookie` and `User-Agent`.\n- **No server push:** Server can only respond to explicit client requests.",
+      "images": []
+    },
+    {
+      "id": 25,
+      "question": "HTTP/2",
+      "answer": "HTTP/2 (2015) was designed to solve HTTP/1.1's performance issues while maintaining semantic compatibility. Same methods, headers, and status codes.\n\n**Key features:**\n\n**Binary framing:** HTTP/2 uses a binary protocol instead of text. All communication is via frames, which are smaller and more efficient to parse.\n\n**Multiplexing:** Multiple requests and responses can be interleaved on a single TCP connection. Each request/response pair is assigned a stream ID. The server can send frames from different streams interleaved. This eliminates HTTP-level head-of-line blocking.\n\n**Header compression (HPACK):** Headers are compressed using a static table of common headers and a dynamic table of previously seen headers. Reduces header overhead by 85-88% in typical workloads.\n\n**Server push:** The server can proactively send resources (CSS, JS, images) before the client requests them, reducing round trips.\n\n**Stream prioritization:** Clients can assign weights and dependencies to streams, allowing the server to prioritize important resources.\n\n**HTTP/2 still suffers from TCP-level head-of-line blocking:** All streams share a single TCP connection. If one TCP packet is lost, all streams are blocked until it's retransmitted. This is why HTTP/3 moved to QUIC.",
+      "images": []
+    },
+    {
+      "id": 26,
+      "question": "HTTP/3 and QUIC",
+      "answer": "HTTP/3 is built on **QUIC (Quick UDP Internet Connections)** instead of TCP. QUIC was developed by Google and standardized in RFC 9000 (2021).\n\n**Why QUIC?**\n- Eliminates TCP head-of-line blocking by multiplexing streams independently in the transport layer\n- Reduces connection establishment latency: 0-RTT (for returning clients) or 1-RTT (new clients) vs TCP's 1-RTT + TLS's 1-2 RTT\n- Encryption is built-in (always TLS 1.3)\n- Better performance on lossy/mobile networks\n- Connection migration: connections survive IP/port changes (e.g., switching from Wi-Fi to cellular)\n\n**QUIC features:**\n- Runs over UDP (avoids ossification — middleboxes can't inspect/modify as easily)\n- Implements its own reliability, ordering, and congestion control per stream\n- Each stream is independently flow-controlled\n- Built-in encryption (no unencrypted QUIC in HTTP/3)\n\n```\nHTTP/3 connection establishment:\nClient → Server: UDP packet with ClientHello (QUIC + TLS combined)\nServer → Client: ServerHello + application data possible in same RTT\nTotal: 1 RTT for new connections, 0 RTT for resumed connections\n```\n\n**Current adoption:** HTTP/3 is supported by all major browsers and CDNs (Cloudflare, Fastly, Google). As of 2024, ~30% of web traffic uses HTTP/3.",
+      "images": []
+    },
+    {
+      "id": 27,
+      "question": "Module 9: HTTPS / TLS",
+      "answer": "### SSL vs TLS\n\n**SSL (Secure Sockets Layer)** was the original encryption protocol for HTTP, developed by Netscape. SSL 2.0 (1995) and SSL 3.0 (1996) are obsolete and have known vulnerabilities (POODLE, etc.).\n\n**TLS (Transport Layer Security)** is the modern successor to SSL. TLS 1.0 and 1.1 are deprecated (2020). TLS 1.2 is widely supported and still secure. TLS 1.3 is current best practice.\n\nDespite SSL being deprecated, the term \"SSL\" is still commonly used colloquially to mean TLS (as in \"SSL certificates,\" \"SSL termination\"). In technical contexts, always mean TLS.\n\n**TLS versions:**\n| Version | Year | Status       |\n|---------|------|--------------|\n| SSL 2.0 | 1995 | Prohibited   |\n| SSL 3.0 | 1996 | Prohibited   |\n| TLS 1.0 | 1999 | Deprecated   |\n| TLS 1.1 | 2006 | Deprecated   |\n| TLS 1.2 | 2008 | Current (OK) |\n| TLS 1.3 | 2018 | Current (Best)|",
+      "images": []
+    },
+    {
+      "id": 28,
+      "question": "TLS Handshake (TLS 1.3)",
+      "answer": "TLS 1.3 simplified and improved the handshake compared to 1.2:\n\n```\nClient                                      Server\n  |                                           |\n  |---- ClientHello (supported ciphers, ---->|\n  |     key_share, supported_versions)        |\n  |                                           |\n  |<--- ServerHello (chosen cipher, ---------|\n  |     key_share, Certificate,               |\n  |     CertificateVerify, Finished)          |\n  |                                           |\n  |---- Finished --------------------------->|\n  |                                           |\n  |======== Encrypted Application Data ======|\n```\n\nTLS 1.3 completes in **1 RTT** (vs 2 RTT for TLS 1.2). For sessions with a pre-shared key (PSK), it achieves **0-RTT** resumption (data sent with the first flight of messages).\n\n**TLS 1.2 handshake** (for comparison) required:\n1. ClientHello\n2. ServerHello + Certificate + ServerHelloDone\n3. ClientKeyExchange + ChangeCipherSpec + Finished\n4. ChangeCipherSpec + Finished\n\nThat's 2 RTT before application data can flow (plus the 1 RTT for TCP handshake = 3 RTT total minimum for HTTP over TLS 1.2).",
+      "images": []
+    },
+    {
+      "id": 29,
+      "question": "Certificates and Certificate Chain",
+      "answer": "A **TLS certificate** is a digitally signed document that binds a public key to an identity (a domain name, organization, etc.). It's issued by a **Certificate Authority (CA)**.\n\n**Certificate contents:**\n- Subject (who it's issued to: domain name, organization)\n- Public key\n- Issuer (who signed it)\n- Validity period (not before, not after)\n- Subject Alternative Names (SANs): additional domains the cert covers\n- Digital signature from the issuer's CA\n\n**Certificate chain (chain of trust):**\n```\nRoot CA (self-signed, in OS/browser trust store)\n  └── Intermediate CA (signed by Root CA)\n       └── End-entity certificate (signed by Intermediate CA)\n            (e.g., *.example.com)\n```\n\nBrowsers and OS trust **root CAs** (a curated list). Root CAs sign **intermediate CAs** to avoid using the root key directly. Intermediate CAs sign end-entity certificates. When a browser validates a certificate:\n1. Check the end-entity cert is signed by a trusted CA\n2. Check the intermediate CA is signed by a root CA in the trust store\n3. Verify the certificate hasn't expired\n4. Verify the certificate is not revoked (CRL or OCSP)\n5. Verify the domain matches the Subject or SANs",
+      "images": []
+    },
+    {
+      "id": 30,
+      "question": "Perfect Forward Secrecy (PFS)",
+      "answer": "**Perfect Forward Secrecy** ensures that compromise of a server's private key does not compromise past session recordings. It's achieved by using **ephemeral key exchange** (DHE or ECDHE) — generating a new, temporary key pair for each session that is discarded afterward.\n\nWithout PFS (static RSA key exchange):\n- Attacker records encrypted traffic\n- Later obtains the server's private key\n- Can decrypt all recorded past traffic\n\nWith PFS (ECDHE key exchange):\n- Session keys are derived from ephemeral keys\n- Ephemeral keys are discarded after each session\n- Past traffic remains encrypted even if the long-term private key is compromised\n\nTLS 1.3 mandates PFS — only ephemeral key exchange is supported.",
+      "images": []
+    },
+    {
+      "id": 31,
+      "question": "SNI (Server Name Indication)",
+      "answer": "**SNI** is a TLS extension that allows the client to specify which hostname it's connecting to during the handshake. This is necessary because:\n- A single IP address may host multiple domains (virtual hosting)\n- The server needs to know which certificate to present before TLS negotiation is complete\n- Without SNI, the server couldn't send the right certificate for the requested domain\n\n```\nClientHello:\n  ...\n  extensions:\n    server_name: www.example.com    ← SNI field\n```\n\nSNI is sent in plaintext (before encryption is established), which means an observer can see which domain you're connecting to. **ESNI (Encrypted SNI)** and **ECH (Encrypted Client Hello)** are extensions designed to encrypt this field.",
+      "images": []
+    },
+    {
+      "id": 32,
+      "question": "ALPN (Application-Layer Protocol Negotiation)",
+      "answer": "**ALPN** is a TLS extension that allows the client and server to negotiate which application protocol to use over the TLS connection, without requiring additional round trips.\n\n```\nClientHello:\n  extensions:\n    application_layer_protocol_negotiation: [h2, http/1.1]\n    \nServerHello:\n  extensions:\n    application_layer_protocol_negotiation: h2   ← server chose HTTP/2\n```\n\nUsed to negotiate between HTTP/1.1 and HTTP/2 on the same port 443.",
+      "images": []
+    },
+    {
+      "id": 33,
+      "question": "Mutual TLS (mTLS)",
+      "answer": "In standard TLS, only the server presents a certificate. In **mutual TLS (mTLS)**, both the client and server present and validate certificates.\n\n**mTLS handshake:**\n1. Server presents its certificate (as normal)\n2. Server requests client certificate (`CertificateRequest`)\n3. Client presents its certificate\n4. Both sides verify each other's certificates\n\n**Use cases:**\n- Service-to-service authentication in microservices (zero-trust networking)\n- API authentication (client certificates instead of API keys)\n- Kubernetes service mesh (Istio, Linkerd use mTLS between pods)\n- VPN connections\n\n**Advantages over API keys:**\n- Certificates have cryptographically verifiable identity\n- Short-lived certificates reduce risk\n- Can be rotated without client cooperation (SPIFFE/SPIRE)",
+      "images": []
+    },
+    {
+      "id": 34,
+      "question": "Module 10: Load Balancing",
+      "answer": "### Layer 4 Load Balancer\n\nA **Layer 4 load balancer** operates at the Transport layer. It makes routing decisions based on TCP/UDP connection information: source IP, destination IP, source port, destination port, and protocol.\n\n**How it works:**\n- Receives TCP connections from clients\n- Forwards them to backend servers based on a chosen algorithm\n- The backend server sees the TCP connection from the load balancer (or the client's IP if PROXY protocol or transparent mode is used)\n- The LB does not inspect or modify the HTTP payload\n\n**Characteristics:**\n- Very fast (minimal processing)\n- Cannot make routing decisions based on URL, headers, or cookies\n- Cannot perform SSL termination (unless it's also doing SSL passthrough/offload)\n- Lower latency than L7 LB\n- Works with any TCP-based protocol\n\n**Examples:** AWS Network Load Balancer (NLB), HAProxy in TCP mode, nginx stream module",
+      "images": []
+    },
+    {
+      "id": 35,
+      "question": "Layer 7 Load Balancer",
+      "answer": "A **Layer 7 load balancer** operates at the Application layer. It terminates the client's connection, reads the HTTP request, and makes routing decisions based on content.\n\n**Can route based on:**\n- URL path (`/api/*` → service A, `/static/*` → CDN)\n- HTTP headers (`X-Version: v2` → new backend)\n- Cookies (sticky sessions)\n- HTTP method\n- Query parameters\n- Request body (for some implementations)\n\n**Additional capabilities:**\n- SSL/TLS termination (offloads crypto from backends)\n- Header manipulation (add/remove/modify headers)\n- Response modification\n- Health checks at the application level (check HTTP 200, not just TCP connect)\n- Request/response buffering\n- Compression\n- Caching\n- Authentication\n\n**Examples:** AWS Application Load Balancer (ALB), nginx, HAProxy in HTTP mode, Envoy",
+      "images": []
+    },
+    {
+      "id": 36,
+      "question": "Sticky Sessions (Session Persistence)",
+      "answer": "**Sticky sessions** (session affinity) ensure that requests from a specific client always go to the same backend server. Required when application state is stored locally on the server (in-memory sessions, local file storage).\n\n**Methods:**\n- **Cookie-based:** LB sets a cookie identifying the backend. On subsequent requests, LB reads the cookie and routes accordingly.\n- **IP-based:** Hash the client IP to a backend. Doesn't work well behind NAT (all users share one IP).\n\n**Problems with sticky sessions:**\n- Uneven load distribution (some servers may be busier)\n- Loss of affinity when the backend restarts (session lost anyway)\n- Prevents proper stateless architecture\n\n**Better alternative:** Externalize session state (Redis, database). Then any backend can serve any request and you don't need sticky sessions.",
+      "images": []
+    },
+    {
+      "id": 37,
+      "question": "Module 11: Reverse Proxy & API Gateway",
+      "answer": "### Reverse Proxy\n\nA **reverse proxy** sits in front of backend servers and forwards client requests to them. Clients interact with the proxy, not the backend directly.\n\n```\nClient → Reverse Proxy → Backend Server(s)\n```\n\n**What a reverse proxy provides:**\n- **SSL/TLS termination:** Decrypts HTTPS, forwards HTTP to backends. Backends don't need to handle crypto.\n- **Load balancing:** Distribute requests across multiple backends.\n- **Caching:** Cache static assets or API responses.\n- **Compression:** Compress responses before sending to clients.\n- **Security:** Hides backend server details. Can block malicious requests.\n- **Logging:** Centralized request logging.\n- **Header manipulation:** Add, remove, or modify headers.\n\n**Common reverse proxies:** nginx, HAProxy, Envoy, Caddy, Traefik",
+      "images": []
+    },
+    {
+      "id": 38,
+      "question": "Module 12: Linux Networking",
+      "answer": "### Key Linux Networking Tools\n\n**`ip`** — The modern replacement for `ifconfig` and `route`. Part of the `iproute2` package.\n\n```bash\nip addr show                  # Show IP addresses\nip addr add 10.0.0.1/24 dev eth0  # Add IP to interface\nip link show                  # Show network interfaces\nip link set eth0 up           # Enable interface\nip route show                 # Show routing table\nip route add 10.0.1.0/24 via 10.0.0.1  # Add route\nip neigh show                 # Show ARP table\nip -s link show eth0          # Interface statistics\n```\n\n**`ss`** — Socket statistics. Modern replacement for `netstat`. Faster and more feature-rich.\n\n```bash\nss -tlnp          # TCP listening sockets with PID\nss -tunlp         # TCP+UDP, numeric, listening, with PID\nss -s             # Summary statistics\nss -t state established  # Established TCP connections\nss -o state time-wait    # TIME_WAIT connections\nss dst 10.0.0.1          # Connections to specific host\n```\n\n**`netstat`** — Legacy but still commonly found. Shows network connections, routing tables, interfaces.\n\n```bash\nnetstat -tlnp     # Listening TCP ports with PID\nnetstat -an       # All connections, numeric\nnetstat -rn       # Routing table\nnetstat -s        # Per-protocol statistics\n```\n\n**`ping`** — Tests network reachability using ICMP Echo Request/Reply.\n\n```bash\nping 8.8.8.8              # Continuous ping\nping -c 4 google.com      # Send 4 pings\nping -i 0.2 google.com    # 200ms interval\nping -s 1472 google.com   # Large packet (for MTU testing)\nping -M do -s 1472 host   # Don't Fragment bit set (PMTUD testing)\n```\n\n**`traceroute`** — Traces the path packets take to a destination, using ICMP or UDP with increasing TTL.\n\n```bash\ntraceroute google.com\ntraceroute -T google.com   # Use TCP (bypasses firewalls blocking ICMP/UDP)\ntraceroute -n google.com   # No DNS resolution (faster)\nmtr google.com             # Real-time traceroute with statistics\n```\n\n**`tcpdump`** — Captures and displays network packets. The most powerful network debugging tool.\n\n```bash\ntcpdump -i eth0                    # Capture on eth0\ntcpdump -i any                     # Capture on all interfaces\ntcpdump port 80                    # Filter by port\ntcpdump host 10.0.0.1              # Filter by host\ntcpdump tcp and dst port 443       # HTTPS traffic\ntcpdump -w /tmp/capture.pcap       # Write to file (for Wireshark)\ntcpdump -r capture.pcap            # Read from file\ntcpdump -n -A port 8080            # ASCII output, no DNS\ntcpdump 'tcp[tcpflags] & (tcp-syn|tcp-fin) != 0'  # SYN and FIN packets\n```\n\n**`dig`** — DNS lookup tool. The standard for DNS debugging.\n\n```bash\ndig google.com                    # A record lookup\ndig google.com AAAA               # IPv6\ndig google.com MX                 # Mail servers\ndig @8.8.8.8 google.com           # Use specific resolver\ndig +trace google.com             # Trace full resolution path\ndig +short google.com             # Short output (just IP)\ndig google.com +noall +answer     # Only show answer section\ndig -x 8.8.8.8                    # Reverse DNS lookup\n```\n\n**`nslookup`** — Legacy DNS lookup tool. Simpler than dig.\n\n```bash\nnslookup google.com\nnslookup google.com 8.8.8.8       # Use specific nameserver\n```\n\n**`curl`** — Transfer data from/to servers. Essential for HTTP debugging.\n\n```bash\ncurl https://api.example.com/users          # GET request\ncurl -X POST -H \"Content-Type: application/json\" \\\n     -d '{\"name\":\"test\"}' https://api.example.com/users  # POST\ncurl -v https://example.com                 # Verbose (headers, TLS details)\ncurl -I https://example.com                 # HEAD request (headers only)\ncurl -o /dev/null -s -w \"%{http_code}\\n\" https://example.com  # Status code only\ncurl --resolve example.com:443:1.2.3.4 https://example.com   # Override DNS\ncurl -k https://example.com                 # Ignore SSL errors\ncurl --cacert /path/to/ca.pem https://example.com  # Custom CA\ncurl -w \"\\nDNS: %{time_namelookup}\\nConnect: %{time_connect}\\nTTFB: %{time_starttransfer}\\nTotal: %{time_total}\\n\" -o /dev/null -s https://example.com  # Timing breakdown\n```\n\n**`lsof`** — List open files, including network sockets.\n\n```bash\nlsof -i                      # All network connections\nlsof -i :80                  # Connections on port 80\nlsof -i tcp                  # All TCP connections\nlsof -p <PID>                # All files/sockets for a process\nlsof -i :8080 -i :8443       # Multiple ports\n```",
+      "images": []
+    },
+    {
+      "id": 39,
+      "question": "Module 13: AWS Networking",
+      "answer": "### VPC (Virtual Private Cloud)\n\nAn **AWS VPC** is a logically isolated section of the AWS cloud where you launch resources. It's your own private network within AWS, completely separate from other customers.\n\n**Core concepts:**\n- A VPC spans all AZs in a region\n- Each VPC has a CIDR block (e.g., `10.0.0.0/16`)\n- VPCs contain subnets, route tables, security groups, and gateways\n- By default, VPCs cannot communicate with each other (VPC peering or Transit Gateway needed)\n- Default VPC: AWS creates one per region automatically; comes with default subnets, IGW, route tables",
+      "images": []
+    },
+    {
+      "id": 40,
+      "question": "Public and Private Subnets",
+      "answer": "**Public subnet:** A subnet whose route table has a route to an **Internet Gateway**. Resources in public subnets can have public IPs and receive inbound traffic from the internet.\n\n```\nRoute table for public subnet:\n10.0.0.0/16   → local\n0.0.0.0/0     → igw-xxxxx  ← routes to Internet Gateway\n```\n\n**Private subnet:** A subnet with no route to the Internet Gateway. Resources cannot be directly reached from the internet. To reach the internet for outbound traffic (e.g., software updates), they use a **NAT Gateway** in a public subnet.\n\n```\nRoute table for private subnet:\n10.0.0.0/16   → local\n0.0.0.0/0     → nat-xxxxx  ← routes to NAT Gateway (in public subnet)\n```\n\n**Best practice architecture:**\n```\nVPC: 10.0.0.0/16\n\n  Public subnets (one per AZ):\n    10.0.1.0/24 (us-east-1a) - Load balancers, NAT Gateways, Bastion hosts\n    10.0.2.0/24 (us-east-1b)\n\n  Private subnets (one per AZ):\n    10.0.11.0/24 (us-east-1a) - Application servers\n    10.0.12.0/24 (us-east-1b)\n\n  Database subnets (one per AZ):\n    10.0.21.0/24 (us-east-1a) - RDS, ElastiCache\n    10.0.22.0/24 (us-east-1b)\n```",
+      "images": []
+    },
+    {
+      "id": 41,
+      "question": "Internet Gateway and NAT Gateway",
+      "answer": "**Internet Gateway (IGW):** A horizontally scaled, redundant, and highly available VPC component that allows communication between your VPC and the internet. It performs NAT for instances with public IPs. Free to use; you pay for data transfer.\n\n**NAT Gateway:** A managed NAT service that allows instances in private subnets to initiate outbound connections to the internet while preventing inbound connections. Deployed in a public subnet. Costs ~$0.045/hour + data processing fees. Should be deployed in each AZ for HA.\n\n**Elastic IP (EIP):** A static public IPv4 address that you can associate with an EC2 instance or NAT Gateway. Unlike auto-assigned public IPs (which change when instance stops), EIPs are persistent.",
+      "images": []
+    },
+    {
+      "id": 42,
+      "question": "Security Groups and Network ACLs",
+      "answer": "**Security Groups (SG):**\n- Act as a stateful firewall at the **instance/ENI level**\n- Rules are stateful: if inbound traffic is allowed, the response is automatically allowed (no need for explicit outbound rule for responses)\n- Only allow rules (no explicit deny)\n- Evaluated as a union (all rules are considered)\n- Applied when traffic enters/leaves the instance\n\n```\nInbound rules:\nHTTP   TCP  80   0.0.0.0/0    ALLOW\nHTTPS  TCP  443  0.0.0.0/0    ALLOW\nSSH    TCP  22   10.0.0.0/8   ALLOW  ← restrict SSH to internal only\n\nOutbound rules:\nAll traffic  All  All  0.0.0.0/0  ALLOW  ← default; allow all outbound\n```\n\n**Network ACLs (NACLs):**\n- Act as a stateless firewall at the **subnet level**\n- Rules are stateless: you must explicitly allow both inbound and outbound for bidirectional traffic (including ephemeral ports for responses)\n- Support both ALLOW and DENY rules\n- Rules are evaluated in numerical order; first match wins\n- Applied at subnet boundary (before traffic reaches any instance)\n\n**When to use which:**\n- Use Security Groups for most access control (easier, stateful, per-instance)\n- Use NACLs as an additional layer for subnet-wide rules, or to explicitly deny specific IPs (SGs can't deny, only allow)",
+      "images": []
+    },
+    {
+      "id": 43,
+      "question": "VPC Peering and Transit Gateway",
+      "answer": "**VPC Peering:** A networking connection between two VPCs that allows traffic to be routed between them using private IP addresses. Works within a region or across regions (inter-region peering).\n\n**Limitations of VPC peering:**\n- Not transitive: If VPC A peers with VPC B and VPC B peers with VPC C, traffic from A cannot reach C through B\n- At scale (dozens of VPCs), the number of peering connections grows as O(n²)\n\n**Transit Gateway (TGW):** A hub-and-spoke network transit service that allows you to connect multiple VPCs (and on-premises networks via VPN/Direct Connect) through a central hub. Supports transitive routing.\n\n```\nVPC-A ──┐\nVPC-B ──┤ Transit Gateway ──── On-premises (VPN)\nVPC-C ──┘\n```",
+      "images": []
+    },
+    {
+      "id": 44,
+      "question": "Route 53",
+      "answer": "**AWS Route 53** is Amazon's DNS service. It provides:\n- **Authoritative DNS:** Host your domain's DNS records\n- **Domain registration:** Register domains through Route 53\n- **Health checking:** Monitor endpoints and route around failures\n- **Traffic routing policies:**\n  - **Simple:** Single record, no health checking\n  - **Weighted:** Distribute traffic by percentage (A/B testing, canary deployments)\n  - **Latency-based:** Route to the region with lowest latency\n  - **Failover:** Primary/secondary; fail over if primary unhealthy\n  - **Geolocation:** Route based on user's geographic location\n  - **Geoproximity:** Route based on distance to resources\n  - **Multivalue Answer:** Return multiple healthy records (basic load balancing at DNS level)\n\n**Route 53 Resolver:** Acts as the DNS resolver for resources within your VPC. Automatically handles `.amazonaws.com` domains and your custom domains. **Resolver Endpoints** allow DNS queries to flow between your VPC and on-premises networks.",
+      "images": []
+    },
+    {
+      "id": 45,
+      "question": "Module 14: Kubernetes Networking",
+      "answer": "### Pod Networking\n\nIn Kubernetes, each **pod** gets its own IP address from the cluster's pod CIDR range. All pods can communicate with all other pods directly (without NAT) — this is the **Kubernetes networking model**.\n\n**Pod network properties:**\n- Every pod has a unique IP in the cluster\n- Containers within a pod share a network namespace (share IP and ports)\n- Pods communicate across nodes through a CNI plugin\n- No NAT between pods (pod IP is the actual address seen by other pods)\n\n**Pause container:** Each pod has a hidden \"pause\" (or \"infra\") container whose sole job is to hold the network namespace. Other containers in the pod join this namespace.",
+      "images": []
+    },
+    {
+      "id": 46,
+      "question": "CNI (Container Network Interface)",
+      "answer": "**CNI** is a specification and set of libraries for configuring network interfaces in Linux containers. Kubernetes uses CNI plugins to implement pod networking.\n\n**Popular CNI plugins:**\n\n- **Flannel:** Simple overlay network using VXLAN. Easy to set up, limited features.\n- **Calico:** Supports both overlay (VXLAN/IP-in-IP) and native routing (BGP). Also supports Network Policies.\n- **Cilium:** Uses eBPF for high-performance networking. Native Kubernetes Network Policy support, observability, encryption.\n- **Weave Net:** Overlay network with encryption built in.\n- **AWS VPC CNI:** Uses AWS VPC networking directly — pods get IPs from VPC subnets. Native AWS integration but limited IP space.",
+      "images": []
+    },
+    {
+      "id": 47,
+      "question": "Ingress and Gateway API",
+      "answer": "**Ingress:** A Kubernetes resource that defines HTTP routing rules to route external traffic to internal services. Requires an **Ingress Controller** (nginx ingress, AWS ALB Ingress Controller, Traefik) to actually implement the routing.\n\n```yaml\napiVersion: networking.k8s.io/v1\nkind: Ingress\nmetadata:\n  name: my-ingress\nspec:\n  rules:\n  - host: api.example.com\n    http:\n      paths:\n      - path: /v1\n        pathType: Prefix\n        backend:\n          service:\n            name: api-v1\n            port:\n              number: 80\n      - path: /v2\n        pathType: Prefix\n        backend:\n          service:\n            name: api-v2\n            port:\n              number: 80\n```\n\n**Gateway API:** The next-generation successor to Ingress. Provides richer routing capabilities (traffic splitting, header-based routing, TCP/UDP routing), better extensibility, and role-based management (cluster operators vs. application developers).",
+      "images": []
+    },
+    {
+      "id": 48,
+      "question": "CoreDNS and kube-proxy",
+      "answer": "**CoreDNS:** The in-cluster DNS server. Runs as a Deployment and is the default recursive resolver for all pods. Resolves service names like `my-service.my-namespace.svc.cluster.local`.\n\nDNS resolution within Kubernetes:\n```\nmy-service                       → my-service.<current-namespace>.svc.cluster.local\nmy-service.other-ns              → my-service.other-ns.svc.cluster.local\nmy-service.other-ns.svc.cluster.local → resolved by CoreDNS → ClusterIP\n```\n\n**kube-proxy:** Runs on every node and maintains network rules (iptables or IPVS) to implement Service routing. When a pod connects to a ClusterIP, kube-proxy's rules DNAT the packet to one of the actual pod IPs (load balancing).\n\n**iptables mode:** kube-proxy creates iptables rules for each service and endpoint. Works but doesn't scale well above ~1000 services.\n\n**IPVS mode:** Uses kernel IPVS for load balancing. Scales much better (O(1) lookup vs O(n) for iptables).\n\n**Cilium replaces kube-proxy:** Using eBPF, Cilium can replace kube-proxy with more efficient service routing and observability.",
+      "images": []
+    },
+    {
+      "id": 49,
+      "question": "Kubernetes Network Policies",
+      "answer": "**Network Policies** are Kubernetes resources that control which pods can communicate with which other pods (and external endpoints). By default, Kubernetes has no network policies — all pods can talk to all pods.\n\n```yaml\napiVersion: networking.k8s.io/v1\nkind: NetworkPolicy\nmetadata:\n  name: deny-all\n  namespace: production\nspec:\n  podSelector: {}         # Apply to all pods in namespace\n  policyTypes:\n  - Ingress\n  - Egress\n  # No ingress/egress rules = deny all",
+      "images": []
+    },
+    {
+      "id": 50,
+      "question": "Module 15: Database Networking",
+      "answer": "### Database Connections\n\nDatabase connections are expensive: they require TCP handshake, authentication, SSL handshake, and allocation of server-side resources. Each connection on PostgreSQL uses ~5MB of memory.\n\n**Connection limits:** PostgreSQL default `max_connections = 100`. Many connections doing nothing waste resources. Increasing it arbitrarily degrades performance (context switching, lock contention).\n\n**Best practice:** Keep the total number of active connections low. Use connection pooling.",
+      "images": []
+    },
+    {
+      "id": 51,
+      "question": "Read Replicas and Replication",
+      "answer": "**Read replicas** are copies of the primary database that receive data changes via replication. Read replicas handle read-only queries, reducing load on the primary.\n\n**PostgreSQL streaming replication:**\n- Primary server streams WAL (Write-Ahead Log) records to replicas in real-time\n- Replicas apply WAL changes to stay in sync\n- By default, replication is asynchronous (small lag possible) for performance\n- Synchronous replication ensures durability but adds write latency\n\n**Replication lag:** The delay between a write on the primary and its appearance on the replica. Under load, this can be seconds or even minutes. Applications must handle reading stale data from replicas or check replication lag.\n\n**Failover:** When the primary fails:\n1. A replica is promoted to primary\n2. Application connection strings must be updated (or handled by smart DNS/proxy)\n3. Other replicas must reconfigure to replicate from the new primary\n4. Any unconfirmed writes from the old primary may be lost (unless synchronous replication)\n\n**In AWS RDS Multi-AZ:** Standby instance is maintained in sync (synchronous replication). Failover is automatic, typically 60-120 seconds. The CNAME of the endpoint is updated to point to the new primary.",
+      "images": []
+    },
+    {
+      "id": 52,
+      "question": "Module 16: Kafka Networking",
+      "answer": "### Broker Discovery\n\nKafka clients don't connect directly to all brokers at startup. Instead, they use a **bootstrap process:**\n\n1. Client connects to one or more **bootstrap brokers** (configured as `bootstrap.servers`)\n2. Client sends a **Metadata Request** to the bootstrap broker\n3. Broker responds with the full cluster metadata: list of all brokers, topics, partition leaders\n4. Client now knows the full cluster topology and connects to the appropriate leader broker for each partition it needs\n\nThis means `bootstrap.servers` doesn't need to list all brokers — just enough that at least one is reachable at startup. However, listing multiple is recommended for redundancy.",
+      "images": []
+    },
+    {
+      "id": 53,
+      "question": "Metadata Requests and Partition Leaders",
+      "answer": "**Metadata Requests** return information about:\n- All broker hostnames and ports\n- All topics and their partitions\n- Which broker is the leader for each partition\n- Which brokers are followers (ISR)\n\n**Producers** send to the **partition leader**. Followers pull from the leader to replicate data. Consumers typically read from the leader (though recent versions allow reading from followers in the same AZ for cost savings — `replica.fetch.min.bytes`).",
+      "images": []
+    },
+    {
+      "id": 54,
+      "question": "ISR (In-Sync Replicas)",
+      "answer": "The **ISR (In-Sync Replica set)** is the set of replicas that are fully caught up with the leader. A replica is \"in sync\" if it has fetched all messages up to the last committed message from the leader within `replica.lag.time.max.ms`.\n\n**`min.insync.replicas`:** Minimum number of replicas that must acknowledge a write before the producer considers it successful. Setting this to 2 (with replication factor 3) ensures you need at least 2 copies before confirming — provides durability at the cost of latency.\n\n**Producer `acks` setting:**\n- `acks=0`: Fire and forget (fastest, least durable)\n- `acks=1`: Leader acknowledges (moderate)\n- `acks=all` or `acks=-1`: All ISRs acknowledge (slowest, most durable)",
+      "images": []
+    },
+    {
+      "id": 55,
+      "question": "Consumer Groups and Rebalancing",
+      "answer": "**Consumer groups** allow multiple consumers to share the work of consuming from a topic. Each partition is consumed by exactly one consumer in the group.\n\n**Rebalancing** occurs when:\n- A consumer joins the group\n- A consumer leaves the group (gracefully or via timeout)\n- A topic's partition count changes\n\nDuring rebalancing, all partition assignments are revoked and redistributed. This causes a brief pause in consumption.\n\n**Rebalancing protocols:**\n- **Eager rebalancing (default):** All consumers stop, revoke all partitions, then rebalance. Simple but causes downtime.\n- **Cooperative/Incremental rebalancing:** Only reassign the partitions that need to move. Consumers that keep their partitions continue without interruption.\n\n**Key networking parameters:**\n- `session.timeout.ms`: Maximum time between heartbeats before broker removes consumer (default: 45000ms)\n- `heartbeat.interval.ms`: How often consumers send heartbeats (default: 3000ms)\n- `max.poll.interval.ms`: Maximum time between `poll()` calls before considered dead",
+      "images": []
+    },
+    {
+      "id": 56,
+      "question": "Module 17: Distributed Systems Networking",
+      "answer": "### Timeouts\n\nIn distributed systems, every network call must have a timeout. Without timeouts, a slow or unresponsive downstream service causes your threads/goroutines/resources to pile up, eventually exhausting your service.\n\n**Types of timeouts:**\n\n**Connection timeout:** How long to wait to establish a TCP connection. Should be short (1-5 seconds). If it takes longer, the server is likely unreachable.\n\n**Read timeout (socket timeout):** How long to wait for data to arrive after the connection is established. Depends on expected response time (e.g., 2-30 seconds for typical APIs).\n\n**Request timeout:** Total time budget for the entire request (connection + waiting + reading). Provides an upper bound.\n\n**Write timeout:** How long to wait when sending data (usually less critical but can block on slow connections).\n\n**Setting appropriate timeouts:**\n- Measure your p99/p999 latency in normal conditions\n- Set timeout to a multiple of p99 (e.g., 3×) to allow for occasional spikes\n- Don't set it so high that failures cause thread pool exhaustion\n- Propagate timeouts (reduce remaining budget as you call downstream services — deadline propagation)",
+      "images": []
+    },
+    {
+      "id": 57,
+      "question": "Exponential Backoff with Jitter",
+      "answer": "**Exponential backoff** increases the wait time between retries exponentially to reduce load on a struggling server:\n\n```\nAttempt 1: wait 1s\nAttempt 2: wait 2s\nAttempt 3: wait 4s\nAttempt 4: wait 8s\nAttempt 5: wait 16s (capped at some max)\n```\n\nWithout jitter, all retrying clients will retry at the same time, creating thundering herd problems. **Jitter** adds randomness:\n\n```python\nimport random, time\n\nbase_delay = 1.0  # seconds\nmax_delay = 60.0\ncap = 30.0\n\nfor attempt in range(max_attempts):\n    try:\n        result = make_request()\n        break\n    except TransientError:\n        delay = min(cap, base_delay * (2 ** attempt))\n        # Full jitter: random in [0, delay]\n        time.sleep(random.uniform(0, delay))\n```\n\n**\"Full jitter\"** (random between 0 and computed delay) tends to work better than **\"decorrelated jitter\"** or **\"equal jitter\"** for most use cases.",
+      "images": []
+    },
+    {
+      "id": 58,
+      "question": "Module 18: Networking Security",
+      "answer": "### Firewalls\n\nA **firewall** is a network security system that monitors and controls incoming and outgoing traffic based on security rules. It establishes a barrier between trusted internal networks and untrusted external networks.\n\n**Types:**\n- **Packet filtering:** Inspects packets at the network layer based on IP/port rules. Stateless.\n- **Stateful inspection:** Tracks connection state; knows if a packet belongs to an established connection.\n- **Application layer / NGFW (Next-Gen Firewall):** Deep packet inspection; can filter based on application protocol content.\n- **WAF (Web Application Firewall):** Specializes in HTTP traffic; protects against OWASP Top 10.",
+      "images": []
+    },
+    {
+      "id": 59,
+      "question": "WAF (Web Application Firewall)",
+      "answer": "A **WAF** inspects HTTP requests and responses to protect web applications from common attacks:\n- **SQL Injection:** Malicious SQL in input fields\n- **Cross-Site Scripting (XSS):** Injected JavaScript executed in victims' browsers\n- **CSRF:** Trick users into performing actions on authenticated sites\n- **Command Injection:** Shell commands injected via input\n- **Path traversal:** `../../etc/passwd` style attacks\n- **HTTP flooding:** DDoS at the application layer\n\n**Deployment modes:**\n- **Detection mode:** Log but don't block (learn your traffic first)\n- **Prevention mode:** Block malicious requests\n\n**AWS WAF:** Managed WAF service integrates with CloudFront, ALB, and API Gateway. Supports managed rule groups (AWS, OWASP, vendor-specific).",
+      "images": []
+    },
+    {
+      "id": 60,
+      "question": "CORS (Cross-Origin Resource Sharing)",
+      "answer": "**CORS** is a browser security mechanism that controls which web pages can make requests to a different domain than the one that served the page.\n\n**Same-Origin Policy (SOP):** Browsers block JavaScript from making requests to a different origin (protocol + domain + port) than the page's origin.\n\n**CORS allows exceptions:**\n```\nBrowser: GET https://api.example.com/data\n  (from page at https://www.myapp.com)\n  \nBrowser sends: Origin: https://www.myapp.com\n\nServer responds with:\n  Access-Control-Allow-Origin: https://www.myapp.com\n  (or * for public APIs)\n\nBrowser: OK to read the response\n```\n\n**Preflight requests:** For non-simple requests (POST with JSON, custom headers), the browser sends an OPTIONS request first:\n```\nOPTIONS /api/data HTTP/1.1\nOrigin: https://myapp.com\nAccess-Control-Request-Method: POST\nAccess-Control-Request-Headers: Content-Type, Authorization\n\nHTTP/1.1 204 No Content\nAccess-Control-Allow-Origin: https://myapp.com\nAccess-Control-Allow-Methods: GET, POST, PUT, DELETE\nAccess-Control-Allow-Headers: Content-Type, Authorization\nAccess-Control-Max-Age: 86400   ← cache preflight for 1 day\n```",
+      "images": []
+    },
+    {
+      "id": 61,
+      "question": "CSRF (Cross-Site Request Forgery)",
+      "answer": "**CSRF** attacks trick authenticated users into making unintended requests to a web application. For example: a malicious page makes the victim's browser send a state-changing request to their bank.\n\n**Protection methods:**\n- **CSRF tokens:** A random token included in forms and checked server-side. An attacker can't read the token (SOP) so can't forge the request.\n- **SameSite cookies:** With `SameSite=Strict` or `Lax`, cookies aren't sent on cross-site requests.\n- **Double Submit Cookie:** Submit the same random value as both a cookie and a request header; CSRF can't forge the header.\n- **Check Origin/Referer headers:** Only process requests from allowed origins (not foolproof but a layer of defense).",
+      "images": []
+    },
+    {
+      "id": 62,
+      "question": "DDoS and SYN Flood",
+      "answer": "**DDoS (Distributed Denial of Service):** An attack in which many systems flood a target with traffic to overwhelm its capacity, making it unavailable to legitimate users.\n\n**SYN Flood:** A specific DDoS attack targeting the TCP handshake. The attacker sends many SYN packets with spoofed source IPs. The server sends SYN-ACK responses and holds half-open connections, exhausting its connection table.\n\n**Defenses:**\n- **SYN cookies:** Server doesn't allocate state for half-open connections until the handshake completes\n- **Rate limiting:** Limit SYN packets per source IP\n- **IP reputation filtering:** Block known bad IPs\n- **Anycast scrubbing:** Route traffic to DDoS mitigation centers that filter attack traffic\n- **AWS Shield:** Managed DDoS protection service (Standard is free, Advanced is paid)",
+      "images": []
+    },
+    {
+      "id": 63,
+      "question": "Man-in-the-Middle (MITM)",
+      "answer": "A **MITM attack** occurs when an attacker secretly intercepts and potentially alters communication between two parties who believe they're communicating directly.\n\n**Attack vectors:**\n- ARP poisoning (LAN): Attacker responds to ARP requests with their own MAC address\n- DNS poisoning: Return malicious IP for legitimate domain\n- SSL stripping: Downgrade HTTPS to HTTP\n- BGP hijacking: Advertise more specific routes to redirect internet traffic\n\n**Defenses:**\n- **HTTPS/TLS:** Encrypts traffic; certificate validation prevents impersonation\n- **HSTS (HTTP Strict Transport Security):** Tells browsers to always use HTTPS for a domain\n- **Certificate Transparency:** Public logs of all issued certificates; detect unauthorized cert issuance\n- **DNSSEC:** Cryptographically signed DNS responses\n- **mTLS:** Both sides must present valid certificates",
+      "images": []
+    },
+    {
+      "id": 64,
+      "question": "Module 19: Networking Observability",
+      "answer": "### OpenTelemetry\n\n**OpenTelemetry (OTel)** is an open-source observability framework providing vendor-neutral APIs, SDKs, and tooling for generating, collecting, and exporting telemetry data: **traces, metrics, and logs**.\n\n**Components:**\n- **API:** Language-specific API for instrumentation\n- **SDK:** Implementation of the API with processing and export capabilities\n- **Collector:** Agent or gateway to receive, process, and export telemetry\n- **OTLP (OpenTelemetry Protocol):** Standard telemetry data transport format\n\n**Data types:**\n- **Traces:** End-to-end journey of a request across services (spans)\n- **Metrics:** Measurements over time (counters, gauges, histograms)\n- **Logs:** Timestamped event records\n\nOTel is supported by all major observability backends: Jaeger, Zipkin, Datadog, New Relic, Honeycomb, Grafana Tempo.",
+      "images": []
+    },
+    {
+      "id": 65,
+      "question": "Correlation and Request IDs",
+      "answer": "**Correlation ID (or Trace ID):** A unique identifier assigned at the entry point of a system and passed through all subsequent calls. Allows correlating all logs, metrics, and traces for a single request across multiple services.\n\n**Request ID:** Sometimes used synonymously with correlation ID. Often generated per service hop (vs. correlation ID which is end-to-end).\n\n**Implementation:**\n```python\n# Generate at entry point (API gateway or first service)\nrequest_id = str(uuid.uuid4())\nheaders['X-Request-Id'] = request_id\nheaders['X-Correlation-Id'] = correlation_id\n\n# Log with IDs in every service\nlogger.info(\"Processing request\", extra={\n    \"request_id\": request_id,\n    \"correlation_id\": correlation_id,\n    \"user_id\": user_id\n})\n\n# Pass to downstream services\nresponse = requests.get(\n    downstream_url,\n    headers={\"X-Correlation-Id\": correlation_id}\n)\n```",
+      "images": []
+    },
+    {
+      "id": 66,
+      "question": "Wireshark and Packet Capture",
+      "answer": "**Wireshark** is a graphical packet analyzer that captures and displays network traffic. Essential for deep protocol debugging.\n\n**Common use cases:**\n- Debug TLS handshake failures\n- Inspect exact HTTP requests and responses\n- Identify packet loss and retransmissions\n- Analyze DNS resolution issues\n- Verify MTU issues (fragmentation)\n\n**Key Wireshark filters:**\n```\nhttp                          # All HTTP traffic\nhttp.request.method == \"POST\" # Only POST requests\ntcp.port == 8080              # Traffic on port 8080\nip.addr == 10.0.0.1           # Traffic to/from IP\ntcp.flags.reset == 1          # TCP RST packets\ndns                           # DNS traffic\ntcp.analysis.retransmission   # Retransmitted packets\n```\n\n**tcpdump → Wireshark workflow:**\n```bash\n# Capture on server with tcpdump\ntcpdump -i eth0 -w capture.pcap\n\n# Transfer to local machine and open in Wireshark\nscp server:/tmp/capture.pcap .\nwireshark capture.pcap\n```",
+      "images": []
+    },
+    {
+      "id": 67,
+      "question": "Module 20: Production Troubleshooting",
+      "answer": "### DNS Debugging\n\n**Symptoms:** Service cannot connect to other services, requests failing with \"could not resolve host.\"\n\n**Debugging steps:**\n\n```bash\n# 1. Test basic DNS resolution\ndig api.example.com\n\n# 2. Test with a specific resolver\ndig @8.8.8.8 api.example.com\ndig @10.0.0.2 api.example.com  # VPC's DNS resolver\n\n# 3. Check /etc/resolv.conf\ncat /etc/resolv.conf\n\n# 4. Test resolution from inside a container/pod\nkubectl exec -it mypod -- nslookup api.example.com\nkubectl exec -it mypod -- dig api.example.com\n\n# 5. Check if CoreDNS is healthy in Kubernetes\nkubectl get pods -n kube-system | grep coredns\nkubectl logs -n kube-system deployment/coredns\n\n# 6. Trace the full DNS path\ndig +trace api.example.com\n\n# 7. Check TTL of cached records (look for very short or zero TTL)\ndig api.example.com | grep -A1 'ANSWER SECTION'\n```\n\n**Common issues:**\n- Wrong or missing `search` domain in `/etc/resolv.conf`\n- DNS server unreachable (firewall blocking UDP/TCP port 53)\n- TTL expired and re-resolution fails (authoritative server down)\n- In Kubernetes: CoreDNS overloaded (high CPU, too many requests — implement NodeLocal DNSCache)\n- ndots setting causing unnecessary absolute lookups",
+      "images": []
+    },
+    {
+      "id": 68,
+      "question": "HTTP Errors (4xx/5xx)",
+      "answer": "**400 Bad Request:** Request malformed. Check Content-Type header, request body format, required fields.\n\n**401 Unauthorized:** Missing or invalid authentication. Check token validity/expiry, Authorization header format.\n\n**403 Forbidden:** Authenticated but not authorized. Check permissions, IAM policies, service account roles.\n\n**404 Not Found:** Wrong URL path, resource doesn't exist, trailing slashes, case sensitivity.\n\n**429 Too Many Requests:** Rate limited. Check rate limit headers (`Retry-After`, `X-RateLimit-*`). Implement backoff.\n\n**500 Internal Server Error:** Server-side exception. Check application logs, exception traces.\n\n**502 Bad Gateway:** Upstream returned invalid response. Check if backend is running and healthy. Look at backend logs.\n\n**503 Service Unavailable:**\n- LB has no healthy backends (all health checks failing)\n- Service is overloaded\n- Deployment in progress with no instances\n\n**504 Gateway Timeout:**\n- Backend took too long to respond\n- Database query slow\n- External API call timing out\n- Network latency spike between LB and backend\n\n```bash\n# Check response headers for debugging info\ncurl -v https://api.example.com/endpoint 2>&1 | head -50\n\n# Check load balancer access logs (AWS ALB)\n# Check application logs for 500s\nkubectl logs deployment/myapp --since=5m | grep ERROR\n```",
+      "images": []
+    },
+    {
+      "id": 69,
+      "question": "Kubernetes Connectivity Issues",
+      "answer": "**Pod to Pod:**\n```bash\n# Test connectivity between pods\nkubectl exec pod-a -- curl http://pod-b-ip:8080\nkubectl exec pod-a -- ping pod-b-ip\n\n# Check if CNI is working (pods have IPs)\nkubectl get pods -o wide\n\n# Check Network Policies\nkubectl get networkpolicies -A\nkubectl describe networkpolicy <name>\n```\n\n**Pod to Service:**\n```bash\n# Test service DNS resolution\nkubectl exec pod -- nslookup my-service.my-namespace\n\n# Test service connectivity\nkubectl exec pod -- curl http://my-service:80\n\n# Check endpoints (are backends registered?)\nkubectl get endpoints my-service\nkubectl describe service my-service\n\n# Check pod labels match selector\nkubectl get pods --selector=app=my-app\n```\n\n**External to Pod (Ingress):**\n```bash\n# Check Ingress resource\nkubectl describe ingress my-ingress\n\n# Check ingress controller logs\nkubectl logs -n ingress-nginx deployment/ingress-nginx-controller\n\n# Check TLS certificate\nkubectl describe secret my-tls-secret\n\n# Test with curl\ncurl -H \"Host: api.example.com\" http://load-balancer-ip/path\n```",
+      "images": []
+    },
+    {
+      "id": 70,
+      "question": "Quick Reference: Cheat Sheets",
+      "answer": "### Common Port Numbers\n| Port | Protocol | Service          |\n|------|----------|------------------|\n| 22   | TCP      | SSH              |\n| 25   | TCP      | SMTP             |\n| 53   | TCP/UDP  | DNS              |\n| 80   | TCP      | HTTP             |\n| 443  | TCP      | HTTPS            |\n| 3306 | TCP      | MySQL            |\n| 5432 | TCP      | PostgreSQL       |\n| 6379 | TCP      | Redis            |\n| 9092 | TCP      | Kafka            |\n| 2181 | TCP      | ZooKeeper        |\n| 2379 | TCP      | etcd             |\n| 8080 | TCP      | HTTP (alternate) |\n| 6443 | TCP      | Kubernetes API   |\n| 10250| TCP      | Kubelet          |\n| 4789 | UDP      | VXLAN            |\n\n### TCP Flags Reference\n| Flag | Meaning                          |\n|------|----------------------------------|\n| SYN  | Synchronize (connection setup)   |\n| ACK  | Acknowledge                      |\n| FIN  | Finish (graceful close)          |\n| RST  | Reset (abrupt close)             |\n| PSH  | Push (deliver data immediately)  |\n| URG  | Urgent (urgent data pointer)     |\n| ECE  | ECN Echo (congestion)            |\n| CWR  | Congestion Window Reduced        |\n\n### HTTP Status Code Summary\n| Range | Category      | Common Codes                     |\n|-------|---------------|----------------------------------|\n| 1xx   | Informational | 100 Continue                     |\n| 2xx   | Success       | 200, 201, 204, 206               |\n| 3xx   | Redirect      | 301, 302, 304, 307, 308          |\n| 4xx   | Client Error  | 400, 401, 403, 404, 409, 422, 429|\n| 5xx   | Server Error  | 500, 502, 503, 504               |\n\n### CIDR Quick Reference\n| CIDR | Hosts   |\n|------|---------|\n| /32  | 1       |\n| /30  | 2       |\n| /28  | 14      |\n| /27  | 30      |\n| /26  | 62      |\n| /24  | 254     |\n| /22  | 1,022   |\n| /20  | 4,094   |\n| /16  | 65,534  |\n| /8   | 16M     |",
+      "images": []
+    }
+  ]
+}

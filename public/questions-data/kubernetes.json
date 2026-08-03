@@ -1,0 +1,729 @@
+{
+  "topic": "Kubernetes",
+  "description": "Pods, deployments, services, networking, storage, and K8s internals",
+  "icon": "☸️",
+  "accent": "#38bdf8",
+  "source": "kubernetes.md",
+  "questions": [
+    {
+      "id": 1,
+      "question": "What is Kubernetes?",
+      "answer": "Kubernetes (K8s) is an open-source container orchestration platform originally developed by Google and now maintained by the Cloud Native Computing Foundation (CNCF). It automates the deployment, scaling, scheduling, and management of containerized applications across clusters of machines.",
+      "images": []
+    },
+    {
+      "id": 2,
+      "question": "Why is Kubernetes Used?",
+      "answer": "- **Automated deployment & rollbacks** — deploy new versions safely and roll back on failure\n- **Self-healing** — restarts failed containers, replaces and reschedules pods on dead nodes\n- **Horizontal scaling** — scale applications up/down manually or automatically\n- **Service discovery & load balancing** — built-in DNS and traffic distribution\n- **Secret & config management** — manage sensitive data and configuration separately from code\n- **Storage orchestration** — auto-mount local, cloud, or network storage\n- **Multi-cloud & hybrid support** — runs on AWS, GCP, Azure, on-prem, or bare metal",
+      "images": []
+    },
+    {
+      "id": 3,
+      "question": "What is a Pod?",
+      "answer": "A Pod is the **smallest deployable unit** in Kubernetes. It represents a single instance of a running process in the cluster and can contain one or more tightly coupled containers that share:\n\n- The same network namespace (IP address and ports)\n- The same storage volumes\n- The same lifecycle",
+      "images": []
+    },
+    {
+      "id": 4,
+      "question": "Difference Between Pod and Container?",
+      "answer": "| Aspect | Container | Pod |\n|---|---|---|\n| Definition | Isolated runtime for an application | Kubernetes wrapper around one or more containers |\n| Networking | Has its own network stack | Containers in a Pod share one IP |\n| Management | Managed by container runtime (Docker, containerd) | Managed by Kubernetes |\n| Lifecycle | Independent | All containers in a Pod start/stop together |\n| Storage | No built-in volume sharing | Containers in a Pod share volumes |\n\nA Pod is a Kubernetes abstraction; a Container is the actual running process inside it.",
+      "images": []
+    },
+    {
+      "id": 5,
+      "question": "What is a Deployment?",
+      "answer": "A Deployment is a Kubernetes resource that manages a **stateless application**. It describes the desired state (e.g., \"run 3 replicas of this container image\") and the Deployment Controller continuously reconciles actual state to match. It supports:\n\n- Rolling updates and rollbacks\n- Scaling up/down\n- Self-healing via ReplicaSets",
+      "images": []
+    },
+    {
+      "id": 6,
+      "question": "What is a ReplicaSet?",
+      "answer": "A ReplicaSet ensures that a **specified number of identical Pod replicas** are running at any given time. If a Pod dies, the ReplicaSet creates a new one. If there are too many Pods, it terminates extras.\n\n> In practice, you rarely create ReplicaSets directly — Deployments manage them for you automatically.",
+      "images": []
+    },
+    {
+      "id": 7,
+      "question": "Difference Between Deployment and StatefulSet?",
+      "answer": "| Feature | Deployment | StatefulSet |\n|---|---|---|\n| Use case | Stateless apps (web servers, APIs) | Stateful apps (databases, queues) |\n| Pod identity | Pods are interchangeable | Each Pod has a stable, unique identity |\n| Pod naming | Random suffix (pod-xyz) | Ordered suffix (pod-0, pod-1, pod-2) |\n| Storage | Shared or ephemeral | Each Pod gets its own PersistentVolume |\n| Scaling order | Simultaneous | Ordered (one at a time) |\n| Examples | Nginx, Node.js APIs | MySQL, Kafka, Zookeeper |",
+      "images": []
+    },
+    {
+      "id": 8,
+      "question": "What is a DaemonSet?",
+      "answer": "A DaemonSet ensures that **one copy of a Pod runs on every node** (or a subset of nodes) in the cluster. When nodes are added, Pods are automatically scheduled on them. When nodes are removed, Pods are garbage-collected.\n\n**Common uses:**\n- Log collectors (Fluentd, Filebeat)\n- Monitoring agents (Prometheus Node Exporter)\n- Network plugins (CNI agents)\n- Security agents",
+      "images": []
+    },
+    {
+      "id": 9,
+      "question": "What is a Service in Kubernetes?",
+      "answer": "A Service is an abstraction that defines a **stable network endpoint** to access a set of Pods. Since Pods are ephemeral and their IPs change, Services provide a consistent IP address and DNS name that load-balances traffic to matching Pods using label selectors.",
+      "images": []
+    },
+    {
+      "id": 10,
+      "question": "Types of Kubernetes Services?",
+      "answer": "1. **ClusterIP** — internal-only access within the cluster (default)\n2. **NodePort** — exposes the service on each node's IP at a static port\n3. **LoadBalancer** — provisions an external cloud load balancer\n4. **ExternalName** — maps a service to an external DNS name\n5. **Headless** — no ClusterIP; used with StatefulSets for direct Pod DNS",
+      "images": []
+    },
+    {
+      "id": 11,
+      "question": "Difference Between ClusterIP, NodePort, and LoadBalancer?",
+      "answer": "| Type | Accessible From | Use Case |\n|---|---|---|\n| ClusterIP | Inside the cluster only | Internal microservice communication |\n| NodePort | Outside via `<NodeIP>:<NodePort>` | Development/testing, simple external access |\n| LoadBalancer | External via cloud LB public IP | Production external traffic (AWS ELB, GCP LB) |\n\n**Traffic flow:**\n- `LoadBalancer` → `NodePort` → `ClusterIP` → Pod (each builds on the previous)",
+      "images": []
+    },
+    {
+      "id": 12,
+      "question": "What is Ingress?",
+      "answer": "Ingress is a Kubernetes API object that manages **external HTTP/HTTPS access** to services within a cluster. It provides:\n\n- Host-based routing (`api.example.com` → API service)\n- Path-based routing (`/api` → API, `/web` → frontend)\n- TLS/SSL termination\n- Rewrite rules and redirects\n\nIngress does **not** expose arbitrary ports/protocols — it is HTTP/HTTPS specific.",
+      "images": []
+    },
+    {
+      "id": 13,
+      "question": "What is an Ingress Controller?",
+      "answer": "An Ingress Controller is the **actual implementation** that fulfills Ingress rules. Kubernetes defines the Ingress spec, but a controller is required to act on it.\n\n**Popular controllers:**\n- **NGINX Ingress Controller** — most common, open source\n- **Traefik** — modern, auto-discovery\n- **HAProxy** — high performance\n- **AWS ALB Ingress Controller** — native AWS integration\n- **Istio Gateway** — service mesh based",
+      "images": []
+    },
+    {
+      "id": 14,
+      "question": "Kubernetes Architecture",
+      "answer": "### Control Plane (Master Node)\n| Component | Role |\n|---|---|\n| **API Server** | Entry point for all REST commands; validates and persists state |\n| **etcd** | Distributed key-value store; stores all cluster state |\n| **Scheduler** | Assigns Pods to nodes based on resource availability |\n| **Controller Manager** | Runs controller loops (Node, ReplicaSet, Endpoint controllers) |\n| **Cloud Controller Manager** | Integrates with cloud provider APIs |\n\n### Worker Nodes\n| Component | Role |\n|---|---|\n| **Kubelet** | Agent on each node; ensures containers run as specified |\n| **Kube Proxy** | Maintains network rules for Pod-to-Service communication |\n| **Container Runtime** | Runs containers (containerd, CRI-O, Docker) |\n\n### Flow\n```\nUser → kubectl → API Server → etcd (persists)\n                            → Scheduler (assigns node)\n                            → Controller Manager (reconciles)\n                            → Kubelet on Node (runs Pod)\n```",
+      "images": []
+    },
+    {
+      "id": 15,
+      "question": "What is etcd?",
+      "answer": "etcd is a **distributed, consistent key-value store** that serves as Kubernetes' \"brain\" — the single source of truth for all cluster state. Every resource (Pods, Services, ConfigMaps, Secrets) is stored here.\n\n- Uses the **Raft consensus algorithm** for high availability\n- Typically runs as a 3 or 5 node cluster for fault tolerance\n- All API Server reads/writes go through etcd\n- Should be backed up regularly in production",
+      "images": []
+    },
+    {
+      "id": 16,
+      "question": "What is Kubelet?",
+      "answer": "The Kubelet is a **node-level agent** that runs on every worker node. It:\n\n- Watches the API Server for Pods assigned to its node\n- Instructs the container runtime to start/stop containers\n- Reports node and Pod status back to the control plane\n- Runs liveness/readiness probes\n- Manages container logs and resource reporting",
+      "images": []
+    },
+    {
+      "id": 17,
+      "question": "What is Kube Proxy?",
+      "answer": "Kube Proxy runs on every node and maintains **network rules** (iptables or IPVS) that allow network communication to Pods from inside or outside the cluster. It implements the Service abstraction by routing traffic to the correct Pod endpoints.",
+      "images": []
+    },
+    {
+      "id": 18,
+      "question": "What is the API Server?",
+      "answer": "The Kubernetes API Server (`kube-apiserver`) is the **front-end of the control plane**. It:\n\n- Exposes the Kubernetes REST API\n- Validates all incoming requests\n- Is the only component that reads from and writes to etcd\n- Handles authentication, authorization (RBAC), and admission control\n- Is horizontally scalable for high availability",
+      "images": []
+    },
+    {
+      "id": 19,
+      "question": "What is the Scheduler in Kubernetes?",
+      "answer": "The `kube-scheduler` watches for newly created Pods with no assigned node and **selects the best node** to run them based on:\n\n- Resource availability (CPU, memory)\n- Node affinity/anti-affinity rules\n- Taints and tolerations\n- Pod topology spread constraints\n- Custom scheduling policies",
+      "images": []
+    },
+    {
+      "id": 20,
+      "question": "What are Controllers in Kubernetes?",
+      "answer": "Controllers are **control loops** that continuously watch the cluster state and make changes to move the current state toward the desired state. Each controller manages a specific resource type:\n\n- **ReplicaSet Controller** — ensures correct Pod count\n- **Node Controller** — responds to node failures\n- **Endpoint Controller** — populates Service endpoints\n- **Job Controller** — manages batch jobs to completion\n- **CronJob Controller** — schedules jobs on a time basis",
+      "images": []
+    },
+    {
+      "id": 21,
+      "question": "What is Horizontal Pod Autoscaler (HPA)?",
+      "answer": "HPA **automatically scales the number of Pod replicas** in a Deployment, ReplicaSet, or StatefulSet based on observed metrics like CPU utilization, memory usage, or custom metrics from Prometheus.\n\n```yaml\napiVersion: autoscaling/v2\nkind: HorizontalPodAutoscaler\nspec:\n  minReplicas: 2\n  maxReplicas: 10\n  metrics:\n  - type: Resource\n    resource:\n      name: cpu\n      target:\n        type: Utilization\n        averageUtilization: 70\n```",
+      "images": []
+    },
+    {
+      "id": 22,
+      "question": "What is Vertical Pod Autoscaler (VPA)?",
+      "answer": "VPA **automatically adjusts the CPU and memory requests/limits** of containers in a Pod based on historical usage. It resizes Pods to right-size resource allocations, potentially evicting and restarting Pods with new settings.\n\n**Modes:**\n- `Off` — only recommendations, no changes\n- `Initial` — sets resources at Pod creation only\n- `Auto` — updates Pods (may restart them)",
+      "images": []
+    },
+    {
+      "id": 23,
+      "question": "What is Cluster Autoscaler?",
+      "answer": "The Cluster Autoscaler **automatically adjusts the number of nodes** in a cluster:\n\n- **Scales up** when Pods are unschedulable due to insufficient resources\n- **Scales down** when nodes are underutilized and their Pods can be rescheduled elsewhere\n\nWorks natively with AWS (ASG), GCP (MIGs), and Azure (VMSS).",
+      "images": []
+    },
+    {
+      "id": 24,
+      "question": "Difference Between HPA and VPA?",
+      "answer": "| Feature | HPA | VPA |\n|---|---|---|\n| What it scales | Number of Pods (horizontal) | Resources per Pod (vertical) |\n| Metric basis | CPU/memory/custom metrics | Historical resource usage |\n| Downtime | None (adds/removes Pods) | May restart Pods to resize |\n| Use case | Variable traffic loads | Right-sizing resource requests |\n| Can be used together? | Carefully (avoid conflicts on CPU metrics) | Yes, with HPA on custom metrics |",
+      "images": []
+    },
+    {
+      "id": 25,
+      "question": "What are Resource Requests and Limits?",
+      "answer": "**Requests** — the minimum resources a container is **guaranteed**. Used by the Scheduler to decide node placement.\n\n**Limits** — the maximum resources a container **can use**. Enforced by the container runtime.\n\n```yaml\nresources:\n  requests:\n    memory: \"128Mi\"\n    cpu: \"250m\"\n  limits:\n    memory: \"256Mi\"\n    cpu: \"500m\"\n```\n\n- `250m` = 0.25 CPU cores\n- If no limits are set, a container can consume all node resources",
+      "images": []
+    },
+    {
+      "id": 26,
+      "question": "What Happens When a Pod Exceeds Memory Limits?",
+      "answer": "When a container exceeds its memory limit:\n\n1. The Linux kernel's **Out-Of-Memory (OOM) killer** terminates the process\n2. Kubernetes records the termination reason as **OOMKilled**\n3. The Pod is restarted by the kubelet (based on its `restartPolicy`)\n4. If it keeps crashing, the Pod enters `CrashLoopBackOff`",
+      "images": []
+    },
+    {
+      "id": 27,
+      "question": "What is OOMKilled?",
+      "answer": "`OOMKilled` (Out Of Memory Killed) is a **container termination reason** that indicates the container was killed because it exceeded its configured memory limit. It's visible in:\n\n```bash\nkubectl describe pod <pod-name>\n# Last State: Terminated\n#   Reason: OOMKilled\n```\n\n**Fix:** Increase memory limits, fix memory leaks, or use VPA for auto-sizing.",
+      "images": []
+    },
+    {
+      "id": 28,
+      "question": "What is a Persistent Volume (PV)?",
+      "answer": "A Persistent Volume is a **piece of storage in the cluster** provisioned by an administrator or dynamically by a StorageClass. It is a cluster-level resource with a lifecycle independent of any individual Pod.\n\n- Backed by: NFS, iSCSI, AWS EBS, GCP PD, Azure Disk, etc.\n- Has access modes: `ReadWriteOnce`, `ReadOnlyMany`, `ReadWriteMany`\n- Has a reclaim policy: `Retain`, `Recycle`, `Delete`",
+      "images": []
+    },
+    {
+      "id": 29,
+      "question": "What is a Persistent Volume Claim (PVC)?",
+      "answer": "A PVC is a **user's request for storage**. It specifies size, access mode, and optionally a StorageClass. Kubernetes binds it to a matching PV.\n\n```yaml\napiVersion: v1\nkind: PersistentVolumeClaim\nspec:\n  accessModes: [ReadWriteOnce]\n  resources:\n    requests:\n      storage: 5Gi\n```",
+      "images": []
+    },
+    {
+      "id": 30,
+      "question": "Difference Between PV and PVC?",
+      "answer": "| Aspect | PersistentVolume (PV) | PersistentVolumeClaim (PVC) |\n|---|---|---|\n| Who creates it | Admin or StorageClass (dynamic) | Developer/user |\n| Scope | Cluster-wide resource | Namespace-scoped resource |\n| Represents | Actual storage backend | Request for storage |\n| Analogy | A physical hard drive | A ticket to reserve that drive |",
+      "images": []
+    },
+    {
+      "id": 31,
+      "question": "What is a StorageClass?",
+      "answer": "A StorageClass defines **how storage is dynamically provisioned**. When a PVC requests storage with a given StorageClass, Kubernetes automatically creates a PV.\n\n```yaml\napiVersion: storage.k8s.io/v1\nkind: StorageClass\nmetadata:\n  name: fast\nprovisioner: kubernetes.io/aws-ebs\nparameters:\n  type: gp3\n```\n\nCommon provisioners: AWS EBS, GCP PD, Azure Disk, NFS, Ceph (Rook).",
+      "images": []
+    },
+    {
+      "id": 32,
+      "question": "What is a ConfigMap?",
+      "answer": "A ConfigMap stores **non-sensitive configuration data** as key-value pairs. It decouples environment-specific configuration from container images.\n\n**Usage:**\n- Mounted as files in a Pod\n- Injected as environment variables\n- Used in command-line arguments\n\n```yaml\napiVersion: v1\nkind: ConfigMap\ndata:\n  APP_ENV: production\n  LOG_LEVEL: info\n```",
+      "images": []
+    },
+    {
+      "id": 33,
+      "question": "What is a Secret?",
+      "answer": "A Secret stores **sensitive data** (passwords, tokens, certificates) in base64-encoded form. It works like a ConfigMap but is designed for confidential information.\n\n```yaml\napiVersion: v1\nkind: Secret\ntype: Opaque\ndata:\n  password: cGFzc3dvcmQxMjM=   # base64(\"password123\")\n```\n\n> Note: base64 is encoding, not encryption. Use external vaults (HashiCorp Vault, AWS Secrets Manager) for true security.",
+      "images": []
+    },
+    {
+      "id": 34,
+      "question": "Difference Between ConfigMap and Secret?",
+      "answer": "| Feature | ConfigMap | Secret |\n|---|---|---|\n| Data type | Non-sensitive config | Sensitive data |\n| Encoding | Plain text | Base64 encoded |\n| Storage in etcd | Plain text | Base64 (encrypted at rest if configured) |\n| Use case | App settings, URLs | Passwords, API keys, certs |\n| RBAC control | Standard | Tighter access recommended |",
+      "images": []
+    },
+    {
+      "id": 35,
+      "question": "How do Pods Communicate with Each Other?",
+      "answer": "- **Within the same Pod** — via `localhost` (shared network namespace)\n- **Across Pods in the cluster** — using Pod IPs directly (flat network model) or via Services\n- **Using Services** — stable DNS name and VIP regardless of Pod IP changes\n- **DNS resolution** — `service-name.namespace.svc.cluster.local`\n\nKubernetes mandates a flat network: every Pod can reach every other Pod without NAT.",
+      "images": []
+    },
+    {
+      "id": 36,
+      "question": "What is CNI?",
+      "answer": "CNI (Container Network Interface) is a **specification and set of plugins** that configure network interfaces for containers. It defines how network connectivity is set up and torn down for Pods.\n\n**Popular CNI plugins:**\n- **Flannel** — simple overlay network\n- **Calico** — supports NetworkPolicies, BGP routing\n- **Cilium** — eBPF-based, high performance, Layer 7 policies\n- **Weave Net** — encrypted mesh network\n- **AWS VPC CNI** — native AWS networking",
+      "images": []
+    },
+    {
+      "id": 37,
+      "question": "What are Network Policies?",
+      "answer": "Network Policies are **firewall rules for Pods**. They define which Pods can communicate with which other Pods or external endpoints, using label selectors.\n\nBy default, all Pod-to-Pod communication is allowed. A NetworkPolicy can restrict ingress (incoming) and egress (outgoing) traffic.\n\n```yaml\napiVersion: networking.k8s.io/v1\nkind: NetworkPolicy\nspec:\n  podSelector:\n    matchLabels:\n      role: db\n  ingress:\n  - from:\n    - podSelector:\n        matchLabels:\n          role: api\n```\n\nRequires a CNI that supports NetworkPolicy (Calico, Cilium, Weave).",
+      "images": []
+    },
+    {
+      "id": 38,
+      "question": "What are Taints and Tolerations?",
+      "answer": "**Taints** are applied to **nodes** to repel Pods from being scheduled on them.\n\n**Tolerations** are applied to **Pods** to allow them to be scheduled on tainted nodes.\n\n```bash\n# Taint a node\nkubectl taint nodes node1 dedicated=gpu:NoSchedule\n```\n\n```yaml\n# Pod tolerates the taint\ntolerations:\n- key: \"dedicated\"\n  operator: \"Equal\"\n  value: \"gpu\"\n  effect: \"NoSchedule\"\n```\n\n**Effects:** `NoSchedule`, `PreferNoSchedule`, `NoExecute`",
+      "images": []
+    },
+    {
+      "id": 39,
+      "question": "What are Node Selectors?",
+      "answer": "Node Selectors are the **simplest form of node constraint**. They allow a Pod to be scheduled only on nodes with specific labels.\n\n```yaml\nspec:\n  nodeSelector:\n    disktype: ssd\n    zone: us-east-1a\n```\n\nFor more complex rules, use Node Affinity instead.",
+      "images": []
+    },
+    {
+      "id": 40,
+      "question": "What are Affinity and Anti-Affinity Rules?",
+      "answer": "**Node Affinity** — schedules Pods on nodes matching label expressions (more powerful than nodeSelector).\n\n**Pod Affinity** — schedules Pods on nodes that already run Pods matching a selector (co-location).\n\n**Pod Anti-Affinity** — schedules Pods on nodes that do NOT have specific Pods (spread across nodes for HA).\n\n```yaml\naffinity:\n  podAntiAffinity:\n    requiredDuringSchedulingIgnoredDuringExecution:\n    - labelSelector:\n        matchLabels:\n          app: web\n      topologyKey: \"kubernetes.io/hostname\"\n```\n\n**Types:** `requiredDuringScheduling...` (hard rule) vs `preferredDuringScheduling...` (soft rule).",
+      "images": []
+    },
+    {
+      "id": 41,
+      "question": "What are Namespaces in Kubernetes?",
+      "answer": "Namespaces are a way to **divide cluster resources between multiple users or teams**. They provide a scope for names — resources must be unique within a namespace but not across them.\n\n**Default namespaces:**\n- `default` — default for user workloads\n- `kube-system` — Kubernetes system components\n- `kube-public` — publicly accessible data\n- `kube-node-lease` — node heartbeat leases",
+      "images": []
+    },
+    {
+      "id": 42,
+      "question": "Why are Namespaces Used?",
+      "answer": "- **Multi-tenancy** — isolate teams, projects, or environments\n- **Resource quotas** — limit CPU/memory per team\n- **RBAC scoping** — grant permissions per namespace\n- **Network isolation** — combined with NetworkPolicies\n- **Environment separation** — `dev`, `staging`, `prod` in one cluster",
+      "images": []
+    },
+    {
+      "id": 43,
+      "question": "What are Labels and Selectors?",
+      "answer": "**Labels** are key-value pairs attached to Kubernetes objects for identification.\n\n```yaml\nmetadata:\n  labels:\n    app: web\n    env: production\n    version: v2\n```\n\n**Selectors** are queries that filter objects by their labels. Used by Services, ReplicaSets, Deployments, and NetworkPolicies to target Pods.",
+      "images": []
+    },
+    {
+      "id": 44,
+      "question": "What are Annotations?",
+      "answer": "Annotations are key-value pairs that store **non-identifying metadata** — information not used by Kubernetes internals but consumed by tools, operators, or humans.\n\n```yaml\nmetadata:\n  annotations:\n    deployment.kubernetes.io/revision: \"3\"\n    prometheus.io/scrape: \"true\"\n    build-version: \"abc123\"\n```\n\nUnlike labels, annotations cannot be used in selectors.",
+      "images": []
+    },
+    {
+      "id": 45,
+      "question": "What are Init Containers?",
+      "answer": "Init Containers are **specialized containers that run before app containers** in a Pod. They run sequentially, and all must complete successfully before the main containers start.\n\n**Use cases:**\n- Wait for a database to be ready\n- Clone a git repository before the app starts\n- Set up configuration files\n- Run database migrations",
+      "images": []
+    },
+    {
+      "id": 46,
+      "question": "What are Sidecar Containers?",
+      "answer": "Sidecar Containers run **alongside the main application container** in the same Pod, extending or supporting its functionality without modifying it.\n\n**Use cases:**\n- Log shipping (Fluentd, Filebeat)\n- Service mesh proxies (Envoy in Istio)\n- Secret injection agents (Vault Agent)\n- Metrics exporters",
+      "images": []
+    },
+    {
+      "id": 47,
+      "question": "Difference Between Init Container and Sidecar Container?",
+      "answer": "| Feature | Init Container | Sidecar Container |\n|---|---|---|\n| Timing | Runs before main containers | Runs alongside main containers |\n| Lifecycle | Exits after completion | Runs for the Pod's entire lifetime |\n| Execution | Sequential | Concurrent with main containers |\n| Purpose | Setup/pre-conditions | Support/extend the main app |",
+      "images": []
+    },
+    {
+      "id": 48,
+      "question": "What are Liveness Probes?",
+      "answer": "A Liveness Probe determines **whether a container is running**. If it fails, Kubernetes kills the container and restarts it according to the restart policy.\n\n```yaml\nlivenessProbe:\n  httpGet:\n    path: /healthz\n    port: 8080\n  initialDelaySeconds: 30\n  periodSeconds: 10\n  failureThreshold: 3\n```\n\n**Probe types:** `httpGet`, `tcpSocket`, `exec` (run a command)",
+      "images": []
+    },
+    {
+      "id": 49,
+      "question": "What are Readiness Probes?",
+      "answer": "A Readiness Probe determines **whether a container is ready to receive traffic**. If it fails, the Pod is removed from the Service's endpoints — traffic stops being routed to it — but the container is NOT restarted.\n\n```yaml\nreadinessProbe:\n  httpGet:\n    path: /ready\n    port: 8080\n  initialDelaySeconds: 5\n  periodSeconds: 5\n```",
+      "images": []
+    },
+    {
+      "id": 50,
+      "question": "Difference Between Liveness and Readiness Probes?",
+      "answer": "| Feature | Liveness Probe | Readiness Probe |\n|---|---|---|\n| Checks | Is the container alive? | Is the container ready for traffic? |\n| On failure | Kills and restarts the container | Removes Pod from Service endpoints |\n| Use case | Detect deadlocks, stuck processes | Startup delays, overload protection |\n| Traffic impact | Temporary interruption during restart | No traffic until probe passes |",
+      "images": []
+    },
+    {
+      "id": 51,
+      "question": "What is a Rolling Update?",
+      "answer": "A Rolling Update gradually replaces old Pod instances with new ones **without downtime**. Kubernetes controls the pace using:\n\n- `maxUnavailable` — max Pods that can be down during update (default: 25%)\n- `maxSurge` — max extra Pods above desired count (default: 25%)\n\n```yaml\nstrategy:\n  type: RollingUpdate\n  rollingUpdate:\n    maxUnavailable: 1\n    maxSurge: 1\n```",
+      "images": []
+    },
+    {
+      "id": 52,
+      "question": "What is a Canary Deployment?",
+      "answer": "A Canary Deployment routes a **small percentage of traffic** to a new version while the majority still goes to the stable version. If the canary is healthy, traffic is gradually shifted.\n\n**Kubernetes approach:**\n- Deploy a small number of new-version Pods alongside old ones\n- Use Ingress annotations or a service mesh (Istio) for traffic splitting (e.g., 5% new, 95% old)",
+      "images": []
+    },
+    {
+      "id": 53,
+      "question": "What is a Blue-Green Deployment?",
+      "answer": "Blue-Green runs **two identical production environments** simultaneously. \"Blue\" is live; \"Green\" is the new version. Once Green is verified, traffic is switched instantly by updating the Service selector.\n\n**Pros:** Instant switchover, easy rollback  \n**Cons:** Double the infrastructure cost during deployment",
+      "images": []
+    },
+    {
+      "id": 54,
+      "question": "How do you Rollback a Deployment?",
+      "answer": "```bash\n# View rollout history\nkubectl rollout history deployment/my-app\n\n# Rollback to previous version\nkubectl rollout undo deployment/my-app\n\n# Rollback to a specific revision\nkubectl rollout undo deployment/my-app --to-revision=2\n\n# Check rollout status\nkubectl rollout status deployment/my-app\n```",
+      "images": []
+    },
+    {
+      "id": 55,
+      "question": "What is Helm?",
+      "answer": "Helm is the **package manager for Kubernetes**. It allows you to define, install, and upgrade complex Kubernetes applications using templated YAML files called \"Charts.\" Think of it as `apt` or `npm` for Kubernetes.",
+      "images": []
+    },
+    {
+      "id": 56,
+      "question": "Why Use Helm?",
+      "answer": "- **Reusability** — parameterize and reuse Kubernetes manifests\n- **Release management** — track installed application versions\n- **Rollbacks** — easy rollback to previous release\n- **Dependency management** — install dependent charts automatically\n- **Community charts** — thousands of ready-made charts on Artifact Hub",
+      "images": []
+    },
+    {
+      "id": 57,
+      "question": "What are Helm Charts?",
+      "answer": "A Helm Chart is a **collection of files** that describes a Kubernetes application:\n\n```\nmy-chart/\n├── Chart.yaml          # Chart metadata (name, version)\n├── values.yaml         # Default configuration values\n├── templates/          # Kubernetes manifest templates\n│   ├── deployment.yaml\n│   ├── service.yaml\n│   └── ingress.yaml\n└── charts/             # Dependent charts\n```",
+      "images": []
+    },
+    {
+      "id": 58,
+      "question": "Difference Between Docker and Kubernetes?",
+      "answer": "| Aspect | Docker | Kubernetes |\n|---|---|---|\n| Purpose | Build and run containers | Orchestrate containers at scale |\n| Scope | Single machine | Multi-node cluster |\n| Scaling | Manual | Automatic (HPA, Cluster Autoscaler) |\n| Self-healing | No | Yes |\n| Networking | Docker networks (bridge/overlay) | Flat pod network via CNI |\n| Analogy | Shipping a single container | Managing a fleet of container ships |\n\nDocker builds the containers; Kubernetes runs and manages them at scale.",
+      "images": []
+    },
+    {
+      "id": 59,
+      "question": "Difference Between Docker Swarm and Kubernetes?",
+      "answer": "| Feature | Docker Swarm | Kubernetes |\n|---|---|---|\n| Complexity | Simple, easy setup | Complex, steep learning curve |\n| Scalability | Limited | Enterprise-scale |\n| Ecosystem | Small | Massive (CNCF ecosystem) |\n| Auto-healing | Basic | Advanced |\n| Networking | Built-in overlay | Pluggable CNI |\n| Load balancing | Built-in | Service/Ingress |\n| Adoption | Declining | Industry standard |",
+      "images": []
+    },
+    {
+      "id": 60,
+      "question": "What Happens When a Node Goes Down?",
+      "answer": "1. The Node Controller detects the node is unreachable (after `node-monitor-grace-period`, default 40s)\n2. Node is marked as `NotReady`\n3. After `pod-eviction-timeout` (default 5 min), Pods on the failed node are marked for eviction\n4. The Scheduler reschedules those Pods on healthy nodes\n5. New Pods start on the remaining nodes",
+      "images": []
+    },
+    {
+      "id": 61,
+      "question": "What Happens When a Pod Crashes?",
+      "answer": "1. The kubelet detects the container has exited\n2. Based on `restartPolicy` (`Always`, `OnFailure`, `Never`), the container is restarted\n3. Kubernetes applies **exponential backoff** between restarts (10s → 20s → 40s → ... max 5 min)\n4. If the Pod keeps crashing, it enters `CrashLoopBackOff` state\n5. The underlying ReplicaSet/Deployment does NOT create a new Pod (restart happens in-place)",
+      "images": []
+    },
+    {
+      "id": 62,
+      "question": "How Does Kubernetes Perform Self-Healing?",
+      "answer": "- **Pod crashes** → Kubelet restarts containers automatically\n- **Node failure** → Controller Manager reschedules Pods on healthy nodes\n- **Pod deleted** → ReplicaSet Controller creates a replacement immediately\n- **Unhealthy container** → Liveness Probe triggers restart\n- **Unready container** → Readiness Probe removes Pod from load balancer",
+      "images": []
+    },
+    {
+      "id": 63,
+      "question": "How Would you Troubleshoot CrashLoopBackOff?",
+      "answer": "```bash\n# 1. Check Pod status and events\nkubectl describe pod <pod-name>\n\n# 2. Check current logs\nkubectl logs <pod-name>\n\n# 3. Check previous container logs (before crash)\nkubectl logs <pod-name> --previous\n\n# 4. Check exit code in describe output\n# Exit 1 = app error, Exit 137 = OOMKilled, Exit 143 = SIGTERM\n\n# 5. Temporarily override the entrypoint to debug\nkubectl run debug --image=my-image --command -- sleep 3600\nkubectl exec -it debug -- /bin/sh\n```\n\n**Common causes:** App startup error, missing ConfigMap/Secret, wrong image, OOMKilled, failed health checks.",
+      "images": []
+    },
+    {
+      "id": 64,
+      "question": "How Would you Troubleshoot a Pending Pod?",
+      "answer": "```bash\n# 1. Describe the pod — look at Events section\nkubectl describe pod <pod-name>\n\n# 2. Common causes and fixes:\n```\n\n| Cause | Symptom in Events | Fix |\n|---|---|---|\n| Insufficient CPU/memory | `Insufficient cpu` | Add nodes or reduce requests |\n| No matching node | `no nodes available` | Check taints, nodeSelector, affinity |\n| PVC not bound | `pod has unbound PVCs` | Check StorageClass, PV availability |\n| Image pull error | `ImagePullBackOff` | Fix image name, add imagePullSecret |",
+      "images": []
+    },
+    {
+      "id": 65,
+      "question": "How Would you Debug a Failing Deployment?",
+      "answer": "```bash\n# 1. Check Deployment status\nkubectl rollout status deployment/my-app\nkubectl describe deployment my-app\n\n# 2. Check ReplicaSet\nkubectl get rs\nkubectl describe rs <rs-name>\n\n# 3. Check Pod events\nkubectl get pods\nkubectl describe pod <pod-name>\n\n# 4. Check logs\nkubectl logs deployment/my-app --tail=100\n\n# 5. Check recent events\nkubectl get events --sort-by='.lastTimestamp'\n```",
+      "images": []
+    },
+    {
+      "id": 66,
+      "question": "How Would you Debug Networking Issues Between Pods?",
+      "answer": "```bash\n# 1. Verify Pod IPs and DNS\nkubectl get pods -o wide\nkubectl exec -it <pod> -- nslookup <service-name>\n\n# 2. Test connectivity\nkubectl exec -it <pod> -- curl http://<service-name>:<port>\nkubectl exec -it <pod> -- nc -zv <target-pod-ip> <port>\n\n# 3. Check Service and Endpoints\nkubectl describe svc <service-name>\nkubectl get endpoints <service-name>\n\n# 4. Check NetworkPolicies\nkubectl get networkpolicies -n <namespace>\n\n# 5. Run a debug pod\nkubectl run netdebug --image=nicolaka/netshoot --rm -it -- bash\n```",
+      "images": []
+    },
+    {
+      "id": 67,
+      "question": "How Would you Debug High CPU Usage in Kubernetes?",
+      "answer": "```bash\n# 1. Check resource usage at node and pod level\nkubectl top nodes\nkubectl top pods --all-namespaces --sort-by=cpu\n\n# 2. Check HPA and current replicas\nkubectl get hpa\n\n# 3. Describe the pod for resource limits\nkubectl describe pod <pod-name>\n\n# 4. Check application metrics in Prometheus/Grafana\n\n# 5. Profile the application inside the container\nkubectl exec -it <pod> -- top\nkubectl exec -it <pod> -- /bin/sh -c \"ps aux | sort -rk 3\"\n```",
+      "images": []
+    },
+    {
+      "id": 68,
+      "question": "How Would you Debug Memory Leaks in Containers?",
+      "answer": "```bash\n# 1. Monitor memory usage over time\nkubectl top pods --containers\n\n# 2. Set memory limits and watch for OOMKilled\nkubectl describe pod <pod-name> | grep -A5 \"Last State\"\n\n# 3. Use metrics-server or Prometheus to graph memory over time\n\n# 4. Exec into container and inspect\nkubectl exec -it <pod> -- cat /proc/meminfo\nkubectl exec -it <pod> -- jmap -heap <pid>  # Java\n\n# 5. Use language-specific profilers (pprof for Go, jvm heap dump for Java)\n```",
+      "images": []
+    },
+    {
+      "id": 69,
+      "question": "How Would you Monitor Kubernetes Clusters?",
+      "answer": "**Layered monitoring approach:**\n\n1. **Infrastructure** — Node CPU, memory, disk, network (Node Exporter)\n2. **Control plane** — API server latency, etcd performance, scheduler queue\n3. **Workloads** — Pod restarts, CPU/memory usage, HPA activity\n4. **Application** — Request rate, error rate, latency (RED metrics)\n5. **Logs** — Centralized log aggregation and search",
+      "images": []
+    },
+    {
+      "id": 70,
+      "question": "Which Tools are Used for Kubernetes Monitoring?",
+      "answer": "| Layer | Tool |\n|---|---|\n| Metrics collection | Prometheus |\n| Metrics visualization | Grafana |\n| Log aggregation | Loki + Promtail |\n| Log search | Elasticsearch + Kibana (ELK) |\n| Distributed tracing | Jaeger, Tempo |\n| Alerting | Alertmanager |\n| Pre-built dashboards | kube-prometheus-stack (Helm chart) |\n| In-cluster metrics | metrics-server |\n| Cost monitoring | Kubecost |",
+      "images": []
+    },
+    {
+      "id": 71,
+      "question": "How Does Prometheus Work with Kubernetes?",
+      "answer": "1. Prometheus **scrapes metrics** from HTTP endpoints (`/metrics`) exposed by Pods, Services, and node exporters\n2. Uses **service discovery** to automatically find targets via Kubernetes API\n3. Stores time-series data in its local TSDB\n4. **AlertManager** handles alerting rules\n5. **Grafana** queries Prometheus via PromQL for dashboards\n\n**Key components of kube-prometheus-stack:**\n- Prometheus Operator (manages Prometheus via CRDs)\n- ServiceMonitor/PodMonitor (define scrape targets)\n- Grafana (visualization)\n- AlertManager (alert routing)\n- Node Exporter (node metrics)\n- kube-state-metrics (Kubernetes object metrics)",
+      "images": []
+    },
+    {
+      "id": 72,
+      "question": "What is Loki Used For?",
+      "answer": "Loki is a **horizontally scalable log aggregation system** by Grafana Labs, designed for Kubernetes. Unlike Elasticsearch, it indexes only **log labels** (not content), making it much cheaper to run.\n\n- Promtail (agent) ships logs from nodes to Loki\n- LogQL is used to query logs (similar to PromQL)\n- Integrates natively with Grafana alongside Prometheus",
+      "images": []
+    },
+    {
+      "id": 73,
+      "question": "What is Service Discovery in Kubernetes?",
+      "answer": "Service discovery is the mechanism by which services **find each other** without hardcoded IPs. Kubernetes provides automatic service discovery via:\n\n- **DNS** — every Service gets a DNS record automatically\n- **Environment variables** — Kubernetes injects service host/port into Pod env vars\n- **Labels + Selectors** — Services dynamically discover their Pod endpoints",
+      "images": []
+    },
+    {
+      "id": 74,
+      "question": "How Does DNS Work in Kubernetes?",
+      "answer": "Every Service gets a DNS record:\n\n```\n<service-name>.<namespace>.svc.cluster.local\n```\n\nPods can reach services using short names within the same namespace (`my-service`) or fully qualified names across namespaces.\n\nPod DNS is also available:\n\n```\n<pod-ip-with-dashes>.<namespace>.pod.cluster.local\n```",
+      "images": []
+    },
+    {
+      "id": 75,
+      "question": "What is CoreDNS?",
+      "answer": "CoreDNS is the **default DNS server** in Kubernetes clusters (replaced kube-dns since 1.11). It:\n\n- Runs as a Deployment in `kube-system`\n- Resolves Service and Pod DNS names within the cluster\n- Is extensible via plugins (health, cache, forward, rewrite, etc.)\n- Configurable via a `Corefile` ConfigMap",
+      "images": []
+    },
+    {
+      "id": 76,
+      "question": "How do you Expose an Application Externally?",
+      "answer": "**Options in order of complexity:**\n\n1. **NodePort** — quick, for testing only\n2. **LoadBalancer** — cloud load balancer per service (expensive at scale)\n3. **Ingress** — single LB with host/path-based routing (recommended)\n4. **ExternalDNS** — auto-update DNS records for services/ingress\n5. **Service Mesh (Istio Gateway)** — advanced traffic management",
+      "images": []
+    },
+    {
+      "id": 77,
+      "question": "How do you Secure Kubernetes Secrets?",
+      "answer": "1. **Enable encryption at rest** — configure `EncryptionConfiguration` for etcd\n2. **Use external secret stores** — HashiCorp Vault, AWS Secrets Manager, Azure Key Vault\n3. **Use External Secrets Operator** — sync external secrets into Kubernetes Secrets\n4. **Restrict access with RBAC** — limit who can read Secret resources\n5. **Avoid mounting unnecessary secrets** — only mount what the Pod needs\n6. **Audit secret access** — enable Kubernetes audit logging",
+      "images": []
+    },
+    {
+      "id": 78,
+      "question": "How do you Manage Application Configuration in Kubernetes?",
+      "answer": "- **ConfigMaps** — non-sensitive environment-specific config\n- **Secrets** — sensitive values (DB passwords, API keys)\n- **Helm values.yaml** — parameterized configs per environment\n- **Kustomize** — overlay-based config management without templates\n- **External Secrets Operator** — pull configs from external sources\n- **Spring Cloud Config / Consul** — for dynamic config refresh in Java/Go apps",
+      "images": []
+    },
+    {
+      "id": 79,
+      "question": "What is RBAC in Kubernetes?",
+      "answer": "RBAC (Role-Based Access Control) controls **who can do what** in the Kubernetes API.\n\n**Key resources:**\n- `Role` — defines permissions within a namespace\n- `ClusterRole` — defines permissions cluster-wide\n- `RoleBinding` — binds a Role to a user/group/ServiceAccount (namespace)\n- `ClusterRoleBinding` — binds a ClusterRole cluster-wide\n\n```yaml\n# Allow reading pods in \"dev\" namespace\napiVersion: rbac.authorization.k8s.io/v1\nkind: Role\nmetadata:\n  namespace: dev\nrules:\n- apiGroups: [\"\"]\n  resources: [\"pods\"]\n  verbs: [\"get\", \"list\", \"watch\"]\n```",
+      "images": []
+    },
+    {
+      "id": 80,
+      "question": "What are Service Accounts?",
+      "answer": "Service Accounts are **Kubernetes identities for Pods** (as opposed to user accounts for humans). They allow Pods to authenticate to the Kubernetes API and are used with RBAC to grant specific permissions.\n\n```yaml\nspec:\n  serviceAccountName: my-app-sa\n```\n\nEvery namespace has a `default` Service Account. Best practice: create dedicated Service Accounts with least-privilege permissions.",
+      "images": []
+    },
+    {
+      "id": 81,
+      "question": "How do you Secure Communication Between Microservices?",
+      "answer": "1. **mTLS** — mutual TLS via a service mesh (Istio, Linkerd)\n2. **NetworkPolicies** — restrict which Pods can talk to which\n3. **RBAC** — control API access between services\n4. **JWT/OAuth2** — application-level authentication\n5. **Secrets management** — rotate credentials automatically",
+      "images": []
+    },
+    {
+      "id": 82,
+      "question": "What is mTLS in Kubernetes?",
+      "answer": "mTLS (mutual TLS) means **both sides of a connection authenticate each other** using certificates. Unlike standard TLS (only the server authenticates), mTLS ensures the client is also verified.\n\nIn Kubernetes, a **service mesh** like Istio or Linkerd automatically injects sidecar proxies (Envoy) that handle mTLS transparently — your application code doesn't need to change.",
+      "images": []
+    },
+    {
+      "id": 83,
+      "question": "Difference Between Stateful and Stateless Applications?",
+      "answer": "| Aspect | Stateless | Stateful |\n|---|---|---|\n| Data | No persistent data stored locally | Stores data that must survive restarts |\n| Scaling | Scale out freely (any replica handles any request) | Scaling is complex; identity matters |\n| Examples | Web servers, REST APIs, microservices | Databases, message queues, caches |\n| K8s resource | Deployment | StatefulSet |",
+      "images": []
+    },
+    {
+      "id": 84,
+      "question": "When Would you Use StatefulSet?",
+      "answer": "Use StatefulSet when your application requires:\n\n- **Stable network identity** — consistent hostname across restarts\n- **Stable storage** — each Pod needs its own persistent volume\n- **Ordered deployment** — Pods must start/stop in sequence\n- **Ordered scaling** — scale one Pod at a time\n\n**Examples:** MySQL, PostgreSQL, Kafka, Zookeeper, Elasticsearch, Redis Cluster",
+      "images": []
+    },
+    {
+      "id": 85,
+      "question": "How do you Deploy Databases in Kubernetes?",
+      "answer": "**Option 1 — StatefulSet (self-managed):**\n- Deploy with StatefulSet + PVCs for data persistence\n- Use Operators for advanced management (lifecycle, backups, failover)\n\n**Option 2 — Kubernetes Operators:**\n- MySQL Operator, PostgreSQL Operator (CloudNativePG), Redis Operator\n- Automate backup, restore, scaling, failover\n\n**Option 3 — Managed cloud databases:**\n- Use AWS RDS, GCP Cloud SQL, Azure Database outside Kubernetes\n- Recommended for production when operational simplicity > cost",
+      "images": []
+    },
+    {
+      "id": 86,
+      "question": "How do you Scale Applications in Kubernetes?",
+      "answer": "**Manual scaling:**\n```bash\nkubectl scale deployment my-app --replicas=5\n```\n\n**Horizontal Pod Autoscaler (HPA):** Auto-scales Pods based on CPU/memory/custom metrics\n\n**Vertical Pod Autoscaler (VPA):** Auto-adjusts resource requests per Pod\n\n**Cluster Autoscaler:** Adds/removes nodes based on pending Pods\n\n**KEDA (Kubernetes Event-Driven Autoscaling):** Scale based on external events (queue depth, HTTP traffic, cron)",
+      "images": []
+    },
+    {
+      "id": 87,
+      "question": "How do Rolling Updates Ensure Zero Downtime?",
+      "answer": "1. New Pods are created alongside old ones (controlled by `maxSurge`)\n2. Kubernetes waits for new Pods to pass Readiness Probes before routing traffic\n3. Old Pods are terminated gradually (controlled by `maxUnavailable`)\n4. Traffic is only sent to Pods that have passed readiness checks\n5. If new Pods fail probes, the rollout pauses — old Pods stay alive",
+      "images": []
+    },
+    {
+      "id": 88,
+      "question": "How do you Deploy a Microservices Architecture in Kubernetes?",
+      "answer": "1. **One Deployment per service** with appropriate resource limits\n2. **Services** for internal discovery and load balancing\n3. **Ingress** for external routing to services\n4. **ConfigMaps/Secrets** for per-service configuration\n5. **Namespaces** for environment isolation\n6. **Helm** charts per microservice, managed via umbrella chart or GitOps\n7. **Service mesh** (Istio/Linkerd) for mTLS, observability, traffic management",
+      "images": []
+    },
+    {
+      "id": 89,
+      "question": "How Would you Deploy WebSocket Servers in Kubernetes?",
+      "answer": "- Use **SessionAffinity: ClientIP** on the Service to route a client to the same Pod\n- Or use **Ingress with sticky sessions** (`nginx.ingress.kubernetes.io/affinity: cookie`)\n- Ensure **no timeout at Ingress/LB** level (`proxy-read-timeout: 3600`)\n- Use **StatefulSets** if WebSocket state must be per-Pod\n- For pub/sub across pods, use Redis Pub/Sub or a message queue",
+      "images": []
+    },
+    {
+      "id": 90,
+      "question": "How Would you Handle Sticky Sessions in Kubernetes?",
+      "answer": "```yaml\n# Service-level affinity (IP-based)\nspec:\n  sessionAffinity: ClientIP\n  sessionAffinityConfig:\n    clientIP:\n      timeoutSeconds: 3600\n```\n\n```yaml\n# Ingress-level affinity (cookie-based — more reliable)\nannotations:\n  nginx.ingress.kubernetes.io/affinity: \"cookie\"\n  nginx.ingress.kubernetes.io/session-cookie-name: \"INGRESSCOOKIE\"\n  nginx.ingress.kubernetes.io/session-cookie-expires: \"172800\"\n```",
+      "images": []
+    },
+    {
+      "id": 91,
+      "question": "How Would you Deploy Kafka/Redis in Kubernetes?",
+      "answer": "**Kafka:**\n- Use the **Strimzi Operator** — manages Kafka clusters as CRDs\n- Deploy with StatefulSet, dedicated PVCs per broker\n- Configure anti-affinity to spread brokers across nodes\n\n**Redis:**\n- **Redis Standalone**: simple Deployment + PVC\n- **Redis Sentinel**: HA with automatic failover\n- **Redis Cluster**: sharded, use Redis Operator (Spotahome or Redis Enterprise)\n- Consider **managed Redis** (ElastiCache, Redis Cloud) for production",
+      "images": []
+    },
+    {
+      "id": 92,
+      "question": "What is an Operator in Kubernetes?",
+      "answer": "An Operator is a **Kubernetes-native application** that uses CRDs and controllers to automate the management of complex, stateful applications. It encodes operational knowledge (deploy, scale, upgrade, backup, restore) into software.\n\n**Examples:**\n- Prometheus Operator\n- CloudNativePG (PostgreSQL)\n- Strimzi (Kafka)\n- Elasticsearch Operator\n\nPattern: CRD (what you want) + Controller (makes it happen).",
+      "images": []
+    },
+    {
+      "id": 93,
+      "question": "What are Custom Resource Definitions (CRDs)?",
+      "answer": "CRDs extend the Kubernetes API with **custom resource types**. Once a CRD is created, you can create instances of that resource using `kubectl` like any native Kubernetes object.\n\n```yaml\napiVersion: apiextensions.k8s.io/v1\nkind: CustomResourceDefinition\nmetadata:\n  name: kafkas.kafka.strimzi.io\n```\n\nAfter applying, you can do `kubectl get kafkas` — Operators watch these custom resources.",
+      "images": []
+    },
+    {
+      "id": 94,
+      "question": "What is GitOps?",
+      "answer": "GitOps is a **deployment methodology** where:\n\n- The **desired state** of the cluster is stored in a Git repository\n- A GitOps operator (ArgoCD, FluxCD) continuously **syncs** the cluster to match the Git state\n- All changes go through Git (PRs, code review, audit trail)\n- Drift between Git and cluster is automatically detected and corrected\n\n**Benefits:** Auditability, rollback via git revert, consistency, security.",
+      "images": []
+    },
+    {
+      "id": 95,
+      "question": "What is ArgoCD?",
+      "answer": "ArgoCD is a **declarative GitOps continuous delivery tool** for Kubernetes. It:\n\n- Monitors Git repositories for changes to Kubernetes manifests\n- Automatically (or manually) syncs changes to the cluster\n- Provides a web UI and CLI for managing applications\n- Supports Helm, Kustomize, Jsonnet, and plain YAML\n- Shows diff between desired and live state",
+      "images": []
+    },
+    {
+      "id": 96,
+      "question": "What is FluxCD?",
+      "answer": "FluxCD is another **GitOps toolkit** for Kubernetes, part of the CNCF sandbox. It:\n\n- Watches Git repos, Helm repos, and OCI registries\n- Applies changes automatically to the cluster\n- Is more modular and CLI-driven than ArgoCD\n- Supports multi-tenancy natively\n- Uses GitRepository, Kustomization, HelmRelease CRDs\n\n**ArgoCD vs FluxCD:** ArgoCD has a richer UI; FluxCD is more composable and CLI-focused.",
+      "images": []
+    },
+    {
+      "id": 97,
+      "question": "How do CI/CD Pipelines Integrate with Kubernetes?",
+      "answer": "**Typical flow:**\n```\nCode Push → CI (GitHub Actions / Jenkins / GitLab CI)\n  → Build Docker image\n  → Push image to registry (ECR, GCR, Docker Hub)\n  → Update image tag in Git (Helm values / Kustomize overlay)\n  → ArgoCD/FluxCD detects change → Deploys to Kubernetes\n```\n\n**Push model:** CI pipeline runs `kubectl apply` or `helm upgrade` directly (less secure, requires cluster credentials in CI)\n\n**Pull model (preferred):** GitOps operator polls Git and applies changes (cluster credentials stay inside the cluster)",
+      "images": []
+    },
+    {
+      "id": 98,
+      "question": "How do you Manage Multiple Environments in Kubernetes?",
+      "answer": "**Option 1 — Multiple Namespaces in one cluster:**\n- `dev`, `staging`, `prod` namespaces\n- Simple but no hard isolation\n\n**Option 2 — Multiple clusters:**\n- Separate cluster per environment\n- Strong isolation, more management overhead\n\n**Option 3 — Kustomize overlays:**\n```\nbase/           # common manifests\noverlays/\n  dev/          # dev-specific patches\n  staging/\n  prod/\n```\n\n**Option 4 — Helm + values files:**\n```bash\nhelm install my-app ./chart -f values.prod.yaml\n```",
+      "images": []
+    },
+    {
+      "id": 99,
+      "question": "How do you Optimize Kubernetes Costs?",
+      "answer": "| Strategy | Action |\n|---|---|\n| Right-size resources | Use VPA recommendations; avoid over-provisioning |\n| Use HPA | Scale down during low traffic |\n| Use Cluster Autoscaler | Remove idle nodes automatically |\n| Spot/Preemptible instances | Use for non-critical, fault-tolerant workloads |\n| Namespace resource quotas | Prevent resource waste by teams |\n| Set Pod Disruption Budgets | Allow safe spot interruptions |\n| Use Kubecost | Visualize cost per namespace/team/workload |\n| Container image optimization | Smaller images = faster pulls, less storage |\n| Delete unused resources | Regular cleanup of orphaned PVCs, LBs, namespaces |",
+      "images": []
+    },
+    {
+      "id": 100,
+      "question": "Best Practices for Running Production Workloads in Kubernetes",
+      "answer": "**Reliability:**\n- Set resource requests and limits on all containers\n- Configure liveness and readiness probes\n- Use Pod Disruption Budgets (PDB) to ensure availability during disruptions\n- Run at least 3 replicas for critical services\n- Use anti-affinity rules to spread Pods across nodes\n\n**Security:**\n- Enable RBAC with least-privilege principles\n- Use dedicated ServiceAccounts per application\n- Encrypt Secrets at rest; use external secret managers\n- Scan container images for vulnerabilities (Trivy, Snyk)\n- Use NetworkPolicies to restrict east-west traffic\n- Run containers as non-root users\n\n**Scalability:**\n- Configure HPA for all stateless workloads\n- Use Cluster Autoscaler with appropriate node pools\n- Set appropriate PodDisruptionBudgets\n\n**Observability:**\n- Deploy kube-prometheus-stack for metrics\n- Centralize logs with Loki or ELK\n- Set up distributed tracing (Jaeger/Tempo)\n- Create actionable alerts (not alert fatigue)\n\n**Operations:**\n- Use GitOps (ArgoCD/FluxCD) for all deployments\n- Tag and version all container images; avoid `latest`\n- Use Helm or Kustomize for manifest management\n- Regularly back up etcd\n- Test disaster recovery procedures",
+      "images": []
+    },
+    {
+      "id": 101,
+      "question": "How do you monitor Kubernetes clusters?",
+      "answer": "Monitoring a Kubernetes cluster is a multi-layered discipline. It is not simply about watching CPU and memory — it encompasses the health of the control plane, data plane, workloads, networking, storage, and the applications running inside containers. A comprehensive strategy involves four primary signals: **metrics**, **logs**, **traces**, and **events**.\n\n### The Observability Stack\n\nThe de-facto open-source Kubernetes monitoring stack centers on:\n\n- **Prometheus** — pull-based metrics collection and storage\n- **Grafana** — visualization and dashboards\n- **Alertmanager** — alert routing and silencing\n- **kube-state-metrics** — Kubernetes object state as metrics\n- **node-exporter** — host-level OS and hardware metrics\n- **cAdvisor** (embedded in kubelet) — per-container resource usage\n\nCommercial alternatives and complements include Datadog, Dynatrace, New Relic, Elastic Observability, and Grafana Cloud.\n\n### Monitoring Layers\n\n**Control Plane**\n\nThe API server, scheduler, controller manager, and etcd are foundational. If these degrade, the entire cluster is compromised even if workloads appear healthy.\n\nKey signals:\n- `apiserver_request_total` — request rate broken down by verb, resource, code\n- `apiserver_request_duration_seconds` — API latency percentiles (p50, p99)\n- `etcd_disk_wal_fsync_duration_seconds` — etcd write latency (should be < 10ms)\n- `scheduler_scheduling_attempt_duration_seconds` — scheduling latency\n- `controller_manager_work_queue_depth` — backlog in reconciliation loops\n\n**Node Layer**\n\nCPU, memory, disk I/O, network, and kernel-level metrics from node-exporter. See [Section 6](#6-what-metrics-matter-for-nodes) for a deep dive.\n\n**Workload Layer**\n\nPod health, restarts, resource consumption, and readiness via kube-state-metrics and cAdvisor.\n\n**Application Layer**\n\nCustom business metrics emitted by your services via Prometheus client libraries or StatsD, plus traces and structured logs.\n\n### Prometheus Operator and kube-prometheus-stack\n\nThe `kube-prometheus-stack` Helm chart (formerly `prometheus-operator`) is the fastest path to a production-grade setup. It installs:\n\n```bash\nhelm repo add prometheus-community https://prometheus-community.github.io/helm-charts\nhelm install kube-prometheus-stack prometheus-community/kube-prometheus-stack \\\n  --namespace monitoring --create-namespace\n```\n\nIt deploys Prometheus, Alertmanager, Grafana, node-exporter, kube-state-metrics, and a set of pre-built dashboards and alert rules (the `kubernetes-mixin` ruleset).\n\n### ServiceMonitor and PodMonitor\n\nPrometheus Operator uses CRDs to discover scrape targets declaratively:\n\n```yaml\napiVersion: monitoring.coreos.com/v1\nkind: ServiceMonitor\nmetadata:\n  name: my-app\n  namespace: monitoring\n  labels:\n    release: kube-prometheus-stack\nspec:\n  namespaceSelector:\n    matchNames:\n      - production\n  selector:\n    matchLabels:\n      app: my-app\n  endpoints:\n    - port: metrics\n      interval: 30s\n      path: /metrics\n```\n\n### The Four Golden Signals (Google SRE)\n\nFor any service, monitor:\n\n1. **Latency** — time to serve requests (distinguish success vs error latency)\n2. **Traffic** — request volume (req/s, messages/s)\n3. **Errors** — error rate (HTTP 5xx, gRPC codes)\n4. **Saturation** — how full the service is (CPU throttling %, queue depth)\n\nThese form the basis of SLO-driven alerting and are directly applicable to Kubernetes workloads.\n\n### USE Method (Brendan Gregg)\n\nFor every resource (CPU, memory, disk, network):\n\n- **Utilization** — percentage of time the resource is busy\n- **Saturation** — degree of extra work it cannot service (queuing)\n- **Errors** — error events from the resource\n\n### Kubernetes Events\n\nEvents are first-class objects in Kubernetes and are often the fastest way to understand cluster-level issues. They are ephemeral (TTL of ~1 hour by default) and must be persisted with tools like `event-exporter` or sent to a log backend.\n\n```bash\nkubectl get events --all-namespaces --sort-by='.lastTimestamp'\nkubectl get events -n production --field-selector reason=BackOff\n```\n\nEvents are especially useful for detecting scheduling failures, image pull errors, volume mount failures, and probe failures before they become full outages.",
+      "images": []
+    },
+    {
+      "id": 102,
+      "question": "Difference between liveness and readiness probes?",
+      "answer": "Kubernetes uses three types of probes to assess container health. Understanding the semantic difference between them is critical because misconfiguring them causes cascading failures more often than almost any other operational mistake.\n\n### Liveness Probe\n\nA liveness probe answers: **\"Is this container alive and functional, or is it stuck/deadlocked?\"**\n\nWhen a liveness probe fails, the kubelet **kills the container and restarts it** (subject to the pod's `restartPolicy`). This is a recovery mechanism for processes that have entered a broken state from which they cannot recover on their own — for example, a Go application with a deadlocked goroutine that holds resources but never makes progress.\n\n```yaml\nlivenessProbe:\n  httpGet:\n    path: /healthz\n    port: 8080\n  initialDelaySeconds: 30    # Wait before first check — allow startup\n  periodSeconds: 10          # Check every 10 seconds\n  failureThreshold: 3        # Kill after 3 consecutive failures\n  successThreshold: 1        # 1 success to recover\n  timeoutSeconds: 5          # Probe request timeout\n```\n\n**Critical design rule:** The liveness endpoint must never depend on downstream services (databases, caches). If the database is down, the app is not \"dead\" — it is waiting. Failing liveness over a downstream dependency causes the pod to restart in a loop, making the situation worse (thundering herd on recovery, losing any in-memory state, taking time to warm up caches). The liveness check should verify only internal process health: goroutine health, internal lock states, or just that the HTTP server is responding.\n\n### Readiness Probe\n\nA readiness probe answers: **\"Is this container ready to receive traffic?\"**\n\nWhen a readiness probe fails, the container is **removed from the Endpoints object** of all matching Services. Traffic is no longer routed to it. The container is not restarted. This is the mechanism for graceful degradation: if an app needs to warm up a cache, establish a database connection pool, or temporarily stop serving (e.g., during a rolling update), the readiness probe signals this.\n\n```yaml\nreadinessProbe:\n  httpGet:\n    path: /ready\n    port: 8080\n  initialDelaySeconds: 5\n  periodSeconds: 5\n  failureThreshold: 3\n  successThreshold: 2        # Require 2 successes to re-add to endpoints\n```\n\nThe readiness check **can and should** check downstream dependencies because it controls whether the pod receives traffic. If the database connection pool is exhausted, the pod should report not-ready.\n\n### Startup Probe\n\nA startup probe answers: **\"Has the container finished its initialization sequence?\"**\n\nIt disables liveness and readiness probes until it succeeds. This is designed for slow-starting applications (JVM apps, applications loading large ML models) where you cannot set a high enough `initialDelaySeconds` on the liveness probe without leaving broken containers running too long.\n\n```yaml\nstartupProbe:\n  httpGet:\n    path: /healthz\n    port: 8080\n  failureThreshold: 30       # Allow up to 30 * 10s = 5 minutes to start\n  periodSeconds: 10\n```\n\n### Summary Comparison\n\n| Aspect | Liveness | Readiness | Startup |\n|---|---|---|---|\n| Failure action | Restart container | Remove from endpoints | Disable liveness/readiness |\n| Purpose | Detect deadlock/crash | Control traffic routing | Allow slow startup |\n| Checks dependencies? | No | Yes | No |\n| Affects scheduling? | No | No | No |\n\n### Common Mistakes\n\n- Setting `initialDelaySeconds` too low causes restarts during JVM warm-up, resulting in CrashLoopBackOff\n- Making liveness probe check the database — a downstream outage triggers a restart loop cluster-wide\n- Not setting a startup probe for slow apps and using a very high `initialDelaySeconds` on liveness instead, which means a truly dead container takes forever to restart\n- Not setting `successThreshold > 1` for readiness on flapping services, causing endpoints to oscillate rapidly",
+      "images": []
+    },
+    {
+      "id": 103,
+      "question": "Why do pods restart repeatedly?",
+      "answer": "Repeated pod restarts are one of the most common Kubernetes operational issues. The root causes span a wide spectrum from application bugs to resource exhaustion to misconfiguration.\n\n### Restart Counter\n\nThe restart count in `kubectl get pods` increments every time the container is restarted. The restart policy of a pod (`Always`, `OnFailure`, `Never`) controls whether and when restarts happen.\n\n```bash\nkubectl get pods -n production\n# NAME                    READY   STATUS             RESTARTS   AGE\n# my-app-6d4b9f7c-x9q2p   0/1     CrashLoopBackOff   14         23m\n```\n\n### Primary Causes\n\n**1. Application crash (non-zero exit code)**\n\nThe container process exits with a non-zero code. This is the most straightforward case.\n\n```bash\nkubectl logs my-app-6d4b9f7c-x9q2p --previous\n# Shows logs from the previous container run\n```\n\nLook for panics, uncaught exceptions, or fatal errors. A Java application with `OutOfMemoryError` that causes JVM exit, a Python app with an unhandled exception at startup, or a misconfigured binary that exits immediately are common examples.\n\n**2. OOMKilled**\n\nThe container exceeded its memory limit and the Linux OOM killer terminated it. The exit code is 137 (128 + SIGKILL). Covered deeply in [Section 9](#9-what-causes-oomkilled-errors).\n\n```bash\nkubectl describe pod my-app-6d4b9f7c-x9q2p | grep -A5 \"Last State\"\n# Last State: Terminated\n#   Reason: OOMKilled\n#   Exit Code: 137\n```\n\n**3. Liveness probe failure**\n\nThe liveness probe is too aggressive (low timeout, too few retries) or checks something that legitimately fails under load (like a database connection). The container is killed by the kubelet even though the process itself is fine.\n\n**4. Misconfigured command or entrypoint**\n\nThe container starts but the entrypoint script exits immediately — for example, a shell script that runs a command in the background but does not block in the foreground. Docker/Kubernetes requires PID 1 to stay alive.\n\n```dockerfile\n# WRONG - starts process in background, shell exits immediately\nCMD [\"/bin/sh\", \"-c\", \"my-app &\"]\n\n# CORRECT - process runs in foreground as PID 1\nCMD [\"my-app\"]\n# or use exec\nCMD [\"/bin/sh\", \"-c\", \"exec my-app\"]\n```\n\n**5. Missing dependencies at startup**\n\nThe application requires a config file, secret mount, or environment variable that is absent or malformed. Common with `envFrom` referencing a missing ConfigMap or Secret.\n\n```bash\nkubectl describe pod my-app-xxx | grep -A10 Events\n# Warning  Failed  2m  kubelet  Error: secret \"db-credentials\" not found\n```\n\n**6. Resource pressure and CPU throttling**\n\nExtremely tight CPU limits cause liveness probe timeouts. The container is technically alive but so CPU-throttled that it cannot respond to the probe within the timeout window. This is a particularly subtle failure mode.\n\n**7. Init container failure**\n\nIf an init container exits non-zero and the pod's restart policy is `Always`, the init container is retried indefinitely. The main container never starts but the pod still shows restart counts incrementing.\n\n**8. Node-level pressure**\n\nThe node is under memory or disk pressure. The kubelet may evict pods (eviction) or the node may experience kernel-level OOM events that kill processes.\n\n### Diagnostic Workflow\n\n```bash\n# Step 1: Check pod status and restart count\nkubectl get pod <name> -n <ns> -o wide\n\n# Step 2: Describe the pod for events and last state\nkubectl describe pod <name> -n <ns>\n\n# Step 3: Get logs from the PREVIOUS container run\nkubectl logs <name> -n <ns> --previous\n\n# Step 4: Check resource usage\nkubectl top pod <name> -n <ns>\n\n# Step 5: Check node conditions\nkubectl describe node <node-name> | grep -A20 Conditions\n```",
+      "images": []
+    },
+    {
+      "id": 104,
+      "question": "How do you debug CrashLoopBackOff?",
+      "answer": "`CrashLoopBackOff` is not a crash itself — it is Kubernetes backing off restart attempts using an exponential backoff (10s, 20s, 40s, 80s, 160s, up to a maximum of 300s). The container is crashing, and Kubernetes is throttling how quickly it retries to avoid thrashing the node.\n\n### Step-by-Step Debugging\n\n**Step 1: Examine the exit code**\n\n```bash\nkubectl describe pod <pod-name> -n <namespace>\n```\n\nLook for the `Last State` section:\n\n```\nLast State:     Terminated\n  Reason:       Error       <- non-zero exit / crash\n  Exit Code:    1\n  Started:      Mon, 01 Jan 2024 10:00:00 +0000\n  Finished:     Mon, 01 Jan 2024 10:00:02 +0000\n```\n\nExit codes to know:\n- `0` — clean exit (process exited intentionally)\n- `1` — general application error\n- `127` — command not found (bad entrypoint)\n- `128+N` — killed by signal N (e.g., 137 = SIGKILL/OOMKilled, 143 = SIGTERM)\n- `137` — OOMKilled (memory limit exceeded)\n- `139` — segmentation fault (SIGSEGV)\n\n**Step 2: Get previous container logs**\n\n```bash\nkubectl logs <pod-name> -n <namespace> --previous\n```\n\nThis is the single most valuable debugging command. The `--previous` flag retrieves logs from the container that just crashed, not the currently starting (or backing-off) one.\n\nIf logs are empty, the process crashed before writing anything. Check if the container image has a valid entrypoint:\n\n```bash\nkubectl run debug --image=<your-image> --restart=Never -it -- /bin/sh\n# Manually run the entrypoint to see what happens\n```\n\n**Step 3: Check for resource limits**\n\n```bash\nkubectl get pod <name> -o yaml | grep -A10 resources\n```\n\nA container that is being OOMKilled will show exit code 137 and reason `OOMKilled`. Temporarily removing or increasing the memory limit to confirm is a valid diagnostic step.\n\n**Step 4: Check environment and secrets**\n\nMany crashes at startup are caused by missing environment variables, missing secrets, or misconfigured config files.\n\n```bash\nkubectl get pod <name> -o yaml | grep -A20 env\nkubectl get pod <name> -o yaml | grep -A20 envFrom\nkubectl get secret <secret-name> -n <namespace>\n```\n\n**Step 5: Use an ephemeral debug container (Kubernetes 1.23+)**\n\n```bash\nkubectl debug -it <pod-name> -n <namespace> \\\n  --image=busybox:latest \\\n  --target=<container-name>\n```\n\nThis attaches a debug container to the pod's process namespace, allowing you to inspect the filesystem, environment, and running processes even when the main container is crashing.\n\n**Step 6: Override the entrypoint to keep the container alive**\n\nWhen you need the container to stay up for investigation:\n\n```bash\nkubectl run debug-app --image=<your-image> \\\n  --restart=Never \\\n  --command -- /bin/sh -c \"sleep infinity\"\nkubectl exec -it debug-app -- /bin/sh\n# Now run the actual entrypoint manually and observe\n```\n\nOr patch a deployment temporarily:\n\n```bash\nkubectl patch deployment my-app -p \\\n  '{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"my-app\",\"command\":[\"sleep\",\"infinity\"]}]}}}}'\n```\n\n**Step 7: Check for readiness/liveness probe misconfiguration**\n\n```bash\nkubectl get pod <name> -o yaml | grep -A15 livenessProbe\n```\n\nIf the liveness probe is killing the container before it finishes starting, you will see short container lifetimes (the `Started/Finished` window in `describe`). The solution is to add or increase a `startupProbe`.\n\n**Step 8: Check kubelet logs on the node**\n\nFor crashes that leave no application logs:\n\n```bash\n# Get the node where the pod runs\nkubectl get pod <name> -o wide\n\n# SSH to node and check kubelet logs\njournalctl -u kubelet -n 200 --no-pager | grep <pod-name>\n\n# Or check system-level OOM\ndmesg | grep -i \"out of memory\"\ndmesg | grep -i \"oom_kill\"\n```\n\n### Checklist Summary\n\n- Inspect exit code — OOM, crash, or signal?\n- Read `--previous` logs\n- Check resource requests/limits\n- Verify all ConfigMaps, Secrets, volumes exist\n- Validate entrypoint runs correctly\n- Check if liveness probe timeouts are too aggressive\n- Review node-level events and conditions",
+      "images": []
+    },
+    {
+      "id": 105,
+      "question": "What is kube-state-metrics?",
+      "answer": "**kube-state-metrics** (KSM) is a service that listens to the Kubernetes API server and generates metrics about the **state of Kubernetes objects** — not about resource usage, but about the logical state of the cluster as modeled by Kubernetes objects.\n\n### What it exposes\n\nWhere `cAdvisor` tells you \"this container is using 500MB of memory right now,\" `kube-state-metrics` tells you \"this Deployment has 3 desired replicas and 2 available replicas.\" It exposes the `.spec` and `.status` fields of Kubernetes resources as Prometheus metrics.\n\nKey metric families:\n\n**Deployments**\n```\nkube_deployment_spec_replicas{deployment=\"my-app\", namespace=\"production\"} 3\nkube_deployment_status_replicas_available{deployment=\"my-app\", namespace=\"production\"} 2\nkube_deployment_status_replicas_unavailable{deployment=\"my-app\", namespace=\"production\"} 1\nkube_deployment_metadata_generation{deployment=\"my-app\", namespace=\"production\"} 7\n```\n\n**Pods**\n```\nkube_pod_status_phase{pod=\"my-app-xxx\", namespace=\"production\", phase=\"Running\"} 1\nkube_pod_container_status_restarts_total{pod=\"my-app-xxx\", container=\"my-app\"} 5\nkube_pod_container_status_ready{pod=\"my-app-xxx\", container=\"my-app\"} 0\nkube_pod_container_resource_limits{resource=\"memory\", unit=\"byte\"} 536870912\nkube_pod_container_resource_requests{resource=\"cpu\", unit=\"core\"} 0.5\n```\n\n**Nodes**\n```\nkube_node_status_condition{condition=\"Ready\", status=\"true\", node=\"worker-1\"} 1\nkube_node_spec_unschedulable{node=\"worker-1\"} 0\nkube_node_status_allocatable{resource=\"cpu\", node=\"worker-1\", unit=\"core\"} 4\n```\n\n**Jobs and CronJobs**\n```\nkube_job_status_succeeded{job_name=\"backup-job\", namespace=\"production\"} 1\nkube_job_status_failed{job_name=\"backup-job\", namespace=\"production\"} 0\nkube_cronjob_next_schedule_time{cronjob=\"nightly-backup\"} 1704067200\n```\n\n**StatefulSets, DaemonSets, HPA, PVCs**\n\nKSM covers nearly all Kubernetes resource types: StatefulSets, DaemonSets, ReplicaSets, Services, Endpoints, Namespaces, LimitRanges, ResourceQuotas, PersistentVolumeClaims, Ingresses, and more.\n\n### Architecture\n\nKSM runs as a single Deployment with a single replica. It uses informers and shared caches to watch the API server, making it efficient. Because it uses informers (not polling), it reflects the current state of the cluster with very low latency.\n\n```yaml\n# Typical KSM deployment is included in kube-prometheus-stack\n# Resource requests for a medium cluster (~50 nodes, ~500 pods):\nresources:\n  requests:\n    cpu: 100m\n    memory: 128Mi\n  limits:\n    cpu: 500m\n    memory: 512Mi\n```\n\nFor large clusters (1000+ pods), KSM memory usage grows substantially — it caches all object states in memory. Shard mode (available in newer KSM versions) can split responsibility across multiple instances.\n\n### Essential Alert Rules Using KSM\n\n```yaml\n# Deployment has fewer replicas than desired\n- alert: DeploymentReplicasMismatch\n  expr: |\n    kube_deployment_spec_replicas\n      != kube_deployment_status_replicas_available\n  for: 15m\n  labels:\n    severity: warning\n\n# Pod has been in pending state for too long\n- alert: PodNotScheduled\n  expr: kube_pod_status_phase{phase=\"Pending\"} == 1\n  for: 30m\n  labels:\n    severity: warning\n\n# Container restart rate high\n- alert: HighRestartRate\n  expr: |\n    rate(kube_pod_container_status_restarts_total[15m]) * 60 > 1\n  for: 5m\n  labels:\n    severity: critical\n\n# PVC not bound\n- alert: PVCNotBound\n  expr: kube_persistentvolumeclaim_status_phase{phase!=\"Bound\"} == 1\n  for: 10m\n  labels:\n    severity: warning\n```\n\n### KSM vs cAdvisor vs metrics-server\n\n| Source | What it measures | Use case |\n|---|---|---|\n| kube-state-metrics | Object state (desired vs actual) | Alerting on mismatches, configuration drift |\n| cAdvisor (kubelet /metrics/cadvisor) | Container runtime metrics (CPU, memory, net, disk) | Resource utilization dashboards |\n| metrics-server | Lightweight CPU/memory for HPA/VPA and `kubectl top` | Autoscaling, `kubectl top` only — not for alerting |\n| node-exporter | Node OS/hardware metrics | Node-level health |",
+      "images": []
+    },
+    {
+      "id": 106,
+      "question": "What metrics matter for nodes?",
+      "answer": "Nodes are the physical or virtual machines that host pods. Node health is foundational — a sick node can silently corrupt workloads by throttling CPU, evicting pods, or losing network connectivity.\n\n### CPU Metrics\n\n```\n# CPU utilization (overall)\n100 - (avg by (instance) (rate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)\n\n# CPU steal time (relevant in virtualized environments — indicates noisy neighbor)\nrate(node_cpu_seconds_total{mode=\"steal\"}[5m]) * 100\n\n# CPU iowait (high iowait indicates storage bottleneck)\nrate(node_cpu_seconds_total{mode=\"iowait\"}[5m]) * 100\n\n# Load average (should stay below number of CPUs)\nnode_load1   # 1-minute load average\nnode_load5   # 5-minute\nnode_load15  # 15-minute\n```\n\nCPU steal time > 5% on a cloud VM is a major signal — the hypervisor is not delivering CPU cycles reliably, causing probe timeouts and application latency spikes.\n\n### Memory Metrics\n\n```\n# Available memory\nnode_memory_MemAvailable_bytes\n\n# Memory utilization\n(1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100\n\n# Swap usage (non-zero swap is a strong signal of memory pressure)\nnode_memory_SwapTotal_bytes - node_memory_SwapFree_bytes\n\n# OOM events\nnode_vmstat_oom_kill\n\n# Page faults (major faults indicate swapping)\nrate(node_vmstat_pgmajfault[5m])\n```\n\nKubernetes recommends disabling swap on nodes (historically required, though newer versions offer more flexibility). Swap on Kubernetes nodes can cause unpredictable latency because the kubelet and scheduler assume memory constraints are enforced hard limits.\n\n### Disk Metrics\n\n```\n# Disk space utilization per mount\n(1 - node_filesystem_avail_bytes / node_filesystem_size_bytes) * 100\n\n# inode usage (can run out before disk space runs out!)\n(1 - node_filesystem_files_free / node_filesystem_files) * 100\n\n# Disk I/O utilization\nrate(node_disk_io_time_seconds_total[5m]) * 100\n\n# Disk read/write throughput\nrate(node_disk_read_bytes_total[5m])\nrate(node_disk_written_bytes_total[5m])\n\n# Disk saturation (avg queue length)\nrate(node_disk_io_time_weighted_seconds_total[5m])\n```\n\nInode exhaustion is a classic Kubernetes gotcha. Container image layers, small log files, and temporary files can exhaust inodes even when disk space usage is low. Always alert on both.\n\n### Network Metrics\n\n```\n# Network throughput per interface\nrate(node_network_receive_bytes_total{device!=\"lo\"}[5m])\nrate(node_network_transmit_bytes_total{device!=\"lo\"}[5m])\n\n# Packet drops (critical for cluster networking)\nrate(node_network_receive_drop_total[5m])\nrate(node_network_transmit_drop_total[5m])\n\n# Packet errors\nrate(node_network_receive_errs_total[5m])\nrate(node_network_transmit_errs_total[5m])\n\n# TCP retransmissions\nrate(node_netstat_Tcp_RetransSegs[5m])\n\n# TCP connection states\nnode_sockstat_TCP_inuse\nnode_sockstat_TCP_tw  # TIME_WAIT connections\n```\n\nPacket drops are particularly important in Kubernetes. CNI plugin issues, conntrack table overflow, or NIC ring buffer exhaustion all manifest as packet drops, causing mysterious application timeouts.\n\n### kubelet and System Metrics\n\n```\n# Kubelet running pods\nkubelet_running_pods\n\n# Kubelet running containers\nkubelet_running_containers\n\n# Pod start duration\nkubelet_pod_start_duration_seconds\n\n# Volume mount errors\nkubelet_volume_stats_available_bytes\nstorage_operation_duration_seconds\n```\n\n### Node Conditions (from kube-state-metrics)\n\n```\nkube_node_status_condition{condition=\"MemoryPressure\", status=\"true\"}\nkube_node_status_condition{condition=\"DiskPressure\", status=\"true\"}\nkube_node_status_condition{condition=\"PIDPressure\", status=\"true\"}\nkube_node_status_condition{condition=\"NetworkUnavailable\", status=\"true\"}\nkube_node_status_condition{condition=\"Ready\", status=\"false\"}\n```\n\nWhen `MemoryPressure` is true, the kubelet begins evicting pods. When `DiskPressure` is true, it evicts pods and prevents new scheduling. Proactive alerting at 80% thresholds prevents these conditions from being reached.\n\n### PID Exhaustion\n\nOften overlooked, PID exhaustion (`PIDPressure`) can bring down a node. Each container spawns processes; a fork bomb or excessive thread creation can exhaust the kernel PID limit.\n\n```\n# Alert at 80% PID usage\n(node_processes_max - node_processes_pids) / node_processes_max < 0.2\n```\n\n### Recommended Alert Thresholds\n\n| Metric | Warning | Critical |\n|---|---|---|\n| CPU utilization | > 80% for 15m | > 95% for 5m |\n| Memory utilization | > 85% for 15m | > 95% for 5m |\n| Disk space | > 80% | > 90% |\n| Inode usage | > 80% | > 90% |\n| Disk I/O utilization | > 80% for 5m | > 95% for 2m |\n| Network packet drop rate | > 0.1% | > 1% |\n| Load average / CPU count | > 1.5 | > 3.0 |",
+      "images": []
+    },
+    {
+      "id": 107,
+      "question": "How do you monitor ingress traffic?",
+      "answer": "Ingress controllers are the entry point for all HTTP/HTTPS traffic into a cluster. They are a critical observation point because they see every request and can expose rich telemetry about latency, error rates, and traffic distribution.\n\n### NGINX Ingress Controller Metrics\n\nThe most widely used ingress controller. It exposes a Prometheus metrics endpoint at port 10254 by default.\n\nKey metrics:\n\n```\n# Request rate\nrate(nginx_ingress_controller_requests[5m])\n\n# Request duration (latency) by status code, ingress, service\nhistogram_quantile(0.99,\n  sum(rate(nginx_ingress_controller_request_duration_seconds_bucket[5m]))\n  by (le, ingress, namespace, service)\n)\n\n# Error rate (4xx + 5xx)\nrate(nginx_ingress_controller_requests{status=~\"[45]..\"}[5m])\n  / rate(nginx_ingress_controller_requests[5m])\n\n# Request size and response size\nnginx_ingress_controller_request_size_sum\nnginx_ingress_controller_response_size_sum\n\n# Upstream response time (time spent in backend service)\nhistogram_quantile(0.95,\n  rate(nginx_ingress_controller_response_duration_seconds_bucket[5m])\n)\n\n# Connection count\nnginx_ingress_controller_nginx_process_connections{state=\"active\"}\n\n# SSL certificate expiry (critical for proactive renewal)\nnginx_ingress_controller_ssl_expire_time_seconds\n```\n\n**SSL Certificate Expiry Alert:**\n```yaml\n- alert: SSLCertificateExpirationWarning\n  expr: |\n    nginx_ingress_controller_ssl_expire_time_seconds\n    - time() < 30 * 24 * 3600\n  labels:\n    severity: warning\n  annotations:\n    summary: \"SSL certificate expires in less than 30 days\"\n```\n\n### Ingress-Level Four Golden Signals\n\n```yaml\n# Request rate per service\nsum(rate(nginx_ingress_controller_requests[5m])) by (ingress, service, namespace)\n\n# Error rate per service\nsum(rate(nginx_ingress_controller_requests{status=~\"5..\"}[5m])) by (ingress, service)\n  /\nsum(rate(nginx_ingress_controller_requests[5m])) by (ingress, service)\n\n# p99 latency per service\nhistogram_quantile(0.99,\n  sum(rate(nginx_ingress_controller_request_duration_seconds_bucket[5m]))\n  by (le, ingress, service)\n)\n\n# Active connections (saturation proxy)\nnginx_ingress_controller_nginx_process_connections{state=\"active\"}\n```\n\n### Access Log Correlation\n\nNGINX Ingress logs each request. Shipping these logs to a log aggregation system (Loki, Elasticsearch, Datadog) enables:\n\n- Full request tracing by `trace-id` header\n- Investigation of slow or erroring requests by path\n- Client IP analysis for security\n- Bot detection via User-Agent filtering\n\nEnable JSON log format for easier parsing:\n\n```yaml\n# nginx-ingress ConfigMap\ndata:\n  log-format-upstream: >\n    {\"time\":\"$time_iso8601\",\"remote_addr\":\"$remote_addr\",\n    \"request_id\":\"$req_id\",\"method\":\"$request_method\",\n    \"uri\":\"$request_uri\",\"status\":\"$status\",\n    \"request_time\":\"$request_time\",\"upstream_time\":\"$upstream_response_time\",\n    \"ingress\":\"$ingress_name\",\"service\":\"$service_name\"}\n```\n\n### Load Balancer and DNS Monitoring\n\nAt the cloud layer, the LoadBalancer service in front of the ingress needs monitoring:\n\n- ELB/ALB healthy target count (AWS)\n- Backend latency from cloud LB perspective\n- LB error rates (502, 503 from cloud LB vs 5xx from upstream)\n- DNS TTL and resolution latency (for split-horizon or external-dns setups)\n\n### Monitoring Traffic Distribution\n\nFor A/B testing, canary deployments, or traffic splitting:\n\n```\n# Traffic split validation (if using canary annotations or service mesh)\nsum(rate(nginx_ingress_controller_requests[5m])) by (service)\n# Verify canary receives expected % of traffic\n```",
+      "images": []
+    },
+    {
+      "id": 108,
+      "question": "How do you monitor container resource usage?",
+      "answer": "Container resource monitoring provides visibility into what each container actually consumes versus what was requested or limited. The primary source is **cAdvisor**, which is embedded in the kubelet and exposes metrics at `/metrics/cadvisor`.\n\n### CPU Metrics\n\n```\n# CPU usage rate per container (cores)\nrate(container_cpu_usage_seconds_total{container!=\"\"}[5m])\n\n# CPU throttling — time the container was throttled (critical)\nrate(container_cpu_cfs_throttled_seconds_total{container!=\"\"}[5m])\n\n# CPU throttle ratio — % of scheduling periods where throttling occurred\nrate(container_cpu_cfs_throttled_periods_total{container!=\"\"}[5m])\n  /\nrate(container_cpu_cfs_periods_total{container!=\"\"}[5m])\n\n# CPU usage vs limit (saturation ratio)\nrate(container_cpu_usage_seconds_total{container!=\"\"}[5m])\n  /\non(pod, container, namespace)\n  kube_pod_container_resource_limits{resource=\"cpu\"}\n```\n\n**CPU throttling** is one of the most insidious Kubernetes issues. A container can be using only 10% CPU on average but still be heavily throttled because it has bursty behavior and a low CPU limit. Throttling does not cause OOMKilled — it causes latency spikes and probe timeouts. Many teams are surprised to find their p99 latency problems are caused by CPU throttling, not memory.\n\n### Memory Metrics\n\n```\n# Working set memory (what the OOM killer uses — excludes page cache)\ncontainer_memory_working_set_bytes{container!=\"\"}\n\n# RSS (resident set size — process memory in RAM)\ncontainer_memory_rss{container!=\"\"}\n\n# Cache (page cache — can be reclaimed by OS under pressure)\ncontainer_memory_cache{container!=\"\"}\n\n# Memory usage vs limit\ncontainer_memory_working_set_bytes{container!=\"\"}\n  /\non(pod, container, namespace)\n  kube_pod_container_resource_limits{resource=\"memory\"}\n\n# Memory usage vs request\ncontainer_memory_working_set_bytes{container!=\"\"}\n  /\non(pod, container, namespace)\n  kube_pod_container_resource_requests{resource=\"memory\"}\n```\n\nUse `container_memory_working_set_bytes` (not `container_memory_usage_bytes`) for memory alerting because the OOM killer uses working set. `usage_bytes` includes page cache which is reclaimable and will not trigger OOM.\n\n### Network Metrics per Container/Pod\n\n```\n# Network bytes received per pod\nrate(container_network_receive_bytes_total{container!=\"\"}[5m])\n\n# Network bytes transmitted per pod\nrate(container_network_transmit_bytes_total{container!=\"\"}[5m])\n\n# Network errors\nrate(container_network_receive_errors_total[5m])\nrate(container_network_transmit_errors_total[5m])\n\n# Dropped packets\nrate(container_network_receive_packets_dropped_total[5m])\nrate(container_network_transmit_packets_dropped_total[5m])\n```\n\n### Storage (Filesystem) Metrics\n\n```\n# Filesystem reads per container\nrate(container_fs_reads_bytes_total{container!=\"\"}[5m])\n\n# Filesystem writes per container\nrate(container_fs_writes_bytes_total{container!=\"\"}[5m])\n\n# Filesystem usage (overlayfs root filesystem)\ncontainer_fs_usage_bytes{container!=\"\"}\n\n# Ephemeral storage usage (important for log rotation)\ncontainer_ephemeral_storage_used_bytes\n```\n\n### Right-Sizing Containers\n\nUsing resource usage metrics to right-size requests and limits:\n\n```\n# CPU request recommendation: p99 of usage over 7 days\nquantile_over_time(0.99,\n  rate(container_cpu_usage_seconds_total[5m])[7d:5m]\n)\n\n# Memory limit recommendation: max + 20% headroom\nmax_over_time(container_memory_working_set_bytes[7d]) * 1.2\n```\n\nThe **Vertical Pod Autoscaler (VPA)** automates this process and can run in recommendation mode (no mutations) to suggest right-sized resource values without changing anything.\n\n### Resource Efficiency Metrics\n\n```\n# CPU efficiency = usage / request (should be near 1.0)\nrate(container_cpu_usage_seconds_total[5m])\n  /\nkube_pod_container_resource_requests{resource=\"cpu\"}\n\n# Memory efficiency = usage / request\ncontainer_memory_working_set_bytes\n  /\nkube_pod_container_resource_requests{resource=\"memory\"}\n```\n\nLow efficiency (< 0.2) indicates over-provisioned requests, which wastes cluster capacity and reduces scheduling density. High efficiency (> 0.9) indicates under-provisioned requests, which can cause eviction and scheduling failures.",
+      "images": []
+    },
+    {
+      "id": 109,
+      "question": "What causes OOMKilled errors?",
+      "answer": "OOMKilled (Out of Memory Killed) occurs when a container's memory usage reaches its configured limit and the Linux kernel's OOM killer terminates the process. This is one of the most frequent and disruptive container failures in production.\n\n### The Mechanics\n\nLinux cgroups enforce memory limits on containers. When `container_memory_working_set_bytes` reaches the `resources.limits.memory` value, the kernel sends SIGKILL (signal 9) to the process. There is no warning, no graceful shutdown — the process is immediately terminated. The exit code is 137.\n\n```\nkubectl describe pod <name>\n# Containers:\n#   my-app:\n#     Last State:     Terminated\n#       Reason:       OOMKilled\n#       Exit Code:    137\n```\n\n### Common Root Causes\n\n**1. Memory limit set too low**\n\nThe most common cause. The limit was estimated (or guessed) and does not reflect actual runtime behavior. JVM applications, in particular, use memory for the heap, metaspace, native memory, and JVM overhead. Setting only the heap size via `-Xmx` does not bound total JVM memory usage — native memory and thread stacks are additional.\n\nJVM total memory ≈ `-Xmx` + `-XX:MaxMetaspaceSize` + thread stacks (N × ~512KB) + JVM overhead (~200MB)\n\n**2. Memory leak in application**\n\nThe application gradually increases memory consumption over hours or days until hitting the limit. This is identifiable by a steadily rising slope in `container_memory_working_set_bytes`:\n\n```\n# Alert for memory leak pattern: 90%+ of limit sustained\ncontainer_memory_working_set_bytes\n  /\non(pod, container, namespace) kube_pod_container_resource_limits{resource=\"memory\"}\n> 0.9\n```\n\n**3. Sudden traffic spike or large workload**\n\nProcessing a large batch job, an unexpected traffic spike causing excessive in-memory caching, or loading a large dataset can cause transient memory peaks.\n\n**4. Memory fragmentation**\n\nApplications using memory allocators (especially in C/C++) can have high VSZ (virtual memory) but their actual RSS is much lower. However, Go, Java, and Python all have their own allocator behaviors that can cause fragmentation.\n\n**5. Page cache exhaustion**\n\nUnder some conditions, the kernel cannot reclaim page cache fast enough. The OOM killer may fire even though `container_memory_usage_bytes` appears to have headroom, because what matters is `working_set_bytes` (which excludes page cache that has already been evicted).\n\n**6. Sidecar containers consuming shared memory**\n\nIn pods with sidecar containers (e.g., a service mesh proxy like Envoy/Istio), the sidecar also consumes memory. If you size the main container correctly but forget the sidecar overhead, the node-level memory pressure from all containers in the pod contributes to OOM risk.\n\n**7. tmpfs mounts and /dev/shm usage**\n\n`emptyDir` volumes with `medium: Memory` are backed by tmpfs and count against the container's memory limit. Applications that use `/dev/shm` for inter-process communication can quietly consume large amounts of memory this way.\n\n### Detection and Prevention\n\n```bash\n# Check OOM kills on a node (dmesg)\ndmesg | grep -i \"out of memory\"\ndmesg | grep -i \"oom_kill\"\n\n# Node-level OOM kill metric\nnode_vmstat_oom_kill\n\n# Container memory growth rate (leak detection)\nderiv(container_memory_working_set_bytes[1h])\n```\n\n**Preventive measures:**\n\n- Set requests equal to average usage, limits at 1.5–2× requests for headroom\n- Use VPA in recommendation mode to gather right-sizing data over time\n- For JVMs, use `-XX:+UseContainerSupport` (Java 10+) so the JVM respects cgroup memory limits\n- Set `-XX:MaxRAMPercentage=75` rather than absolute `-Xmx` so limits scale with the container\n- Add memory leak detection dashboards with retention of 7–30 day trends\n- Implement circuit breakers and back-pressure in applications to shed load before OOM",
+      "images": []
+    },
+    {
+      "id": 110,
+      "question": "How do you observe autoscaling behavior?",
+      "answer": "Kubernetes has three autoscaling dimensions: Horizontal Pod Autoscaler (HPA), Vertical Pod Autoscaler (VPA), and Cluster Autoscaler (CA). Each requires different observability approaches.\n\n### Horizontal Pod Autoscaler (HPA)\n\nThe HPA scales the number of pod replicas based on metrics (CPU, memory, or custom metrics).\n\n```bash\n# View HPA status\nkubectl get hpa -n production\n\n# NAME       REFERENCE         TARGETS         MINPODS  MAXPODS  REPLICAS\n# my-app     Deployment/my-app 72%/60%         2        20       5\n```\n\n**Key HPA Metrics:**\n\n```\n# Current metric value vs target\nkube_horizontalpodautoscaler_status_current_replicas\nkube_horizontalpodautoscaler_spec_max_replicas\nkube_horizontalpodautoscaler_spec_min_replicas\nkube_horizontalpodautoscaler_status_desired_replicas\n\n# HPA conditions (from kube-state-metrics)\nkube_horizontalpodautoscaler_status_condition{\n  condition=\"AbleToScale\", status=\"true\"\n}\nkube_horizontalpodautoscaler_status_condition{\n  condition=\"ScalingLimited\", status=\"true\"\n  # means replicas are at max limit — may need to increase maxReplicas\n}\n```\n\n**Detecting HPA problems:**\n\nThe HPA scale-up is limited by the rate at which new pods become ready. If `AbleToScale` is false, it means the HPA cannot scale for a reason (e.g., the Deployment is being updated, or there are API errors fetching metrics).\n\n```\n# Alert: HPA at max replicas for extended period (maxReplicas too low)\nkube_horizontalpodautoscaler_status_current_replicas\n  ==\nkube_horizontalpodautoscaler_spec_max_replicas\n```\n\n**Scale event timeline:**\n\nHPA decisions show up in Kubernetes events:\n\n```bash\nkubectl describe hpa my-app -n production\n# Events:\n#   Normal   SuccessfulRescale  2m    horizontal-pod-autoscaler\n#            New size: 8; reason: cpu resource utilization (percentage of request)\n#            above target\n```\n\n### Custom Metrics and KEDA\n\nWhen scaling on CPU/memory alone is insufficient, custom metrics (from Prometheus, SQS queue depth, Kafka consumer lag, etc.) via KEDA (Kubernetes Event-Driven Autoscaling) or the Custom Metrics API provide richer scaling signals.\n\nKEDA exposes its own metrics:\n\n```\nkeda_scaler_metrics_value             -- current metric value\nkeda_scaler_metrics_latency           -- time to fetch metric from source\nkeda_scaler_active                    -- whether the scaler is active\nkeda_scaled_object_errors             -- errors in metric retrieval\n```\n\n**Queue-depth-based scaling observation:**\n\n```\n# SQS queue depth vs pod count\naws_sqs_approximate_number_of_messages_visible\n  vs\nkube_deployment_status_replicas_available\n```\n\n### Cluster Autoscaler\n\nThe Cluster Autoscaler adds or removes nodes when pods cannot be scheduled (scale-up) or nodes are underutilized (scale-down).\n\n```\n# Pending pods waiting for nodes\nkube_pod_status_phase{phase=\"Pending\"}\n\n# Cluster Autoscaler specific metrics\ncluster_autoscaler_nodes_count\ncluster_autoscaler_unschedulable_pods_count\ncluster_autoscaler_last_activity  # timestamp of last scale event\ncluster_autoscaler_scaled_up_nodes_total\ncluster_autoscaler_scaled_down_nodes_total\ncluster_autoscaler_errors_total\n\n# Node group size\ncluster_autoscaler_nodes_count by (node_group)\n```\n\n**Cluster Autoscaler failure modes:**\n\n- **Scale-up blocked by quota:** AWS, GCP, or Azure account limits prevent new instance provisioning\n- **Scale-up blocked by taints/tolerations:** Pending pods cannot tolerate available node group taints\n- **Scale-down blocked by PodDisruptionBudgets:** PDB prevents node drain\n- **Scale-down blocked by local storage:** Pods using `emptyDir` with data cannot be safely evicted\n\n```bash\n# Check why a pod is pending (scheduling failure reason)\nkubectl describe pod <pending-pod> | grep -A20 Events\n\n# Check cluster autoscaler logs\nkubectl logs -l app=cluster-autoscaler -n kube-system --tail=100\n```\n\n### VPA Recommendations\n\n```\n# VPA recommendation metrics\nkube_verticalpodautoscaler_status_recommendation_containerrecommendations_target\nkube_verticalpodautoscaler_status_recommendation_containerrecommendations_lowerbound\nkube_verticalpodautoscaler_status_recommendation_containerrecommendations_upperbound\n```\n\nBuild a dashboard showing actual resource usage vs VPA recommendations vs current requests/limits. This is the feedback loop for right-sizing.",
+      "images": []
+    },
+    {
+      "id": 111,
+      "question": "How do you monitor service mesh traffic?",
+      "answer": "Service meshes (Istio, Linkerd, Cilium Service Mesh) inject a sidecar proxy into each pod, giving them visibility into all intra-cluster service-to-service communication. This is fundamentally different from monitoring ingress traffic — service meshes monitor the **east-west** traffic within the cluster.\n\n### Istio Observability\n\nIstio's Envoy sidecar proxies emit rich telemetry automatically without any application code changes.\n\n**The Istio metrics set:**\n\n```\n# Request volume\nistio_requests_total{\n  source_workload, destination_workload,\n  destination_service_name, destination_service_namespace,\n  response_code, reporter\n}\n\n# Request duration (latency distribution)\nistio_request_duration_milliseconds_bucket\n\n# Request/response size\nistio_request_bytes_bucket\nistio_response_bytes_bucket\n\n# TCP connections (for non-HTTP protocols)\nistio_tcp_connections_opened_total\nistio_tcp_connections_closed_total\nistio_tcp_sent_bytes_total\nistio_tcp_received_bytes_total\n```\n\n**Golden signals per service pair:**\n\n```\n# Error rate between service A and service B\nsum(rate(istio_requests_total{\n  source_workload=\"service-a\",\n  destination_workload=\"service-b\",\n  response_code=~\"5..\"\n}[5m]))\n/\nsum(rate(istio_requests_total{\n  source_workload=\"service-a\",\n  destination_workload=\"service-b\"\n}[5m]))\n\n# p99 latency\nhistogram_quantile(0.99,\n  sum(rate(istio_request_duration_milliseconds_bucket{\n    destination_workload=\"service-b\"\n  }[5m]))\n  by (le)\n) / 1000  # convert ms to seconds\n```\n\n### mTLS and Security Metrics\n\nService meshes enforce mutual TLS between services, which provides both encryption and identity verification. Monitor for security posture:\n\n```\n# Connections NOT using mTLS (should be zero in enforced mode)\nistio_requests_total{connection_security_policy=\"none\"}\n\n# Policy check failures (AuthorizationPolicy violations)\nenvoy_http_downstream_rq_total{response_code=\"403\"}\n```\n\n### Linkerd Observability\n\nLinkerd's proxy (written in Rust, lighter than Envoy) emits similar metrics:\n\n```\nrequest_total\nresponse_total{classification=\"success\"}\nresponse_total{classification=\"failure\"}\nresponse_latency_ms_bucket\nroute_request_total\n```\n\nLinkerd's CLI provides instant golden signal access:\n\n```bash\nlinkerd viz stat deployment -n production\nlinkerd viz routes deploy/my-service -n production\nlinkerd viz tap deployment/my-service -n production\n```\n\n### Service Dependency Mapping\n\nOne of the most powerful features of service mesh observability is automatic service topology mapping. Tools like Kiali (for Istio) and Linkerd's viz dashboard render the service graph with error rates and latency on each edge.\n\n```bash\n# Install Kiali for Istio topology visualization\nkubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.20/samples/addons/kiali.yaml\n```\n\n### Envoy Admin Metrics (raw)\n\nEach Envoy sidecar exposes an admin port (15000) with extremely detailed metrics:\n\n```\n# Upstream (outbound) connection pool exhaustion\nenvoy_cluster_upstream_cx_pool_overflow\n\n# Circuit breaker trips\nenvoy_cluster_upstream_rq_pending_overflow  # pending queue overflow\nenvoy_cluster_upstream_rq_retry             # retries happening\nenvoy_cluster_upstream_rq_retry_overflow    # retry budget exhausted\n\n# Health check failures for upstreams\nenvoy_cluster_health_check_failure\n\n# Outlier detection (automatic unhealthy host ejection)\nenvoy_cluster_outlier_detection_ejections_active\nenvoy_cluster_outlier_detection_ejections_total\n```\n\nEnvoy circuit breaker and outlier detection metrics reveal whether failure isolation is working correctly — a service mesh is not just for observability but for resilience.",
+      "images": []
+    },
+    {
+      "id": 112,
+      "question": "What is distributed observability in Kubernetes?",
+      "answer": "Distributed observability is the practice of achieving comprehensive understanding of system behavior across multiple loosely coupled services, nodes, pods, and cloud resources. In Kubernetes, where a single user request may traverse dozens of microservices across multiple nodes, traditional single-process debugging tools are insufficient.\n\n### The Three Pillars\n\n**1. Metrics** — numeric measurements over time (Prometheus, CloudWatch, Datadog)\n\n**2. Logs** — discrete events with context (Loki, Elasticsearch, Splunk)\n\n**3. Traces** — causal records of request execution across services (Jaeger, Zipkin, Tempo, OTLP)\n\nThe modern addition is **Events** (Kubernetes events) as a fourth pillar and **Profiling** as a fifth (continuous profiling with Parca, Pyroscope).\n\n### Correlation — The Key Challenge\n\nThe value of distributed observability comes from correlating these signals. Without correlation, you have isolated signals. With correlation, you can:\n\n- See a Prometheus alert → link to relevant logs → link to the trace of a failing request → link to a CPU flame graph showing where time was spent\n- Jump from a single failing trace to the metric trend that shows it's systemic vs isolated\n\nThis correlation is done through **context propagation**: trace IDs, span IDs, and baggage attached to every request. The W3C TraceContext standard and OpenTelemetry provide the interoperability layer.\n\n### OpenTelemetry (OTel)\n\nOpenTelemetry is the CNCF standard for vendor-neutral instrumentation. The OTel Collector acts as a telemetry pipeline inside Kubernetes:\n\n```yaml\n# OpenTelemetry Collector deployment\napiVersion: opentelemetry.io/v1alpha1\nkind: OpenTelemetryCollector\nmetadata:\n  name: otel-collector\nspec:\n  config: |\n    receivers:\n      otlp:\n        protocols:\n          grpc:\n          http:\n      prometheus:\n        config:\n          scrape_configs:\n            - job_name: 'kubernetes-pods'\n              kubernetes_sd_configs:\n                - role: pod\n\n    processors:\n      batch:\n      memory_limiter:\n        limit_mib: 512\n      k8sattributes:          # Enriches telemetry with K8s metadata\n        auth_type: serviceAccount\n        passthrough: false\n        extract:\n          metadata:\n            - k8s.namespace.name\n            - k8s.deployment.name\n            - k8s.pod.name\n            - k8s.node.name\n\n    exporters:\n      otlp:\n        endpoint: jaeger-collector:4317\n      prometheusremotewrite:\n        endpoint: http://prometheus:9090/api/v1/write\n      loki:\n        endpoint: http://loki:3100/loki/api/v1/push\n\n    service:\n      pipelines:\n        traces:\n          receivers: [otlp]\n          processors: [memory_limiter, k8sattributes, batch]\n          exporters: [otlp]\n        metrics:\n          receivers: [prometheus]\n          processors: [batch]\n          exporters: [prometheusremotewrite]\n```\n\n### The Kubernetes Metadata Enrichment Problem\n\nEvery telemetry signal emitted from within a pod needs to be enriched with Kubernetes metadata: namespace, pod name, deployment name, node name, labels. Without this enrichment, a trace from a microservice is just a trace — you cannot correlate it back to the specific pod revision, deployment version, or replica that generated it.\n\nOTel's `k8sattributes` processor, Fluent Bit's Kubernetes filter, and Vector's Kubernetes metadata transform all serve this purpose.\n\n### Exemplars: Bridging Metrics and Traces\n\nPrometheus 2.35+ supports exemplars — trace ID references embedded in metric samples. This allows jumping directly from a metric data point to the specific trace that caused a spike:\n\n```\n# A histogram sample with an exemplar\nhttp_request_duration_seconds_bucket{le=\"0.5\"} 1234 # {trace_id=\"abc123\"} 0.35\n```\n\nGrafana can visualize exemplars on metric graphs, letting you click a latency spike and immediately view the trace.",
+      "images": []
+    },
+    {
+      "id": 113,
+      "question": "How do you collect logs from containers?",
+      "answer": "Kubernetes log collection is a fundamental operational requirement. Container logs are ephemeral — they disappear when the pod is deleted. Every production cluster needs a centralized log aggregation pipeline.\n\n### How Kubernetes Handles Logs Natively\n\nWhen a container writes to stdout/stderr, the container runtime (containerd, CRI-O) captures that output and writes it to a log file on the node at:\n\n```\n/var/log/pods/<namespace>_<pod-name>_<uid>/<container-name>/<restart-count>.log\n/var/log/containers/<pod-name>_<namespace>_<container>-<container-id>.log  # symlink\n```\n\nThe kubelet manages log rotation. `kubectl logs` reads from these files via the kubelet API.\n\n### Log Collection Architectures\n\n**DaemonSet-based collection (primary approach)**\n\nA log collection agent runs on every node as a DaemonSet. It reads log files from the node's filesystem, enriches them with Kubernetes metadata, and ships them to a backend.\n\nCommon agents: Fluent Bit (lightweight, C-based), Fluentd (full-featured, Ruby-based), Promtail (for Loki), Vector (Rust-based, modern).\n\n```yaml\n# Fluent Bit DaemonSet — minimal example\napiVersion: apps/v1\nkind: DaemonSet\nmetadata:\n  name: fluent-bit\n  namespace: logging\nspec:\n  selector:\n    matchLabels:\n      app: fluent-bit\n  template:\n    spec:\n      serviceAccountName: fluent-bit\n      containers:\n        - name: fluent-bit\n          image: fluent/fluent-bit:2.2\n          volumeMounts:\n            - name: varlog\n              mountPath: /var/log\n            - name: varlibdockercontainers\n              mountPath: /var/lib/docker/containers\n              readOnly: true\n            - name: config\n              mountPath: /fluent-bit/etc\n      volumes:\n        - name: varlog\n          hostPath:\n            path: /var/log\n        - name: varlibdockercontainers\n          hostPath:\n            path: /var/lib/docker/containers\n        - name: config\n          configMap:\n            name: fluent-bit-config\n```\n\nFluent Bit ConfigMap with Kubernetes metadata enrichment:\n\n```\n[INPUT]\n    Name              tail\n    Path              /var/log/containers/*.log\n    multiline.parser  docker, cri\n    Tag               kube.*\n    Mem_Buf_Limit     50MB\n\n[FILTER]\n    Name                kubernetes\n    Match               kube.*\n    Kube_URL            https://kubernetes.default.svc:443\n    Kube_CA_File        /var/run/secrets/kubernetes.io/serviceaccount/ca.crt\n    Kube_Token_File     /var/run/secrets/kubernetes.io/serviceaccount/token\n    Merge_Log           On\n    K8S-Logging.Parser  On\n    K8S-Logging.Exclude On\n\n[OUTPUT]\n    Name  loki\n    Match kube.*\n    Host  loki.monitoring.svc.cluster.local\n    Port  3100\n    Labels job=fluentbit, namespace=$kubernetes['namespace_name'], pod=$kubernetes['pod_name']\n```\n\n**Sidecar-based collection**\n\nCovered in detail in [Section 14](#14-sidecar-logging-vs-daemonset-logging).\n\n### Structured Logging\n\nAlways emit logs as JSON in containers. Human-readable log formats are nearly impossible to parse reliably at scale.\n\n```json\n{\n  \"timestamp\": \"2024-01-15T10:30:00.123Z\",\n  \"level\": \"ERROR\",\n  \"service\": \"payment-service\",\n  \"trace_id\": \"abc123def456\",\n  \"span_id\": \"789xyz\",\n  \"user_id\": \"usr_12345\",\n  \"message\": \"Payment processing failed\",\n  \"error\": \"connection refused\",\n  \"upstream\": \"payment-gateway\",\n  \"duration_ms\": 3001\n}\n```\n\nIncluding `trace_id` and `span_id` in every log line is the foundation of correlated observability.\n\n### Log Backends\n\n- **Grafana Loki** — label-based log aggregation, Prometheus-like query language (LogQL), cost-effective (only indexes labels, not full text)\n- **Elasticsearch + Kibana** — full-text search, powerful but operationally complex and expensive at scale\n- **Datadog Logs** — managed, integrates with metrics and traces natively\n- **Google Cloud Logging / AWS CloudWatch Logs** — cloud-native, integrates with cluster audit logs",
+      "images": []
+    },
+    {
+      "id": 114,
+      "question": "Sidecar logging vs DaemonSet logging?",
+      "answer": "These are the two primary architectures for getting logs out of containers. Each has meaningful trade-offs.\n\n### DaemonSet Logging\n\nA single log agent pod runs on each node and collects logs from all containers by reading node-level log files.\n\n**Architecture:**\n```\nNode\n├── Pod A (container writes to stdout → /var/log/containers/A.log)\n├── Pod B (container writes to stdout → /var/log/containers/B.log)\n├── Pod C (container writes to stdout → /var/log/containers/C.log)\n└── Fluent Bit DaemonSet\n    └── Reads all *.log files → enriches with K8s metadata → ships to Loki/ES\n```\n\n**Advantages:**\n- **Low overhead:** One agent per node serves all pods, regardless of pod count\n- **No application changes:** Works for any container that writes to stdout/stderr\n- **Centrally managed:** A single DaemonSet configuration covers the entire cluster\n- **Pod-lifecycle-independent:** Logs persist on the node even after the pod exits (until log rotation)\n- **No sidecar resource cost:** Does not add CPU/memory requests to every pod\n\n**Disadvantages:**\n- **No access to log files inside containers:** Only captures stdout/stderr, not files written inside the container's filesystem\n- **Shared resource contention:** One log agent handles all pods' logs; a particularly chatty pod can cause backpressure for all pods on that node\n- **Less per-service configuration flexibility:** Changing parsing, tagging, or routing for one service requires conditional logic in the shared config\n- **Node-level failure blast radius:** If the DaemonSet pod on a node crashes, all log shipping for that node stops\n\n**Best for:** Most clusters, most applications, especially when all services write structured JSON to stdout.\n\n### Sidecar Logging\n\nA dedicated log-shipping container runs alongside each application container within the same pod, sharing a volume.\n\n**Architecture:**\n```\nPod\n├── app-container\n│   └── Writes logs to /var/log/app/*.log (shared emptyDir volume)\n└── fluent-bit-sidecar\n    └── Reads /var/log/app/*.log → processes → ships to backend\n```\n\nOr the streaming sidecar variant — the sidecar tails log files and re-emits them to stdout/stderr, then the DaemonSet collects them:\n\n```\nPod\n├── app-container\n│   └── Writes to /var/log/app/*.log\n└── sidecar-streamer\n    └── Reads /var/log/app/*.log → writes to own stdout → DaemonSet collects\n```\n\n**Advantages:**\n- **File-based log collection:** Handles applications that write to files (legacy apps, apps that cannot be modified to write to stdout)\n- **Per-service configuration:** Each pod's sidecar can have completely custom parsing, filtering, and routing\n- **Isolation:** One service's logging cannot affect another service's log shipping\n- **Multi-stream logging:** Different log streams (access log, error log, audit log) can be independently routed\n\n**Disadvantages:**\n- **Resource overhead:** Every pod needs an additional container. At 50 pods per node with a 50m CPU / 64Mi sidecar, that's 2.5 CPU cores and 3.2GB RAM consumed just for log shipping\n- **Operational complexity:** Every Deployment template must include the sidecar definition; sidecars must be updated across all pods during upgrades\n- **Volume coordination:** Requires `emptyDir` shared volumes and proper log rotation configuration to prevent disk exhaustion\n- **`kubectl logs` fragmentation:** Logs are split across containers; `kubectl logs pod -c sidecar` vs `kubectl logs pod -c app` requires explicit container selection\n\n**Best for:** Legacy applications that write to files, applications with complex multi-stream logging requirements, or highly sensitive services that need isolated log routing.\n\n### Hybrid Architecture\n\nMany production clusters use both:\n\n```\nDaemonSet agent  →  collects stdout/stderr from all pods\nSidecar agents   →  handle specific pods that write to files or need custom routing\n```\n\nA common pattern: use Fluent Bit as the DaemonSet agent for stdout collection, and Fluent Bit sidecars only for the handful of legacy applications that write to files.\n\n### Decision Matrix\n\n| Criterion | DaemonSet | Sidecar |\n|---|---|---|\n| App writes to stdout | ✅ Ideal | Works (redundant) |\n| App writes to files | ❌ Cannot access | ✅ Required |\n| Resource efficiency | ✅ Shared agent | ❌ Per-pod overhead |\n| Configuration isolation | ❌ Shared config | ✅ Per-pod config |\n| Operational simplicity | ✅ One DaemonSet | ❌ Per-pod management |\n| Pod volume requirements | None | emptyDir required |\n| Cluster scale sensitivity | Scales well | Overhead multiplies with pods |",
+      "images": []
+    },
+    {
+      "id": 115,
+      "question": "How do you trace requests across Kubernetes services?",
+      "answer": "Distributed tracing reconstructs the full causal chain of a request as it flows through multiple services. In a Kubernetes microservices architecture, a single user request might traverse an API gateway, an authentication service, a business logic service, a database proxy, and a notification service — tracing makes this visible as a single coherent timeline.\n\n### How Distributed Tracing Works\n\n**Trace:** A tree of spans representing a single end-to-end operation.\n\n**Span:** A single unit of work: \"service A called service B, which took 45ms.\"\n\nEach span carries:\n- `trace_id` — unique identifier for the entire trace\n- `span_id` — identifier for this specific span\n- `parent_span_id` — which span triggered this one\n- `start_time`, `duration`\n- `service_name`, `operation_name`\n- Tags (key-value metadata)\n- Logs (timestamped events within the span)\n- Status (OK, ERROR)\n\n### Context Propagation\n\nFor a trace to flow across service boundaries, the trace context must be propagated in requests. The W3C TraceContext standard defines the `traceparent` HTTP header:\n\n```\ntraceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01\n```\n\nThis header is passed from service A to service B in every HTTP call. Service B creates a child span with `parent_span_id` pointing to service A's span. gRPC uses metadata; Kafka and other messaging systems use message headers.\n\n### OpenTelemetry Auto-Instrumentation\n\nOTel provides auto-instrumentation agents that inject tracing into popular frameworks without code changes:\n\n```yaml\n# OTel Java auto-instrumentation via initContainer and Java agent\nspec:\n  initContainers:\n    - name: otel-agent\n      image: ghcr.io/open-telemetry/opentelemetry-operator/autoinstrumentation-java:latest\n      command: [\"cp\", \"/javaagent.jar\", \"/otel/javaagent.jar\"]\n      volumeMounts:\n        - name: otel-agent\n          mountPath: /otel\n  containers:\n    - name: my-java-app\n      env:\n        - name: JAVA_TOOL_OPTIONS\n          value: \"-javaagent:/otel/javaagent.jar\"\n        - name: OTEL_SERVICE_NAME\n          value: \"my-java-app\"\n        - name: OTEL_EXPORTER_OTLP_ENDPOINT\n          value: \"http://otel-collector:4317\"\n      volumeMounts:\n        - name: otel-agent\n          mountPath: /otel\n```\n\nThe **OpenTelemetry Operator** automates this with the `Instrumentation` CRD:\n\n```yaml\napiVersion: opentelemetry.io/v1alpha1\nkind: Instrumentation\nmetadata:\n  name: my-instrumentation\n  namespace: production\nspec:\n  exporter:\n    endpoint: http://otel-collector:4317\n  propagators:\n    - tracecontext\n    - baggage\n    - b3  # for services that use B3 propagation (Zipkin-compatible)\n  sampler:\n    type: parentbased_traceidratio\n    argument: \"0.1\"  # 10% sampling rate for high-traffic services\n  java:\n    image: ghcr.io/open-telemetry/opentelemetry-operator/autoinstrumentation-java:latest\n  python:\n    image: ghcr.io/open-telemetry/opentelemetry-operator/autoinstrumentation-python:latest\n  nodejs:\n    image: ghcr.io/open-telemetry/opentelemetry-operator/autoinstrumentation-nodejs:latest\n```\n\n### Sampling Strategies\n\nAt high request rates, recording every trace is cost-prohibitive. Sampling strategies:\n\n**Head-based sampling (decision at trace start):**\n- `TraceIDRatioSampler` — sample N% of all traces randomly\n- `ParentBasedSampler` — respect the sampling decision from the upstream service\n\n**Tail-based sampling (decision after trace completes):**\nThe OTel Collector's tail sampling processor collects all spans for a trace and then makes a sampling decision based on the full trace characteristics:\n\n```yaml\nprocessors:\n  tail_sampling:\n    decision_wait: 10s\n    policies:\n      - name: errors-policy\n        type: status_code\n        status_code: {status_codes: [ERROR]}\n        # Always sample error traces\n      - name: slow-traces-policy\n        type: latency\n        latency: {threshold_ms: 1000}\n        # Always sample traces > 1 second\n      - name: random-policy\n        type: probabilistic\n        probabilistic: {sampling_percentage: 5}\n        # 5% random sampling for normal traces\n```\n\n### Trace Backends\n\n- **Jaeger** — CNCF project, feature-rich, good for high-cardinality trace search\n- **Grafana Tempo** — integrates natively with Grafana/Loki/Prometheus, very cost-efficient (uses object storage)\n- **Zipkin** — older, simpler, widely compatible\n- **Datadog APM, Honeycomb, Lightstep** — managed options with advanced analytics\n\n### Service Map from Traces\n\nTrace backends can automatically generate service dependency maps by analyzing `source_service → destination_service` relationships in spans. This gives you a real-time, data-driven service topology map, unlike static architectural diagrams which become stale.",
+      "images": []
+    },
+    {
+      "id": 116,
+      "question": "Challenges with ephemeral containers?",
+      "answer": "Ephemeral containers (GA in Kubernetes 1.25) are a debugging feature that allows attaching a temporary container to a running pod without modifying its spec. They solve a critical observability problem: distroless or minimal images lack debugging tools, but modifying the pod spec to add them requires a restart.\n\n### What They Solve\n\nModern container security best practices advocate for minimal, distroless base images that contain only the application binary. This means no shell, no `curl`, no `netstat`, no `tcpdump`. When something goes wrong, debugging is impossible.\n\n```bash\n# Attach a debug container with full tools to a running pod\nkubectl debug -it my-pod -n production \\\n  --image=nicolaka/netshoot \\\n  --target=my-app-container\n\n# Now you have tools available in the pod's network/process namespace\n/ # ss -tulpn           # see listening ports\n/ # curl localhost:8080/healthz\n/ # tcpdump -i eth0 port 8080\n/ # cat /proc/1/environ # inspect app environment\n```\n\n### Challenges\n\n**1. Ephemeral container spec is immutable once added**\n\nOnce an ephemeral container is added to a pod, it cannot be modified or removed via the Kubernetes API until the pod is deleted. If you attach the wrong image or need different settings, you must delete the pod (causing a service interruption in single-replica deployments) or wait for the pod to be recycled.\n\n```\n# Cannot remove or update ephemeral containers via:\nkubectl patch pod <name> ...  # immutable after creation\n```\n\n**2. No resource limits enforcement clarity**\n\nEphemeral containers share the pod's cgroup and resource pools. While you can specify resource requests/limits for ephemeral containers, the behavior under memory pressure is less predictable. A debugging session that consumes significant memory can trigger OOMKilled for the main container.\n\n**3. Sharing the pod's network and PID namespace (opt-in)**\n\nUsing `--target` shares the process namespace of the target container, allowing you to see its processes. However, this also means debugging tools can interfere with the target container's networking and processes. Incorrectly run commands (e.g., sending signals to the wrong PID) can crash the main container.\n\n**4. Image pull in production environment**\n\nEphemeral containers require pulling a debug image into the production node. In air-gapped or heavily network-restricted environments, this image may not be accessible. The pull itself can add latency and disk pressure on the node.\n\n**5. RBAC and audit concerns**\n\nAttaching ephemeral containers to production pods is a highly privileged operation. It should require specific RBAC permissions and generate audit log entries:\n\n```yaml\n# RBAC for ephemeral containers — grant carefully\nrules:\n  - apiGroups: [\"\"]\n    resources: [\"pods/ephemeralcontainers\"]\n    verbs: [\"update\", \"patch\"]\n```\n\nMany security-conscious teams require a break-glass process (approval + audit notification) before allowing ephemeral container attachment in production.\n\n**6. Not persisted across pod restarts**\n\nEphemeral containers only exist for the lifetime of the pod they are attached to. If the pod restarts (which happens frequently in crash loops), the ephemeral container disappears. Debugging a CrashLoopBackOff with ephemeral containers is difficult precisely because the pod restarts before you can gather useful information.\n\n**7. Not visible in `kubectl get pods`**\n\nEphemeral containers are in the pod spec but not shown by default in pod listings. They are in `.spec.ephemeralContainers` and viewable via `kubectl get pod <name> -o yaml` or `kubectl describe pod`.\n\n**8. Log stream management**\n\nEphemeral container logs are viewable via `kubectl logs pod -c <ephemeral-container-name>` but may not be collected by the DaemonSet log agent (depending on when the log file is created and whether the node agent picks it up). Short-lived debugging sessions may not be captured in centralized logging.\n\n### Alternatives and Complements\n\n- `kubectl exec` — works only when the container has a shell\n- `kubectl cp` — copy files into/out of containers for offline analysis\n- Node-level debugging (`kubectl debug node/<name> -it --image=ubuntu`) — bypasses container namespace entirely\n- eBPF-based tools (Pixie, Tetragon, Hubble) — observe container behavior at kernel level without entering the container at all",
+      "images": []
+    },
+    {
+      "id": 117,
+      "question": "How do you monitor AWS Lambda/serverless?",
+      "answer": "Serverless functions introduce a fundamentally different observability model. Unlike long-running containers, Lambda functions are stateless, ephemeral, billed per invocation, and scale to zero. Traditional metric collection via pull-based Prometheus does not work; you must adapt to a push-based, event-driven telemetry model.\n\n### Native AWS Lambda Metrics (CloudWatch)\n\nAWS automatically publishes these metrics to CloudWatch for every Lambda function:\n\n```\n# Invocation volume\naws_lambda_invocations_total\n\n# Error count and rate\naws_lambda_errors_total\n\n# Duration (p50, p90, p99, max)\naws_lambda_duration_milliseconds{quantile=\"0.99\"}\n\n# Throttles (when concurrency limit is hit)\naws_lambda_throttles_total\n\n# Concurrent executions (current)\naws_lambda_concurrent_executions\n\n# Unreserved concurrency\naws_lambda_unreserved_concurrent_executions\n\n# Iterator age (for stream-based triggers like Kinesis/DynamoDB)\naws_lambda_iterator_age_milliseconds  # lag between record creation and processing\n\n# Dead letter queue errors\naws_lambda_dead_letter_errors_total\n\n# Provisioned concurrency utilization\naws_lambda_provisioned_concurrency_utilization\n```\n\n### Lambda Powertools (Structured Observability SDK)\n\nAWS Lambda Powertools (Python, Java, TypeScript, .NET) provides opinionated utilities for Lambda-native observability:\n\n```python\nfrom aws_lambda_powertools import Logger, Metrics, Tracer\nfrom aws_lambda_powertools.metrics import MetricUnit\n\nlogger = Logger(service=\"payment-processor\")\ntracer = Tracer(service=\"payment-processor\")\nmetrics = Metrics(namespace=\"MyApp\", service=\"payment-processor\")\n\n@metrics.log_metrics(capture_cold_start_metric=True)  # Automatically tracks cold starts\n@tracer.capture_lambda_handler\n@logger.inject_lambda_context(log_event=True)\ndef handler(event, context):\n    metrics.add_metric(name=\"PaymentProcessed\", unit=MetricUnit.Count, value=1)\n    \n    with tracer.capture_method:\n        result = process_payment(event)\n    \n    logger.info(\"Payment processed\", extra={\n        \"amount\": event[\"amount\"],\n        \"customer_id\": event[\"customer_id\"],\n        \"trace_id\": tracer.get_trace_id()\n    })\n    \n    return result\n```\n\n### X-Ray Distributed Tracing\n\nAWS X-Ray provides distributed tracing for Lambda, tracing execution across Lambda, API Gateway, DynamoDB, SQS, and other AWS services.\n\n```python\nfrom aws_xray_sdk.core import xray_recorder, patch_all\n\npatch_all()  # Auto-instruments boto3, requests, pymysql, etc.\n\n@xray_recorder.capture(\"process_payment\")\ndef process_payment(data):\n    # This creates a subsegment in X-Ray\n    xray_recorder.current_subsegment().put_annotation(\"payment_amount\", data[\"amount\"])\n    ...\n```\n\nX-Ray service maps show the topology of serverless architectures across Lambda, API Gateway, DynamoDB, SQS, SNS, and external HTTP calls.\n\n### Custom Metrics via EMF (Embedded Metrics Format)\n\nCloudWatch Embedded Metrics Format (EMF) allows embedding custom metrics in structured log lines, which CloudWatch automatically extracts asynchronously. This is the lowest-overhead way to emit custom metrics from Lambda (no synchronous API call):\n\n```python\nfrom aws_lambda_powertools.metrics import MetricUnit, Metrics\n\nmetrics = Metrics(namespace=\"MyApp\")\n\ndef handler(event, context):\n    metrics.add_metric(name=\"OrderValue\", unit=MetricUnit.Count, value=event[\"amount\"])\n    metrics.add_metric(name=\"ProcessingTime\", unit=MetricUnit.Milliseconds, value=150)\n    metrics.add_metadata(key=\"order_id\", value=event[\"order_id\"])\n    # Metrics are flushed at function end by the decorator\n```\n\n### SQS/Kinesis Consumer Monitoring\n\nWhen Lambda is triggered by queues or streams, **iterator age** is the critical metric:\n\n```\naws_lambda_iterator_age_milliseconds (Kinesis, DynamoDB Streams)\naws_sqs_approximate_age_of_oldest_message (SQS)\n```\n\nHigh iterator age means processing is falling behind production rate. Alert aggressively:\n\n```\n# Alert: Lambda falling behind Kinesis stream\naws_lambda_iterator_age_milliseconds > 60000  # > 1 minute behind\n```\n\n### Error Handling and DLQ Monitoring\n\nFor asynchronous invocations (S3 events, SNS, EventBridge), failed events after retries go to a Dead Letter Queue (DLQ). Monitor DLQ message count:\n\n```\naws_sqs_approximate_number_of_messages_visible{queue_name=\"my-lambda-dlq\"} > 0\n```\n\nA non-zero DLQ is always an alert condition in production.",
+      "images": []
+    },
+    {
+      "id": 118,
+      "question": "Cold start monitoring?",
+      "answer": "Cold starts are the latency penalty paid when a Lambda function starts a new execution environment — loading the runtime, initializing the function code, and establishing connections. They can add hundreds of milliseconds to seconds of latency and must be explicitly monitored.\n\n### What Happens During a Cold Start\n\n1. AWS allocates an execution environment (VM/microVM)\n2. The Lambda runtime (Python, Java, Node.js, etc.) is initialized\n3. The deployment package is downloaded and extracted\n4. The initialization code outside the handler is executed\n5. The handler is invoked\n\nFor JVM-based functions, step 4 alone can take 5–10 seconds. Node.js and Python typically cold start in 200–500ms. Compiled languages (Go, Rust via custom runtimes) can cold start in < 100ms.\n\n### Detecting Cold Starts\n\n**AWS Lambda Powertools (recommended):**\n\n```python\n@metrics.log_metrics(capture_cold_start_metric=True)\ndef handler(event, context):\n    pass\n# Automatically emits ColdStart metric to CloudWatch\n```\n\n**Manually via INIT_START log pattern:**\n\nLambda writes `INIT_START` to logs at the beginning of a cold start. This is parseable via CloudWatch Insights or log forwarding:\n\n```\nfields @timestamp, @message\n| filter @message like /INIT_START/\n| stats count() as cold_starts by bin(5min)\n```\n\n**Custom detection:**\n\n```python\nimport os\n\n_cold_start = True\n\ndef handler(event, context):\n    global _cold_start\n    is_cold_start = _cold_start\n    _cold_start = False\n    \n    if is_cold_start:\n        # Log or emit metric for cold start\n        logger.info(\"Cold start\", extra={\"cold_start\": True})\n```\n\n### Provisioned Concurrency\n\nProvisioned Concurrency pre-initializes execution environments, eliminating cold starts for those instances. Monitor its efficiency:\n\n```\n# Provisioned concurrency utilization\naws_lambda_provisioned_concurrency_utilization\n\n# Spillover invocations (hitting non-provisioned concurrency and getting cold starts)\naws_lambda_provisioned_concurrency_spillover_invocations_total\n```\n\nIf spillover invocations are significant, you need to increase provisioned concurrency.\n\n### Cold Start Duration Breakdown\n\nUse X-Ray to see initialization time separately from invocation time:\n\nIn X-Ray traces, Lambda shows:\n- **Initialization** — time spent in cold start (initialization phase)\n- **Invocation** — time in the handler function itself\n\nThis separation lets you quantify whether a slow request was due to cold start or actual handler processing.\n\n### Reducing Cold Starts\n\n- **Package size reduction:** Smaller deployment packages extract faster. Keep Lambda zips < 10MB. Use Lambda Layers for common dependencies.\n- **GraalVM native compilation** (Java): Native executables start in < 100ms vs 5-10s for JVM\n- **Connection reuse:** Establish database connections, SDK clients outside the handler (in init code). They persist across warm invocations.\n- **ARM64 architecture (Graviton2):** Generally lower cold start times and 20% cheaper\n- **SnapStart** (Java 11+): AWS snapshots the initialized execution environment and restores it, making Java cold starts comparable to Python/Node.js\n\n### Alert on Cold Start Rate\n\n```\n# High cold start rate may indicate over-scaling or traffic bursts\n# Monitor in CloudWatch:\n100 * ColdStart / (ColdStart + SuccessfulRequests) > 10  # > 10% cold start rate\n```",
+      "images": []
+    },
+    {
+      "id": 119,
+      "question": "CloudWatch vs Prometheus?",
+      "answer": "CloudWatch and Prometheus are both monitoring systems but represent fundamentally different philosophies: managed cloud-native vs open-source self-hosted. Choosing between them (or combining them) is a decision with significant operational and cost implications.\n\n### Architecture Philosophy\n\n**Prometheus:**\n- Pull-based: Prometheus scrapes metrics from endpoints on a configured interval\n- Self-hosted: you run and operate it (or use managed Prometheus: AWS AMP, Grafana Cloud, Cortex, Thanos)\n- TSDB with 15-day default retention; long-term storage requires Thanos/Cortex/VictoriaMetrics\n- Open-source ecosystem: integrates with everything via exporters\n- PromQL: powerful, expressive query language\n\n**CloudWatch:**\n- Push-based: services push metrics to CloudWatch (SDK, agent, EMF)\n- Fully managed: zero operational overhead, automatic scaling, indefinite retention\n- Native integration with all AWS services (EC2, RDS, Lambda, SQS, ELB, etc.)\n- CloudWatch Metrics Insights (SQL-like) and metric math for queries\n- Structured around namespaces, dimensions (limited cardinality)\n\n### Key Technical Differences\n\n| Dimension | Prometheus | CloudWatch |\n|---|---|---|\n| Data model | Labels (high cardinality OK) | Dimensions (max 30, low cardinality) |\n| Query language | PromQL | Metrics Insights (SQL-like) |\n| Scrape model | Pull (active scraping) | Push (SDK, agent, EMF) |\n| Custom metrics cost | Free (self-hosted) | $0.30 per custom metric/month |\n| Retention | 15 days (default) | 15 months (configurable) |\n| Alerting | Alertmanager (powerful routing) | CloudWatch Alarms (simpler) |\n| Dashboard | Grafana (rich, open) | CloudWatch Dashboards (limited) |\n| Cardinality limits | High (practical limit ~10M series) | 10 dimensions per metric |\n| Kubernetes-native | Excellent (kube-prometheus-stack) | Requires Container Insights agent |\n| Operational overhead | Significant | Near zero |\n| Cost model | Infrastructure cost only | Per-metric, per-API-call, per-log-GB |\n\n### CloudWatch Container Insights\n\nFor Kubernetes on AWS (EKS), CloudWatch Container Insights provides Kubernetes metrics via the CloudWatch agent deployed as a DaemonSet:\n\n```bash\n# Install Container Insights on EKS\nClusterName=my-cluster\nRegionName=us-east-1\nFluentBitHttpPort='2020'\n\ncurl https://raw.githubusercontent.com/aws-samples/amazon-cloudwatch-container-insights/latest/k8s-deployment-manifest-templates/deployment-mode/daemonset/container-insights-monitoring/quickstart/cwagent-fluent-bit-quickstart.yaml |\n  sed \"s/{{cluster_name}}/${ClusterName}/;s/{{region_name}}/${RegionName}/\" |\n  kubectl apply -f -\n```\n\nContainer Insights provides: cluster CPU/memory utilization, pod/node metrics, container-level metrics, and auto-generated dashboards.\n\n### Cost Analysis\n\nFor a medium-scale Kubernetes cluster (~100 pods, ~1000 custom metrics):\n\n**Prometheus (self-hosted on EKS):**\n- 2× Prometheus instances (HA): ~$200/month (EC2)\n- Thanos for long-term storage: ~$50/month (S3 + compute)\n- Grafana: ~$30/month\n- Total: ~$280/month + engineering time to operate\n\n**CloudWatch:**\n- 1000 custom metrics × $0.30 = $300/month\n- 5 million API requests × $0.01/1000 = $50/month\n- Container Insights metrics: ~$150/month\n- CloudWatch Logs: ~$50/month for 10GB/day\n- Total: ~$550+/month, but zero operational overhead\n\n**Managed Prometheus (AWS AMP):**\n- $0.000004 per metric sample\n- ~$150/month for typical usage\n- Plus Grafana: AMG or self-hosted\n\n### When to Use Which\n\n**Use Prometheus when:**\n- Running Kubernetes anywhere (on-prem, multi-cloud, EKS)\n- Need high-cardinality metrics (pod-level, container-level, user-level)\n- Have engineering capacity to operate it\n- Want to avoid per-metric cloud costs at scale\n- Need tight integration with the Kubernetes ecosystem\n\n**Use CloudWatch when:**\n- AWS-native stack with Lambda, ECS, or light EKS usage\n- Small team without SRE capacity to operate Prometheus\n- Need minimal time-to-value\n- AWS service metrics are primary concern (RDS, SQS, ALB, etc.)\n\n**Use both (most common in practice):**\n- Prometheus for Kubernetes workload metrics (containers, pods, nodes)\n- CloudWatch for AWS service metrics and Lambda/serverless\n- Grafana with both as data sources for unified dashboards",
+      "images": []
+    },
+    {
+      "id": 120,
+      "question": "How do you monitor multi-region deployments?",
+      "answer": "Multi-region deployments multiply the complexity of observability. You now have independent control planes, potentially independent metric systems, inter-region latency, cross-region replication lag, failover events, and region-specific incident impacts to monitor.\n\n### Architecture Patterns for Multi-Region Observability\n\n**Federated Prometheus**\n\nEach region runs its own Prometheus. A global Prometheus federates (pulls) aggregated metrics from regional instances:\n\n```yaml\n# Global Prometheus federating regional instances\nscrape_configs:\n  - job_name: federate-us-east-1\n    honor_labels: true\n    metrics_path: /federate\n    params:\n      match[]:\n        - '{__name__=~\"cluster:.*\"}'     # Only aggregate-level metrics\n        - '{job=\"kubernetes-apiservers\"}'\n    static_configs:\n      - targets: ['prometheus-us-east-1.internal:9090']\n\n  - job_name: federate-eu-west-1\n    honor_labels: true\n    metrics_path: /federate\n    params:\n      match[]:\n        - '{__name__=~\"cluster:.*\"}'\n    static_configs:\n      - targets: ['prometheus-eu-west-1.internal:9090']\n```\n\n**Thanos or Cortex for Global View**\n\nThanos Query aggregates queries across multiple Prometheus instances (in different regions) transparently. Each regional Prometheus uploads blocks to a shared (or regional) object store (S3/GCS), and Thanos Compactor deduplicates and compacts:\n\n```\n┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐\n│   us-east-1     │     │   eu-west-1     │     │   ap-south-1    │\n│   Prometheus    │     │   Prometheus    │     │   Prometheus    │\n│   + Sidecar     │     │   + Sidecar     │     │   + Sidecar     │\n└────────┬────────┘     └────────┬────────┘     └────────┬────────┘\n         │                       │                       │\n         ▼                       ▼                       ▼\n    ┌────────┐              ┌────────┐              ┌────────┐\n    │ S3     │              │ S3     │              │ S3     │\n    │ Bucket │              │ Bucket │              │ Bucket │\n    └────────┘              └────────┘              └────────┘\n              ╲                   │                 ╱\n               ╲                  │                ╱\n                ▼                 ▼               ▼\n              ┌────────────────────────────────────┐\n              │         Thanos Query               │\n              │    (global query aggregation)      │\n              └──────────────────┬─────────────────┘\n                                 │\n                                 ▼\n                          ┌─────────────┐\n                          │   Grafana   │\n                          │  (global)   │\n                          └─────────────┘\n```\n\n### Cross-Region Latency Monitoring\n\nLatency between regions is foundational to multi-region system health. Measure it continuously:\n\n```python\n# Synthetic probe between regions using Blackbox Exporter\n# Deploy in each region, probe endpoints in all other regions\n\n- job_name: cross-region-latency\n  metrics_path: /probe\n  params:\n    module: [http_2xx]\n  static_configs:\n    - targets:\n        - https://api.eu-west-1.example.com/health\n        - https://api.ap-south-1.example.com/health\n  relabel_configs:\n    - source_labels: [__address__]\n      target_label: __param_target\n    - source_labels: [__param_target]\n      target_label: instance\n    - target_label: __address__\n      replacement: blackbox-exporter:9115\n```\n\nKey cross-region metrics:\n\n```\n# Probe success rate (is the region reachable?)\nprobe_success{instance=\"api.eu-west-1.example.com\"} == 0  # alert condition\n\n# Cross-region latency\nprobe_duration_seconds{instance=~\".*eu-west-1.*\"}\n\n# DNS resolution time per region\nprobe_dns_lookup_time_seconds\n\n# TLS handshake time (can degrade before full failure)\nprobe_tls_version_info\nprobe_ssl_earliest_cert_expiry\n```\n\n### Replication Lag Monitoring\n\nFor systems with cross-region data replication (databases, caches, event streams):\n\n```\n# PostgreSQL replication lag (bytes)\npg_replication_lag\n\n# RDS replica lag (seconds)\naws_rds_replica_lag_seconds{region=\"eu-west-1\"}\n\n# Kafka cross-region replication lag (messages behind)\nkafka_consumer_group_lag{consumer_group=\"cross-region-replicator\"}\n\n# DynamoDB Global Tables replication latency\naws_dynamodb_replication_latency_milliseconds\n```\n\nReplication lag thresholds should be tuned to your RPO (Recovery Point Objective). If RPO is 30 seconds, alert at 25 seconds lag.\n\n### Failover Event Detection\n\nDetecting and measuring failover events:\n\n```\n# Traffic shift during failover — detect sudden changes in request distribution\nsum(rate(nginx_ingress_controller_requests[5m])) by (region)\n\n# DNS health check status (Route 53)\naws_route53_health_check_status{health_check_id=\"...\"}\n\n# Global load balancer backend distribution\naws_globalaccelerator_processed_bytes_in by (endpoint)\n```\n\nAlert on traffic imbalances that might indicate a failover has occurred but was not intentionally triggered.\n\n### Multi-Region Dashboard Design\n\nA global dashboard should show:\n\n- **Region health grid:** One cell per region showing RED/AMBER/GREEN status\n- **Request distribution:** Real-time traffic breakdown by region\n- **Cross-region error rate:** Requests that fail only when routing to a specific region\n- **Replication lag timeline:** Each replica's lag vs source\n- **Failover event log:** Historical record of failover events with duration\n\n```\n# Example: Detecting region-specific error spikes (may indicate degradation)\n(\n  rate(http_requests_total{status=~\"5..\", region=\"us-east-1\"}[5m])\n    /\n  rate(http_requests_total{region=\"us-east-1\"}[5m])\n)\n>\navg(\n  rate(http_requests_total{status=~\"5..\"}[5m])\n    /\n  rate(http_requests_total[5m])\n) * 3  # Alert if one region's error rate is 3× the global average\n```\n\n### Alerting Strategy for Multi-Region\n\nMulti-region alerting requires careful design to avoid noise:\n\n- **Regional Alertmanager instances** with routing to on-call teams that own each region\n- **Global alerts** that fire only when multiple regions are affected simultaneously (cross-region silencing)\n- **Inhibition rules** that suppress regional alerts when a known global incident is ongoing\n- **Timezone-aware escalation paths** — who is on-call for ap-southeast-1 at 3am UTC?\n\n9129219476\n\n```yaml\n# Alertmanager inhibition: suppress regional alerts during global incidents\ninhibit_rules:\n  - source_match:\n      severity: critical\n      scope: global\n    target_match:\n      scope: regional\n    equal: [alertname]\n```",
+      "images": []
+    }
+  ]
+}

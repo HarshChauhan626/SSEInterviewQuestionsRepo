@@ -6,69 +6,77 @@ interface Props {
   description?: string;
 }
 
-const { title, description = 'SSE Interview Questions - System Design, DSA, and More' } = Astro.props;
+const { title, description = 'Dev Notes — Algorithms, Systems & Interview Prep' } = Astro.props;
+const currentPath = Astro.url.pathname;
 ---
 
 <!doctype html>
-<html lang="en" class="scroll-smooth">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="description" content={description} />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#0b0e14" />
+    <meta name="theme-color" content="#0a0c10" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300;0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;0,14..32,800;1,14..32,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
     <title>{title}</title>
   </head>
-  <body class="bg-[#0b0e14] text-[#dde3ee] font-sans antialiased">
+  <body>
     <!-- Progress Bar -->
-    <div id="progressBar" class="fixed top-0 left-0 h-0.5 bg-gradient-to-r from-[#e535ab] to-[#3fa7ff] z-60 transition-all duration-100" style="width: 0%"></div>
+    <div id="progressBar" style="position:fixed;top:0;left:0;height:2px;background:linear-gradient(to right,#e535ab,#3fa7ff);z-index:999;width:0%;transition:width 0.1s;"></div>
 
     <!-- Navigation -->
-    <nav class="sticky top-0 z-50 bg-[rgba(11,14,20,0.85)] backdrop-blur-md border-b border-[#1a212e]">
-      <div class="max-w-6xl mx-auto px-6 py-3.5 flex items-center justify-between">
-        <a href="/" class="flex items-center gap-2.5 font-bold text-sm text-[#dde3ee] hover:text-white transition">
-          <div class="w-2 h-2 rounded-full bg-gradient-to-r from-[#e535ab] to-[#3fa7ff]"></div>
+    <nav>
+      <div class="nav-inner">
+        <a href="/" class="nav-logo" aria-label="Dev Notes Home">
+          <div class="nav-logo-dot"></div>
           Dev Notes
         </a>
-        <a href="/" class="text-xs text-[#8c96a8] hover:text-[#dde3ee] transition">← All notes</a>
+        <div class="nav-links">
+          <a href="/" class:list={['nav-link', { active: currentPath === '/' }]}>Home</a>
+          <a href="/viewer" class:list={['nav-link', { active: currentPath.startsWith('/viewer') }]}>Q&amp;A</a>
+          <a href="/dsa-viewer" class:list={['nav-link', { active: currentPath.startsWith('/dsa-viewer') }]}>DSA</a>
+          <a href="/topics" class:list={['nav-link', { active: currentPath.startsWith('/topics') }]}>Topics</a>
+          <a href="/about" class:list={['nav-link', { active: currentPath === '/about' }]}>About</a>
+        </div>
       </div>
     </nav>
 
     <!-- Main Content -->
-    <main class="max-w-6xl mx-auto px-6 py-9 min-h-screen">
+    <main>
       <slot />
     </main>
 
     <!-- Footer -->
-    <footer class="border-t border-[#1a212e] bg-[#0b0e14] py-10 mt-20">
-      <div class="max-w-6xl mx-auto px-6 text-center text-xs text-[#5c6577]">
-        <p>&copy; 2024 SSE Interview Questions & Dev Notes. Built with Astro + Tailwind.</p>
-      </div>
+    <footer>
+      <p>&copy; 2024 Dev Notes &mdash; DSA &amp; Interview Prep Library. Built with Astro.</p>
     </footer>
 
     <!-- Back to Top Button -->
-    <a id="backToTop" href="#" class="fixed bottom-6 right-6 w-10.5 h-10.5 rounded-full bg-[#141925] border border-[#222a38] flex items-center justify-center text-[#8c96a8] font-mono text-xs opacity-0 pointer-events-none transition-opacity z-40 hover:text-[#dde3ee]">↑</a>
+    <a id="backToTop" href="#" aria-label="Back to top">↑</a>
 
     <script>
       // Progress bar
       const progressBar = document.getElementById('progressBar');
       window.addEventListener('scroll', () => {
-        const scrollPercent = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight)) * 100;
-        if (progressBar) progressBar.style.width = scrollPercent + '%';
+        const pct = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight)) * 100;
+        if (progressBar) progressBar.style.width = pct + '%';
       });
 
-      // Back to top button
+      // Back to top
       const backToTop = document.getElementById('backToTop');
       window.addEventListener('scroll', () => {
+        if (!backToTop) return;
         if (window.scrollY > 300) {
-          backToTop?.classList.add('opacity-100', 'pointer-events-auto');
-          backToTop?.classList.remove('opacity-0', 'pointer-events-none');
+          backToTop.style.opacity = '1';
+          backToTop.style.pointerEvents = 'auto';
         } else {
-          backToTop?.classList.remove('opacity-100', 'pointer-events-auto');
-          backToTop?.classList.add('opacity-0', 'pointer-events-none');
+          backToTop.style.opacity = '0';
+          backToTop.style.pointerEvents = 'none';
         }
       });
-
       backToTop?.addEventListener('click', (e) => {
         e.preventDefault();
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -76,3 +84,130 @@ const { title, description = 'SSE Interview Questions - System Design, DSA, and 
     </script>
   </body>
 </html>
+
+<style>
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(10, 12, 16, 0.82);
+    backdrop-filter: blur(20px) saturate(1.4);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .nav-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 clamp(16px, 5vw, 32px);
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .nav-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--text);
+    text-decoration: none;
+    letter-spacing: -0.01em;
+  }
+
+  .nav-logo:hover { text-decoration: none; color: #fff; }
+
+  .nav-logo-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 10px var(--accent);
+    animation: pulse 2.5s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.85); }
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 4px;
+  }
+
+  .nav-link {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-2);
+    text-decoration: none;
+    padding: 6px 12px;
+    border-radius: 8px;
+    transition: color 150ms, background 150ms;
+  }
+
+  .nav-link:hover {
+    color: var(--text);
+    background: rgba(255,255,255,0.05);
+    text-decoration: none;
+  }
+
+  .nav-link.active {
+    color: var(--text);
+    background: rgba(255,255,255,0.07);
+  }
+
+  main {
+    position: relative;
+    z-index: 1;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: clamp(32px, 5vw, 72px) clamp(16px, 5vw, 32px) 100px;
+    min-height: calc(100vh - 60px - 80px);
+  }
+
+  footer {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    padding: 28px 16px 40px;
+    color: var(--text-3);
+    font-size: 0.8rem;
+    border-top: 1px solid var(--border);
+  }
+
+  footer p { margin: 0; color: var(--text-3); }
+
+  #backToTop {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-2);
+    font-family: monospace;
+    font-size: 0.9rem;
+    text-decoration: none;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 200ms, transform 200ms;
+    z-index: 50;
+  }
+
+  #backToTop:hover {
+    transform: translateY(-2px);
+    color: var(--text);
+    text-decoration: none;
+  }
+
+  @media (max-width: 600px) {
+    .nav-links { display: none; }
+  }
+</style>

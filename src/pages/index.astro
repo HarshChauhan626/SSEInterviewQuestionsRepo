@@ -1,8 +1,9 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import topicsData from '../../dsa-questions-data/index.json';
+import questionsIndex from '../../questions-data/index.json';
+import dsaIndex from '../../dsa-questions-data/index.json';
 
-interface Topic {
+interface TopicEntry {
   file: string;
   topic: string;
   description: string;
@@ -11,126 +12,506 @@ interface Topic {
   count: number;
 }
 
-const topics: Topic[] = topicsData;
-const totalQuestions = topics.reduce((sum, t) => sum + t.count, 0);
+const qaTopics: TopicEntry[] = questionsIndex;
+const dsaTopics: TopicEntry[] = dsaIndex;
+
+const totalQA = qaTopics.reduce((s, t) => s + t.count, 0);
+const totalDSA = dsaTopics.reduce((s, t) => s + t.count, 0);
+
+const quizzes = [
+  { id: 'agenticai',           icon: '🤖', title: 'Agentic AI MCQ',            desc: 'Multi-agent systems, LLM orchestration, tool calling' },
+  { id: 'awssolutionarchitect',icon: '☁️', title: 'AWS Solution Architect',     desc: 'EC2, S3, RDS, VPC, Lambda, and cloud architecture' },
+  { id: 'databases',           icon: '🗄️', title: 'Databases MCQ',              desc: 'SQL, NoSQL, indexing, transactions, and DB internals' },
+  { id: 'kafka',               icon: '⚡', title: 'Kafka MCQ',                   desc: 'Partitions, consumers, producers, delivery guarantees' },
+  { id: 'networking',          icon: '🌐', title: 'Networking MCQ',             desc: 'TCP/IP, HTTP, DNS, TLS, CDN, and load balancing' },
+  { id: 'nodejs',              icon: '🟢', title: 'Node.js MCQ',                desc: 'Event loop, V8, streams, modules, async patterns' },
+  { id: 'postgresql',          icon: '🐘', title: 'PostgreSQL MCQ',             desc: 'MVCC, indexing, query planning, and performance' },
+  { id: 'reactnextjs',         icon: '⚛️', title: 'React & Next.js MCQ',        desc: 'Hooks, state management, rendering, and Redux' },
+  { id: 'systemdesign',        icon: '🏗️', title: 'System Design MCQ',          desc: 'Scalability, CAP theorem, microservices, and patterns' },
+  { id: 'go',                  icon: '🐹', title: 'Golang Mastery Quiz',         desc: 'Goroutines, channels, interfaces, and Go idioms' },
+];
+
+const tools = [
+  {
+    href: '/viewer',
+    icon: '🎯',
+    title: 'Interview Q&A Viewer',
+    desc: `${totalQA}+ senior engineer Q&As across ${qaTopics.length} topics. Practice with randomized flashcards or review all at once.`,
+    pill: `${totalQA}+ Q&As`,
+    pillColor: '#6c8cff',
+    pillBg: 'rgba(108,140,255,0.12)',
+    border: 'rgba(108,140,255,0.2)',
+    bg: 'linear-gradient(135deg,rgba(108,140,255,0.06) 0%,transparent 60%)',
+  },
+  {
+    href: '/dsa-viewer',
+    icon: '📊',
+    title: 'DSA & Logic Puzzles Viewer',
+    desc: `${totalDSA} interactive DSA and logic puzzle Q&As across ${dsaTopics.length} topics. Flashcards or review-all mode.`,
+    pill: `${totalDSA} Q&As`,
+    pillColor: '#10b981',
+    pillBg: 'rgba(16,185,129,0.12)',
+    border: 'rgba(16,185,129,0.2)',
+    bg: 'linear-gradient(135deg,rgba(16,185,129,0.06) 0%,transparent 60%)',
+  },
+  {
+    href: '/codechecker',
+    icon: '💻',
+    title: 'Code Checker',
+    desc: 'Write solutions from memory and check against reference implementations. Includes timer, hints, and progress tracking.',
+    pill: 'Practice',
+    pillColor: '',
+    pillBg: '',
+    border: '',
+    bg: '',
+  },
+  {
+    href: '/custom-test',
+    icon: '🎲',
+    title: 'Custom Test Generator',
+    desc: `Generate randomized tests with ${totalDSA}+ DSA problems and 1000+ MCQ questions. Mix & match topics for focused practice.`,
+    pill: 'Quiz',
+    pillColor: '',
+    pillBg: '',
+    border: '',
+    bg: '',
+  },
+  {
+    href: '/golang-fill-blanks',
+    icon: '🐹',
+    title: 'Go Syntax Practice',
+    desc: 'Master Go channels, goroutines, mutexes, and syntax mechanics. Fill in the missing keywords in functional tutorial code snippets.',
+    pill: '340+ Snippets',
+    pillColor: '#22d3a6',
+    pillBg: 'rgba(34,211,166,0.12)',
+    border: 'rgba(34,211,166,0.25)',
+    bg: 'linear-gradient(135deg,rgba(34,211,166,0.06) 0%,transparent 60%)',
+  },
+];
+
+const misc = [
+  {
+    href: '/systemdesign',
+    icon: '📐',
+    title: 'System Design Examples',
+    desc: 'Visual diagrams, architecture, components, and in-depth data flows for popular system design problems.',
+    pill: 'Examples',
+  },
+  {
+    href: '/system-design-scenarios',
+    icon: '🏗️',
+    title: 'System Design Scenarios',
+    desc: 'Real-world failures, distributed chaos, and the architecture decisions that matter at scale. 38 detailed scenarios.',
+    pill: 'Scenarios',
+  },
+  {
+    href: '/apiprotocols',
+    icon: '🔌',
+    title: 'API Protocols (GraphQL & gRPC)',
+    desc: 'Comprehensive reference covering GraphQL and gRPC architecture, streaming, N+1 problems, and 30 interview Q&As.',
+    pill: 'Protocols',
+  },
+  {
+    href: '/systemdesignterminology',
+    icon: '📖',
+    title: 'System Design Terminology',
+    desc: 'A comprehensive glossary of system design terms, categorized and mapped with diagrams.',
+    pill: 'Glossary',
+  },
+];
+
+const noteIconMap: Record<string, string> = {
+  'a2arag.md': '🔗', 'agenticai.md': '🤖', 'architecturalpatterns.md': '🏗️',
+  'databases.md': '🗄️', 'distributedsystems.md': '🌐', 'dotnet.md': '💜',
+  'dsaeasytomedium.md': '📊', 'golang.md': '🔵', 'golangcodequestions.md': '💻',
+  'kafka.md': '⚡', 'kubernetes.md': '☸️', 'networkingessentials.md': '📡',
+  'nodejs.md': '🟢', 'observability.md': '🔭', 'postgresql.md': '🐘',
+  'puzzles.md': '🧩', 'react.md': '⚛️', 'securityrelatedtopics.md': '🔐',
+  'systemdesigneventdrivenetc.md': '🏛️', 'systemdesigninterviewdesigncheatsheet.md': '📐',
+  'websocket.md': '🔌',
+};
+
+const notes = [
+  'agenticai.md','architecturalpatterns.md','databases.md','distributedsystems.md',
+  'dotnet.md','dsaeasytomedium.md','golang.md','golangcodequestions.md','kafka.md',
+  'kubernetes.md','networkingessentials.md','nodejs.md','observability.md',
+  'postgresql.md','puzzles.md','react.md','securityrelatedtopics.md',
+  'systemdesigneventdrivenetc.md','systemdesigninterviewdesigncheatsheet.md',
+  'websocket.md','a2arag.md',
+];
+
+function titleFromFile(f: string): string {
+  const map: Record<string, string> = {
+    'a2arag.md': 'A2A RAG', 'agenticai.md': 'Agentic AI',
+    'architecturalpatterns.md': 'Architectural Patterns', 'databases.md': 'Databases',
+    'distributedsystems.md': 'Distributed Systems', 'dotnet.md': '.NET',
+    'dsaeasytomedium.md': 'DSA Easy To Medium', 'golang.md': 'Golang',
+    'golangcodequestions.md': 'Golang Code Questions', 'kafka.md': 'Kafka',
+    'kubernetes.md': 'Kubernetes', 'networkingessentials.md': 'Networking Essentials',
+    'nodejs.md': 'Node.js', 'observability.md': 'Observability',
+    'postgresql.md': 'PostgreSQL', 'puzzles.md': 'Puzzles', 'react.md': 'React',
+    'securityrelatedtopics.md': 'Security Related Topics',
+    'systemdesigneventdrivenetc.md': 'System Design: Event Driven Etc',
+    'systemdesigninterviewdesigncheatsheet.md': 'System Design Interview Cheatsheet',
+    'websocket.md': 'WebSocket',
+  };
+  return map[f] || f.replace(/\.(md|html)$/i, '');
+}
 ---
 
-<Layout title="SSE Interview Questions - DSA, System Design & More">
-  <!-- Hero Section -->
-  <section class="hero mb-16">
-    <div class="mb-4">
-      <span class="section-tag text-[var(--accent-warn)]">$ dev-notes</span>
-    </div>
-    <h1 class="mb-4">Interview Preparation Hub</h1>
-    <p class="hero p text-lg text-[var(--text-dim)] max-w-3xl mb-8">
-      A comprehensive reference on DSA fundamentals, coding patterns, and interview strategies. Complete with {totalQuestions}+ curated interview questions and answers covering all major topics.
-    </p>
-    <div class="flex flex-wrap gap-7 mt-6">
-      <div>
-        <b class="block text-2xl font-mono text-[var(--text)]">{topics.length}</b>
-        <span class="text-xs uppercase tracking-wider text-[var(--text-faint)]">Topic Categories</span>
+<Layout title="Dev Notes — Algorithms, Systems & Interview Prep">
+  <!-- Ambient blobs -->
+  <div class="blob blob-1" aria-hidden="true"></div>
+  <div class="blob blob-2" aria-hidden="true"></div>
+  <div class="blob blob-3" aria-hidden="true"></div>
+
+  <!-- Hero -->
+  <section class="hero animate-in">
+    <div class="hero-eyebrow">Interview Prep &amp; Study Notes</div>
+    <h1>Everything you need to <em>ace</em> the interview.</h1>
+    <p class="hero-desc">A curated shelf of algorithms, systems design, backend engineering, and AI notes — plus interactive quizzes to test your knowledge.</p>
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <b>{totalQA}+</b>
+        <span>Q&amp;A Questions</span>
       </div>
-      <div>
-        <b class="block text-2xl font-mono text-[var(--text)]">{totalQuestions}+</b>
-        <span class="text-xs uppercase tracking-wider text-[var(--text-faint)]">Interview Q&A</span>
+      <div class="hero-stat">
+        <b>{quizzes.length}</b>
+        <span>MCQ Quizzes</span>
       </div>
-      <div>
-        <b class="block text-2xl font-mono text-[var(--text)]">100%</b>
-        <span class="text-xs uppercase tracking-wider text-[var(--text-faint)]">Open Source</span>
+      <div class="hero-stat">
+        <b>{notes.length}</b>
+        <span>Study Notes</span>
       </div>
     </div>
   </section>
 
-  <!-- Topics Grid -->
-  <section id="topics" class="mb-20">
-    <div class="mb-8">
-      <span class="section-tag grpc">01 / topics</span>
-      <h2 class="mt-2 flex items-center gap-3">
-        <span class="w-1 h-8 bg-[var(--accent-grpc)] rounded-full"></span>
-        All Interview Topics
-      </h2>
-    </div>
+  <!-- Search -->
+  <div class="search-bar animate-in animate-delay-1">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+      <circle cx="11" cy="11" r="7"></circle>
+      <path d="m21 21-4.35-4.35"></path>
+    </svg>
+    <input id="filter" type="search" placeholder="Search quizzes, Q&As and notes…" autocomplete="off" aria-label="Search resources">
+    <span class="search-count" id="visibleCount"></span>
+  </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      {topics.map((topic: Topic) => (
-        <a 
-          href={`/topics/${topic.file.replace('dsa-questions-data/', '').replace('.json', '')}`}
-          class="card group hover:border-[var(--accent-grpc)] transition-all duration-200 cursor-pointer"
-          style={`border-top-color: ${topic.accent}`}
-        >
-          <div class="flex items-start gap-3 mb-3">
-            <span class="text-2xl">{topic.icon}</span>
-            <div class="flex-1">
-              <h3 class="text-sm font-bold text-[var(--text)] group-hover:text-[var(--accent-grpc)] transition">
-                {topic.topic}
-              </h3>
+  <!-- Q&A Section -->
+  <div id="qaSection" class="animate-in animate-delay-1">
+    <div class="section-header">
+      <span class="section-badge" style="background:rgba(108,140,255,0.1);border:1px solid rgba(108,140,255,0.25);color:#6c8cff;">Q&amp;A</span>
+      <h2 class="section-title">Interview Q&amp;A</h2>
+      <div class="section-divider"></div>
+      <span class="section-count" id="qa-shown"></span>
+    </div>
+    <div class="quiz-grid" id="qaGrid">
+      {qaTopics.map((t) => {
+        const slug = t.file.replace('questions-data/', '').replace('.json', '');
+        return (
+          <a class="quiz-card" href={`/viewer?topic=${t.file}`} style={`border-color:rgba(108,140,255,0.2)`} data-title={t.topic} data-type="qa">
+            <div class="quiz-card-icon" style="background:rgba(108,140,255,0.1);border-color:rgba(108,140,255,0.2);color:#6c8cff;">{t.icon}</div>
+            <div class="quiz-card-body">
+              <div class="quiz-card-title">{t.topic}</div>
+              <div class="quiz-card-file">{t.count} questions</div>
             </div>
+            <div class="quiz-card-footer">
+              <span class="quiz-pill" style="background:rgba(108,140,255,0.1);color:#6c8cff;">Q&amp;A</span>
+              <span class="card-arrow">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2.5 6h7m-3-3 3 3-3 3"/></svg>
+              </span>
+            </div>
+          </a>
+        );
+      })}
+      <div class="empty" id="qaEmpty">No Q&amp;A match your search.</div>
+    </div>
+  </div>
+
+  <!-- Quizzes Section -->
+  <div id="quizSection" class="animate-in animate-delay-2">
+    <div class="section-header">
+      <span class="section-badge quiz">Quizzes</span>
+      <h2 class="section-title">Interactive MCQ Quizzes</h2>
+      <div class="section-divider"></div>
+      <span class="section-count" id="quiz-shown"></span>
+    </div>
+    <div class="quiz-grid" id="quizGrid">
+      {quizzes.map((q) => (
+        <a class="quiz-card" href={`/quiz/${q.id}`} data-title={q.title} data-type="quiz">
+          <div class="quiz-card-icon">{q.icon}</div>
+          <div class="quiz-card-body">
+            <div class="quiz-card-title">{q.title}</div>
+            <div class="quiz-card-file">{q.desc}</div>
           </div>
-          <p class="text-xs text-[var(--text-dim)] mb-3 leading-relaxed">
-            {topic.description}
-          </p>
-          <div class="flex items-center justify-between">
-            <span class="text-xs font-mono text-[var(--text-faint)]">
-              {topic.count} questions
+          <div class="quiz-card-footer">
+            <span class="quiz-pill">MCQ Quiz</span>
+            <span class="card-arrow">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2.5 6h7m-3-3 3 3-3 3"/></svg>
             </span>
-            <span class="text-xs text-[var(--accent-grpc)]">→</span>
+          </div>
+        </a>
+      ))}
+      <div class="empty" id="quizEmpty">No quizzes match your search.</div>
+    </div>
+  </div>
+
+  <!-- Notes Section -->
+  <div id="notesSection" class="animate-in animate-delay-3">
+    <div class="section-header">
+      <span class="section-badge note">Notes</span>
+      <h2 class="section-title">DSA &amp; Engineering Notes</h2>
+      <div class="section-divider"></div>
+      <span class="section-count" id="notes-shown">{notes.length} notes</span>
+    </div>
+    <div class="notes-list" id="notesGrid">
+      {notes.map((file) => (
+        <a class="note-card" href={`/markdownreader?file=notes/${file}`} data-title={titleFromFile(file)} data-type="note">
+          <div class="note-card-icon">{noteIconMap[file] || '📄'}</div>
+          <div class="note-card-body">
+            <div class="note-card-title">{titleFromFile(file)}</div>
+            <div class="note-card-file">{file}</div>
+          </div>
+          <span class="note-card-arrow">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2.5 6h7m-3-3 3 3-3 3"/></svg>
+          </span>
+        </a>
+      ))}
+      <div class="empty" id="notesEmpty">No notes match your search.</div>
+    </div>
+  </div>
+
+  <!-- Scenario-Based -->
+  <div id="miscSection" class="animate-in animate-delay-3">
+    <div class="section-header">
+      <span class="section-badge misc">Misc</span>
+      <h2 class="section-title">Scenario-Based Questions</h2>
+      <div class="section-divider"></div>
+      <span class="section-count">{misc.length} available</span>
+    </div>
+    <div class="tools-grid">
+      {misc.map((item) => (
+        <a class="tool-card" href={item.href} data-title={item.title} data-type="misc">
+          <div class="tool-card-icon">{item.icon}</div>
+          <div class="tool-card-body">
+            <div class="tool-card-title">{item.title}</div>
+            <div class="tool-card-desc">{item.desc}</div>
+          </div>
+          <div class="tool-card-footer">
+            <span class="tool-pill misc-pill">{item.pill}</span>
+            <span class="tool-arrow">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2.5 6h7m-3-3 3 3-3 3"/></svg>
+            </span>
           </div>
         </a>
       ))}
     </div>
-  </section>
+  </div>
 
-  <!-- Features Section -->
-  <section class="mb-20">
-    <div class="mb-8">
-      <span class="section-tag gql">02 / features</span>
-      <h2 class="mt-2 flex items-center gap-3">
-        <span class="w-1 h-8 bg-[var(--accent-gql)] rounded-full"></span>
-        What You Get
-      </h2>
+  <!-- Tools Section -->
+  <div id="toolsSection" class="animate-in animate-delay-3">
+    <div class="section-header">
+      <span class="section-badge quiz">Tools</span>
+      <h2 class="section-title">Interactive Practice Tools</h2>
+      <div class="section-divider"></div>
+      <span class="section-count">{tools.length} available</span>
     </div>
-
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div class="card grpc">
-        <h4 class="mb-2 text-[var(--accent-grpc)]">✓ Structured Learning</h4>
-        <p class="text-sm text-[var(--text-dim)]">
-          Topics organized by difficulty and concepts, from fundamentals to advanced patterns.
-        </p>
-      </div>
-      <div class="card gql">
-        <h4 class="mb-2 text-[var(--accent-gql)]">✓ Interview Ready</h4>
-        <p class="text-sm text-[var(--text-dim)]">
-          Real interview questions with detailed explanations and solution approaches.
-        </p>
-      </div>
-      <div class="card grpc">
-        <h4 class="mb-2 text-[var(--accent-grpc)]">✓ Code Examples</h4>
-        <p class="text-sm text-[var(--text-dim)]">
-          Syntactically correct implementations showing best practices and edge cases.
-        </p>
-      </div>
-      <div class="card gql">
-        <h4 class="mb-2 text-[var(--accent-gql)]">✓ Always Updated</h4>
-        <p class="text-sm text-[var(--text-dim)]">
-          Continuously refined with community contributions and industry trends.
-        </p>
-      </div>
+    <div class="tools-grid">
+      {tools.map((tool) => (
+        <a
+          class="tool-card"
+          href={tool.href}
+          data-title={tool.title}
+          data-type="tool"
+          style={`${tool.border ? `border-color:${tool.border};` : ''}${tool.bg ? `background:${tool.bg};` : ''}`}
+        >
+          <div class="tool-card-icon">{tool.icon}</div>
+          <div class="tool-card-body">
+            <div class="tool-card-title">{tool.title}</div>
+            <div class="tool-card-desc">{tool.desc}</div>
+          </div>
+          <div class="tool-card-footer">
+            <span class="tool-pill" style={`${tool.pillColor ? `color:${tool.pillColor};` : ''}${tool.pillBg ? `background:${tool.pillBg};` : ''}`}>{tool.pill}</span>
+            <span class="tool-arrow">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2.5 6h7m-3-3 3 3-3 3"/></svg>
+            </span>
+          </div>
+        </a>
+      ))}
     </div>
-  </section>
-
-  <!-- CTA Section -->
-  <section class="mb-20">
-    <div class="bg-gradient-to-br from-[rgba(229,53,171,0.1)] to-[rgba(63,167,255,0.1)] border border-[var(--border)] rounded-[10px] p-8 text-center">
-      <h2 class="mb-4">Ready to Master Interview Prep?</h2>
-      <p class="text-[var(--text-dim)] mb-6 max-w-2xl mx-auto">
-        Choose a topic above to start exploring questions, code examples, and detailed explanations.
-      </p>
-      <a 
-        href="#topics"
-        class="inline-block px-6 py-3 bg-gradient-to-r from-[var(--accent-gql)] to-[var(--accent-grpc)] text-white font-semibold rounded-lg hover:shadow-lg hover:shadow-[rgba(229,53,171,0.3)] transition-all"
-      >
-        Explore Topics
-      </a>
-    </div>
-  </section>
+  </div>
 </Layout>
+
+<script is:inline>
+  /* ── Client-side search filter ── */
+  const filter = document.getElementById('filter') as HTMLInputElement;
+  const visibleCount = document.getElementById('visibleCount')!;
+
+  function runFilter() {
+    const term = filter.value.trim().toLowerCase();
+    const allCards = document.querySelectorAll<HTMLElement>('[data-title]');
+    let shown = 0;
+
+    allCards.forEach(card => {
+      const title = (card.dataset.title || '').toLowerCase();
+      const visible = !term || title.includes(term);
+      card.style.display = visible ? '' : 'none';
+      if (visible) shown++;
+    });
+
+    // Show/hide empty states per section
+    ['qaEmpty', 'quizEmpty', 'notesEmpty'].forEach(id => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const grid = el.parentElement!;
+      const hasVisible = [...grid.querySelectorAll<HTMLElement>('[data-title]')].some(c => c.style.display !== 'none');
+      el.style.display = hasVisible ? 'none' : 'block';
+    });
+
+    const total = allCards.length;
+    visibleCount.textContent = term ? `${shown} of ${total} results` : `${total} resources`;
+
+    // Update shown counts
+    const qaShown = document.getElementById('qa-shown');
+    const quizShown = document.getElementById('quiz-shown');
+    if (qaShown) {
+      const qaGrid = document.getElementById('qaGrid')!;
+      const n = [...qaGrid.querySelectorAll<HTMLElement>('[data-type="qa"]')].filter(c => c.style.display !== 'none').length;
+      qaShown.textContent = `${n} shown`;
+    }
+    if (quizShown) {
+      const quizGrid = document.getElementById('quizGrid')!;
+      const n = [...quizGrid.querySelectorAll<HTMLElement>('[data-type="quiz"]')].filter(c => c.style.display !== 'none').length;
+      quizShown.textContent = `${n} shown`;
+    }
+  }
+
+  filter?.addEventListener('input', runFilter);
+  runFilter();
+</script>
+
+<style is:global>
+  .blob {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(100px);
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.35;
+  }
+  .blob-1 { width: 600px; height: 500px; top: -180px; left: -200px;
+    background: radial-gradient(circle, rgba(108,140,255,0.25) 0%, transparent 70%); }
+  .blob-2 { width: 500px; height: 400px; top: 0; right: -180px;
+    background: radial-gradient(circle, rgba(249,115,22,0.18) 0%, transparent 70%); }
+  .blob-3 { width: 400px; height: 400px; bottom: 10%; left: 35%;
+    background: radial-gradient(circle, rgba(34,211,166,0.12) 0%, transparent 70%); }
+
+  /* Hero */
+  .hero { margin-bottom: 48px; }
+  .hero-eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 0.78rem; font-weight: 600; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--accent);
+    margin-bottom: 20px; padding: 5px 12px;
+    border: 1px solid rgba(108,140,255,0.25); border-radius: 999px;
+    background: rgba(108,140,255,0.07);
+  }
+  .hero-eyebrow::before {
+    content: ''; width: 5px; height: 5px; border-radius: 50%;
+    background: var(--accent); box-shadow: 0 0 6px var(--accent);
+  }
+  h1 {
+    font-size: clamp(2.2rem, 5vw, 4rem);
+    font-weight: 800; line-height: 1.08; letter-spacing: -0.03em;
+    color: var(--text); margin-bottom: 18px;
+  }
+  h1 em {
+    font-style: normal;
+    background: linear-gradient(135deg, #6c8cff 0%, #a78bfa 50%, #22d3a6 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .hero-desc { font-size: 1.05rem; line-height: 1.75; color: var(--text-2); max-width: 560px; }
+  .hero-stats { display: flex; gap: 28px; margin-top: 24px; flex-wrap: wrap; }
+  .hero-stat { display: flex; flex-direction: column; }
+  .hero-stat b { font-size: 1.6rem; font-weight: 800; font-family: monospace; color: var(--text); }
+  .hero-stat span { font-size: 0.72rem; color: var(--text-2); text-transform: uppercase; letter-spacing: 0.06em; }
+
+  /* Search */
+  .search-bar { margin: 32px 0 48px; position: relative; max-width: 520px; }
+  .search-bar svg { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); width: 17px; height: 17px; color: var(--text-3); pointer-events: none; }
+  #filter { width: 100%; height: 50px; padding: 0 16px 0 46px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font: 0.95rem/1 'Inter', sans-serif; outline: none; transition: border-color 180ms, box-shadow 180ms; }
+  #filter::placeholder { color: var(--text-3); }
+  #filter:focus { border-color: rgba(108,140,255,0.5); box-shadow: 0 0 0 3px rgba(108,140,255,0.1); }
+  .search-count { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); font-size: 0.78rem; color: var(--text-3); pointer-events: none; }
+
+  /* Section headers */
+  .section-header { display: flex; align-items: center; gap: 14px; margin-bottom: 20px; margin-top: 56px; }
+  .section-badge { display: inline-flex; align-items: center; gap: 7px; padding: 5px 13px; border-radius: 999px; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; }
+  .section-badge::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+  .section-badge.quiz { background: rgba(249,115,22,0.1); border: 1px solid rgba(249,115,22,0.25); color: #f97316; }
+  .section-badge.note { background: rgba(34,211,166,0.08); border: 1px solid rgba(34,211,166,0.2); color: #22d3a6; }
+  .section-badge.misc { background: rgba(167,139,250,0.1); border: 1px solid rgba(167,139,250,0.25); color: #a78bfa; }
+  .section-title { font-size: 1.3rem; font-weight: 700; letter-spacing: -0.02em; color: var(--text); }
+  .section-count { margin-left: auto; font-size: 0.8rem; color: var(--text-3); }
+  .section-divider { flex: 1; height: 1px; background: var(--border); }
+
+  /* Quiz grid */
+  .quiz-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(260px,1fr)); gap: 14px; margin-bottom: 8px; }
+  .quiz-card { position: relative; display: flex; flex-direction: column; gap: 14px; padding: 22px; background: var(--surface); border: 1px solid var(--border); border-radius: 18px; color: inherit; text-decoration: none; overflow: hidden; transition: border-color 200ms, transform 200ms, box-shadow 200ms; }
+  .quiz-card::before { content: ''; position: absolute; inset: 0; opacity: 0; background: radial-gradient(circle at top left, rgba(249,115,22,0.12) 0%, transparent 65%); transition: opacity 250ms; }
+  .quiz-card:hover { border-color: rgba(249,115,22,0.4); transform: translateY(-3px); box-shadow: 0 18px 48px rgba(0,0,0,0.3); text-decoration: none; }
+  .quiz-card:hover::before { opacity: 1; }
+  .quiz-card-icon { width: 40px; height: 40px; border-radius: 10px; background: rgba(249,115,22,0.1); border: 1px solid rgba(249,115,22,0.2); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0; }
+  .quiz-card-body { flex: 1; }
+  .quiz-card-title { font-size: 1rem; font-weight: 700; line-height: 1.3; color: var(--text); margin-bottom: 5px; letter-spacing: -0.01em; }
+  .quiz-card-file { font-size: 0.75rem; font-family: 'JetBrains Mono', monospace; color: var(--text-3); }
+  .quiz-card-footer { display: flex; align-items: center; justify-content: space-between; }
+  .quiz-pill { display: inline-flex; align-items: center; gap: 5px; font-size: 0.7rem; font-weight: 600; padding: 3px 10px; border-radius: 999px; background: rgba(249,115,22,0.1); color: #f97316; letter-spacing: 0.05em; text-transform: uppercase; }
+  .card-arrow { width: 28px; height: 28px; border-radius: 50%; background: var(--surface2); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; color: var(--text-3); transition: color 200ms, background 200ms; }
+  .quiz-card:hover .card-arrow { background: #f97316; border-color: #f97316; color: #fff; }
+
+  /* Notes list */
+  .notes-list { display: grid; grid-template-columns: repeat(auto-fill,minmax(300px,1fr)); gap: 10px; }
+  .note-card { display: flex; align-items: center; gap: 14px; padding: 16px 18px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; color: inherit; text-decoration: none; transition: border-color 180ms, background 180ms, transform 180ms; }
+  .note-card:hover { border-color: rgba(34,211,166,0.35); background: var(--surface2); transform: translateX(3px); text-decoration: none; }
+  .note-card-icon { width: 36px; height: 36px; flex-shrink: 0; border-radius: 8px; background: rgba(34,211,166,0.08); border: 1px solid rgba(34,211,166,0.15); display: flex; align-items: center; justify-content: center; font-size: 1rem; }
+  .note-card-body { flex: 1; min-width: 0; }
+  .note-card-title { font-size: 0.92rem; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: -0.01em; }
+  .note-card-file { font-size: 0.7rem; font-family: 'JetBrains Mono', monospace; color: var(--text-3); margin-top: 2px; }
+  .note-card-arrow { color: var(--text-3); flex-shrink: 0; transition: color 180ms, transform 180ms; }
+  .note-card:hover .note-card-arrow { color: #22d3a6; transform: translateX(2px); }
+
+  /* Tools grid */
+  .tools-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(280px,1fr)); gap: 14px; }
+  .tool-card { position: relative; display: flex; flex-direction: column; gap: 12px; padding: 22px; background: var(--surface); border: 1px solid var(--border); border-radius: 18px; color: inherit; text-decoration: none; overflow: hidden; transition: border-color 200ms, transform 200ms, box-shadow 200ms; }
+  .tool-card::before { content: ''; position: absolute; inset: 0; opacity: 0; background: radial-gradient(circle at top left, rgba(108,140,255,0.15) 0%, transparent 65%); transition: opacity 250ms; }
+  .tool-card:hover { border-color: rgba(108,140,255,0.4); transform: translateY(-3px); box-shadow: 0 18px 48px rgba(0,0,0,0.3); text-decoration: none; }
+  .tool-card:hover::before { opacity: 1; }
+  .tool-card-icon { width: 44px; height: 44px; border-radius: 10px; background: rgba(108,140,255,0.1); border: 1px solid rgba(108,140,255,0.2); display: flex; align-items: center; justify-content: center; font-size: 1.4rem; flex-shrink: 0; }
+  .tool-card-body { flex: 1; }
+  .tool-card-title { font-size: 1rem; font-weight: 700; line-height: 1.3; color: var(--text); margin-bottom: 4px; letter-spacing: -0.01em; }
+  .tool-card-desc { font-size: 0.8rem; color: var(--text-2); line-height: 1.5; }
+  .tool-card-footer { display: flex; align-items: center; justify-content: space-between; }
+  .tool-pill { display: inline-flex; align-items: center; gap: 5px; font-size: 0.7rem; font-weight: 600; padding: 3px 10px; border-radius: 999px; background: rgba(108,140,255,0.1); color: #6c8cff; letter-spacing: 0.05em; text-transform: uppercase; }
+  .misc-pill { background: rgba(167,139,250,0.1) !important; color: #a78bfa !important; }
+  .tool-arrow { width: 28px; height: 28px; border-radius: 50%; background: var(--surface2); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; color: var(--text-3); transition: color 200ms, background 200ms; }
+  .tool-card:hover .tool-arrow { background: #6c8cff; border-color: #6c8cff; color: #fff; }
+
+  /* Empty state */
+  .empty { grid-column: 1/-1; text-align: center; padding: 40px 20px; color: var(--text-3); font-size: 0.9rem; display: none; }
+
+  /* Animations */
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+  .animate-in { animation: fadeUp 0.45s ease both; }
+  .animate-delay-1 { animation-delay: 0.05s; }
+  .animate-delay-2 { animation-delay: 0.10s; }
+  .animate-delay-3 { animation-delay: 0.15s; }
+
+  /* Responsive */
+  @media (max-width: 680px) {
+    .quiz-grid { grid-template-columns: 1fr; }
+    .notes-list { grid-template-columns: 1fr; }
+    .tools-grid { grid-template-columns: 1fr; }
+    h1 { font-size: 2rem; }
+  }
+</style>
