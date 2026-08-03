@@ -1,0 +1,170 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import topicsIndex from '../../../dsa-questions-data/index.json';
+import fs from 'fs';
+import path from 'path';
+
+interface TopicMetadata {
+  file: string;
+  topic: string;
+  description: string;
+  icon: string;
+  accent: string;
+  count: number;
+}
+
+interface Question {
+  id: string;
+  title: string;
+  difficulty?: string;
+  tags?: string[];
+  description?: string;
+  explanation?: string;
+  companies?: string[];
+}
+
+export async function getStaticPaths() {
+  const topics: TopicMetadata[] = topicsIndex;
+  return topics.map((topic) => ({
+    params: { slug: topic.file.replace('dsa-questions-data/', '').replace('.json', '') },
+    props: { topic },
+  }));
+}
+
+interface Props {
+  topic: TopicMetadata;
+}
+
+const { topic } = Astro.props;
+
+// Load questions data
+const dataPath = path.join(process.cwd(), 'dsa-questions-data', `${topic.file.split('/')[1]}`);
+let questions: Question[] = [];
+try {
+  const data = fs.readFileSync(dataPath, 'utf-8');
+  questions = JSON.parse(data);
+} catch (error) {
+  console.error(`Failed to load questions from ${dataPath}`, error);
+}
+---
+
+<Layout title={`${topic.topic} - Interview Questions`}>
+  <!-- Hero Section -->
+  <section class="hero mb-12">
+    <div class="mb-4">
+      <span class="section-tag text-[var(--accent-warn)]">{topic.icon} {topic.topic}</span>
+    </div>
+    <h1 class="mb-4 flex items-center gap-3">
+      <span class="text-4xl">{topic.icon}</span>
+      {topic.topic}
+    </h1>
+    <p class="text-lg text-[var(--text-dim)] max-w-3xl mb-6">
+      {topic.description}
+    </p>
+    <div class="flex flex-wrap gap-6">
+      <div>
+        <b class="block text-2xl font-mono" style={`color: ${topic.accent}`}>{questions.length}</b>
+        <span class="text-xs uppercase tracking-wider text-[var(--text-faint)]">Questions</span>
+      </div>
+      <div>
+        <b class="block text-2xl font-mono text-[var(--text)]">Expert</b>
+        <span class="text-xs uppercase tracking-wider text-[var(--text-faint)]">Curated</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Questions List -->
+  <section class="mb-20">
+    <div class="mb-8">
+      <h2 class="flex items-center gap-3">
+        <span class="w-1 h-8 rounded-full" style={`background-color: ${topic.accent}`}></span>
+        All Questions
+      </h2>
+    </div>
+
+    <div class="space-y-3">
+      {questions && questions.length > 0 ? (
+        questions.map((question: Question, idx: number) => (
+          <details class="border border-[var(--border)] rounded-[10px] bg-[var(--bg-card)] group overflow-hidden hover:border-[var(--accent-grpc)] transition-all">
+            <summary class="px-5 py-3.5 cursor-pointer flex justify-between items-center gap-3 font-semibold text-[var(--text)] text-sm hover:text-[var(--accent-grpc)] transition group-open:border-b group-open:border-[var(--border-soft)]">
+              <span class="flex items-center gap-3 flex-1">
+                <span class="font-mono text-xs text-[var(--text-faint)]">{String(idx + 1).padStart(3, '0')}</span>
+                <span>{question.title || question}</span>
+                {question.difficulty && (
+                  <span 
+                    class="text-xs font-mono px-2 py-0.5 rounded border"
+                    style={`
+                      color: ${question.difficulty === 'Easy' ? '#33d6a6' : question.difficulty === 'Medium' ? '#ffb347' : '#ff5d6c'};
+                      border-color: ${question.difficulty === 'Easy' ? 'rgba(51, 214, 166, 0.4)' : question.difficulty === 'Medium' ? 'rgba(255, 179, 71, 0.4)' : 'rgba(255, 93, 108, 0.4)'};
+                    `}
+                  >
+                    {question.difficulty}
+                  </span>
+                )}
+              </span>
+              <span class="text-[var(--text-faint)] text-xs font-mono">▼</span>
+            </summary>
+            <div class="px-5 py-4 text-[var(--text-dim)] text-sm border-t border-[var(--border-soft)] space-y-4">
+              {question.description && (
+                <div>
+                  <h4 class="font-semibold text-[var(--text)] mb-2 text-xs uppercase tracking-wide">Description</h4>
+                  <p class="text-xs leading-relaxed">{question.description}</p>
+                </div>
+              )}
+              {question.explanation && (
+                <div>
+                  <h4 class="font-semibold text-[var(--text)] mb-2 text-xs uppercase tracking-wide">Explanation</h4>
+                  <p class="text-xs leading-relaxed">{question.explanation}</p>
+                </div>
+              )}
+              {question.tags && question.tags.length > 0 && (
+                <div class="pt-2">
+                  <h4 class="font-semibold text-[var(--text)] mb-2 text-xs uppercase tracking-wide">Tags</h4>
+                  <div class="flex flex-wrap gap-2">
+                    {question.tags.map((tag: string) => (
+                      <span class="pill text-xs">{tag}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </details>
+        ))
+      ) : (
+        <div class="callout">
+          <p class="text-sm">Questions data is loading. Check back soon!</p>
+        </div>
+      )}
+    </div>
+  </section>
+
+  <!-- Navigation -->
+  <div class="flex gap-4 mt-12 pt-8 border-t border-[var(--border-soft)]">
+    <a 
+      href="/topics"
+      class="px-4 py-2 text-sm text-[var(--accent-grpc)] hover:text-white transition"
+    >
+      ← Back to Topics
+    </a>
+    <a 
+      href="/"
+      class="px-4 py-2 text-sm text-[var(--text-dim)] hover:text-[var(--accent-grpc)] transition"
+    >
+      Home
+    </a>
+  </div>
+</Layout>
+
+<style>
+  details summary::-webkit-details-marker {
+    display: none;
+  }
+
+  details[open] summary {
+    color: var(--text);
+  }
+
+  details[open] summary::after {
+    transform: rotate(180deg);
+  }
+</style>

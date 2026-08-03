@@ -1,40 +1,136 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import topicsData from '../../dsa-questions-data/index.json';
+
+interface Topic {
+  file: string;
+  topic: string;
+  description: string;
+  icon: string;
+  accent: string;
+  count: number;
+}
+
+const topics: Topic[] = topicsData;
+const totalQuestions = topics.reduce((sum, t) => sum + t.count, 0);
 ---
 
-<Layout title="Home - SSE Interview Questions">
-  <div class="max-w-7xl mx-auto px-4 py-12">
-    <div class="text-center mb-12">
-      <h1 class="text-5xl font-bold mb-4">SSE Interview Questions</h1>
-      <p class="text-xl text-gray-600">Master System Design, Data Structures, Algorithms, and More</p>
+<Layout title="SSE Interview Questions - DSA, System Design & More">
+  <!-- Hero Section -->
+  <section class="hero mb-16">
+    <div class="mb-4">
+      <span class="section-tag text-[var(--accent-warn)]">$ dev-notes</span>
     </div>
-
-    <div class="grid md:grid-cols-3 gap-8 mb-12">
-      <div class="bg-blue-50 p-6 rounded-lg shadow">
-        <h2 class="text-2xl font-bold mb-4 text-blue-600">🎯 System Design</h2>
-        <p class="text-gray-700">Learn system design patterns, architectural concepts, and real-world design challenges.</p>
-        <a href="/topics" class="text-blue-600 hover:underline mt-4 inline-block">Explore →</a>
+    <h1 class="mb-4">Interview Preparation Hub</h1>
+    <p class="hero p text-lg text-[var(--text-dim)] max-w-3xl mb-8">
+      A comprehensive reference on DSA fundamentals, coding patterns, and interview strategies. Complete with {totalQuestions}+ curated interview questions and answers covering all major topics.
+    </p>
+    <div class="flex flex-wrap gap-7 mt-6">
+      <div>
+        <b class="block text-2xl font-mono text-[var(--text)]">{topics.length}</b>
+        <span class="text-xs uppercase tracking-wider text-[var(--text-faint)]">Topic Categories</span>
       </div>
-
-      <div class="bg-green-50 p-6 rounded-lg shadow">
-        <h2 class="text-2xl font-bold mb-4 text-green-600">📊 Data Structures</h2>
-        <p class="text-gray-700">Master arrays, linked lists, trees, graphs, and other essential data structures.</p>
-        <a href="/topics" class="text-green-600 hover:underline mt-4 inline-block">Explore →</a>
+      <div>
+        <b class="block text-2xl font-mono text-[var(--text)]">{totalQuestions}+</b>
+        <span class="text-xs uppercase tracking-wider text-[var(--text-faint)]">Interview Q&A</span>
       </div>
-
-      <div class="bg-purple-50 p-6 rounded-lg shadow">
-        <h2 class="text-2xl font-bold mb-4 text-purple-600">⚡ Algorithms</h2>
-        <p class="text-gray-700">Practice sorting, searching, dynamic programming, and advanced algorithms.</p>
-        <a href="/topics" class="text-purple-600 hover:underline mt-4 inline-block">Explore →</a>
+      <div>
+        <b class="block text-2xl font-mono text-[var(--text)]">100%</b>
+        <span class="text-xs uppercase tracking-wider text-[var(--text-faint)]">Open Source</span>
       </div>
     </div>
+  </section>
 
-    <div class="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-8 rounded-lg text-center">
-      <h2 class="text-3xl font-bold mb-4">Ready to ace your interviews?</h2>
-      <p class="mb-6 text-lg">Start exploring our comprehensive collection of interview questions and solutions.</p>
-      <a href="/topics" class="bg-white text-blue-600 px-8 py-3 rounded-lg font-bold hover:bg-gray-100 inline-block">
-        Get Started
+  <!-- Topics Grid -->
+  <section id="topics" class="mb-20">
+    <div class="mb-8">
+      <span class="section-tag grpc">01 / topics</span>
+      <h2 class="mt-2 flex items-center gap-3">
+        <span class="w-1 h-8 bg-[var(--accent-grpc)] rounded-full"></span>
+        All Interview Topics
+      </h2>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {topics.map((topic: Topic) => (
+        <a 
+          href={`/topics/${topic.file.replace('dsa-questions-data/', '').replace('.json', '')}`}
+          class="card group hover:border-[var(--accent-grpc)] transition-all duration-200 cursor-pointer"
+          style={`border-top-color: ${topic.accent}`}
+        >
+          <div class="flex items-start gap-3 mb-3">
+            <span class="text-2xl">{topic.icon}</span>
+            <div class="flex-1">
+              <h3 class="text-sm font-bold text-[var(--text)] group-hover:text-[var(--accent-grpc)] transition">
+                {topic.topic}
+              </h3>
+            </div>
+          </div>
+          <p class="text-xs text-[var(--text-dim)] mb-3 leading-relaxed">
+            {topic.description}
+          </p>
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-mono text-[var(--text-faint)]">
+              {topic.count} questions
+            </span>
+            <span class="text-xs text-[var(--accent-grpc)]">→</span>
+          </div>
+        </a>
+      ))}
+    </div>
+  </section>
+
+  <!-- Features Section -->
+  <section class="mb-20">
+    <div class="mb-8">
+      <span class="section-tag gql">02 / features</span>
+      <h2 class="mt-2 flex items-center gap-3">
+        <span class="w-1 h-8 bg-[var(--accent-gql)] rounded-full"></span>
+        What You Get
+      </h2>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="card grpc">
+        <h4 class="mb-2 text-[var(--accent-grpc)]">✓ Structured Learning</h4>
+        <p class="text-sm text-[var(--text-dim)]">
+          Topics organized by difficulty and concepts, from fundamentals to advanced patterns.
+        </p>
+      </div>
+      <div class="card gql">
+        <h4 class="mb-2 text-[var(--accent-gql)]">✓ Interview Ready</h4>
+        <p class="text-sm text-[var(--text-dim)]">
+          Real interview questions with detailed explanations and solution approaches.
+        </p>
+      </div>
+      <div class="card grpc">
+        <h4 class="mb-2 text-[var(--accent-grpc)]">✓ Code Examples</h4>
+        <p class="text-sm text-[var(--text-dim)]">
+          Syntactically correct implementations showing best practices and edge cases.
+        </p>
+      </div>
+      <div class="card gql">
+        <h4 class="mb-2 text-[var(--accent-gql)]">✓ Always Updated</h4>
+        <p class="text-sm text-[var(--text-dim)]">
+          Continuously refined with community contributions and industry trends.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Section -->
+  <section class="mb-20">
+    <div class="bg-gradient-to-br from-[rgba(229,53,171,0.1)] to-[rgba(63,167,255,0.1)] border border-[var(--border)] rounded-[10px] p-8 text-center">
+      <h2 class="mb-4">Ready to Master Interview Prep?</h2>
+      <p class="text-[var(--text-dim)] mb-6 max-w-2xl mx-auto">
+        Choose a topic above to start exploring questions, code examples, and detailed explanations.
+      </p>
+      <a 
+        href="#topics"
+        class="inline-block px-6 py-3 bg-gradient-to-r from-[var(--accent-gql)] to-[var(--accent-grpc)] text-white font-semibold rounded-lg hover:shadow-lg hover:shadow-[rgba(229,53,171,0.3)] transition-all"
+      >
+        Explore Topics
       </a>
     </div>
-  </div>
+  </section>
 </Layout>

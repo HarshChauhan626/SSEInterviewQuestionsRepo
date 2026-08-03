@@ -2,41 +2,136 @@
 import Layout from '../layouts/Layout.astro';
 ---
 
-<Layout title="About - SSE Interview Questions">
-  <div class="max-w-4xl mx-auto px-4 py-12">
-    <h1 class="text-4xl font-bold mb-6">About SSE Interview Questions</h1>
-    
-    <div class="prose prose-lg">
-      <p class="text-gray-700 mb-4">
-        SSE Interview Questions is a comprehensive resource for preparing for technical interviews at top tech companies.
-      </p>
-
-      <h2 class="text-2xl font-bold mt-8 mb-4">What We Cover</h2>
-      <ul class="list-disc list-inside space-y-2 text-gray-700">
-        <li>System Design Architecture</li>
-        <li>Data Structures & Algorithms</li>
-        <li>Database Design & Optimization</li>
-        <li>Distributed Systems Concepts</li>
-        <li>Cloud Platforms & DevOps</li>
-        <li>Programming Language Specifics</li>
-        <li>Network Protocols & Communication</li>
-        <li>Security Best Practices</li>
-      </ul>
-
-      <h2 class="text-2xl font-bold mt-8 mb-4">How to Use This Resource</h2>
-      <ol class="list-decimal list-inside space-y-2 text-gray-700">
-        <li>Browse topics by category</li>
-        <li>Read through interview questions and problem statements</li>
-        <li>Study the provided solutions and explanations</li>
-        <li>Practice implementing solutions from scratch</li>
-        <li>Review key concepts and patterns</li>
-      </ol>
-
-      <h2 class="text-2xl font-bold mt-8 mb-4">Contributing</h2>
-      <p class="text-gray-700">
-        This resource is open source and community-driven. If you'd like to contribute questions, solutions, or improvements,
-        please visit our GitHub repository.
-      </p>
+<Layout title="About - Interview Questions">
+  <!-- Hero Section -->
+  <section class="hero mb-16">
+    <div class="mb-4">
+      <span class="section-tag text-[var(--accent-warn)]">About this resource</span>
     </div>
+    <h1 class="mb-4">Interview Questions Hub</h1>
+    <p class="text-lg text-[var(--text-dim)] max-w-3xl mb-8">
+      A comprehensive, community-driven resource for preparing technical interviews at top tech companies.
+    </p>
+  </section>
+
+  <!-- Main Content -->
+  <div class="max-w-3xl space-y-12 mb-20">
+    <!-- What We Cover -->
+    <section>
+      <h2 class="flex items-center gap-3 mb-6">
+        <span class="w-1 h-8 bg-[var(--accent-grpc)] rounded-full"></span>
+        What We Cover
+      </h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {[
+          { icon: '📊', title: 'Data Structures', desc: 'Arrays, Linked Lists, Trees, Graphs, Heaps, and more' },
+          { icon: '⚡', title: 'Algorithms', desc: 'Sorting, Searching, Dynamic Programming, Recursion' },
+          { icon: '🔄', title: 'Patterns', desc: 'Sliding Window, Two Pointers, Backtracking, Greedy' },
+          { icon: '🧩', title: 'Logic Puzzles', desc: '50+ classic logic and math interview puzzles' },
+        ].map((item) => (
+          <div class="card grpc">
+            <div class="text-2xl mb-2">{item.icon}</div>
+            <h4 class="text-[var(--accent-grpc)] mb-1">{item.title}</h4>
+            <p class="text-xs text-[var(--text-dim)]">{item.desc}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+
+    <!-- How to Use -->
+    <section>
+      <h2 class="flex items-center gap-3 mb-6">
+        <span class="w-1 h-8 bg-[var(--accent-gql)] rounded-full"></span>
+        How to Use This Resource
+      </h2>
+      <div class="space-y-3">
+        {[
+          { num: 1, title: 'Browse Topics', desc: 'Explore our collection organized by difficulty and concept' },
+          { num: 2, title: 'Read Questions', desc: 'Study problem statements with difficulty indicators' },
+          { num: 3, title: 'Understand Solutions', desc: 'Learn approaches, explanations, and optimal techniques' },
+          { num: 4, title: 'Practice Coding', desc: 'Implement solutions from scratch to solidify understanding' },
+          { num: 5, title: 'Review Patterns', desc: 'Recognize and apply patterns across different problems' },
+        ].map((item) => (
+          <div class="flex gap-4">
+            <div class="flex-shrink-0">
+              <div class="flex items-center justify-center h-8 w-8 rounded-full bg-[var(--accent-gql)] text-[var(--bg)] font-bold text-sm">
+                {item.num}
+              </div>
+            </div>
+            <div>
+              <h4 class="font-semibold text-[var(--text)] mb-1">{item.title}</h4>
+              <p class="text-sm text-[var(--text-dim)]">{item.desc}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+
+    <!-- Key Features -->
+    <section>
+      <h2 class="flex items-center gap-3 mb-6">
+        <span class="w-1 h-8 bg-[var(--accent-warn)] rounded-full"></span>
+        Key Features
+      </h2>
+      <ul class="space-y-3 text-[var(--text-dim)]">
+        <li class="flex gap-3">
+          <span class="text-[var(--accent-good)] flex-shrink-0">✓</span>
+          <span><strong>500+</strong> carefully curated interview questions</span>
+        </li>
+        <li class="flex gap-3">
+          <span class="text-[var(--accent-good)] flex-shrink-0">✓</span>
+          <span>Multiple <strong>difficulty levels</strong> (Easy, Medium, Hard)</span>
+        </li>
+        <li class="flex gap-3">
+          <span class="text-[var(--accent-good)] flex-shrink-0">✓</span>
+          <span>Detailed <strong>explanations</strong> and approach discussions</span>
+        </li>
+        <li class="flex gap-3">
+          <span class="text-[var(--accent-good)] flex-shrink-0">✓</span>
+          <span><strong>Tag-based</strong> organization for easy discovery</span>
+        </li>
+        <li class="flex gap-3">
+          <span class="text-[var(--accent-good)] flex-shrink-0">✓</span>
+          <span>100% <strong>open source</strong> and community-driven</span>
+        </li>
+      </ul>
+    </section>
+
+    <!-- Contributing -->
+    <section>
+      <h2 class="flex items-center gap-3 mb-6">
+        <span class="w-1 h-8 bg-[var(--accent-grpc)] rounded-full"></span>
+        Contributing
+      </h2>
+      <div class="card grpc">
+        <p class="text-[var(--text-dim)] mb-4">
+          This resource is open source and driven by the community. We welcome contributions of:
+        </p>
+        <ul class="list-disc list-inside space-y-2 text-[var(--text-dim)] text-sm">
+          <li>New interview questions and explanations</li>
+          <li>Better solutions and optimizations</li>
+          <li>Bug fixes and typo corrections</li>
+          <li>Additional test cases and edge cases</li>
+          <li>Improvements to documentation</li>
+        </ul>
+        <p class="text-xs text-[var(--text-faint)] mt-4">
+          Visit the GitHub repository to learn how to contribute.
+        </p>
+      </div>
+    </section>
+
+    <!-- Footer CTA -->
+    <section class="bg-gradient-to-br from-[rgba(229,53,171,0.1)] to-[rgba(63,167,255,0.1)] border border-[var(--border)] rounded-[10px] p-8 text-center">
+      <h2 class="mb-4">Ready to Start Preparing?</h2>
+      <p class="text-[var(--text-dim)] mb-6">
+        Dive into our collection of interview questions and ace your next technical interview.
+      </p>
+      <a 
+        href="/topics"
+        class="inline-block px-6 py-3 bg-gradient-to-r from-[var(--accent-gql)] to-[var(--accent-grpc)] text-white font-semibold rounded-lg hover:shadow-lg hover:shadow-[rgba(229,53,171,0.3)] transition-all"
+      >
+        Explore Topics
+      </a>
+    </section>
   </div>
 </Layout>
