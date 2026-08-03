@@ -602,8 +602,14 @@
 
     function resolveFile(file) {
       if (!file) return markdownFiles[0];
-      const decoded = decodeURIComponent(file).split("/").pop();
+      const decoded = decodeURIComponent(file);
+      
       if (markdownFiles.includes(decoded)) return decoded;
+      
+      const filename = decoded.split("/").pop();
+      const match = markdownFiles.find(candidate => candidate.endsWith("/" + filename) || candidate === filename);
+      if (match) return match;
+
       if (fileAliases[decoded] && markdownFiles.includes(fileAliases[decoded])) return fileAliases[decoded];
 
       const lowerMatch = markdownFiles.find(candidate => candidate.toLowerCase() === decoded.toLowerCase());
