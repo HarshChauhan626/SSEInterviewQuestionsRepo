@@ -202,7 +202,7 @@
   }
 
   .callout {
-    @apply border border-[var(--border)] border-l-4 border-l-[var(--accent-warn)] bg-[var(--bg-card)] rounded-r-[10px] p-3.5 my-4.5 text-sm;
+    @apply border border-[var(--border)] border-l-4 border-l-[var(--accent-warn)] bg-[var(--bg-card)] rounded-r-[10px] p-3.5 my-4 text-sm;
   }
 
   .callout.tip {
@@ -214,7 +214,7 @@
   }
 
   .pill {
-    @apply inline-block font-mono text-xs px-2.25 py-0.5 rounded-full border border-[var(--border)] text-[var(--text-dim)] mx-1 my-0.5;
+    @apply inline-block font-mono text-xs px-2 py-1 rounded-full border border-[var(--border)] text-[var(--text-dim)] mx-1 my-0.5;
   }
 
   .pill.good {
