@@ -1,0 +1,41 @@
+---
+import '../styles/globals.css';
+
+interface Props {
+  title: string;
+  description?: string;
+}
+
+const { title, description = 'SSE Interview Questions - Your guide to System Design, DSA, and More' } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="description" content={description} />
+    <meta name="viewport" content="width=device-width" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>{title}</title>
+  </head>
+  <body>
+    <nav class="bg-gray-800 text-white p-4">
+      <div class="max-w-7xl mx-auto flex justify-between items-center">
+        <a href="/" class="text-2xl font-bold">SSE Interview Questions</a>
+        <ul class="flex gap-6">
+          <li><a href="/" class="hover:text-gray-300">Home</a></li>
+          <li><a href="/topics" class="hover:text-gray-300">Topics</a></li>
+          <li><a href="/about" class="hover:text-gray-300">About</a></li>
+        </ul>
+      </div>
+    </nav>
+    <main class="min-h-screen">
+      <slot />
+    </main>
+    <footer class="bg-gray-800 text-white p-8 mt-12">
+      <div class="max-w-7xl mx-auto text-center">
+        <p>&copy; 2024 SSE Interview Questions. All rights reserved.</p>
+      </div>
+    </footer>
+  </body>
+</html>

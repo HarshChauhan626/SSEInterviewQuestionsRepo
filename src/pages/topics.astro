@@ -1,0 +1,38 @@
+---
+import Layout from '../layouts/Layout.astro';
+
+const topics = [
+  { name: 'System Design', path: '/topics/system-design', icon: '🏗️' },
+  { name: 'Data Structures', path: '/topics/data-structures', icon: '📊' },
+  { name: 'Algorithms', path: '/topics/algorithms', icon: '⚡' },
+  { name: 'Databases', path: '/topics/databases', icon: '💾' },
+  { name: 'Distributed Systems', path: '/topics/distributed-systems', icon: '🌐' },
+  { name: 'Networking', path: '/topics/networking', icon: '🔗' },
+  { name: 'Node.js', path: '/topics/nodejs', icon: '🟢' },
+  { name: 'React', path: '/topics/react', icon: '⚛️' },
+  { name: 'Go', path: '/topics/go', icon: '🐹' },
+  { name: 'Kubernetes', path: '/topics/kubernetes', icon: '☸️' },
+  { name: 'Kafka', path: '/topics/kafka', icon: '📡' },
+  { name: 'Security', path: '/topics/security', icon: '🔒' },
+];
+---
+
+<Layout title="Topics - SSE Interview Questions">
+  <div class="max-w-7xl mx-auto px-4 py-12">
+    <h1 class="text-4xl font-bold mb-4">Interview Topics</h1>
+    <p class="text-gray-600 mb-8">Select a topic to explore interview questions and resources</p>
+
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {topics.map((topic) => (
+        <a
+          href={topic.path}
+          class="block p-6 bg-white border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:shadow-lg transition"
+        >
+          <div class="text-4xl mb-3">{topic.icon}</div>
+          <h2 class="text-xl font-bold text-gray-800">{topic.name}</h2>
+          <p class="text-gray-600 text-sm mt-2">Click to view questions →</p>
+        </a>
+      ))}
+    </div>
+  </div>
+</Layout>
