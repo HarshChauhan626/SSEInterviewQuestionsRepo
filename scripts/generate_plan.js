@@ -1,6 +1,9 @@
 const fs = require('fs');
+const path = require('path');
+const csvIn = path.join(__dirname, '../data/csv/questions.csv');
+const csvOut = path.join(__dirname, '../data/csv/study_plan.csv');
 
-const content = fs.readFileSync('d:/DSA/questions.csv', 'utf-8');
+const content = fs.readFileSync(csvIn, 'utf-8');
 const lines = content.split(/\r?\n/).filter(line => line.trim().length > 0);
 
 // skip header
@@ -59,5 +62,5 @@ while (easies.length > 0 || mediums.length > 0 || hards.length > 0) {
     day++;
 }
 
-fs.writeFileSync('d:/DSA/study_plan.csv', csvOutput);
-console.log('Successfully generated d:/DSA/study_plan.csv');
+fs.writeFileSync(csvOut, csvOutput);
+console.log(`Successfully generated ${csvOut}`);

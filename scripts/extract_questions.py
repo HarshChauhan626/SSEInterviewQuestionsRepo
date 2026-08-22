@@ -16,7 +16,7 @@ import json
 import os
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-OUT_DIR = os.path.join(BASE_DIR, "questions-data")
+OUT_DIR = os.path.join(BASE_DIR, "../questions-data")
 os.makedirs(OUT_DIR, exist_ok=True)
 
 # ──────────────────────────────────────────────
@@ -201,9 +201,9 @@ def extract_questions_from_md(filepath):
 
 
 def build_json_for_file(md_filename, topic, description, icon, accent):
-    filepath = os.path.join(BASE_DIR, md_filename)
+    filepath = os.path.join(BASE_DIR, "../public/notes", md_filename)
     if not os.path.exists(filepath):
-        print(f"  WARNING: File not found: {md_filename}")
+        print(f"  WARNING: File not found: ../public/notes/{md_filename}")
         return None
 
     print(f"  Parsing {md_filename}...")

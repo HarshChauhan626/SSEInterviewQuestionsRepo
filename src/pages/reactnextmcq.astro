@@ -26,7 +26,7 @@
   }
   *{box-sizing:border-box;margin:0;padding:0}
   body{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;min-height:100vh;overflow-x:hidden}
-  body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;background:radial-gradient(80% 60% at 50% -20%,rgba(97,218,251,0.06) 0%,transparent 60%),radial-gradient(60% 40% at 80% 100%,rgba(0,229,160,0.04) 0%,transparent 50%);pointer-events:none;z-index:0}
+  body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0}
 
   /* SPLASH */
   #splash{position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--bg);padding:24px;text-align:center}
@@ -47,7 +47,7 @@
   .logo{font-family:'Space Mono',monospace;font-size:13px;font-weight:700;color:var(--accent);white-space:nowrap}
   .progress-wrap{flex:1;display:flex;flex-direction:column;gap:4px}
   .progress-bar{height:4px;background:var(--border);border-radius:2px;overflow:hidden}
-  .progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:2px;transition:width .4s cubic-bezier(.4,0,.2,1)}
+  .progress-fill{height:100%;background: linear-gradient(180deg, rgba(108,139,255,0.12) 0%, transparent 100%);border-radius:2px;transition:width .4s cubic-bezier(.4,0,.2,1)}
   .progress-label{font-family:'Space Mono',monospace;font-size:10px;color:var(--muted)}
   .score-pill{font-family:'Space Mono',monospace;font-size:12px;background:var(--card);border:1px solid var(--border);padding:6px 14px;border-radius:2px;white-space:nowrap}
   .score-pill span{color:var(--accent2)}

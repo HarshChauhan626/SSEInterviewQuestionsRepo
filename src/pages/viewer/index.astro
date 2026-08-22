@@ -68,11 +68,11 @@
       transition: background 0.8s ease;
     }
     #blob1 { width: 700px; height: 600px; top: -200px; left: -250px;
-      background: radial-gradient(circle, rgba(108,140,255,0.3) 0%, transparent 70%); }
+       }
     #blob2 { width: 500px; height: 450px; top: 0; right: -200px;
-      background: radial-gradient(circle, rgba(249,115,22,0.2) 0%, transparent 70%); }
+       }
     #blob3 { width: 450px; height: 400px; bottom: 10%; left: 35%;
-      background: radial-gradient(circle, rgba(34,211,166,0.15) 0%, transparent 70%); }
+       }
 
     /* ── Navbar ── */
     nav {
@@ -145,7 +145,7 @@
     }
     .hero h1 em {
       font-style: normal;
-      background: linear-gradient(135deg, #6c8cff 0%, #a78bfa 50%, #22d3a6 100%);
+      background: linear-gradient(180deg, rgba(108,139,255,0.12) 0%, transparent 100%);
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
       background-clip: text;
     }
@@ -191,7 +191,7 @@
     }
     .topic-card::before {
       content: ''; position: absolute; inset: 0;
-      background: linear-gradient(135deg, var(--card-accent-rgb, rgba(108,140,255,0.06)) 0%, transparent 60%);
+      background: linear-gradient(180deg, rgba(108,139,255,0.12) 0%, transparent 100%);
       opacity: 0; transition: opacity 0.22s;
     }
     .topic-card:hover { border-color: var(--border-h); transform: translateY(-3px);
@@ -814,7 +814,7 @@
       document.documentElement.style.setProperty('--topic-accent', color);
       // Update blob color
       document.getElementById('blob1').style.background =
-        `radial-gradient(circle, ${hexToRgba(color, 0.22)} 0%, transparent 70%)`;
+        `linear-gradient(180deg, rgba(108,139,255,0.12) 0%, transparent 100%)} 0%, transparent 70%)`;
     }
 
     function hexToRgba(hex, alpha) {

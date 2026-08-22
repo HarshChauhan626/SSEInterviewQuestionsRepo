@@ -1,9 +1,9 @@
 const fs = require('fs');
 const path = require('path');
 
-const mdPath = path.join(__dirname, 'systemdesignterminology.md');
-const refHtmlPath = path.join(__dirname, 'systemdesign.html');
-const outHtmlPath = path.join(__dirname, 'systemdesignterminology.html');
+const mdPath = path.join(__dirname, '../public/notes/systemdesignterminology.md');
+const refHtmlPath = path.join(__dirname, '../src/pages/systemdesign.astro');
+const outHtmlPath = path.join(__dirname, '../public/systemdesignterminology.html');
 
 // Read files
 const mdContent = fs.readFileSync(mdPath, 'utf8');

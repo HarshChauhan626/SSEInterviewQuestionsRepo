@@ -48,7 +48,7 @@
     border-bottom: 1px solid var(--border);
     padding: 56px 24px 48px;
     text-align: center;
-    background: radial-gradient(80% 60% at 50% -10%, rgba(108,139,255,0.12) 0%, transparent 70%);
+    background: linear-gradient(180deg, rgba(108,139,255,0.12) 0%, transparent 100%);
   }
 
   .hero-eyebrow {
@@ -67,7 +67,7 @@
     letter-spacing: -0.03em;
     line-height: 1.15;
     margin-bottom: 16px;
-    background: linear-gradient(135deg, #e2e8f0 0%, #a5b4fc 60%, #6c8bff 100%);
+    background: linear-gradient(180deg, rgba(108,139,255,0.12) 0%, transparent 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -469,7 +469,7 @@
 
   .progress-fill {
     height: 100%;
-    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    background: linear-gradient(180deg, rgba(108,139,255,0.12) 0%, transparent 100%);
     border-radius: 1px;
     transition: width 0.3s;
   }
@@ -838,7 +838,7 @@ T2: UPDATE seats SET status='BOOKED', user='B' WHERE id='12C'  ← both succeed!
         <span class="section-label">// solution 2 — optimistic locking</span>
         <div class="code-block"><span class="cm">-- Add a version column, check it on update</span>
 <span class="kw">SELECT</span> id, status, version <span class="kw">FROM</span> seats <span class="kw">WHERE</span> id=<span class="str">'12C'</span>;
-<span class="cm">-- Got: { status: 'AVAILABLE', version: 7 }</span>
+          <span class="cm">-- Got: &#123; status: 'AVAILABLE', version: 7 &#125;</span>
 
 <span class="kw">UPDATE</span> seats
   <span class="kw">SET</span> status=<span class="str">'BOOKED'</span>, version=<span class="num">8</span>
@@ -1155,11 +1155,11 @@ T2: UPDATE seats SET status='BOOKED', user='B' WHERE id='12C'  ← both succeed!
 
         <span class="section-label">// idempotency key — the critical detail</span>
         <div class="code-block"><span class="cm">// Payment request with idempotency key</span>
-{
+&#123;
   <span class="str">"amount"</span>: <span class="num">450</span>,
   <span class="str">"user_id"</span>: <span class="str">"u_123"</span>,
   <span class="str">"idempotency_key"</span>: <span class="str">"checkout_session_abc_v1"</span>
-}
+&#125;
 
 <span class="cm">// If we retry, same key → same result, no double charge</span>
 <span class="cm">// Payment service stores: key → result for 24h</span></div>
@@ -1267,12 +1267,12 @@ process(E1)      → sends notification AGAIN 💥
 
 <span class="cm">// THE FIX — idempotent processing</span>
 <span class="kw">function</span> <span class="fn">process</span>(event):
-  <span class="kw">if</span> db.exists(<span class="str">`processed:${event.id}`</span>):
+  <span class="kw">if</span> db.exists(<span class="str">`processed:$&#123;event.id&#125;`</span>):
     <span class="kw">return</span>  <span class="cm">// Already done, skip safely</span>
   
   <span class="kw">begin</span> transaction:
     sendNotification(event)
-    db.insert(<span class="str">`processed:${event.id}`</span>)
+    db.insert(<span class="str">`processed:$&#123;event.id&#125;`</span>)
   <span class="kw">commit</span></div>
 
         <ul class="step-list">
@@ -1310,12 +1310,12 @@ process(E1)      → sends notification AGAIN 💥
         </ul>
 
         <div class="code-block"><span class="cm">// State machine — reject invalid transitions</span>
-VALID_TRANSITIONS = {
+VALID_TRANSITIONS = &#123;
   <span class="str">"PLACED"</span>: [<span class="str">"CONFIRMED"</span>, <span class="str">"CANCELLED"</span>],
   <span class="str">"CONFIRMED"</span>: [<span class="str">"SHIPPED"</span>, <span class="str">"CANCELLED"</span>],
   <span class="str">"SHIPPED"</span>: [<span class="str">"DELIVERED"</span>, <span class="str">"RETURNED"</span>],
   <span class="str">"DELIVERED"</span>: [<span class="str">"RETURNED"</span>]
-}
+&#125;
 
 <span class="kw">if</span> newState <span class="kw">not in</span> VALID_TRANSITIONS[currentState]:
   publishToDLQ(event)  <span class="cm">// Out-of-order — handle separately</span></div>
@@ -1407,14 +1407,14 @@ PK: <span class="str">"celebrity_123"</span>
 
 <span class="cm">// GOOD: Add random suffix to spread across 10 partitions</span>
 suffix = random.randint(<span class="num">0</span>, <span class="num">9</span>)
-PK: <span class="str">f"celebrity_123_{suffix}"</span>
+PK: <span class="str">f"celebrity_123_&#123;suffix&#125;"</span>
 <span class="cm">// → celebrity_123_0, celebrity_123_1 ... celebrity_123_9</span>
 <span class="cm">// 10x write throughput immediately</span>
 
 <span class="cm">// To READ all activity: scatter-gather</span>
 results = []
 <span class="kw">for</span> suffix <span class="kw">in</span> range(<span class="num">0</span>, <span class="num">10</span>):
-  results += query(PK=<span class="str">f"celebrity_123_{suffix}"</span>)
+  results += query(PK=<span class="str">f"celebrity_123_&#123;suffix&#125;"</span>)
 merge_and_sort(results)</div>
 
         <ul class="step-list">
@@ -1745,7 +1745,7 @@ GATEWAY SHOULD NOT DO:
         </div>
         <p class="answer-text">"This is the <strong>distributed write conflict</strong> problem. Two writers, same object, no coordination. Resolution strategy depends on the data type — text files, structured data, and spreadsheets need different approaches."</p>
         <ul class="step-list">
-          <li><span class="step-num">01</span><div><strong>Vector clocks for conflict detection:</strong> Each device maintains a vector clock <span class="inline-code">{device: version}</span>. If one clock dominates (all values ≥), take the higher version. If neither dominates, you have a genuine conflict.</div></li>
+          <li><span class="step-num">01</span><div><strong>Vector clocks for conflict detection:</strong> Each device maintains a vector clock <span class="inline-code">&#123;device: version&#125;</span>. If one clock dominates (all values ≥), take the higher version. If neither dominates, you have a genuine conflict.</div></li>
           <li><span class="step-num">02</span><div><strong>3-way merge for text files:</strong> Find the last common ancestor. Compare both diverged versions against the ancestor. Merge non-overlapping changes automatically. Present overlapping changes to the user — identical to git merge conflicts.</div></li>
           <li><span class="step-num">03</span><div><strong>Conflict file strategy (Dropbox default):</strong> Create "report (Alice's conflicted copy).docx." Both versions preserved. Simple, no data loss, user decides. Not ideal but never wrong.</div></li>
           <li><span class="step-num">04</span><div><strong>CRDTs for conflict-free data structures:</strong> Conflict-free Replicated Data Types merge automatically. A CRDT counter can be incremented on two devices and merged without conflict. Google Docs uses Operational Transformation, a CRDT variant, for real-time collaboration.</div></li>
@@ -1910,7 +1910,7 @@ FROM ledger_entries WHERE wallet_id = <span class="num">123</span></div>
         </div>
         <p class="answer-text">"Presence is a <strong>heartbeat-driven system with aggressive TTL-based expiry</strong>. The challenge: 1 billion+ users, frequent state changes, and the need to fan-out status to all of a user's contacts in real time."</p>
         <ul class="step-list">
-          <li><span class="step-num">01</span><div><strong>Heartbeat-based presence:</strong> Every active client sends a heartbeat ping every 5 seconds. Server updates <span class="inline-code">user:{id}:last_seen</span> in Redis with the current timestamp. If no heartbeat arrives, the key expires after 30s (5s × 6 missed heartbeats) — user is considered offline.</div></li>
+          <li><span class="step-num">01</span><div><strong>Heartbeat-based presence:</strong> Every active client sends a heartbeat ping every 5 seconds. Server updates <span class="inline-code">user:&#123;id&#125;:last_seen</span> in Redis with the current timestamp. If no heartbeat arrives, the key expires after 30s (5s × 6 missed heartbeats) — user is considered offline.</div></li>
           <li><span class="step-num">02</span><div><strong>TTL-based expiry over explicit disconnect:</strong> Network disconnects (phone died, tunnel) don't send an explicit "going offline" event. TTL expiry is the only reliable signal. Design around the assumption that explicit disconnects may never arrive.</div></li>
           <li><span class="step-num">03</span><div><strong>Presence fan-out on status change:</strong> When a user goes online or offline, fan out the status change to all their contacts who are currently online. Use a Kafka topic <span class="inline-code">presence.events</span> with contact fan-out workers. Only send to contacts whose client is connected — skip offline users.</div></li>
           <li><span class="step-num">04</span><div><strong>Privacy controls complicate the system:</strong> WhatsApp has "nobody / my contacts / everyone" last seen privacy settings. Don't store one global last_seen — store per-relationship visibility flags. A user who sets "nobody" must return null for all presence queries except their own.</div></li>
@@ -2077,7 +2077,7 @@ redis.ZREVRANGE(<span class="str">"leaderboard:tournament:2024"</span>, rank-<sp
           <li><span class="step-num">03</span><div><strong>Targeting rules:</strong> Feature flags support targeting: enable only for internal employees first, then Android, then iOS 15+, then iOS 14. Exclude device types, OS versions, or geographic regions. The iOS 14 crash would have been caught at the internal testing stage.</div></li>
           <li><span class="step-num">04</span><div><strong>Automatic rollback on error spike:</strong> Integrate your feature flag system with your error monitoring (Sentry, Datadog). If crash rate for flag-enabled users exceeds 1% (vs 0.1% baseline), automatically disable the flag and page on-call. No human decision required during 3 AM incidents.</div></li>
         </ul>
-        <div class="callout tip"><span class="callout-icon">💡</span><span>LaunchDarkly, Split.io, Unleash (open-source), and Growthbook are popular feature flag platforms. For most teams, a simple Redis hash with flag name → {enabled, rollout_percent, exclusions} is sufficient and free. Don't over-engineer this.</span></div>
+        <div class="callout tip"><span class="callout-icon">💡</span><span>LaunchDarkly, Split.io, Unleash (open-source), and Growthbook are popular feature flag platforms. For most teams, a simple Redis hash with flag name → &#123;enabled, rollout_percent, exclusions&#125; is sufficient and free. Don't over-engineer this.</span></div>
       </div>
     </div>
 
@@ -2166,14 +2166,14 @@ ALTER TABLE users DROP COLUMN user_name;
 
 <span class="cm">// On query popularity update (after a successful search)</span>
 <span class="kw">for</span> prefix <span class="kw">in</span> all_prefixes(<span class="str">"iphone"</span>):  <span class="cm">// "i","ip","iph","ipho","iphon","iphone"</span>
-  redis.ZINCRBY(<span class="str">f"auto:{prefix}"</span>, <span class="num">1</span>, <span class="str">"iphone"</span>)
+  redis.ZINCRBY(<span class="str">f"auto:&#123;prefix&#125;"</span>, <span class="num">1</span>, <span class="str">"iphone"</span>)
 
 <span class="cm">// On user keystroke (query time)</span>
 <span class="kw">function</span> <span class="fn">autocomplete</span>(prefix):
-  <span class="kw">return</span> redis.ZREVRANGE(<span class="str">f"auto:{prefix}"</span>, <span class="num">0</span>, <span class="num">9</span>)  <span class="cm">// top 10</span>
+  <span class="kw">return</span> redis.ZREVRANGE(<span class="str">f"auto:&#123;prefix&#125;"</span>, <span class="num">0</span>, <span class="num">9</span>)  <span class="cm">// top 10</span>
 <span class="cm">// O(log N) per request. 1M RPS = 1M Redis ops/sec. Cluster handles it.</span></div>
         <ul class="step-list">
-          <li><span class="step-num">01</span><div><strong>Precomputed prefix sets in Redis ZSET:</strong> For every popular search term, write the term to all of its prefix sets scored by search frequency. "iphone" goes into sets "i", "ip", "iph", etc. Autocomplete = single ZREVRANGE on <span class="inline-code">auto:{prefix}</span>. Sub-millisecond reads.</div></li>
+          <li><span class="step-num">01</span><div><strong>Precomputed prefix sets in Redis ZSET:</strong> For every popular search term, write the term to all of its prefix sets scored by search frequency. "iphone" goes into sets "i", "ip", "iph", etc. Autocomplete = single ZREVRANGE on <span class="inline-code">auto:&#123;prefix&#125;</span>. Sub-millisecond reads.</div></li>
           <li><span class="step-num">02</span><div><strong>Limit prefix fan-out:</strong> A term with 20 characters has 20 prefixes. Writing to 20 Redis keys per popular query is fine. But with millions of tail queries, the number of keys explodes. Set a minimum prefix length of 2 characters and only maintain Top-1000 queries per prefix — prune the long tail.</div></li>
           <li><span class="step-num">03</span><div><strong>Trie for exact prefix matching (alternative):</strong> An in-memory trie data structure enables O(prefix_length) lookup. For a service with &lt;10M unique terms, fit the entire trie in RAM (one app server, 8GB). For larger vocab, distribute by prefix hash — requests for "i*" go to shard 1, "a*" go to shard 2.</div></li>
           <li><span class="step-num">04</span><div><strong>Client-side debouncing:</strong> Instead of firing on every keystroke, fire 150-300ms after the last keystroke. Reduces RPS by 60-70% for typical typing speeds with zero user-visible quality degradation. The easiest optimization that requires no backend changes.</div></li>
@@ -2232,8 +2232,8 @@ ALTER TABLE users DROP COLUMN user_name;
           </svg>
         </div>
         <ul class="step-list">
-          <li><span class="step-num">01</span><div><strong>Feature Store with precomputed features:</strong> Maintain a Redis hash per user: <span class="inline-code">fraud_features:{user_id}</span> → {tx_count_1h: 3, tx_amount_1h: 450, unique_merchants_24h: 7, ...}. A Flink streaming job continuously updates these features as transactions arrive. At inference time, one Redis HGETALL = all 40 features in under 5ms.</div></li>
-          <li><span class="step-num">02</span><div><strong>Sliding window velocity features:</strong> "Transactions in the last 1 hour" is expensive to compute on demand (requires scanning all txns). Precompute with a Flink sliding window: on every transaction, update <span class="inline-code">ZADD tx_history:{user_id} timestamp tx_id</span>, then count with ZCOUNT in the last 3600s. Maintained incrementally — O(log n) per update.</div></li>
+          <li><span class="step-num">01</span><div><strong>Feature Store with precomputed features:</strong> Maintain a Redis hash per user: <span class="inline-code">fraud_features:&#123;user_id&#125;</span> → &#123;tx_count_1h: 3, tx_amount_1h: 450, unique_merchants_24h: 7, ...&#125;. A Flink streaming job continuously updates these features as transactions arrive. At inference time, one Redis HGETALL = all 40 features in under 5ms.</div></li>
+          <li><span class="step-num">02</span><div><strong>Sliding window velocity features:</strong> "Transactions in the last 1 hour" is expensive to compute on demand (requires scanning all txns). Precompute with a Flink sliding window: on every transaction, update <span class="inline-code">ZADD tx_history:&#123;user_id&#125; timestamp tx_id</span>, then count with ZCOUNT in the last 3600s. Maintained incrementally — O(log n) per update.</div></li>
           <li><span class="step-num">03</span><div><strong>Lightweight ML model for inference latency:</strong> Gradient Boosted Trees (XGBoost/LightGBM) infer in &lt;5ms with 40 features — far faster than neural networks. Neural networks excel at raw data (images, text); tabular fraud features are the ideal case for gradient boosting. Don't reach for deep learning when GBT is sufficient.</div></li>
           <li><span class="step-num">04</span><div><strong>Risk tier routing:</strong> Low risk (&lt;0.1) → auto-approve. Medium risk (0.1-0.5) → approve + async review. High risk (0.5-0.8) → SMS/OTP verification step. Very high (&gt;0.8) → block + notify user. This handles edge cases without binary approve/block creating too many false positives.</div></li>
         </ul>
@@ -2258,7 +2258,7 @@ ALTER TABLE users DROP COLUMN user_name;
         <p class="answer-text">"Logging everything at DEBUG level without a retention strategy is a common mistake. The fix is <strong>log tiering, structured logging, and intelligent sampling</strong> — not more Elasticsearch capacity."</p>
         <ul class="step-list">
           <li><span class="step-num">01</span><div><strong>Log level discipline:</strong> DEBUG logs should never reach production Elasticsearch. Route DEBUG to a short-lived local buffer (30 minutes). INFO logs go to Elasticsearch with 7-day retention. WARN/ERROR go to Elasticsearch with 30-day retention and PagerDuty integration. This single change typically reduces log volume by 80%.</div></li>
-          <li><span class="step-num">02</span><div><strong>Structured logging (JSON):</strong> Replace unstructured messages like <span class="inline-code">"Payment processed for user 123 in 45ms"</span> with JSON: <span class="inline-code">{"event": "payment_processed", "user_id": 123, "duration_ms": 45}</span>. Structured logs are indexable, filterable, and parseable. You can search <span class="inline-code">user_id:123</span> instead of regex-parsing freetext.</div></li>
+          <li><span class="step-num">02</span><div><strong>Structured logging (JSON):</strong> Replace unstructured messages like <span class="inline-code">"Payment processed for user 123 in 45ms"</span> with JSON: <span class="inline-code">&#123;"event": "payment_processed", "user_id": 123, "duration_ms": 45&#125;</span>. Structured logs are indexable, filterable, and parseable. You can search <span class="inline-code">user_id:123</span> instead of regex-parsing freetext.</div></li>
           <li><span class="step-num">03</span><div><strong>Tiered storage:</strong> Hot tier (Elasticsearch, &lt;7 days) for fast search. Warm tier (S3 + Athena, 7-90 days) for ad-hoc SQL queries at $5/TB scanned. Cold tier (S3 Glacier, &gt;90 days) for compliance at $0.004/GB/month. 90% of log queries are about the last 3 days — match your storage cost to your access patterns.</div></li>
           <li><span class="step-num">04</span><div><strong>Tail-based sampling for traces:</strong> Don't trace every request. Sample 1% of successful requests, 100% of errors, 100% of slow requests (&gt;1s). Tail-based sampling (Jaeger, OpenTelemetry) makes the sampling decision after the full trace is collected — you always capture errors even if they started as "normal" requests.</div></li>
         </ul>

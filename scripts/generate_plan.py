@@ -1,8 +1,13 @@
 import csv
 import random
+import os
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+CSV_IN = os.path.join(BASE_DIR, '../data/csv/questions.csv')
+CSV_OUT = os.path.join(BASE_DIR, '../data/csv/study_plan.csv')
 
 questions = []
-with open('d:/DSA/questions.csv', 'r', encoding='utf-8') as f:
+with open(CSV_IN, 'r', encoding='utf-8') as f:
     reader = csv.DictReader(f)
     for row in reader:
         questions.append(row)
@@ -17,7 +22,7 @@ random.shuffle(easies)
 random.shuffle(mediums)
 random.shuffle(hards)
 
-with open('d:/DSA/study_plan.csv', 'w', newline='', encoding='utf-8') as f:
+with open(CSV_OUT, 'w', newline='', encoding='utf-8') as f:
     writer = csv.writer(f)
     writer.writerow(['Day', 'Pattern', 'Difficulty Level', 'Problem Name'])
     
@@ -48,4 +53,4 @@ with open('d:/DSA/study_plan.csv', 'w', newline='', encoding='utf-8') as f:
         
         day += 1
 
-print("Successfully generated d:/DSA/study_plan.csv")
+print(f"Successfully generated {CSV_OUT}")

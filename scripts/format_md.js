@@ -135,4 +135,4 @@ function processFile(filepath) {
     console.log("Processed successfully.");
 }
 
-processFile('d:/DSA/nodejs.md');
+processFile(path.join(__dirname, '../public/notes/nodejs.md'));

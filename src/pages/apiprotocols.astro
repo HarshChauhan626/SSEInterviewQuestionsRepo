@@ -1,673 +1,11 @@
 ---
-// API Protocols
+import Layout from '../layouts/Layout.astro';
+import CodeBlock from '../components/CodeBlock.astro';
 ---
 
-<!DOCTYPE html>
-<html lang="en">
+<Layout title="GraphQL & gRPC — The Complete Guide | Dev Notes" description="A complete, system-design-grade reference on GraphQL and gRPC: concepts, architecture, schemas, protobufs, streaming, best practices, diagrams, and 50+ senior interview Q&A.">
+  <div class="shell">
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>GraphQL &amp; gRPC — The Complete Guide | Dev Notes</title>
-    <meta name="description"
-        content="A complete, system-design-grade reference on GraphQL and gRPC: concepts, architecture, schemas, protobufs, streaming, best practices, diagrams, and 50+ senior interview Q&amp;A.">
-    <style is:global>
-        :root {
-            --bg: #0b0e14;
-            --bg-elev: #11151d;
-            --bg-card: #141925;
-            --border: #222a38;
-            --border-soft: #1a212e;
-            --text: #dde3ee;
-            --text-dim: #8c96a8;
-            --text-faint: #5c6577;
-            --accent-gql: #e535ab;
-            --accent-grpc: #3fa7ff;
-            --accent-good: #33d6a6;
-            --accent-warn: #ffb347;
-            --accent-bad: #ff5d6c;
-            --mono: "JetBrains Mono", "Fira Code", ui-monospace, SFMono-Regular, Consolas, monospace;
-            --sans: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
-            --radius: 10px;
-            --maxw: 920px;
-        }
-
-        * {
-            box-sizing: border-box;
-        }
-
-        html {
-            scroll-behavior: smooth;
-        }
-
-        body {
-            margin: 0;
-            background:
-                radial-gradient(80% 60% at 15% -5%, rgba(229, 53, 171, .08), transparent 60%),
-                radial-gradient(80% 60% at 85% 0%, rgba(63, 167, 255, .08), transparent 60%),
-                var(--bg);
-            color: var(--text);
-            font-family: var(--sans);
-            line-height: 1.65;
-            -webkit-font-smoothing: antialiased;
-        }
-
-        a {
-            color: var(--accent-grpc);
-            text-decoration: none;
-        }
-
-        a:hover {
-            text-decoration: underline;
-        }
-
-        code,
-        pre,
-        .mono {
-            font-family: var(--mono);
-        }
-
-        code {
-            background: rgba(255, 255, 255, .06);
-            padding: .15em .45em;
-            border-radius: 5px;
-            font-size: .86em;
-            color: #ffd479;
-        }
-
-        pre {
-            background: #0a0d13;
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 18px 20px;
-            overflow-x: auto;
-            font-size: .84rem;
-            line-height: 1.55;
-            margin: 18px 0;
-        }
-
-        pre code {
-            background: none;
-            padding: 0;
-            color: #cdd6e4;
-        }
-
-        .tok-kw {
-            color: #ff79c6;
-        }
-
-        .tok-type {
-            color: #8be9fd;
-        }
-
-        .tok-str {
-            color: #f1fa8c;
-        }
-
-        .tok-com {
-            color: #6272a4;
-        }
-
-        .tok-fn {
-            color: #50fa7b;
-        }
-
-        .tok-num {
-            color: #bd93f9;
-        }
-
-        /* layout shell */
-        .topbar {
-            position: sticky;
-            top: 0;
-            z-index: 50;
-            background: rgba(11, 14, 20, .85);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid var(--border-soft);
-        }
-
-        .topbar-inner {
-            max-width: 1180px;
-            margin: 0 auto;
-            padding: 14px 24px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 16px;
-        }
-
-        .brand {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-weight: 700;
-            color: var(--text);
-            font-size: .95rem;
-        }
-
-        .brand .dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, var(--accent-gql), var(--accent-grpc));
-        }
-
-        .brand-sub {
-            color: var(--text-faint);
-            font-weight: 500;
-        }
-
-        .topbar a.home {
-            color: var(--text-dim);
-            font-size: .85rem;
-        }
-
-        .progress {
-            height: 2px;
-            background: linear-gradient(90deg, var(--accent-gql), var(--accent-grpc));
-            width: 0%;
-            position: fixed;
-            top: 0;
-            left: 0;
-            z-index: 60;
-            transition: width .1s;
-        }
-
-        .shell {
-            max-width: 1180px;
-            margin: 0 auto;
-            display: grid;
-            grid-template-columns: 240px minmax(0, 1fr);
-            gap: 44px;
-            padding: 36px 24px 120px;
-        }
-
-        .toc {
-            position: sticky;
-            top: 64px;
-            align-self: start;
-            max-height: calc(100vh - 90px);
-            overflow-y: auto;
-            padding-right: 8px;
-        }
-
-        .toc::-webkit-scrollbar {
-            width: 5px;
-        }
-
-        .toc::-webkit-scrollbar-thumb {
-            background: var(--border);
-            border-radius: 5px;
-        }
-
-        .toc-title {
-            font-size: .7rem;
-            letter-spacing: .12em;
-            text-transform: uppercase;
-            color: var(--text-faint);
-            margin: 0 0 10px;
-            font-weight: 700;
-        }
-
-        .toc nav a {
-            display: block;
-            font-size: .83rem;
-            color: var(--text-dim);
-            padding: 5px 0 5px 12px;
-            border-left: 2px solid var(--border-soft);
-            margin-bottom: 1px;
-        }
-
-        .toc nav a:hover {
-            color: var(--text);
-            text-decoration: none;
-            border-left-color: var(--accent-grpc);
-        }
-
-        .toc nav a.sub {
-            padding-left: 24px;
-            font-size: .78rem;
-            color: var(--text-faint);
-        }
-
-        .toc nav a.qsec {
-            border-left-color: var(--accent-warn);
-        }
-
-        .toc nav a.active {
-            color: #fff;
-            border-left-color: var(--accent-gql);
-        }
-
-        main {
-            min-width: 0;
-        }
-
-        /* hero */
-        .hero {
-            padding: 8px 0 40px;
-            border-bottom: 1px solid var(--border-soft);
-            margin-bottom: 48px;
-        }
-
-        .hero .eyebrow {
-            font-family: var(--mono);
-            font-size: .78rem;
-            color: var(--accent-warn);
-            letter-spacing: .06em;
-            margin-bottom: 14px;
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-
-        .hero .eyebrow::before {
-            content: "$";
-            color: var(--text-faint);
-        }
-
-        .hero h1 {
-            font-size: 2.6rem;
-            line-height: 1.12;
-            margin: 0 0 16px;
-            font-weight: 800;
-            letter-spacing: -.02em;
-            background: linear-gradient(120deg, #fff 30%, var(--accent-gql) 65%, var(--accent-grpc) 100%);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-        }
-
-        .hero p.lede {
-            font-size: 1.08rem;
-            color: var(--text-dim);
-            max-width: 640px;
-            margin: 0 0 22px;
-        }
-
-        .hero .stats {
-            display: flex;
-            gap: 28px;
-            flex-wrap: wrap;
-            margin-top: 18px;
-        }
-
-        .hero .stat b {
-            display: block;
-            font-size: 1.5rem;
-            font-family: var(--mono);
-            color: var(--text);
-        }
-
-        .hero .stat span {
-            font-size: .75rem;
-            color: var(--text-faint);
-            text-transform: uppercase;
-            letter-spacing: .06em;
-        }
-
-        /* sections */
-        section.block {
-            margin-bottom: 56px;
-            scroll-margin-top: 80px;
-        }
-
-        .section-tag {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            font-family: var(--mono);
-            font-size: .72rem;
-            color: var(--text-faint);
-            text-transform: uppercase;
-            letter-spacing: .1em;
-            margin-bottom: 8px;
-        }
-
-        .section-tag.gql {
-            color: var(--accent-gql);
-        }
-
-        .section-tag.grpc {
-            color: var(--accent-grpc);
-        }
-
-        h2 {
-            font-size: 1.7rem;
-            margin: 0 0 6px;
-            letter-spacing: -.01em;
-            color: #fff;
-        }
-
-        h2.gql-h {
-            border-left: 3px solid var(--accent-gql);
-            padding-left: 14px;
-        }
-
-        h2.grpc-h {
-            border-left: 3px solid var(--accent-grpc);
-            padding-left: 14px;
-        }
-
-        h3 {
-            font-size: 1.2rem;
-            margin: 30px 0 10px;
-            color: #f1f4fa;
-        }
-
-        h4 {
-            font-size: 1rem;
-            margin: 20px 0 8px;
-            color: var(--text);
-        }
-
-        p {
-            color: #c4cbda;
-            margin: 10px 0;
-        }
-
-        .lead-p {
-            font-size: 1.02rem;
-            color: var(--text-dim);
-        }
-
-        ul,
-        ol {
-            color: #c4cbda;
-            padding-left: 22px;
-        }
-
-        li {
-            margin: 6px 0;
-        }
-
-        strong {
-            color: #f3f6fb;
-        }
-
-        .callout {
-            border: 1px solid var(--border);
-            border-left: 3px solid var(--accent-warn);
-            background: var(--bg-card);
-            border-radius: 0 var(--radius) var(--radius) 0;
-            padding: 14px 18px;
-            margin: 18px 0;
-            font-size: .92rem;
-        }
-
-        .callout.tip {
-            border-left-color: var(--accent-good);
-        }
-
-        .callout.danger {
-            border-left-color: var(--accent-bad);
-        }
-
-        .callout-label {
-            font-family: var(--mono);
-            font-size: .7rem;
-            text-transform: uppercase;
-            letter-spacing: .08em;
-            color: var(--accent-warn);
-            margin-bottom: 6px;
-            font-weight: 700;
-        }
-
-        .callout.tip .callout-label {
-            color: var(--accent-good);
-        }
-
-        .callout.danger .callout-label {
-            color: var(--accent-bad);
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 18px 0;
-            font-size: .88rem;
-        }
-
-        th,
-        td {
-            border: 1px solid var(--border);
-            padding: 10px 14px;
-            text-align: left;
-            vertical-align: top;
-        }
-
-        th {
-            background: var(--bg-elev);
-            color: var(--text);
-            font-size: .78rem;
-            text-transform: uppercase;
-            letter-spacing: .05em;
-        }
-
-        td {
-            color: var(--text-dim);
-        }
-
-        tr:nth-child(even) td {
-            background: rgba(255, 255, 255, .015);
-        }
-
-        .card-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 18px;
-            margin: 20px 0;
-        }
-
-        @media(max-width:720px) {
-            .card-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .card {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 18px 20px;
-        }
-
-        .card h4 {
-            margin-top: 0;
-        }
-
-        .card.gql {
-            border-top: 2px solid var(--accent-gql);
-        }
-
-        .card.grpc {
-            border-top: 2px solid var(--accent-grpc);
-        }
-
-        .diagram-wrap {
-            background: var(--bg-elev);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 20px;
-            margin: 20px 0;
-            overflow-x: auto;
-        }
-
-        .diagram-cap {
-            font-size: .78rem;
-            color: var(--text-faint);
-            text-align: center;
-            margin-top: 10px;
-            font-family: var(--mono);
-        }
-
-        svg text {
-            font-family: var(--mono);
-        }
-
-        .pill {
-            display: inline-block;
-            font-family: var(--mono);
-            font-size: .72rem;
-            padding: 2px 9px;
-            border-radius: 99px;
-            border: 1px solid var(--border);
-            color: var(--text-dim);
-            margin: 2px 4px 2px 0;
-        }
-
-        .pill.good {
-            color: var(--accent-good);
-            border-color: rgba(51, 214, 166, .4);
-        }
-
-        .pill.warn {
-            color: var(--accent-warn);
-            border-color: rgba(255, 179, 71, .4);
-        }
-
-        .pill.bad {
-            color: var(--accent-bad);
-            border-color: rgba(255, 93, 108, .4);
-        }
-
-        /* FAQ */
-        #faqList details {
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            background: var(--bg-card);
-            margin-bottom: 10px;
-            overflow: hidden;
-        }
-
-        #faqList summary {
-            padding: 14px 18px;
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 14px;
-            font-weight: 600;
-            color: #eef1f8;
-            font-size: .94rem;
-            list-style: none;
-        }
-
-        #faqList summary::-webkit-details-marker {
-            display: none;
-        }
-
-        #faqList summary::after {
-            content: '▼';
-            color: var(--text-faint);
-            transition: transform .2s;
-            flex: none;
-            font-family: var(--mono);
-            font-size: .75rem;
-        }
-
-        #faqList details[open] summary {
-            border-bottom: 1px solid var(--border-soft);
-        }
-
-        #faqList details[open] summary::after {
-            transform: rotate(180deg);
-        }
-
-        #faqList details p, #faqList details pre {
-            margin: 0;
-            padding: 16px 18px;
-            color: var(--text-dim);
-            font-size: .9rem;
-            line-height: 1.6;
-        }
-
-        .faq-cat {
-            font-family: var(--mono);
-            font-size: .7rem;
-            color: var(--accent-warn);
-            text-transform: uppercase;
-            letter-spacing: .08em;
-            margin: 34px 0 14px;
-            padding-top: 10px;
-            border-top: 1px dashed var(--border);
-        }
-
-        footer {
-            max-width: 1180px;
-            margin: 0 auto;
-            padding: 40px 24px 60px;
-            color: var(--text-faint);
-            font-size: .82rem;
-            border-top: 1px solid var(--border-soft);
-            text-align: center;
-        }
-
-        footer a {
-            color: var(--text-dim);
-        }
-
-        .backtotop {
-            position: fixed;
-            bottom: 24px;
-            right: 24px;
-            width: 42px;
-            height: 42px;
-            border-radius: 50%;
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--text-dim);
-            font-family: var(--mono);
-            text-decoration: none;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity .2s;
-            z-index: 40;
-        }
-
-        .backtotop.show {
-            opacity: 1;
-            pointer-events: auto;
-        }
-
-        @media(max-width:900px) {
-            .shell {
-                grid-template-columns: 1fr;
-            }
-
-            .toc {
-                position: static;
-                max-height: none;
-                margin-bottom: 24px;
-                border: 1px solid var(--border);
-                border-radius: var(--radius);
-                padding: 16px;
-                background: var(--bg-card);
-            }
-
-            .hero h1 {
-                font-size: 2rem;
-            }
-        }
-    </style>
-</head>
-
-<body>
-
-    <div class="progress" id="progressBar"></div>
-
-    <div class="topbar">
-        <div class="topbar-inner">
-            <div class="brand"><span class="dot"></span>Dev Notes <span class="brand-sub">/ GraphQL &amp; gRPC</span>
-            </div>
-            <a class="home" href="http://skillhiveonline.com/index.html">&larr; All notes</a>
-        </div>
-    </div>
-
-    <div class="shell">
         <aside class="toc">
             <p class="toc-title">Contents</p>
             <nav id="tocNav">
@@ -865,35 +203,35 @@
                 <h3>Schema &amp; Type System (SDL)</h3>
                 <p>Every GraphQL API is described by a <strong>Schema Definition Language (SDL)</strong> document. This
                     schema is the contract — the single source of truth for what can be queried.</p>
-                <pre><code><span class="tok-com"># Scalar & object types</span>
-<span class="tok-kw">type</span> <span class="tok-type">User</span> {
-  id: <span class="tok-type">ID!</span>
-  name: <span class="tok-type">String!</span>
-  email: <span class="tok-type">String!</span>
-  orders(limit: <span class="tok-type">Int</span> = <span class="tok-num">10</span>): [<span class="tok-type">Order!</span>]!
+                <CodeBlock code={`# Scalar & object types
+type User {
+  id: ID!
+  name: String!
+  email: String!
+  orders(limit: Int = 10): [Order!]!
 }
 
-<span class="tok-kw">type</span> <span class="tok-type">Order</span> {
-  id: <span class="tok-type">ID!</span>
-  status: <span class="tok-type">OrderStatus!</span>
-  total: <span class="tok-type">Float!</span>
-  items: [<span class="tok-type">OrderItem!</span>]!
+type Order {
+  id: ID!
+  status: OrderStatus!
+  total: Float!
+  items: [OrderItem!]!
 }
 
-<span class="tok-kw">enum</span> <span class="tok-type">OrderStatus</span> { <span class="tok-type">PENDING</span> <span class="tok-type">SHIPPED</span> <span class="tok-type">DELIVERED</span> <span class="tok-type">CANCELLED</span> }
+enum OrderStatus { PENDING SHIPPED DELIVERED CANCELLED }
 
-<span class="tok-kw">type</span> <span class="tok-type">Query</span> {
-  user(id: <span class="tok-type">ID!</span>): <span class="tok-type">User</span>
-  searchUsers(query: <span class="tok-type">String!</span>): [<span class="tok-type">User!</span>]!
+type Query {
+  user(id: ID!): User
+  searchUsers(query: String!): [User!]!
 }
 
-<span class="tok-kw">type</span> <span class="tok-type">Mutation</span> {
-  createOrder(input: <span class="tok-type">CreateOrderInput!</span>): <span class="tok-type">Order!</span>
+type Mutation {
+  createOrder(input: CreateOrderInput!): Order!
 }
 
-<span class="tok-kw">type</span> <span class="tok-type">Subscription</span> {
-  orderStatusChanged(orderId: <span class="tok-type">ID!</span>): <span class="tok-type">Order!</span>
-}</code></pre>
+type Subscription {
+  orderStatusChanged(orderId: ID!): Order!
+}`} />
                 <p>Key type-system rules: <code>!</code> means non-nullable, <code>[Type!]!</code> means a non-null list
                     of non-null items, and every operation root (<code>Query</code>, <code>Mutation</code>,
                     <code>Subscription</code>) is itself just a regular object type. GraphQL ships scalar types
@@ -902,11 +240,11 @@
                 </p>
                 <h4>Interfaces &amp; Unions</h4>
                 <p>GraphQL supports polymorphism so a field can return one of several possible types:</p>
-                <pre><code><span class="tok-kw">interface</span> <span class="tok-type">Node</span> { id: <span class="tok-type">ID!</span> }
-<span class="tok-kw">type</span> <span class="tok-type">Article</span> <span class="tok-kw">implements</span> <span class="tok-type">Node</span> { id: <span class="tok-type">ID!</span> title: <span class="tok-type">String!</span> }
-<span class="tok-kw">type</span> <span class="tok-type">Video</span> <span class="tok-kw">implements</span> <span class="tok-type">Node</span> { id: <span class="tok-type">ID!</span> durationSec: <span class="tok-type">Int!</span> }
+                <CodeBlock code={`interface Node { id: ID! }
+type Article implements Node { id: ID! title: String! }
+type Video implements Node { id: ID! durationSec: Int! }
 
-<span class="tok-kw">union</span> <span class="tok-type">SearchResult</span> = <span class="tok-type">Article</span> | <span class="tok-type">Video</span> | <span class="tok-type">User</span></code></pre>
+union SearchResult = Article | Video | User`} />
             </section>
 
             <section class="block" id="gql-ops">
@@ -936,11 +274,11 @@
                         <td>Long-lived connection (typically WebSocket), event-driven</td>
                     </tr>
                 </table>
-                <pre><code><span class="tok-com">// Query: client asks for exactly these fields, nested</span>
-<span class="tok-kw">query</span> GetUserOrders($userId: <span class="tok-type">ID!</span>) {
+                <CodeBlock code={`// Query: client asks for exactly these fields, nested
+query GetUserOrders($userId: ID!) {
   user(id: $userId) {
     name
-    orders(limit: <span class="tok-num">5</span>) {
+    orders(limit: 5) {
       id
       status
       total
@@ -948,23 +286,23 @@
   }
 }
 
-<span class="tok-com">// Mutation: write + select back the result shape</span>
-<span class="tok-kw">mutation</span> PlaceOrder($input: <span class="tok-type">CreateOrderInput!</span>) {
+// Mutation: write + select back the result shape
+mutation PlaceOrder($input: CreateOrderInput!) {
   createOrder(input: $input) {
     id
     status
   }
 }
 
-<span class="tok-com">// Subscription: stays open, pushes events</span>
-<span class="tok-kw">subscription</span> WatchOrder($orderId: <span class="tok-type">ID!</span>) {
+// Subscription: stays open, pushes events
+subscription WatchOrder($orderId: ID!) {
   orderStatusChanged(orderId: $orderId) {
     status
   }
-}</code></pre>
+}`} />
                 <div class="callout">
                     <div class="callout-label">Fragments</div>
-                    Reusable field selections: <code>fragment OrderFields on Order { id status total }</code> then
+                    Reusable field selections: <code>fragment OrderFields on Order &#123; id status total &#125;</code> then
                     spread with <code>...OrderFields</code>. Keeps large client queries DRY and is heavily used by
                     codegen tools like Apollo Client / Relay.
                 </div>
@@ -978,15 +316,15 @@
                     down. If a field has no custom resolver, a sensible default (read the property off the parent
                     object) is used.
                 </p>
-                <pre><code><span class="tok-kw">const</span> resolvers = {
-  <span class="tok-type">Query</span>: {
-    user: <span class="tok-kw">async</span> (_parent, { id }, ctx) =&gt; ctx.db.users.findById(id),
+                <CodeBlock code={`const resolvers = {
+  Query: {
+    user: async (_parent, { id }, ctx) => ctx.db.users.findById(id),
   },
-  <span class="tok-type">User</span>: {
-    orders: <span class="tok-kw">async</span> (user, { limit }, ctx) =&gt;
+  User: {
+    orders: async (user, { limit }, ctx) =>
       ctx.db.orders.findByUserId(user.id, { limit }),
   },
-};</code></pre>
+};`} />
                 <p>Execution is a tree walk: GraphQL resolves the <strong>root field first</strong> (e.g.
                     <code>user</code>), then recursively resolves each child field of the result <strong>in
                         parallel</strong> (for queries) before moving deeper. This is exactly why naive resolver
@@ -1001,39 +339,7 @@
                         orders</strong> — the N+1 problem.</p>
                 <div class="diagram-wrap">
                     <svg viewBox="0 0 760 230" xmlns="http://www.w3.org/2000/svg">
-                        <style is:global>
-                            .lbl {
-                                fill: #c4cbda;
-                                font-size: 12px;
-                            }
-
-                            .hd {
-                                fill: #fff;
-                                font-size: 13px;
-                                font-weight: 700;
-                            }
-
-                            .box {
-                                fill: #141925;
-                                stroke: #222a38;
-                                rx: 8;
-                            }
-
-                            .bad {
-                                stroke: #ff5d6c;
-                            }
-
-                            .good {
-                                stroke: #33d6a6;
-                            }
-
-                            .arrow {
-                                stroke: #5c6577;
-                                stroke-width: 1.4;
-                                marker-end: url(#ah);
-                                fill: none;
-                            }
-                        </style>
+                        
                         <defs>
                             <marker id="ah" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
                                 <path d="M0,0 L6,3 L0,6 Z" fill="#5c6577" />
@@ -1076,13 +382,13 @@
                     <li><strong>Caching</strong> — memoizes results per request so the same ID is never fetched twice
                         within one GraphQL operation.</li>
                 </ul>
-                <pre><code><span class="tok-kw">const</span> orderLoader = <span class="tok-kw">new</span> DataLoader(<span class="tok-kw">async</span> (userIds) =&gt; {
-  <span class="tok-kw">const</span> rows = <span class="tok-kw">await</span> db.orders.findByUserIds(userIds);
-  <span class="tok-kw">return</span> userIds.map(id =&gt; rows.filter(r =&gt; r.userId === id));
+                <CodeBlock code={`const orderLoader = new DataLoader(async (userIds) => {
+  const rows = await db.orders.findByUserIds(userIds);
+  return userIds.map(id => rows.filter(r => r.userId === id));
 });
 
-<span class="tok-com">// resolver becomes a single batched call</span>
-<span class="tok-type">User</span>: { orders: (user, _args, ctx) =&gt; ctx.orderLoader.load(user.id) }</code></pre>
+// resolver becomes a single batched call
+User: { orders: (user, _args, ctx) => ctx.orderLoader.load(user.id) }`} />
                 <div class="callout danger">
                     <div class="callout-label">Interview trap</div>
                     DataLoader must be instantiated <strong>per request</strong>, never as a singleton — otherwise its
@@ -1096,44 +402,7 @@
                     front of several underlying services — REST APIs, gRPC services, databases.</p>
                 <div class="diagram-wrap">
                     <svg viewBox="0 0 760 290" xmlns="http://www.w3.org/2000/svg">
-                        <style is:global>
-                            .lbl {
-                                fill: #c4cbda;
-                                font-size: 12px;
-                            }
-
-                            .hd {
-                                fill: #fff;
-                                font-size: 13px;
-                                font-weight: 700;
-                            }
-
-                            .box {
-                                fill: #141925;
-                                stroke: #222a38;
-                                rx: 8;
-                            }
-
-                            .client {
-                                stroke: #e535ab;
-                            }
-
-                            .gw {
-                                stroke: #e535ab;
-                                stroke-width: 2;
-                            }
-
-                            .svc {
-                                stroke: #3fa7ff;
-                            }
-
-                            .arrow {
-                                stroke: #5c6577;
-                                stroke-width: 1.4;
-                                marker-end: url(#ah2);
-                                fill: none;
-                            }
-                        </style>
+                        
                         <defs>
                             <marker id="ah2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
                                 <path d="M0,0 L6,3 L0,6 Z" fill="#5c6577" />
@@ -1256,7 +525,7 @@
                 </div>
                 <div class="callout danger">
                     <div class="callout-label">Classic attack: nested query DoS</div>
-                    A single malicious query like <code>user { friends { friends { friends { ... } } } }</code> can be
+                    A single malicious query like <code>user &#123; friends &#123; friends &#123; friends &#123; ... &#125; &#125; &#125; &#125;</code> can be
                     exponential in cost. Mitigate with max query depth, query cost/complexity scoring, and request
                     timeouts.
                 </div>
@@ -1305,36 +574,36 @@
                     gRPC uses by default. A <code>.proto</code> file declares messages (data) and services (RPC
                     methods), which the <code>protoc</code> compiler turns into native classes/structs plus
                     client+server stubs.</p>
-                <pre><code><span class="tok-com">// user.proto</span>
-<span class="tok-kw">syntax</span> = <span class="tok-str">"proto3"</span>;
-<span class="tok-kw">package</span> shop.v1;
+                <CodeBlock code={`// user.proto
+syntax = "proto3";
+package shop.v1;
 
-<span class="tok-kw">message</span> <span class="tok-type">User</span> {
-  <span class="tok-type">string</span> id = <span class="tok-num">1</span>;
-  <span class="tok-type">string</span> name = <span class="tok-num">2</span>;
-  <span class="tok-type">string</span> email = <span class="tok-num">3</span>;
-  <span class="tok-type">repeated</span> <span class="tok-type">Order</span> recent_orders = <span class="tok-num">4</span>;
+message User {
+  string id = 1;
+  string name = 2;
+  string email = 3;
+  repeated Order recent_orders = 4;
 }
 
-<span class="tok-kw">message</span> <span class="tok-type">Order</span> {
-  <span class="tok-type">string</span> id = <span class="tok-num">1</span>;
-  <span class="tok-type">OrderStatus</span> status = <span class="tok-num">2</span>;
-  <span class="tok-type">double</span> total = <span class="tok-num">3</span>;
+message Order {
+  string id = 1;
+  OrderStatus status = 2;
+  double total = 3;
 }
 
-<span class="tok-kw">enum</span> <span class="tok-type">OrderStatus</span> {
-  <span class="tok-type">ORDER_STATUS_UNSPECIFIED</span> = <span class="tok-num">0</span>;
-  <span class="tok-type">ORDER_STATUS_PENDING</span> = <span class="tok-num">1</span>;
-  <span class="tok-type">ORDER_STATUS_SHIPPED</span> = <span class="tok-num">2</span>;
+enum OrderStatus {
+  ORDER_STATUS_UNSPECIFIED = 0;
+  ORDER_STATUS_PENDING = 1;
+  ORDER_STATUS_SHIPPED = 2;
 }
 
-<span class="tok-kw">service</span> <span class="tok-type">UserService</span> {
-  <span class="tok-kw">rpc</span> GetUser(<span class="tok-type">GetUserRequest</span>) <span class="tok-kw">returns</span> (<span class="tok-type">User</span>);
-  <span class="tok-kw">rpc</span> WatchOrders(<span class="tok-type">WatchOrdersRequest</span>) <span class="tok-kw">returns</span> (<span class="tok-kw">stream</span> <span class="tok-type">Order</span>);
+service UserService {
+  rpc GetUser(GetUserRequest) returns (User);
+  rpc WatchOrders(WatchOrdersRequest) returns (stream Order);
 }
 
-<span class="tok-kw">message</span> <span class="tok-type">GetUserRequest</span> { <span class="tok-type">string</span> id = <span class="tok-num">1</span>; }
-<span class="tok-kw">message</span> <span class="tok-type">WatchOrdersRequest</span> { <span class="tok-type">string</span> user_id = <span class="tok-num">1</span>; }</code></pre>
+message GetUserRequest { string id = 1; }
+message WatchOrdersRequest { string user_id = 1; }`} />
                 <p>The integer after each field (<code>= 1</code>, <code>= 2</code>...) is the <strong>field
                         tag</strong> — it, not the field name, is what's actually encoded on the wire. This is the key
                     to protobuf's backward/forward compatibility model.</p>
@@ -1383,38 +652,7 @@
                     definition.</p>
                 <div class="diagram-wrap">
                     <svg viewBox="0 0 760 360" xmlns="http://www.w3.org/2000/svg">
-                        <style is:global>
-                            .lbl {
-                                fill: #c4cbda;
-                                font-size: 11.5px;
-                            }
-
-                            .hd {
-                                fill: #fff;
-                                font-size: 13px;
-                                font-weight: 700;
-                            }
-
-                            .box {
-                                fill: #141925;
-                                stroke: #3fa7ff;
-                                rx: 7;
-                            }
-
-                            .arrow {
-                                stroke: #3fa7ff;
-                                stroke-width: 1.6;
-                                marker-end: url(#ah3);
-                                fill: none;
-                            }
-
-                            .arrowback {
-                                stroke: #33d6a6;
-                                stroke-width: 1.6;
-                                marker-end: url(#ah4);
-                                fill: none;
-                            }
-                        </style>
+                        
                         <defs>
                             <marker id="ah3" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
                                 <path d="M0,0 L6,3 L0,6 Z" fill="#3fa7ff" />
@@ -1543,45 +781,7 @@
                     cross-cutting concerns.</p>
                 <div class="diagram-wrap">
                     <svg viewBox="0 0 760 300" xmlns="http://www.w3.org/2000/svg">
-                        <style is:global>
-                            .lbl {
-                                fill: #c4cbda;
-                                font-size: 12px;
-                            }
-
-                            .hd {
-                                fill: #fff;
-                                font-size: 13px;
-                                font-weight: 700;
-                            }
-
-                            .box {
-                                fill: #141925;
-                                stroke: #222a38;
-                                rx: 8;
-                            }
-
-                            .edge {
-                                stroke: #e535ab;
-                            }
-
-                            .svc {
-                                stroke: #3fa7ff;
-                                stroke-width: 2;
-                            }
-
-                            .side {
-                                stroke: #ffb347;
-                                stroke-dasharray: 3 3;
-                            }
-
-                            .arrow {
-                                stroke: #5c6577;
-                                stroke-width: 1.4;
-                                marker-end: url(#ah5);
-                                fill: none;
-                            }
-                        </style>
+                        
                         <defs>
                             <marker id="ah5" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
                                 <path d="M0,0 L6,3 L0,6 Z" fill="#5c6577" />
@@ -1786,37 +986,7 @@
                 <h3>Payload Size Comparison (same logical data)</h3>
                 <div class="diagram-wrap">
                     <svg viewBox="0 0 760 200" xmlns="http://www.w3.org/2000/svg">
-                        <style is:global>
-                            .lbl {
-                                fill: #c4cbda;
-                                font-size: 12px;
-                            }
-
-                            .hd {
-                                fill: #fff;
-                                font-size: 13px;
-                                font-weight: 700;
-                            }
-
-                            .bar-rest {
-                                fill: #6272a4;
-                            }
-
-                            .bar-gql {
-                                fill: #e535ab;
-                                opacity: .8;
-                            }
-
-                            .bar-grpc {
-                                fill: #3fa7ff;
-                                opacity: .9;
-                            }
-
-                            .axis {
-                                stroke: #222a38;
-                                stroke-width: 1;
-                            }
-                        </style>
+                        
                         <!-- Y axis -->
                         <line class="axis" x1="80" y1="20" x2="80" y2="155" />
                         <line class="axis" x1="80" y1="155" x2="740" y2="155" />
@@ -1917,54 +1087,7 @@
                     edge for flexible client reads, gRPC internally for fast, typed service calls.</p>
                 <div class="diagram-wrap">
                     <svg viewBox="0 0 780 340" xmlns="http://www.w3.org/2000/svg">
-                        <style is:global>
-                            .lbl {
-                                fill: #c4cbda;
-                                font-size: 11.5px;
-                            }
-
-                            .hd {
-                                fill: #fff;
-                                font-size: 13px;
-                                font-weight: 700;
-                            }
-
-                            .box {
-                                fill: #141925;
-                                stroke: #222a38;
-                                rx: 8;
-                            }
-
-                            .client {
-                                stroke: #e535ab;
-                            }
-
-                            .gw {
-                                stroke: #e535ab;
-                                stroke-width: 2;
-                            }
-
-                            .svc {
-                                stroke: #3fa7ff;
-                            }
-
-                            .db {
-                                stroke: #33d6a6;
-                            }
-
-                            .arrow {
-                                stroke: #5c6577;
-                                stroke-width: 1.4;
-                                marker-end: url(#ah6);
-                                fill: none;
-                            }
-
-                            .lbl2 {
-                                fill: #5c6577;
-                                font-size: 10px;
-                                font-style: italic;
-                            }
-                        </style>
+                        
                         <defs>
                             <marker id="ah6" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
                                 <path d="M0,0 L6,3 L0,6 Z" fill="#5c6577" />
@@ -2606,46 +1729,6 @@
             </section>
 
         </main>
-    </div>
-
-    <footer>
-        Dev Notes — GraphQL &amp; gRPC reference. For study and revision purposes; verify against current official docs
-        before relying on specifics in production.
-    </footer>
-
-    <a href="#intro" class="backtotop" id="backToTop">↑</a>
-
-    <script is:inline>
-        (function () {
-            // scroll progress bar
-            var bar = document.getElementById('progressBar');
-            var backBtn = document.getElementById('backToTop');
-            function onScroll() {
-                var h = document.documentElement;
-                var scrolled = (h.scrollTop) / (h.scrollHeight - h.clientHeight) * 100;
-                bar.style.width = scrolled + '%';
-                if (h.scrollTop > 600) backBtn.classList.add('show'); else backBtn.classList.remove('show');
-            }
-            document.addEventListener('scroll', onScroll);
-            onScroll();
-
-            // TOC active link highlighting
-            var sections = Array.prototype.slice.call(document.querySelectorAll('section.block[id]'));
-            var links = Array.prototype.slice.call(document.querySelectorAll('#tocNav a'));
-            function onScrollToc() {
-                var pos = window.scrollY + 100;
-                var current = sections[0] && sections[0].id;
-                sections.forEach(function (s) { if (s.offsetTop <= pos) current = s.id; });
-                links.forEach(function (l) {
-                    l.classList.remove('active');
-                    if (l.getAttribute('href') === '#' + current) l.classList.add('active');
-                });
-            }
-            document.addEventListener('scroll', onScrollToc);
-            onScrollToc();
-        })();
-    </script>
-
-</body>
-
-</html>
+    
+  </div>
+</Layout>

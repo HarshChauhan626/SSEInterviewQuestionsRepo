@@ -130,5 +130,7 @@ def process_file(filepath):
     with open(filepath, 'w', encoding='utf-8') as f:
         f.write('\n'.join(out_lines))
 
+import os
 if __name__ == '__main__':
-    process_file('d:/DSA/nodejs.md')
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    process_file(os.path.join(base_dir, '../public/notes/nodejs.md'))

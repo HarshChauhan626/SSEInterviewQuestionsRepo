@@ -10,7 +10,7 @@ import json
 import os
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-OUT_DIR = os.path.join(BASE_DIR, "dsa-questions-data")
+OUT_DIR = os.path.join(BASE_DIR, "../dsa-questions-data")
 os.makedirs(OUT_DIR, exist_ok=True)
 
 # ──────────────────────────────────────────────
@@ -346,16 +346,17 @@ def extract_questions_from_md(filepath):
 
 
 def build_json_for_file(md_filename, topic, description, icon, accent):
-    filepath = os.path.join(BASE_DIR, md_filename)
-    if not os.path.exists(filepath):
-        print(f"  WARNING: File not found: {md_filename}")
+    # We open the file from the public/notes/ directory
+    file_path = os.path.join(BASE_DIR, "../public/notes", md_filename)
+    if not os.path.exists(file_path):
+        print(f"  [!] Missing file: ../public/notes/{md_filename}")
         return None
 
     print(f"  Parsing {md_filename}...")
-    questions = extract_questions_from_md(filepath)
+    questions = extract_questions_from_md(file_path)
 
     if md_filename == "dsaeasytomedium.md":
-        pseudo_filepath = os.path.join(BASE_DIR, "dsaeasytomedium_pseudocode.md")
+        pseudo_filepath = os.path.join(BASE_DIR, "../public/notes", "dsaeasytomedium_pseudocode.md")
         if os.path.exists(pseudo_filepath):
             pseudo_qs = extract_questions_from_md(pseudo_filepath)
             for i in range(min(len(questions), len(pseudo_qs))):
