@@ -539,6 +539,16 @@
     </div>
     <div class="nav-right">
       <div class="viewer-actions" id="viewer-actions" style="display:none;">
+        <button class="action-btn" id="btn-view-md" title="View in Markdown" onclick="goToMarkdown()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+            <polyline points="10 9 9 9 8 9"></polyline>
+          </svg>
+          <span class="hide-mobile">Markdown Viewer</span>
+        </button>
         <label class="action-btn" title="Show answers by default" style="cursor:pointer">
           <input type="checkbox" id="chk-show-answers" onchange="toggleShowAnswersByDefault()" style="accent-color: var(--topic-accent);">
           <span class="hide-mobile">Show Answers</span>
@@ -1062,6 +1072,13 @@
 
     function escapeHtml(str) {
       return (str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function goToMarkdown() {
+      if (currentTopic && currentTopic.file) {
+        const filename = currentTopic.file.split('/').pop().replace('.json', '.md');
+        window.location.href = `markdownreader.html?file=${encodeURIComponent(filename)}`;
+      }
     }
 
     /* ═══════════════════════════════════════
