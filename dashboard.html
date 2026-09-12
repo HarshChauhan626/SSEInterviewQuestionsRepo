@@ -655,6 +655,145 @@
             display: none;
         }
 
+        /* ── Learn Topic Cards ── */
+        .learn-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+            margin-bottom: 64px;
+        }
+
+        .learn-card {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            padding: 24px;
+            background: var(--surface);
+            border: 1px solid rgba(34, 211, 166, 0.18);
+            border-radius: var(--radius-lg);
+            color: inherit;
+            text-decoration: none;
+            transition: border-color 200ms, background 200ms, transform 220ms, box-shadow 220ms;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .learn-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(34, 211, 166, 0.06) 0%, transparent 60%);
+            opacity: 0;
+            transition: opacity 200ms;
+        }
+
+        .learn-card:hover {
+            border-color: rgba(34, 211, 166, 0.45);
+            transform: translateY(-4px);
+            box-shadow: 0 20px 56px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(34, 211, 166, 0.12);
+        }
+
+        .learn-card:hover::before {
+            opacity: 1;
+        }
+
+        .learn-card-header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .learn-card-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: 12px;
+            background: rgba(34, 211, 166, 0.1);
+            border: 1px solid rgba(34, 211, 166, 0.25);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.6rem;
+            flex-shrink: 0;
+        }
+
+        .learn-card-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: var(--text);
+            line-height: 1.3;
+        }
+
+        .learn-card-subtitle {
+            font-size: 0.75rem;
+            color: var(--note-accent);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-top: 2px;
+        }
+
+        .learn-card-desc {
+            font-size: 0.85rem;
+            color: var(--text-2);
+            line-height: 1.6;
+            flex: 1;
+        }
+
+        .learn-card-chapters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .learn-chip {
+            font-size: 0.68rem;
+            font-weight: 600;
+            padding: 3px 9px;
+            border-radius: 999px;
+            background: rgba(34, 211, 166, 0.1);
+            color: var(--note-accent);
+            border: 1px solid rgba(34, 211, 166, 0.2);
+            letter-spacing: 0.03em;
+        }
+
+        .learn-card-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-top: 1px solid rgba(34, 211, 166, 0.1);
+            padding-top: 14px;
+        }
+
+        .learn-card-cta {
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--note-accent);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .learn-arrow {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: rgba(34, 211, 166, 0.1);
+            border: 1px solid rgba(34, 211, 166, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--note-accent);
+            transition: background 200ms, border-color 200ms, transform 200ms;
+        }
+
+        .learn-card:hover .learn-arrow {
+            background: var(--note-accent);
+            border-color: var(--note-accent);
+            color: #0a0c10;
+            transform: translateX(2px);
+        }
+
         /* ── Footer ── */
         footer {
             position: relative;
@@ -888,6 +1027,84 @@
                         <span class="tool-arrow">${arrowSvg}</span>
                     </div>
                 </a>
+            </div>
+        </div>
+
+        <!-- Learn Topics section -->
+        <div id="learnSection" class="animate-in animate-delay-3">
+            <div class="section-header">
+                <span class="section-badge note" style="background: rgba(34,211,166,0.1); border: 1px solid rgba(34,211,166,0.25); color: #22d3a6;">Learn</span>
+                <h2 class="section-title">Learn Topics</h2>
+                <div class="section-divider"></div>
+                <span class="section-count">2 guides</span>
+            </div>
+            <div class="learn-grid">
+
+                <!-- Kubernetes -->
+                <a class="learn-card" id="learnKubernetes" href="markdownreader.html?file=kuberneteslearning.md">
+                    <div class="learn-card-header">
+                        <div class="learn-card-icon">☸️</div>
+                        <div>
+                            <div class="learn-card-title">Learn about Kubernetes</div>
+                            <div class="learn-card-subtitle">Complete Learning Guide</div>
+                        </div>
+                    </div>
+                    <p class="learn-card-desc">A comprehensive deep-dive into Kubernetes — from fundamentals and networking to EKS, storage, scaling, CI/CD with Argo CD, security, reliability, and essential developer tools.</p>
+                    <div class="learn-card-chapters">
+                        <span class="learn-chip">Fundamentals</span>
+                        <span class="learn-chip">Pods &amp; Deployments</span>
+                        <span class="learn-chip">Networking</span>
+                        <span class="learn-chip">EKS</span>
+                        <span class="learn-chip">Argo CD</span>
+                        <span class="learn-chip">Security</span>
+                        <span class="learn-chip">Reliability</span>
+                    </div>
+                    <div class="learn-card-footer">
+                        <span class="learn-card-cta">Start Reading</span>
+                        <span class="learn-arrow">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                        </span>
+                    </div>
+                </a>
+
+                <!-- Observability -->
+                <a class="learn-card" id="learnObservability" href="markdownreader.html?file=observabilitylearning.md" style="border-color: rgba(249,115,22,0.18); background: var(--surface);">
+                    <style>
+                        #learnObservability::before { background: linear-gradient(135deg, rgba(249,115,22,0.06) 0%, transparent 60%); }
+                        #learnObservability { border-color: rgba(249,115,22,0.18); }
+                        #learnObservability:hover { border-color: rgba(249,115,22,0.45); box-shadow: 0 20px 56px rgba(0,0,0,0.35), 0 0 0 1px rgba(249,115,22,0.12); }
+                        #learnObservability .learn-card-icon { background: rgba(249,115,22,0.1); border-color: rgba(249,115,22,0.25); }
+                        #learnObservability .learn-card-subtitle { color: #f97316; }
+                        #learnObservability .learn-chip { background: rgba(249,115,22,0.1); color: #f97316; border-color: rgba(249,115,22,0.2); }
+                        #learnObservability .learn-card-footer { border-top-color: rgba(249,115,22,0.1); }
+                        #learnObservability .learn-card-cta { color: #f97316; }
+                        #learnObservability .learn-arrow { background: rgba(249,115,22,0.1); border-color: rgba(249,115,22,0.2); color: #f97316; }
+                        #learnObservability:hover .learn-arrow { background: #f97316; border-color: #f97316; color: #0a0c10; }
+                    </style>
+                    <div class="learn-card-header">
+                        <div class="learn-card-icon">📡</div>
+                        <div>
+                            <div class="learn-card-title">Learn about Observability</div>
+                            <div class="learn-card-subtitle">Complete Learning Guide</div>
+                        </div>
+                    </div>
+                    <p class="learn-card-desc">Master modern observability — logs, metrics, distributed tracing, OpenTelemetry, alerting strategies, and production monitoring patterns for cloud-native systems.</p>
+                    <div class="learn-card-chapters">
+                        <span class="learn-chip">Logs</span>
+                        <span class="learn-chip">Metrics</span>
+                        <span class="learn-chip">Tracing</span>
+                        <span class="learn-chip">OpenTelemetry</span>
+                        <span class="learn-chip">Alerting</span>
+                        <span class="learn-chip">Grafana</span>
+                    </div>
+                    <div class="learn-card-footer">
+                        <span class="learn-card-cta">Start Reading</span>
+                        <span class="learn-arrow">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                        </span>
+                    </div>
+                </a>
+
             </div>
         </div>
 
