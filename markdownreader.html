@@ -718,11 +718,11 @@
 
       docTitle.textContent = titleFromFile(file);
       docMeta.textContent = file;
-      rawLink.href = file;
+      rawLink.href = "docs/" + file;
 
       let source = "";
       try {
-        const response = await fetch(file, { cache: "no-store" });
+        const response = await fetch("docs/" + file, { cache: "no-store" });
         if (!response.ok) throw new Error(`${response.status} ${response.statusText || "Fetch failed"} while fetching ${file}`);
         source = await response.text();
       } catch (error) {
