@@ -1,6 +1,6 @@
-﻿# OpenStack â€” Part 1 (P0 Must-Know Topics)
+# OpenStack — Part 1 (P0 Must-Know Topics)
 
-> A deep, from-scratch guide to OpenStack fundamentals â€” architecture, core services, networking, and the complete VM lifecycle â€” with analogies, diagrams, and real command examples.
+> A deep, from-scratch guide to OpenStack fundamentals — architecture, core services, networking, and the complete VM lifecycle — with analogies, diagrams, and real command examples.
 
 ---
 
@@ -9,15 +9,15 @@
 1. [OpenStack Overview & Architecture](#1-openstack-overview--architecture)
 2. [Control Plane vs Data Plane](#2-control-plane-vs-data-plane)
 3. [OpenStack Projects / Services](#3-openstack-projects--services)
-4. [Keystone â€” Identity & RBAC](#4-keystone--identity--rbac)
-5. [Nova â€” Compute](#5-nova--compute)
+4. [Keystone — Identity & RBAC](#4-keystone--identity--rbac)
+5. [Nova — Compute](#5-nova--compute)
 6. [Nova Scheduler](#6-nova-scheduler)
 7. [Nova Compute Nodes](#7-nova-compute-nodes)
 8. [Flavors](#8-flavors)
 9. [VM / Instance Lifecycle](#9-vm--instance-lifecycle)
-10. [Glance â€” Images](#10-glance--images)
-11. [Cinder â€” Block Storage](#11-cinder--block-storage)
-12. [Neutron â€” Networking â­](#12-neutron--networking-)
+10. [Glance — Images](#10-glance--images)
+11. [Cinder — Block Storage](#11-cinder--block-storage)
+12. [Neutron — Networking ⭐](#12-neutron--networking-)
 13. [Neutron Networks](#13-neutron-networks)
 14. [Neutron Subnets](#14-neutron-subnets)
 15. [Neutron Ports](#15-neutron-ports)
@@ -30,9 +30,9 @@
 22. [Provider vs Tenant Networks](#22-provider-vs-tenant-networks)
 23. [Network Namespaces](#23-network-namespaces)
 24. [East-West vs North-South Traffic](#24-east-west-vs-north-south-traffic)
-25. [VM â†’ Internet Traffic Flow](#25-vm--internet-traffic-flow)
-26. [Internet â†’ VM Traffic Flow](#26-internet--vm-traffic-flow)
-27. [VM Creation â€” Complete End-to-End Flow](#27-vm-creation--complete-end-to-end-flow)
+25. [VM → Internet Traffic Flow](#25-vm--internet-traffic-flow)
+26. [Internet → VM Traffic Flow](#26-internet--vm-traffic-flow)
+27. [VM Creation — Complete End-to-End Flow](#27-vm-creation--complete-end-to-end-flow)
 28. [OpenStack CLI](#28-openstack-cli)
 29. [OpenStack REST APIs](#29-openstack-rest-apis)
 30. [Projects / Tenants / Quotas / Availability Zones](#30-projects--tenants--quotas--availability-zones)
@@ -43,52 +43,52 @@
 
 ### What is OpenStack?
 
-OpenStack is a **free, open-source cloud computing platform** that lets you build and manage your own **Infrastructure as a Service (IaaS)** â€” essentially your own private AWS/Azure/GCP, running on your own hardware in your own datacenter.
+OpenStack is a **free, open-source cloud computing platform** that lets you build and manage your own **Infrastructure as a Service (IaaS)** — essentially your own private AWS/Azure/GCP, running on your own hardware in your own datacenter.
 
-It doesn't run VMs itself â€” it **orchestrates** the underlying virtualization (KVM, Xen, ESXi), storage systems, and networking (Linux bridges, OVS, OVN) through a large collection of loosely-coupled services that talk to each other over REST APIs and a message bus.
+It doesn't run VMs itself — it **orchestrates** the underlying virtualization (KVM, Xen, ESXi), storage systems, and networking (Linux bridges, OVS, OVN) through a large collection of loosely-coupled services that talk to each other over REST APIs and a message bus.
 
-### The Hotel Analogy ðŸ¨
+### The Hotel Analogy 🏨
 
 Think of a large hotel:
 
-- **Keystone** = the front desk / ID verification â€” checks who you are and what you're allowed to book.
-- **Nova** = the room booking & room service manager â€” allocates rooms (VMs), decides which room you get.
-- **Glance** = the catalog of pre-furnished room templates (photos of how each room type looks) â€” i.e., OS images.
+- **Keystone** = the front desk / ID verification — checks who you are and what you're allowed to book.
+- **Nova** = the room booking & room service manager — allocates rooms (VMs), decides which room you get.
+- **Glance** = the catalog of pre-furnished room templates (photos of how each room type looks) — i.e., OS images.
 - **Cinder** = the storage lockers you can attach to your room and take with you when you move rooms.
-- **Neutron** = the hotel's internal phone/hallway/elevator system â€” how rooms talk to each other and to the outside world.
+- **Neutron** = the hotel's internal phone/hallway/elevator system — how rooms talk to each other and to the outside world.
 - **Horizon** = the hotel's web portal where you browse and book everything visually.
 - **Swift** = the hotel's shared warehouse for bulk storage (object storage), not room-specific.
 
-Each of these is a separate, independently-scalable microservice â€” that's the key architectural idea.
+Each of these is a separate, independently-scalable microservice — that's the key architectural idea.
 
 ### High-Level Architecture Diagram
 
 ```
-                        â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-                        â”‚         Horizon (UI)         â”‚
-                        â”‚      OpenStack CLI / SDKs    â”‚
-                        â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
-                                        â”‚  REST APIs (HTTPS)
-                        â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–¼â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-                        â”‚           Keystone            â”‚
-                        â”‚   (AuthN/AuthZ, Service Catalog)â”‚
-                        â””â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”˜
-                            â”‚         â”‚         â”‚
-              â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–¼â”€â”€â” â”Œâ”€â”€â”€â–¼â”€â”€â”€â”€â”€â” â”Œâ”€â”€â–¼â”€â”€â”€â”€â”€â”€â”€â”€â”
-              â”‚      Nova       â”‚ â”‚ Neutron â”‚ â”‚  Cinder   â”‚
-              â”‚   (Compute)     â”‚ â”‚ (Network)â”‚ â”‚ (Block SV)â”‚
-              â””â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”˜ â””â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”˜ â””â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”˜
-                  â”‚         â”‚         â”‚             â”‚
-        â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â–¼â”€â”€â”€â” â”Œâ”€â”€â”€â–¼â”€â”€â”€â”€â”€â”   â”‚      â”Œâ”€â”€â”€â”€â”€â”€â–¼â”€â”€â”€â”€â”€â”
-        â”‚ nova-compute â”‚ â”‚ Glance  â”‚   â”‚      â”‚  Storage    â”‚
-        â”‚  (hypervisor)â”‚ â”‚(Images) â”‚   â”‚      â”‚  Backend    â”‚
-        â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜ â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜   â”‚      â”‚(LVM/Ceph..) â”‚
-                                        â”‚      â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
-                              â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â–¼â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-                              â”‚  OVS/OVN/Linux     â”‚
-                              â”‚  Bridges, L2/L3     â”‚
-                              â”‚  agents, DHCP, etc  â”‚
-                              â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+                        ┌─────────────────────────────┐
+                        │         Horizon (UI)         │
+                        │      OpenStack CLI / SDKs    │
+                        └───────────────┬──────────────┘
+                                        │  REST APIs (HTTPS)
+                        ┌───────────────▼──────────────┐
+                        │           Keystone            │
+                        │   (AuthN/AuthZ, Service Catalog)│
+                        └───┬─────────┬─────────┬───────┘
+                            │         │         │
+              ┌─────────────▼──┐ ┌───▼─────┐ ┌──▼────────┐
+              │      Nova       │ │ Neutron │ │  Cinder   │
+              │   (Compute)     │ │ (Network)│ │ (Block SV)│
+              └───┬─────────┬──┘ └────┬────┘ └─────┬─────┘
+                  │         │         │             │
+        ┌─────────▼───┐ ┌───▼─────┐   │      ┌──────▼─────┐
+        │ nova-compute │ │ Glance  │   │      │  Storage    │
+        │  (hypervisor)│ │(Images) │   │      │  Backend    │
+        └──────────────┘ └─────────┘   │      │(LVM/Ceph..) │
+                                        │      └────────────┘
+                              ┌─────────▼─────────┐
+                              │  OVS/OVN/Linux     │
+                              │  Bridges, L2/L3     │
+                              │  agents, DHCP, etc  │
+                              └────────────────────┘
 
         All services communicate over a shared Message Bus (RabbitMQ/AMQP)
         and store state in their own databases (typically MySQL/MariaDB).
@@ -103,7 +103,7 @@ Each of these is a separate, independently-scalable microservice â€” that's
 | **Message-queue driven internals** | Internally, services talk asynchronously via RPC over RabbitMQ |
 | **Pluggable backends** | Storage, networking, and hypervisor drivers are swappable (KVM vs Xen, LVM vs Ceph, OVS vs OVN) |
 | **Multi-tenancy first** | Projects/tenants isolate resources, quotas, and networks by default |
-| **Everything is a resource with an API** | VMs, networks, volumes, images â€” all first-class API objects with UUIDs |
+| **Everything is a resource with an API** | VMs, networks, volumes, images — all first-class API objects with UUIDs |
 
 ### Definitions
 
@@ -119,15 +119,15 @@ This is one of the most important mental models in all of networking and cloud i
 
 ### Definitions
 
-- **Control Plane:** The "brains" â€” decides *what should happen*. It makes decisions, stores configuration/state, and issues instructions. Examples: Nova API deciding which host a VM should land on, Neutron server deciding what a router's routes should be.
-- **Data Plane:** The "muscles" â€” actually *does the work* of moving/processing traffic or workloads based on what the control plane decided. Examples: the actual packets flowing through OVS flows, the actual CPU cycles a VM consumes on a hypervisor.
+- **Control Plane:** The "brains" — decides *what should happen*. It makes decisions, stores configuration/state, and issues instructions. Examples: Nova API deciding which host a VM should land on, Neutron server deciding what a router's routes should be.
+- **Data Plane:** The "muscles" — actually *does the work* of moving/processing traffic or workloads based on what the control plane decided. Examples: the actual packets flowing through OVS flows, the actual CPU cycles a VM consumes on a hypervisor.
 
-### Analogy: Air Traffic Control âœˆï¸
+### Analogy: Air Traffic Control ✈️
 
 - **Control Plane** = the air traffic control tower. It doesn't fly anything. It just tells planes "you're cleared for runway 27," "descend to 10,000 ft," etc. It's about **decisions and coordination**.
-- **Data Plane** = the actual airplanes flying, carrying passengers and cargo. This is where the "real work" â€” the actual transportation â€” happens.
+- **Data Plane** = the actual airplanes flying, carrying passengers and cargo. This is where the "real work" — the actual transportation — happens.
 
-If the control tower (control plane) goes down temporarily, planes already in the air keep flying (data plane keeps working) â€” but no *new* coordinated decisions can be made until it's back.
+If the control tower (control plane) goes down temporarily, planes already in the air keep flying (data plane keeps working) — but no *new* coordinated decisions can be made until it's back.
 
 ### In OpenStack terms
 
@@ -140,61 +140,61 @@ If the control tower (control plane) goes down temporarily, planes already in th
 
 ### Why This Distinction Matters
 
-1. **Failure domains differ.** If `neutron-server` (control plane) crashes, existing VMs keep passing traffic fine (data plane keeps running on already-programmed OVS flows) â€” but you can't create new ports, update security groups, or spin up new networks until it's restored.
+1. **Failure domains differ.** If `neutron-server` (control plane) crashes, existing VMs keep passing traffic fine (data plane keeps running on already-programmed OVS flows) — but you can't create new ports, update security groups, or spin up new networks until it's restored.
 2. **Scaling differs.** Control plane services usually scale by adding more API workers / DB read replicas. Data plane scales by adding more compute/network nodes doing the actual traffic forwarding.
 3. **Latency sensitivity differs.** Control plane operations can tolerate some latency (a few hundred ms to create a port is fine). Data plane operations (packet forwarding) must happen at line-rate, microsecond latencies.
 
 ```
         CONTROL PLANE (slow-path, decisions)          DATA PLANE (fast-path, execution)
-        â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€             â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-        nova-api  â”€â”€ "schedule VM on host-3"  â”€â”€â”€â–º    nova-compute on host-3 boots
-        neutron-server â”€â”€ "create OVS flow"   â”€â”€â”€â–º    OVS on host-3 forwards packets
-        cinder-scheduler â”€â”€ "attach vol X"    â”€â”€â”€â–º    QEMU attaches iSCSI/RBD device
+        ─────────────────────────────────             ──────────────────────────────
+        nova-api  ── "schedule VM on host-3"  ───►    nova-compute on host-3 boots
+        neutron-server ── "create OVS flow"   ───►    OVS on host-3 forwards packets
+        cinder-scheduler ── "attach vol X"    ───►    QEMU attaches iSCSI/RBD device
 ```
 
 ---
 
 ## 3. OpenStack Projects / Services
 
-OpenStack is not one monolithic program â€” it's a constellation of independent "projects," each providing one service, each with its own REST API, database, and (usually) its own set of agents.
+OpenStack is not one monolithic program — it's a constellation of independent "projects," each providing one service, each with its own REST API, database, and (usually) its own set of agents.
 
 ### Core Services (the ones in this guide's P0 list)
 
 | Service (code name) | Purpose | Analogy |
 |---|---|---|
 | **Keystone** | Identity, authentication, authorization, service catalog | Front desk / ID check |
-| **Nova** | Compute â€” manage VM instances | Hotel room booking manager |
-| **Glance** | Image service â€” VM disk image catalog | Room "template photo" catalog |
-| **Cinder** | Block storage â€” persistent virtual disks | Detachable storage lockers |
-| **Neutron** | Networking â€” virtual networks, routers, LB, FW | Hotel's phone/hallway/elevator wiring |
+| **Nova** | Compute — manage VM instances | Hotel room booking manager |
+| **Glance** | Image service — VM disk image catalog | Room "template photo" catalog |
+| **Cinder** | Block storage — persistent virtual disks | Detachable storage lockers |
+| **Neutron** | Networking — virtual networks, routers, LB, FW | Hotel's phone/hallway/elevator wiring |
 | **Swift** | Object storage (not in P0 but often paired) | Warehouse for bulk unstructured data |
 | **Horizon** | Web dashboard/UI | The hotel's booking website |
 
 ### Other Notable (non-P0, for context)
 
-- **Heat** â€” orchestration (like CloudFormation) for stacks of resources.
-- **Ceilometer/Gnocchi** â€” telemetry/metering.
-- **Octavia** â€” Load-Balancer-as-a-Service.
-- **Barbican** â€” secrets/key management.
-- **Designate** â€” DNS-as-a-Service.
-- **Magnum** â€” Container-orchestration-as-a-Service (Kubernetes clusters).
+- **Heat** — orchestration (like CloudFormation) for stacks of resources.
+- **Ceilometer/Gnocchi** — telemetry/metering.
+- **Octavia** — Load-Balancer-as-a-Service.
+- **Barbican** — secrets/key management.
+- **Designate** — DNS-as-a-Service.
+- **Magnum** — Container-orchestration-as-a-Service (Kubernetes clusters).
 
 ### How They Fit Together
 
 ```
    User/Admin
-       â”‚
+       │
        â–¼
    Horizon / CLI / SDK
-       â”‚  (every call first hits Keystone to get a token)
+       │  (every call first hits Keystone to get a token)
        â–¼
-   Keystone â”€â”€ validates identity, returns auth token + service catalog
-       â”‚
-       â”œâ”€â”€â–º Nova     (compute)
-       â”œâ”€â”€â–º Glance   (images)
-       â”œâ”€â”€â–º Cinder   (volumes)
-       â”œâ”€â”€â–º Neutron  (networking)
-       â””â”€â”€â–º Swift    (objects)
+   Keystone ── validates identity, returns auth token + service catalog
+       │
+       ├──► Nova     (compute)
+       ├──► Glance   (images)
+       ├──► Cinder   (volumes)
+       ├──► Neutron  (networking)
+       └──► Swift    (objects)
 
    Every one of these services independently:
      - Has its own REST API (versioned, e.g., /v2.1/, /v3/)
@@ -212,51 +212,51 @@ OpenStack is not one monolithic program â€” it's a constellation of indepen
 
 ---
 
-## 4. Keystone â€” Identity & RBAC
+## 4. Keystone — Identity & RBAC
 
 ### What is Keystone?
 
 Keystone is OpenStack's **identity provider**. It handles:
-1. **Authentication (AuthN)** â€” "who are you?" (username/password, LDAP, SAML, OIDC federation)
-2. **Authorization (AuthZ)** â€” "what are you allowed to do?" (via roles and policies)
-3. **Service Catalog** â€” "where do I find the Nova/Neutron/Cinder API endpoints?"
-4. **Multi-tenancy structure** â€” Projects, Domains, Users, Groups
+1. **Authentication (AuthN)** — "who are you?" (username/password, LDAP, SAML, OIDC federation)
+2. **Authorization (AuthZ)** — "what are you allowed to do?" (via roles and policies)
+3. **Service Catalog** — "where do I find the Nova/Neutron/Cinder API endpoints?"
+4. **Multi-tenancy structure** — Projects, Domains, Users, Groups
 
-### Analogy: The Airport Security + Boarding Pass System âœˆï¸
+### Analogy: The Airport Security + Boarding Pass System ✈️
 
-- You show your **passport** (credentials) at security â†’ Keystone authenticates you.
-- You get a **boarding pass** (token) that says: your name, which flight (project/tenant) you're allowed on, and your seat class (role â€” economy/business = member/admin).
-- At each gate (each OpenStack service), the agent doesn't re-check your passport â€” they just scan your **boarding pass (token)** and check if it's valid and grants the right access.
+- You show your **passport** (credentials) at security → Keystone authenticates you.
+- You get a **boarding pass** (token) that says: your name, which flight (project/tenant) you're allowed on, and your seat class (role — economy/business = member/admin).
+- At each gate (each OpenStack service), the agent doesn't re-check your passport — they just scan your **boarding pass (token)** and check if it's valid and grants the right access.
 - The **airport directory board** (service catalog) tells you which gate (endpoint URL) to go to for each service.
 
 ### Core Concepts
 
 ```
-                    â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-                    â”‚    Domain    â”‚   (top-level container, e.g. "Default", "CompanyX")
-                    â””â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”˜
-                           â”‚
-              â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¼â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+                    ┌─────────────┐
+                    │    Domain    │   (top-level container, e.g. "Default", "CompanyX")
+                    └──────┬──────┘
+                           │
+              ┌────────────┼────────────┐
               â–¼            â–¼            â–¼
-         â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”   â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”   â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”
-         â”‚ Project â”‚   â”‚ Project â”‚   â”‚ Project â”‚   (aka "Tenant")
-         â”‚ "dev"   â”‚   â”‚ "prod"  â”‚   â”‚ "qa"    â”‚
-         â””â”€â”€â”€â”¬â”€â”€â”€â”€â”˜   â””â”€â”€â”€â”¬â”€â”€â”€â”€â”˜   â””â”€â”€â”€â”¬â”€â”€â”€â”€â”˜
-             â”‚            â”‚            â”‚
-        â”Œâ”€â”€â”€â”€â–¼â”€â”€â”€â”   â”Œâ”€â”€â”€â”€â–¼â”€â”€â”€â”   â”Œâ”€â”€â”€â”€â–¼â”€â”€â”€â”
-        â”‚  Users  â”‚   â”‚  Users  â”‚   â”‚  Users  â”‚  (assigned Roles per-project)
-        â””â”€â”€â”€â”€â”€â”€â”€â”€â”˜   â””â”€â”€â”€â”€â”€â”€â”€â”€â”˜   â””â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+         ┌────────┐   ┌────────┐   ┌────────┐
+         │ Project │   │ Project │   │ Project │   (aka "Tenant")
+         │ "dev"   │   │ "prod"  │   │ "qa"    │
+         └───┬────┘   └───┬────┘   └───┬────┘
+             │            │            │
+        ┌────▼───┐   ┌────▼───┐   ┌────▼───┐
+        │  Users  │   │  Users  │   │  Users  │  (assigned Roles per-project)
+        └────────┘   └────────┘   └────────┘
 ```
 
 - **User:** an identity (person or service account) that can authenticate.
 - **Project (Tenant):** a namespace that owns resources (VMs, networks, volumes) and has quotas.
-- **Domain:** a container for users/projects/groups â€” used for multi-org isolation (e.g., separate customer orgs in a public cloud).
+- **Domain:** a container for users/projects/groups — used for multi-org isolation (e.g., separate customer orgs in a public cloud).
 - **Role:** a named permission set (e.g., `admin`, `member`, `reader`) assigned to a **User+Project** pair (a "role assignment").
 - **Group:** a collection of users that can be assigned roles together.
 
 ### RBAC (Role-Based Access Control) in Keystone
 
-Keystone doesn't itself decide "can this user delete this VM" â€” instead:
+Keystone doesn't itself decide "can this user delete this VM" — instead:
 
 1. Keystone issues a **token** that embeds: user ID, project ID, and the **roles** the user has in that project.
 2. Each service (Nova, Neutron, etc.) has its own **policy.yaml** (policy-in-code) that maps API actions to required roles, e.g.:
@@ -271,9 +271,9 @@ Keystone doesn't itself decide "can this user delete this VM" â€” instead:
 | Type | Description |
 |---|---|
 | **Unscoped token** | Proves who you are, but not tied to any project yet |
-| **Project-scoped token** | Tied to a specific project â€” most common, used for actual resource operations |
+| **Project-scoped token** | Tied to a specific project — most common, used for actual resource operations |
 | **Domain-scoped token** | Used for domain-level admin operations |
-| **Fernet token (default in modern OpenStack)** | Lightweight, non-persistent, cryptographically signed â€” replaced old UUID tokens that had to be stored in a DB |
+| **Fernet token (default in modern OpenStack)** | Lightweight, non-persistent, cryptographically signed — replaced old UUID tokens that had to be stored in a DB |
 
 ### Example CLI Flow
 
@@ -293,17 +293,17 @@ openstack role add --user alice --project dev member
 
 ### Why Keystone is "the front door" of the whole system
 
-Every single API call to Nova, Neutron, Cinder, Glance first requires a valid Keystone token in the `X-Auth-Token` header. If Keystone is down, **nothing new can happen** anywhere in the cloud â€” no new VMs, no new volumes, no new networks â€” even though existing VMs keep running (this is the Control Plane vs Data Plane idea again: Keystone is pure control plane).
+Every single API call to Nova, Neutron, Cinder, Glance first requires a valid Keystone token in the `X-Auth-Token` header. If Keystone is down, **nothing new can happen** anywhere in the cloud — no new VMs, no new volumes, no new networks — even though existing VMs keep running (this is the Control Plane vs Data Plane idea again: Keystone is pure control plane).
 
 ---
 
-## 5. Nova â€” Compute
+## 5. Nova — Compute
 
 ### What is Nova?
 
-Nova is OpenStack's **compute service** â€” it's the component responsible for provisioning and managing the lifecycle of **virtual machine instances**. It doesn't do the actual virtualization itself (that's KVM/QEMU/Xen/ESXi's job) â€” Nova is the **orchestrator** that decides *which* physical host a VM should run on, talks to the hypervisor to create it, and tracks its state.
+Nova is OpenStack's **compute service** — it's the component responsible for provisioning and managing the lifecycle of **virtual machine instances**. It doesn't do the actual virtualization itself (that's KVM/QEMU/Xen/ESXi's job) — Nova is the **orchestrator** that decides *which* physical host a VM should run on, talks to the hypervisor to create it, and tracks its state.
 
-### Analogy: The Restaurant Kitchen Manager ðŸ‘¨â€ðŸ³
+### Analogy: The Restaurant Kitchen Manager 👨‍🍳
 
 Think of Nova as a **restaurant's kitchen manager**:
 - A customer (user) places an order (VM creation request) with the waiter (Nova API).
@@ -315,28 +315,28 @@ Think of Nova as a **restaurant's kitchen manager**:
 ### Nova's Sub-Components
 
 ```
-                     â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-   API requests â”€â”€â”€â–º â”‚      nova-api      â”‚  (REST API entrypoint)
-                     â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
-                               â”‚  RPC (via RabbitMQ)
-                     â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â–¼â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-                     â”‚   nova-scheduler   â”‚  (decides WHICH host)
-                     â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
-                               â”‚
-                     â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â–¼â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-                     â”‚   nova-conductor   â”‚  (mediates DB access, business logic,
-                     â”‚                    â”‚   shields compute nodes from direct DB access)
-                     â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
-                               â”‚  RPC
-                â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¼â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+                     ┌───────────────────┐
+   API requests ───► │      nova-api      │  (REST API entrypoint)
+                     └─────────┬─────────┘
+                               │  RPC (via RabbitMQ)
+                     ┌─────────▼─────────┐
+                     │   nova-scheduler   │  (decides WHICH host)
+                     └─────────┬─────────┘
+                               │
+                     ┌─────────▼─────────┐
+                     │   nova-conductor   │  (mediates DB access, business logic,
+                     │                    │   shields compute nodes from direct DB access)
+                     └─────────┬─────────┘
+                               │  RPC
+                ┌──────────────┼──────────────┐
                 â–¼              â–¼              â–¼
-        â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-        â”‚ nova-compute  â”‚â”‚ nova-compute  â”‚â”‚ nova-compute  â”‚  (one per hypervisor host)
-        â”‚  (host A)     â”‚â”‚  (host B)     â”‚â”‚  (host C)     â”‚
-        â””â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”˜â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
-                â”‚
+        ┌──────────────┐┌──────────────┐┌──────────────┐
+        │ nova-compute  ││ nova-compute  ││ nova-compute  │  (one per hypervisor host)
+        │  (host A)     ││  (host B)     ││  (host C)     │
+        └───────┬───────┘└──────────────┘└──────────────┘
+                │
                 â–¼
-          libvirt/KVM â”€â”€ actually creates & runs the VM
+          libvirt/KVM ── actually creates & runs the VM
 ```
 
 | Component | Role |
@@ -351,11 +351,11 @@ Think of Nova as a **restaurant's kitchen manager**:
 
 ### What Nova Is NOT Responsible For
 
-- **Image storage** â†’ that's Glance
-- **Networking (IP assignment, virtual switches)** â†’ that's Neutron (Nova just calls Neutron's API to get a port)
-- **Block storage volumes** â†’ that's Cinder (Nova just calls Cinder's API to attach a volume)
+- **Image storage** → that's Glance
+- **Networking (IP assignment, virtual switches)** → that's Neutron (Nova just calls Neutron's API to get a port)
+- **Block storage volumes** → that's Cinder (Nova just calls Cinder's API to attach a volume)
 
-Nova is the **conductor of an orchestra** â€” it doesn't play every instrument, it coordinates Glance, Neutron, and Cinder to assemble a working VM.
+Nova is the **conductor of an orchestra** — it doesn't play every instrument, it coordinates Glance, Neutron, and Cinder to assemble a working VM.
 
 ---
 
@@ -365,34 +365,34 @@ Nova is the **conductor of an orchestra** â€” it doesn't play every instrum
 
 When you request a new VM, someone has to decide: **which of the (potentially thousands of) physical compute hosts should this VM actually run on?** That's the `nova-scheduler`'s job.
 
-### Analogy: Hotel Booking Optimization ðŸ¨
+### Analogy: Hotel Booking Optimization 🏨
 
 Imagine a hotel with hundreds of rooms across multiple buildings. When a guest requests "a room with 2 beds, ocean view, pet-friendly, in Building B," the booking system:
-1. **Filters out** every room that doesn't meet hard requirements (pet-friendly? ocean view? in Building B?) â€” this is the **Filter** stage.
-2. Among remaining valid rooms, **ranks** them by soft preferences (least crowded floor, most recently cleaned) â€” this is the **Weighing** stage.
+1. **Filters out** every room that doesn't meet hard requirements (pet-friendly? ocean view? in Building B?) — this is the **Filter** stage.
+2. Among remaining valid rooms, **ranks** them by soft preferences (least crowded floor, most recently cleaned) — this is the **Weighing** stage.
 3. Picks the top-ranked room.
 
 ### The Two-Stage Filter + Weight Pipeline
 
 ```
    All compute hosts (e.g. 500 hypervisors)
-           â”‚
+           │
            â–¼
-   â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-   â”‚   FILTERING STAGE  â”‚  Remove hosts that CANNOT satisfy the request
-   â”‚                    â”‚  e.g. not enough RAM, wrong AZ, disabled host,
-   â”‚                    â”‚  doesn't meet flavor's required traits (SSD, GPU)
-   â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
-             â”‚  (e.g. 500 â†’ 40 hosts remain)
+   ┌───────────────────┐
+   │   FILTERING STAGE  │  Remove hosts that CANNOT satisfy the request
+   │                    │  e.g. not enough RAM, wrong AZ, disabled host,
+   │                    │  doesn't meet flavor's required traits (SSD, GPU)
+   └─────────┬──────────┘
+             │  (e.g. 500 → 40 hosts remain)
              â–¼
-   â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-   â”‚   WEIGHING STAGE    â”‚  Rank remaining hosts by preference
-   â”‚                    â”‚  e.g. prefer hosts with more free RAM (spread),
-   â”‚                    â”‚  or fewer VMs already (anti-affinity)
-   â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
-             â”‚
+   ┌───────────────────┐
+   │   WEIGHING STAGE    │  Rank remaining hosts by preference
+   │                    │  e.g. prefer hosts with more free RAM (spread),
+   │                    │  or fewer VMs already (anti-affinity)
+   └─────────┬──────────┘
+             │
              â–¼
-     Best host selected â†’ instance placed there
+     Best host selected → instance placed there
 ```
 
 ### Common Filters
@@ -411,7 +411,7 @@ Imagine a hotel with hundreds of rooms across multiple buildings. When a guest r
 
 | Weigher | Purpose |
 |---|---|
-| `RAMWeigher` | Prefer hosts with more (or less, configurable) free RAM â€” enables spread or stack scheduling strategies |
+| `RAMWeigher` | Prefer hosts with more (or less, configurable) free RAM — enables spread or stack scheduling strategies |
 | `DiskWeigher` | Similar, for disk |
 | `MetricsWeigher` | Custom metrics-based weighing (e.g., host load average) |
 
@@ -420,15 +420,15 @@ Imagine a hotel with hundreds of rooms across multiple buildings. When a guest r
 In newer OpenStack releases, a separate **Placement API** tracks resource inventories (VCPU, MEMORY_MB, DISK_GB) and allocations per host, so the scheduler can do fast resource-based filtering by querying Placement instead of scanning every compute node's live state directly.
 
 ```
-  nova-scheduler â”€â”€â–º Placement API â”€â”€â–º "which hosts have >= 4 VCPU, 8GB RAM free?"
-                                     â”€â”€â–º returns candidate host list
-  nova-scheduler â”€â”€â–º runs Filters + Weighers on candidates â”€â”€â–º picks winner
+  nova-scheduler ──► Placement API ──► "which hosts have >= 4 VCPU, 8GB RAM free?"
+                                     ──► returns candidate host list
+  nova-scheduler ──► runs Filters + Weighers on candidates ──► picks winner
 ```
 
 ### Why This Matters
 
 Scheduling decisions directly affect:
-- **Bin-packing efficiency** (cost â€” fewer wasted idle hosts)
+- **Bin-packing efficiency** (cost — fewer wasted idle hosts)
 - **Fault tolerance** (anti-affinity spreads replicas across failure domains)
 - **Performance** (NUMA/CPU pinning avoids cross-socket memory latency)
 
@@ -440,7 +440,7 @@ Scheduling decisions directly affect:
 
 A **compute node** is a physical server (hypervisor host) that actually runs VMs. It runs the `nova-compute` service, which is the **agent** that talks to Nova's control plane on one side and to the local hypervisor (usually libvirt/KVM) on the other.
 
-### Analogy: The Individual Kitchen Station ðŸ³
+### Analogy: The Individual Kitchen Station 🍳
 
 If nova-scheduler is the manager assigning orders to stations, each **compute node** is an actual cooking station with its own stove, oven, and ingredients (CPU, RAM, local disk). The chef at that station (`nova-compute` process) receives the order and does the actual cooking (creates the VM via libvirt).
 
@@ -460,33 +460,33 @@ If nova-scheduler is the manager assigning orders to stations, each **compute no
 
 ```
                      Compute Node (physical server)
-   â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-   â”‚                                                            â”‚
-   â”‚   â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”     â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”   â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â” â”‚
-   â”‚   â”‚nova-compute â”‚â”€â”€â”€â”€â–ºâ”‚   libvirtd    â”‚â”€â”€â–ºâ”‚  KVM/QEMU    â”‚ â”‚
-   â”‚   â”‚  (agent)    â”‚     â”‚ (hypervisor    â”‚   â”‚ (VM processes)â”‚ â”‚
-   â”‚   â””â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”˜     â”‚  mgmt daemon)  â”‚   â””â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”˜ â”‚
-   â”‚         â”‚            â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜          â”‚         â”‚
-   â”‚         â”‚ RPC to control plane                  â”‚         â”‚
-   â”‚         â”‚                                        â–¼         â”‚
-   â”‚         â”‚                              â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”  â”‚
-   â”‚         â”‚                              â”‚  VM1  VM2  VM3 â”‚  â”‚
-   â”‚         â”‚                              â”‚ (actual guests)â”‚  â”‚
-   â”‚         â”‚                              â””â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”˜  â”‚
-   â”‚         â”‚                                       â”‚           â”‚
-   â”‚   â”Œâ”€â”€â”€â”€â”€â–¼â”€â”€â”€â”€â”€â”€â”€â”€â”€â”                     â”Œâ”€â”€â”€â”€â”€â”€â”€â–¼â”€â”€â”€â”€â”€â”€â”€â”€â” â”‚
-   â”‚   â”‚ neutron-       â”‚                     â”‚  OVS bridge /   â”‚ â”‚
-   â”‚   â”‚ openvswitch-   â”‚â—„â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¤  Linux bridge   â”‚ â”‚
-   â”‚   â”‚ agent          â”‚  wires VM's tap dev  â”‚  (vNIC to phy) â”‚ â”‚
-   â”‚   â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜  into virtual switch â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜ â”‚
-   â”‚                                                            â”‚
-   â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+   ┌──────────────────────────────────────────────────────────┐
+   │                                                            │
+   │   ┌────────────┐     ┌──────────────┐   ┌──────────────┐ │
+   │   │nova-compute │────►│   libvirtd    │──►│  KVM/QEMU    │ │
+   │   │  (agent)    │     │ (hypervisor    │   │ (VM processes)│ │
+   │   └─────┬──────┘     │  mgmt daemon)  │   └──────┬───────┘ │
+   │         │            └──────────────┘          │         │
+   │         │ RPC to control plane                  │         │
+   │         │                                        ▼         │
+   │         │                              ┌───────────────┐  │
+   │         │                              │  VM1  VM2  VM3 │  │
+   │         │                              │ (actual guests)│  │
+   │         │                              └───────┬────────┘  │
+   │         │                                       │           │
+   │   ┌─────▼─────────┐                     ┌───────▼────────┐ │
+   │   │ neutron-       │                     │  OVS bridge /   │ │
+   │   │ openvswitch-   │◄────────────────────┤  Linux bridge   │ │
+   │   │ agent          │  wires VM's tap dev  │  (vNIC to phy) │ │
+   │   └────────────────┘  into virtual switch └────────────────┘ │
+   │                                                            │
+   └──────────────────────────────────────────────────────────┘
 ```
 
 ### Key Facts
 
 - Every hypervisor host in the cloud runs exactly **one `nova-compute` process**.
-- Compute nodes are typically **stateless from the control plane's perspective** â€” if one dies, its VMs can (with shared storage) be evacuated to another host.
+- Compute nodes are typically **stateless from the control plane's perspective** — if one dies, its VMs can (with shared storage) be evacuated to another host.
 - The **hypervisor driver** is pluggable: `libvirt` (KVM/QEMU, most common), `vmware`, `hyperv`, `ironic` (bare metal), etc.
 - Compute nodes periodically send **heartbeats** to the control plane; if missed, `nova-scheduler`'s `ComputeFilter` stops sending new VMs there.
 
@@ -496,11 +496,11 @@ If nova-scheduler is the manager assigning orders to stations, each **compute no
 
 ### What is a Flavor?
 
-A **flavor** is a predefined hardware profile â€” essentially "T-shirt sizing" for VMs. It specifies vCPU count, RAM, root disk size, ephemeral disk, swap, and optional extra specs (like CPU pinning, NUMA, GPU passthrough).
+A **flavor** is a predefined hardware profile — essentially "T-shirt sizing" for VMs. It specifies vCPU count, RAM, root disk size, ephemeral disk, swap, and optional extra specs (like CPU pinning, NUMA, GPU passthrough).
 
-### Analogy: Fast Food Menu Combos ðŸ”
+### Analogy: Fast Food Menu Combos 🍔
 
-You don't custom-order "exactly 347 grams of beef, 2.3 fries" â€” you pick "Combo #2" (Medium meal: burger + medium fries + medium drink). A flavor is exactly that: a fixed, named bundle of resources so users pick from a menu instead of hand-specifying raw hardware numbers.
+You don't custom-order "exactly 347 grams of beef, 2.3 fries" — you pick "Combo #2" (Medium meal: burger + medium fries + medium drink). A flavor is exactly that: a fixed, named bundle of resources so users pick from a menu instead of hand-specifying raw hardware numbers.
 
 ### Default Flavor Examples
 
@@ -526,20 +526,20 @@ openstack flavor set gpu.medium --property hw:cpu_policy=dedicated
 openstack flavor set gpu.medium --property pci_passthrough:alias=nvidia-t4:1
 ```
 
-### Extra Specs â€” Fine-Grained Control
+### Extra Specs — Fine-Grained Control
 
-Flavors aren't just size â€” `extra_specs` let admins encode advanced scheduling/hardware requirements:
+Flavors aren't just size — `extra_specs` let admins encode advanced scheduling/hardware requirements:
 
 | Extra Spec | Meaning |
 |---|---|
-| `hw:cpu_policy=dedicated` | Pin vCPUs to physical cores (no oversubscription) â€” for latency-sensitive workloads |
+| `hw:cpu_policy=dedicated` | Pin vCPUs to physical cores (no oversubscription) — for latency-sensitive workloads |
 | `hw:numa_nodes=2` | Spread the VM across 2 NUMA nodes |
 | `quota:vif_rate_limit` | Network bandwidth limit for the VM's port |
 | `trait:CUSTOM_GPU=required` | Only schedule on hosts advertising this custom Placement trait |
 
 ### Why Flavors Matter for Scheduling
 
-The **Nova Scheduler's filters** (RamFilter, CoreFilter, DiskFilter, NUMATopologyFilter) directly consume the flavor's specs to eliminate hosts that can't satisfy the request â€” so flavors are the direct input to the filtering pipeline discussed in section 6.
+The **Nova Scheduler's filters** (RamFilter, CoreFilter, DiskFilter, NUMATopologyFilter) directly consume the flavor's specs to eliminate hosts that can't satisfy the request — so flavors are the direct input to the filtering pipeline discussed in section 6.
 
 ---
 
@@ -550,26 +550,26 @@ The **Nova Scheduler's filters** (RamFilter, CoreFilter, DiskFilter, NUMATopolog
 An OpenStack instance moves through a well-defined set of states (`vm_state` and `task_state` in Nova's data model):
 
 ```
-        [BUILD] â”€â”€â–º [ACTIVE] â—„â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-           â”‚            â”‚  â–²                â”‚
-           â”‚      stop  â”‚  â”‚ start          â”‚
-           â”‚            â–¼  â”‚                â”‚
-           â”‚         [SHUTOFF]               â”‚
-           â”‚            â”‚                    â”‚
-           â”‚      rebootâ”‚  resize/migrate    â”‚
-           â”‚            â–¼                    â”‚
-           â”‚         [REBOOT] â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–º [RESIZED]
-           â”‚                                  â”‚
-           â”‚                          confirm/revert
-           â”‚                                  â”‚
+        [BUILD] ──► [ACTIVE] ◄──────────────┐
+           │            │  ▲                │
+           │      stop  │  │ start          │
+           │            ▼  │                │
+           │         [SHUTOFF]               │
+           │            │                    │
+           │      reboot│  resize/migrate    │
+           │            ▼                    │
+           │         [REBOOT] ──────────► [RESIZED]
+           │                                  │
+           │                          confirm/revert
+           │                                  │
            â–¼                                  â–¼
         [ERROR]                          [ACTIVE/SHUTOFF]
 
      Other transitions:
-     ACTIVE â”€â”€pauseâ”€â”€â–º PAUSED â”€â”€unpauseâ”€â”€â–º ACTIVE
-     ACTIVE â”€â”€suspendâ”€â”€â–º SUSPENDED â”€â”€resumeâ”€â”€â–º ACTIVE
-     ACTIVE â”€â”€snapshotâ”€â”€â–º (creates Glance image, stays ACTIVE)
-     ANY â”€â”€deleteâ”€â”€â–º [DELETED] (soft-delete, then reclaimed)
+     ACTIVE ──pause──► PAUSED ──unpause──► ACTIVE
+     ACTIVE ──suspend──► SUSPENDED ──resume──► ACTIVE
+     ACTIVE ──snapshot──► (creates Glance image, stays ACTIVE)
+     ANY ──delete──► [DELETED] (soft-delete, then reclaimed)
 ```
 
 ### Definitions of Common States
@@ -585,13 +585,13 @@ An OpenStack instance moves through a well-defined set of states (`vm_state` and
 | `ERROR` | Something failed during a state transition |
 | `DELETED` | Marked for removal / removed |
 
-### Analogy: A Car's Life ðŸš—
+### Analogy: A Car's Life 🚗
 
 - **BUILD** = the car is on the factory assembly line.
 - **ACTIVE** = the car is being driven.
 - **SHUTOFF** = the car is parked, engine off, but fully intact and ready to start again.
-- **PAUSED** = like hitting pause on a video game â€” everything frozen mid-action, engine still "on" conceptually.
-- **SUSPENDED** = like hibernating a laptop â€” state saved to disk, engine actually off, resources released.
+- **PAUSED** = like hitting pause on a video game — everything frozen mid-action, engine still "on" conceptually.
+- **SUSPENDED** = like hibernating a laptop — state saved to disk, engine actually off, resources released.
 - **DELETED** = the car is sent to the scrapyard.
 
 ### Lifecycle Operations (CLI)
@@ -612,7 +612,7 @@ openstack server suspend my-vm
 openstack server delete my-vm
 ```
 
-### What Actually Happens Under the Hood (summary â€” full detail in Section 27)
+### What Actually Happens Under the Hood (summary — full detail in Section 27)
 
 1. `nova-api` validates request, writes an initial DB record (state=BUILD).
 2. `nova-conductor` + `nova-scheduler` pick a host.
@@ -621,24 +621,24 @@ openstack server delete my-vm
    - requests a Neutron port (IP, MAC assigned)
    - requests a Cinder volume if boot-from-volume
    - calls libvirt to define & start the VM
-4. State transitions to `ACTIVE` once boot succeeds; if anything fails â†’ `ERROR`.
+4. State transitions to `ACTIVE` once boot succeeds; if anything fails → `ERROR`.
 
 ---
 
-## 10. Glance â€” Images
+## 10. Glance — Images
 
 ### What is Glance?
 
-Glance is OpenStack's **image service**. It stores and serves the **disk images** (OS templates) used to boot VMs â€” think of it as a registry/catalog, similar in spirit to a Docker image registry, but for full VM disk images (qcow2, raw, vmdk, ISO, etc.).
+Glance is OpenStack's **image service**. It stores and serves the **disk images** (OS templates) used to boot VMs — think of it as a registry/catalog, similar in spirit to a Docker image registry, but for full VM disk images (qcow2, raw, vmdk, ISO, etc.).
 
-### Analogy: A Photocopier Master Template ðŸ“„
+### Analogy: A Photocopier Master Template 📄
 
-Imagine Glance as the master copy of a document in a photocopier's memory. Every time someone wants a "copy" (a new VM), the system doesn't hand them the master â€” it makes a **fresh copy-on-write clone** of it, so the original template stays pristine and reusable for the next 1,000 VMs.
+Imagine Glance as the master copy of a document in a photocopier's memory. Every time someone wants a "copy" (a new VM), the system doesn't hand them the master — it makes a **fresh copy-on-write clone** of it, so the original template stays pristine and reusable for the next 1,000 VMs.
 
 ### What Glance Stores
 
 - **Image metadata**: name, disk format (qcow2/raw/vmdk/ami), container format, size, checksum, visibility, tags, custom properties.
-- **The actual image file bytes**, in a configurable backend (local filesystem, Swift, Ceph RBD, S3-compatible object store â€” most production clouds use Ceph or Swift).
+- **The actual image file bytes**, in a configurable backend (local filesystem, Swift, Ceph RBD, S3-compatible object store — most production clouds use Ceph or Swift).
 
 ### Image Visibility Types
 
@@ -669,13 +669,13 @@ openstack image show ubuntu-22.04
 
 ```
   User requests VM with image="ubuntu-22.04"
-              â”‚
+              │
               â–¼
-       nova-compute â”€â”€â–º Glance API: "give me ubuntu-22.04's data"
-              â”‚
+       nova-compute ──► Glance API: "give me ubuntu-22.04's data"
+              │
               â–¼
    Glance streams image bytes (from Ceph/Swift/local backend)
-              â”‚
+              │
               â–¼
    nova-compute caches it locally, then either:
      (a) uses it directly as the VM's ephemeral root disk (copy-on-write), OR
@@ -691,24 +691,24 @@ Most deployments back images with **qcow2** format and use a **copy-on-write (Co
 
 ---
 
-## 11. Cinder â€” Block Storage
+## 11. Cinder — Block Storage
 
 ### What is Cinder?
 
-Cinder is OpenStack's **block storage service** â€” it provisions and manages **persistent virtual disks (volumes)** that can be attached to VMs, similar to AWS EBS.
+Cinder is OpenStack's **block storage service** — it provisions and manages **persistent virtual disks (volumes)** that can be attached to VMs, similar to AWS EBS.
 
-### Analogy: A Detachable Storage Locker ðŸ”
+### Analogy: A Detachable Storage Locker 🔐
 
 A Cinder volume is like a **detachable storage locker on wheels**. You can:
 - Roll it up and attach it to VM A (room 101).
-- Later detach it, roll it down the hall, and attach it to VM B (room 305) â€” the data persists, independent of any single VM's lifecycle.
+- Later detach it, roll it down the hall, and attach it to VM B (room 305) — the data persists, independent of any single VM's lifecycle.
 - Unlike the VM's own ephemeral disk (which vanishes if the VM is deleted), the locker survives VM deletion.
 
 ### Cinder vs Nova Ephemeral Disk
 
 | | Ephemeral disk (from Nova/Glance) | Cinder Volume |
 |---|---|---|
-| Lifecycle | Tied to the VM â€” deleted when VM deleted | Independent â€” survives VM deletion |
+| Lifecycle | Tied to the VM — deleted when VM deleted | Independent — survives VM deletion |
 | Portability | Cannot move to another VM | Can detach/attach to different VMs |
 | Backend | Local compute node disk (usually) | Dedicated storage backend (LVM, Ceph, SAN, etc.) |
 | Snapshots | Limited | First-class Cinder snapshots |
@@ -717,22 +717,22 @@ A Cinder volume is like a **detachable storage locker on wheels**. You can:
 ### Architecture
 
 ```
-                    â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-   API requests â”€â”€â–º â”‚  cinder-api    â”‚
-                    â””â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”˜
-                            â”‚
-                    â”Œâ”€â”€â”€â”€â”€â”€â”€â–¼â”€â”€â”€â”€â”€â”€â”€â”€â”
-                    â”‚ cinder-schedulerâ”‚  (picks a backend/pool based on
-                    â””â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”˜   capacity, capabilities)
-                            â”‚
-                    â”Œâ”€â”€â”€â”€â”€â”€â”€â–¼â”€â”€â”€â”€â”€â”€â”€â”€â”
-                    â”‚ cinder-volume   â”‚  (talks to the actual backend driver:
-                    â””â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”˜   LVM, Ceph RBD, NetApp, Pure, etc.)
-                            â”‚
-                    â”Œâ”€â”€â”€â”€â”€â”€â”€â–¼â”€â”€â”€â”€â”€â”€â”€â”€â”
-                    â”‚ Storage Backend â”‚
-                    â”‚ (LVM/Ceph/SAN)  â”‚
-                    â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+                    ┌───────────────┐
+   API requests ──► │  cinder-api    │
+                    └───────┬───────┘
+                            │
+                    ┌───────▼────────┐
+                    │ cinder-scheduler│  (picks a backend/pool based on
+                    └───────┬────────┘   capacity, capabilities)
+                            │
+                    ┌───────▼────────┐
+                    │ cinder-volume   │  (talks to the actual backend driver:
+                    └───────┬────────┘   LVM, Ceph RBD, NetApp, Pure, etc.)
+                            │
+                    ┌───────▼────────┐
+                    │ Storage Backend │
+                    │ (LVM/Ceph/SAN)  │
+                    └────────────────┘
 ```
 
 ### CLI Examples
@@ -757,7 +757,7 @@ openstack volume create --snapshot my-vol-snapshot restored-vol
 ### How a Volume Gets Attached (Under the Hood)
 
 1. `nova-compute` calls Cinder's API: "attach volume X to instance Y."
-2. Cinder's driver exports the volume via the backend's protocol â€” commonly **iSCSI** (LVM backend) or **RBD** (Ceph backend).
+2. Cinder's driver exports the volume via the backend's protocol — commonly **iSCSI** (LVM backend) or **RBD** (Ceph backend).
 3. `nova-compute`, via libvirt, connects to that exported block device and attaches it as a new disk (`/dev/vdb`) inside the guest.
 4. Inside the VM, the guest OS sees a brand-new block device it can partition/format/mount.
 
@@ -773,15 +773,15 @@ openstack server create --volume my-boot-vol --flavor m1.medium my-vm
 
 ---
 
-## 12. Neutron â€” Networking â­
+## 12. Neutron — Networking ⭐
 
 ### What is Neutron?
 
-Neutron is OpenStack's **networking-as-a-service** component. It provides tenants with **software-defined virtual networks** â€” virtual switches, routers, DHCP, floating IPs, security groups, load balancers (via Octavia) â€” all fully API-driven and isolated per-project.
+Neutron is OpenStack's **networking-as-a-service** component. It provides tenants with **software-defined virtual networks** — virtual switches, routers, DHCP, floating IPs, security groups, load balancers (via Octavia) — all fully API-driven and isolated per-project.
 
-This is the most conceptually dense P0 topic, so we'll build it up from first principles across sections 12â€“26.
+This is the most conceptually dense P0 topic, so we'll build it up from first principles across sections 12–26.
 
-### Analogy: The Hotel's Internal Telecom & Wiring System â˜Žï¸
+### Analogy: The Hotel's Internal Telecom & Wiring System ☎️
 
 If Nova is "room booking" and Cinder is "storage lockers," **Neutron is the entire electrical/telecom wiring infrastructure of the hotel**:
 - Every room (VM) has a phone jack (**port**) wired into the hallway's internal switchboard (**virtual switch / network**).
@@ -791,34 +791,34 @@ If Nova is "room booking" and Cinder is "storage lockers," **Neutron is the enti
 - The hotel's security desk decides who can call which rooms (**security groups / firewall rules**).
 - New guests automatically get assigned a room phone extension when they check in (**DHCP**).
 
-### Why Neutron is Marked â­ (Complexity)
+### Why Neutron is Marked ⭐ (Complexity)
 
 Networking is the hardest part of OpenStack conceptually because it spans **multiple OSI layers** (L2 switching, L3 routing, overlay encapsulation) and involves **many moving pieces working together in real time**: `neutron-server` (control plane) plus per-host **agents** (`ovs-agent`, `l3-agent`, `dhcp-agent`, `metadata-agent`) that program the actual **data plane** (Open vSwitch flows, Linux network namespaces, iptables).
 
 ### Neutron's High-Level Architecture
 
 ```
-                       â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-     API requests â”€â”€â–º  â”‚    neutron-server     â”‚  (control plane; talks to plugins)
-                       â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
-                                  â”‚
-                     â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-                     â”‚      ML2 Plugin            â”‚  (Modular Layer 2 plugin â€”
-                     â”‚  (pluggable type & mech     â”‚   decides encapsulation:
-                     â”‚   drivers: OVS, OVN, etc.)  â”‚   VLAN/VXLAN/Geneve)
-                     â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
-                                  â”‚  RPC (RabbitMQ)
-         â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¼â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+                       ┌─────────────────────┐
+     API requests ──►  │    neutron-server     │  (control plane; talks to plugins)
+                       └──────────┬────────────┘
+                                  │
+                     ┌────────────┴─────────────┐
+                     │      ML2 Plugin            │  (Modular Layer 2 plugin —
+                     │  (pluggable type & mech     │   decides encapsulation:
+                     │   drivers: OVS, OVN, etc.)  │   VLAN/VXLAN/Geneve)
+                     └────────────┬─────────────┘
+                                  │  RPC (RabbitMQ)
+         ┌────────────────────────┼────────────────────────┐
          â–¼                        â–¼                        â–¼
- â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”      â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”        â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
- â”‚ neutron-       â”‚      â”‚  neutron-l3-   â”‚        â”‚  neutron-dhcp-  â”‚
- â”‚ openvswitch-   â”‚      â”‚  agent         â”‚        â”‚  agent          â”‚
- â”‚ agent          â”‚      â”‚ (runs on       â”‚        â”‚ (runs dnsmasq   â”‚
- â”‚ (runs on every â”‚      â”‚  network node) â”‚        â”‚  per network)   â”‚
- â”‚  compute/net   â”‚      â”‚ programs       â”‚        â”‚                 â”‚
- â”‚  node; programs â”‚      â”‚ routers via    â”‚        â”‚                 â”‚
- â”‚  OVS flows)     â”‚      â”‚ netns + iptablesâ”‚       â”‚                 â”‚
- â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜      â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜        â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+ ┌───────────────┐      ┌───────────────┐        ┌────────────────┐
+ │ neutron-       │      │  neutron-l3-   │        │  neutron-dhcp-  │
+ │ openvswitch-   │      │  agent         │        │  agent          │
+ │ agent          │      │ (runs on       │        │ (runs dnsmasq   │
+ │ (runs on every │      │  network node) │        │  per network)   │
+ │  compute/net   │      │ programs       │        │                 │
+ │  node; programs │      │ routers via    │        │                 │
+ │  OVS flows)     │      │ netns + iptables│       │                 │
+ └───────────────┘      └───────────────┘        └────────────────┘
 ```
 
 ### Neutron's Core Abstractions (previewed, detailed in next sections)
@@ -827,7 +827,7 @@ Networking is the hardest part of OpenStack conceptually because it spans **mult
 |---|---|
 | **Network** | A virtual L2 broadcast domain |
 | **Subnet** | An IP address range (CIDR) bound to a network |
-| **Port** | A virtual NIC â€” a VM's or router's attachment point to a network |
+| **Port** | A virtual NIC — a VM's or router's attachment point to a network |
 | **Router** | A virtual L3 device connecting subnets/networks together and to external networks |
 | **Floating IP** | A public IP mapped (1:1 NAT) to a VM's private IP |
 | **Security Group** | A stateful virtual firewall applied to ports |
@@ -843,16 +843,16 @@ Networking is the hardest part of OpenStack conceptually because it spans **mult
 
 ### Definition
 
-A **Network** in Neutron is a virtual, isolated **Layer 2 broadcast domain** â€” conceptually equivalent to a VLAN or a physical Ethernet switch's collision/broadcast domain, but entirely software-defined.
+A **Network** in Neutron is a virtual, isolated **Layer 2 broadcast domain** — conceptually equivalent to a VLAN or a physical Ethernet switch's collision/broadcast domain, but entirely software-defined.
 
-### Analogy: A Single Floor's Hallway ðŸ¨
+### Analogy: A Single Floor's Hallway 🏨
 
-A Neutron network is like one floor of the hotel â€” all rooms (VM ports) on that floor share the same hallway. If you shout down the hallway (broadcast, e.g., ARP), everyone on that floor hears it. Rooms on a different floor (a different network) never hear it directly â€” they'd need to go through the PBX (router) to communicate.
+A Neutron network is like one floor of the hotel — all rooms (VM ports) on that floor share the same hallway. If you shout down the hallway (broadcast, e.g., ARP), everyone on that floor hears it. Rooms on a different floor (a different network) never hear it directly — they'd need to go through the PBX (router) to communicate.
 
 ### Key Properties
 
 - Every network has one or more **subnets** attached (the IP ranges usable on that L2 segment).
-- Networks are isolated from each other at L2 by default â€” VMs on Network A cannot ARP/broadcast-reach VMs on Network B without a router.
+- Networks are isolated from each other at L2 by default — VMs on Network A cannot ARP/broadcast-reach VMs on Network B without a router.
 - Implemented under the hood via **VLAN tagging**, **VXLAN**, or **Geneve** tunnels (see section 21) depending on the ML2 type driver configured.
 
 ### CLI Example
@@ -867,8 +867,8 @@ openstack network list
 
 | Type | Description |
 |---|---|
-| **Provider network** | Maps directly to a physical network segment the admin defines (e.g., a VLAN on the physical switch) â€” see section 22 |
-| **Tenant network** | Created by a regular user, isolated automatically using overlay tech (VXLAN/Geneve) â€” see section 22 |
+| **Provider network** | Maps directly to a physical network segment the admin defines (e.g., a VLAN on the physical switch) — see section 22 |
+| **Tenant network** | Created by a regular user, isolated automatically using overlay tech (VXLAN/Geneve) — see section 22 |
 | **External network** | A special provider network representing "the internet" or a shared corporate network, used as a router's gateway |
 
 ---
@@ -877,11 +877,11 @@ openstack network list
 
 ### Definition
 
-A **Subnet** is an IP address block (CIDR) associated with a Network â€” it defines the actual IPv4/IPv6 addressing, gateway, and DHCP behavior for that L2 segment.
+A **Subnet** is an IP address block (CIDR) associated with a Network — it defines the actual IPv4/IPv6 addressing, gateway, and DHCP behavior for that L2 segment.
 
-### Analogy: Room Numbering Scheme on a Floor ðŸ”¢
+### Analogy: Room Numbering Scheme on a Floor 🔢
 
-If the Network is "Floor 3," the Subnet is "rooms are numbered 300â€“399, with the floor's PBX exchange (gateway) at room 300." Every guest checking into that floor gets a room number from that specific range.
+If the Network is "Floor 3," the Subnet is "rooms are numbered 300–399, with the floor's PBX exchange (gateway) at room 300." Every guest checking into that floor gets a room number from that specific range.
 
 ### Key Properties
 
@@ -907,7 +907,7 @@ openstack subnet create --network private-net \
 
 ### One Network, Multiple Subnets
 
-A single Neutron network **can** have multiple subnets (e.g., one IPv4 + one IPv6 subnet, or dual IPv4 ranges) â€” all sharing the same L2 broadcast domain, since Subnet is purely an L3 addressing construct layered on top of the L2 Network.
+A single Neutron network **can** have multiple subnets (e.g., one IPv4 + one IPv6 subnet, or dual IPv4 ranges) — all sharing the same L2 broadcast domain, since Subnet is purely an L3 addressing construct layered on top of the L2 Network.
 
 ---
 
@@ -915,9 +915,9 @@ A single Neutron network **can** have multiple subnets (e.g., one IPv4 + one IPv
 
 ### Definition
 
-A **Port** is a virtual network interface â€” Neutron's representation of a single connection point to a Network. Every VM's vNIC, every router's interface, and every DHCP server's interface is backed by a Port object.
+A **Port** is a virtual network interface — Neutron's representation of a single connection point to a Network. Every VM's vNIC, every router's interface, and every DHCP server's interface is backed by a Port object.
 
-### Analogy: The Phone Jack in Each Room â˜Žï¸
+### Analogy: The Phone Jack in Each Room ☎️
 
 A Port is the actual **phone jack** wired into the wall of a hotel room, connected to that floor's switchboard (the Network). It has:
 - A **MAC address** (like the phone's unique hardware serial)
@@ -956,7 +956,7 @@ When a VM boots, Nova requests a port from Neutron (or uses a pre-created one). 
 4. The agent creates a **tap device** and wires it into the local **OVS integration bridge (br-int)**, tagging it with the right internal VLAN so it lands in the correct logical network segment.
 
 ```
-   VM's vNIC (virtio-net) â”€â”€â–º tap device (e.g. tapXXXX) â”€â”€â–º br-int (OVS) â”€â”€â–º network overlay
+   VM's vNIC (virtio-net) ──► tap device (e.g. tapXXXX) ──► br-int (OVS) ──► network overlay
 ```
 
 ---
@@ -967,11 +967,11 @@ When a VM boots, Nova requests a port from Neutron (or uses a pre-created one). 
 
 A **Router** is a virtual L3 device that connects multiple networks/subnets together and optionally connects a tenant network to an **external network** (providing internet access via SNAT/floating IPs).
 
-### Analogy: The Hotel's PBX Exchange ðŸ“ž
+### Analogy: The Hotel's PBX Exchange 📞
 
 The Router is the PBX switchboard that:
-- Connects Floor 1's phone system to Floor 2's phone system (**inter-subnet routing** â€” East-West).
-- Connects the whole hotel's internal phone network to the **outside phone line** (**external gateway** â€” North-South).
+- Connects Floor 1's phone system to Floor 2's phone system (**inter-subnet routing** — East-West).
+- Connects the whole hotel's internal phone network to the **outside phone line** (**external gateway** — North-South).
 - Translates internal extensions to a callable outside number when a guest calls out (**SNAT**).
 - Routes an incoming outside call to the specific correct room if that room has a direct dial-in number set up (**Floating IP / DNAT**).
 
@@ -979,16 +979,16 @@ The Router is the PBX switchboard that:
 
 ```
         External Network (public, "the internet")
-                    â”‚
-                    â”‚  router's gateway port (qg-xxxx)
+                    │
+                    │  router's gateway port (qg-xxxx)
                     â–¼
-        â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-        â”‚   Neutron Router      â”‚   (implemented as a Linux network namespace:
-        â”‚   (L3 agent, in a      â”‚    qrouter-<router-id>)
-        â”‚   dedicated netns)     â”‚
-        â””â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”˜
+        ┌─────────────────────┐
+        │   Neutron Router      │   (implemented as a Linux network namespace:
+        │   (L3 agent, in a      │    qrouter-<router-id>)
+        │   dedicated netns)     │
+        └─────┬─────────┬──────┘
         internal ports (qr-xxxx)
-              â”‚           â”‚
+              │           │
               â–¼           â–¼
       Subnet A (10.0.1.0/24)   Subnet B (10.0.2.0/24)
         [VM1]  [VM2]              [VM3]  [VM4]
@@ -998,10 +998,10 @@ The Router is the PBX switchboard that:
 
 | Concept | Meaning |
 |---|---|
-| **Internal interface (`qr-` port)** | Connects the router to one internal tenant subnet â€” acts as that subnet's default gateway |
+| **Internal interface (`qr-` port)** | Connects the router to one internal tenant subnet — acts as that subnet's default gateway |
 | **Gateway interface (`qg-` port)** | Connects the router to the external network |
 | **SNAT (Source NAT)** | Translates outbound VM traffic's private source IP to the router's public IP, so VMs *without* a floating IP can still reach the internet (many-to-one) |
-| **DNAT (Destination NAT) via Floating IP** | Translates inbound traffic destined for a public floating IP to a specific VM's private IP (one-to-one) â€” see section 17 |
+| **DNAT (Destination NAT) via Floating IP** | Translates inbound traffic destined for a public floating IP to a specific VM's private IP (one-to-one) — see section 17 |
 
 ### CLI Example
 
@@ -1018,7 +1018,7 @@ openstack router add subnet my-router private-subnet
 
 ### Distributed Virtual Routing (DVR)
 
-In legacy/centralized Neutron deployments, all router namespaces live on dedicated **network nodes**, creating a bottleneck and single point of failure. **DVR (Distributed Virtual Router)** distributes East-West routing and floating-IP handling directly onto compute nodes, so traffic between two VMs on different subnets â€” even on the same compute host â€” doesn't need to traverse a centralized network node at all.
+In legacy/centralized Neutron deployments, all router namespaces live on dedicated **network nodes**, creating a bottleneck and single point of failure. **DVR (Distributed Virtual Router)** distributes East-West routing and floating-IP handling directly onto compute nodes, so traffic between two VMs on different subnets — even on the same compute host — doesn't need to traverse a centralized network node at all.
 
 ---
 
@@ -1026,29 +1026,29 @@ In legacy/centralized Neutron deployments, all router namespaces live on dedicat
 
 ### Definition
 
-A **Floating IP** is a publicly-routable IP address from an external network that is **1:1 NAT-mapped** to a specific VM's private, internal fixed IP â€” allowing that VM to be reached directly from outside the cloud (e.g., the internet or corporate network).
+A **Floating IP** is a publicly-routable IP address from an external network that is **1:1 NAT-mapped** to a specific VM's private, internal fixed IP — allowing that VM to be reached directly from outside the cloud (e.g., the internet or corporate network).
 
-### Analogy: A Hotel Room's Direct-Dial Number ðŸ“±
+### Analogy: A Hotel Room's Direct-Dial Number 📱
 
-By default, all hotel rooms share the PBX's single outside line for making calls out (SNAT-like) â€” but nobody outside can call *into* a specific room directly. A **floating IP** is like getting that room its own direct-dial phone number: anyone outside can now call that exact room directly, bypassing the front desk.
+By default, all hotel rooms share the PBX's single outside line for making calls out (SNAT-like) — but nobody outside can call *into* a specific room directly. A **floating IP** is like getting that room its own direct-dial phone number: anyone outside can now call that exact room directly, bypassing the front desk.
 
 ### How It Works
 
 ```
       Internet
-         â”‚
-         â”‚  destined for 203.0.113.10 (Floating IP)
+         │
+         │  destined for 203.0.113.10 (Floating IP)
          â–¼
-   â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-   â”‚   Router      â”‚   DNAT: 203.0.113.10 â”€â”€â–º 10.0.1.50 (VM's fixed IP)
-   â”‚  (qrouter-ns) â”‚   SNAT: 10.0.1.50 â”€â”€â–º 203.0.113.10 (for return traffic)
-   â””â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”˜
+   ┌─────────────┐
+   │   Router      │   DNAT: 203.0.113.10 ──► 10.0.1.50 (VM's fixed IP)
+   │  (qrouter-ns) │   SNAT: 10.0.1.50 ──► 203.0.113.10 (for return traffic)
+   └──────┬───────┘
           â–¼
    VM (fixed IP 10.0.1.50)
 ```
 
 - Floating IPs are allocated from a pool defined on an **external network**.
-- They are a **project-level resource** â€” once allocated to your project, you can associate/disassociate them with different VM ports at will (no need to re-provision).
+- They are a **project-level resource** — once allocated to your project, you can associate/disassociate them with different VM ports at will (no need to re-provision).
 - Implemented via **iptables DNAT/SNAT rules** inside the router's network namespace (or distributed via DVR's floating-IP namespaces on compute nodes).
 
 ### CLI Example
@@ -1064,11 +1064,11 @@ openstack server add floating ip my-vm 203.0.113.10
 openstack server remove floating ip my-vm 203.0.113.10
 ```
 
-### Floating IP vs SNAT â€” Key Difference
+### Floating IP vs SNAT — Key Difference
 
 | | SNAT (default router behavior) | Floating IP |
 |---|---|---|
-| Direction | Outbound only (VM â†’ internet) | Both directions (bidirectional) |
+| Direction | Outbound only (VM → internet) | Both directions (bidirectional) |
 | Mapping | Many VMs share ONE router public IP | One dedicated public IP per VM |
 | Inbound reachability | VM cannot be reached from outside | VM directly reachable from outside |
 | Typical use | Default for all VMs (egress-only) | Public-facing servers (web servers, bastion hosts) |
@@ -1079,18 +1079,18 @@ openstack server remove floating ip my-vm 203.0.113.10
 
 ### Definition
 
-A **Security Group** is a **stateful, virtual firewall** â€” a named set of inbound/outbound rules applied to one or more Neutron ports (VM vNICs). It's conceptually identical to an AWS Security Group.
+A **Security Group** is a **stateful, virtual firewall** — a named set of inbound/outbound rules applied to one or more Neutron ports (VM vNICs). It's conceptually identical to an AWS Security Group.
 
-### Analogy: The Hotel Room's Guest List at the Door ðŸšª
+### Analogy: The Hotel Room's Guest List at the Door 🚪
 
-Each room has a guest list posted at the door (security group rules): "Only room service and the guest's own invited visitors may enter; the guest may call anyone they like." It's a **per-room (per-port)** access control list, not a hallway-wide (network-wide) rule â€” different rooms can have completely different guest lists even on the same floor.
+Each room has a guest list posted at the door (security group rules): "Only room service and the guest's own invited visitors may enter; the guest may call anyone they like." It's a **per-room (per-port)** access control list, not a hallway-wide (network-wide) rule — different rooms can have completely different guest lists even on the same floor.
 
 ### Key Properties
 
-- **Stateful:** if you allow an outbound connection, the return traffic for that same connection is automatically allowed back in (no need for a matching inbound rule) â€” like a phone call, once you dial out, the response can flow back automatically.
+- **Stateful:** if you allow an outbound connection, the return traffic for that same connection is automatically allowed back in (no need for a matching inbound rule) — like a phone call, once you dial out, the response can flow back automatically.
 - **Default-deny inbound, default-allow outbound:** by default, all inbound traffic is denied except what's explicitly allowed; all outbound traffic is allowed.
 - Rules are defined by: **direction** (ingress/egress), **protocol** (TCP/UDP/ICMP), **port range**, and **remote source** (either a CIDR or another security group).
-- A port can have **multiple security groups** attached â€” rules are additive (union of all allow rules).
+- A port can have **multiple security groups** attached — rules are additive (union of all allow rules).
 
 ### CLI Example
 
@@ -1106,7 +1106,7 @@ openstack security group rule create --proto tcp --dst-port 22 \
 openstack security group rule create --proto tcp --dst-port 80 \
     --remote-ip 0.0.0.0/0 web-servers
 
-# Allow all traffic FROM instances in the same security group (common for app-tier â†” db-tier)
+# Allow all traffic FROM instances in the same security group (common for app-tier ↔ db-tier)
 openstack security group rule create --proto tcp --remote-group web-servers web-servers
 
 # Apply to a VM
@@ -1133,26 +1133,26 @@ On the compute node, the `neutron-openvswitch-agent` translates security group r
 
 ### Definition
 
-**DHCP (Dynamic Host Configuration Protocol)** is how VMs automatically receive their IP address, gateway, DNS servers, and other network config when they boot â€” without manual configuration inside the guest OS.
+**DHCP (Dynamic Host Configuration Protocol)** is how VMs automatically receive their IP address, gateway, DNS servers, and other network config when they boot — without manual configuration inside the guest OS.
 
-### Analogy: Automatic Room Check-In ðŸ—ï¸
+### Analogy: Automatic Room Check-In 🗝️
 
-When a guest checks into the hotel, they don't pick their own room number â€” the front desk (DHCP server) automatically assigns them one from the available pool for that floor, tells them where the elevator (gateway) is, and gives them the hotel directory (DNS servers) â€” all automatically, the moment they arrive.
+When a guest checks into the hotel, they don't pick their own room number — the front desk (DHCP server) automatically assigns them one from the available pool for that floor, tells them where the elevator (gateway) is, and gives them the hotel directory (DNS servers) — all automatically, the moment they arrive.
 
 ### How Neutron Implements DHCP
 
-Neutron doesn't write a custom DHCP server â€” it uses the battle-tested **`dnsmasq`** program, running one dedicated instance **per network**, inside its own **network namespace** (`qdhcp-<network-id>`), managed by the `neutron-dhcp-agent`.
+Neutron doesn't write a custom DHCP server — it uses the battle-tested **`dnsmasq`** program, running one dedicated instance **per network**, inside its own **network namespace** (`qdhcp-<network-id>`), managed by the `neutron-dhcp-agent`.
 
 ```
         Network "private-net" (subnet 10.0.1.0/24)
-                    â”‚
-        â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–¼â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-        â”‚  qdhcp-<net-id> netns    â”‚
-        â”‚   running dnsmasq        â”‚  â—„â”€â”€ acts as DHCP server for this subnet
-        â”‚   IP: 10.0.1.2 (dhcp port)â”‚
-        â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
-                     â”‚  (connected to same br-int as VM ports)
-        â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¼â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+                    │
+        ┌───────────▼────────────┐
+        │  qdhcp-<net-id> netns    │
+        │   running dnsmasq        │  ◄── acts as DHCP server for this subnet
+        │   IP: 10.0.1.2 (dhcp port)│
+        └───────────┬────────────┘
+                     │  (connected to same br-int as VM ports)
+        ┌────────────┼────────────┐
         â–¼            â–¼            â–¼
       [VM1]        [VM2]        [VM3]
    (DHCPDISCOVER broadcast reaches dnsmasq via the shared L2 segment)
@@ -1160,18 +1160,18 @@ Neutron doesn't write a custom DHCP server â€” it uses the battle-tested **
 
 ### DHCP Handshake (the classic DORA process)
 
-1. **Discover** â€” VM boots, broadcasts "is there a DHCP server here?"
-2. **Offer** â€” `dnsmasq` (in the `qdhcp` namespace) responds: "here's IP 10.0.1.15, gateway 10.0.1.1, DNS 8.8.8.8."
-3. **Request** â€” VM says "I'll take that IP."
-4. **Acknowledge** â€” `dnsmasq` confirms, VM configures its NIC.
+1. **Discover** — VM boots, broadcasts "is there a DHCP server here?"
+2. **Offer** — `dnsmasq` (in the `qdhcp` namespace) responds: "here's IP 10.0.1.15, gateway 10.0.1.1, DNS 8.8.8.8."
+3. **Request** — VM says "I'll take that IP."
+4. **Acknowledge** — `dnsmasq` confirms, VM configures its NIC.
 
 ### Why It's Namespaced Per-Network
 
-Because IP ranges can **overlap** between different tenants' private networks (e.g., two different projects both using `10.0.0.0/24`), each network's DHCP server must be fully isolated in its own network namespace to avoid IP/ARP collisions â€” this is the same reason routers get their own namespace (see section 23).
+Because IP ranges can **overlap** between different tenants' private networks (e.g., two different projects both using `10.0.0.0/24`), each network's DHCP server must be fully isolated in its own network namespace to avoid IP/ARP collisions — this is the same reason routers get their own namespace (see section 23).
 
 ### Metadata Service Tie-In
 
-The DHCP agent (or a separate metadata agent) also often helps VMs reach the special **metadata service** at `169.254.169.254`, which provides cloud-init data (SSH keys, hostname, user-data scripts) â€” this is delivered via a route pushed by DHCP option 121, pointing that special IP at the router/DHCP namespace, which proxies the request to `nova-metadata-api`.
+The DHCP agent (or a separate metadata agent) also often helps VMs reach the special **metadata service** at `169.254.169.254`, which provides cloud-init data (SSH keys, hostname, user-data scripts) — this is delivered via a route pushed by DHCP option 121, pointing that special IP at the router/DHCP namespace, which proxies the request to `nova-metadata-api`.
 
 ---
 
@@ -1190,17 +1190,17 @@ The DHCP agent (or a separate metadata agent) also often helps VMs reach the spe
 
 ### Analogy Recap: Floors and the PBX
 
-- **L2 = same floor.** VM1 (Room 301) and VM2 (Room 305) on Floor 3 can shout down the hallway directly â€” an ARP broadcast for "who has 10.0.1.5?" is heard by everyone on that floor instantly, no routing needed.
-- **L3 = different floors.** VM3 on Floor 4 wants to talk to VM1 on Floor 3 â€” it can't just shout, because sound doesn't travel between floors. It has to place a call through the PBX (router), which knows the "extension range" (subnet CIDR) for each floor and forwards the call appropriately.
+- **L2 = same floor.** VM1 (Room 301) and VM2 (Room 305) on Floor 3 can shout down the hallway directly — an ARP broadcast for "who has 10.0.1.5?" is heard by everyone on that floor instantly, no routing needed.
+- **L3 = different floors.** VM3 on Floor 4 wants to talk to VM1 on Floor 3 — it can't just shout, because sound doesn't travel between floors. It has to place a call through the PBX (router), which knows the "extension range" (subnet CIDR) for each floor and forwards the call appropriately.
 
 ### Why This Matters for Traffic Flow
 
-- Two VMs on the **same Neutron network** (even different subnets, if multiple are attached) communicate via pure **L2 switching** â€” packets go VM â†’ br-int â†’ (same or different compute host via VXLAN) â†’ br-int â†’ VM, **no router hop needed** if they're on the identical L2 segment.
-- Two VMs on **different Neutron networks** (different L2 segments) must traverse a **Neutron Router** â€” even if physically running on the very same compute host â€” because routing is a logical L3 function tied to the router's namespace/flows.
+- Two VMs on the **same Neutron network** (even different subnets, if multiple are attached) communicate via pure **L2 switching** — packets go VM → br-int → (same or different compute host via VXLAN) → br-int → VM, **no router hop needed** if they're on the identical L2 segment.
+- Two VMs on **different Neutron networks** (different L2 segments) must traverse a **Neutron Router** — even if physically running on the very same compute host — because routing is a logical L3 function tied to the router's namespace/flows.
 
 ```
    Same Network (L2):           Different Networks (L3, needs router):
-   VM1 â”€â”€â–º br-int â”€â”€â–º VM2       VM1 â”€â”€â–º br-int â”€â”€â–º qrouter-ns â”€â”€â–º br-int â”€â”€â–º VM3
+   VM1 ──► br-int ──► VM2       VM1 ──► br-int ──► qrouter-ns ──► br-int ──► VM3
    (direct switching)            (routed hop through the Neutron Router)
 ```
 
@@ -1214,24 +1214,24 @@ Neutron networks need to be **isolated** from each other at L2, but a physical n
 
 ### VLAN (802.1Q)
 
-- A **VLAN tag** (12-bit ID, 1â€“4094) is inserted into the Ethernet frame header to logically segment a physical switch into multiple isolated broadcast domains.
-- **Limitation:** only ~4094 VLANs possible on a single physical network â€” not enough for large multi-tenant clouds.
+- A **VLAN tag** (12-bit ID, 1–4094) is inserted into the Ethernet frame header to logically segment a physical switch into multiple isolated broadcast domains.
+- **Limitation:** only ~4094 VLANs possible on a single physical network — not enough for large multi-tenant clouds.
 - Typically used for **provider networks** where the admin maps Neutron networks directly onto physical VLANs already configured on the datacenter's switches.
 
 ### VXLAN (Virtual Extensible LAN)
 
 - An **overlay/tunneling protocol**: the entire original Ethernet frame (L2) is encapsulated inside a UDP packet and sent across the existing L3 physical network between compute hosts.
-- Uses a **24-bit VNI (VXLAN Network Identifier)** â†’ supports **16 million+** isolated segments, solving VLAN's 4094 limit.
-- This is how two VMs on the same tenant network, but on **physically different compute hosts**, can appear to be on the same L2 segment â€” their traffic is tunneled host-to-host over the datacenter's ordinary IP fabric.
+- Uses a **24-bit VNI (VXLAN Network Identifier)** → supports **16 million+** isolated segments, solving VLAN's 4094 limit.
+- This is how two VMs on the same tenant network, but on **physically different compute hosts**, can appear to be on the same L2 segment — their traffic is tunneled host-to-host over the datacenter's ordinary IP fabric.
 
 ### Geneve (Generic Network Virtualization Encapsulation)
 
 - A newer, more **flexible** overlay protocol (like VXLAN but with extensible TLV-based headers), preferred by **OVN** (Open Virtual Network) deployments.
 - Same core idea as VXLAN (L2-over-L3 tunneling with a large ID space) but designed to carry richer metadata for future extensibility.
 
-### Analogy: Mail Envelopes ðŸ“¬âœ‰ï¸
+### Analogy: Mail Envelopes 📬✉️
 
-- **VLAN tag** = writing a colored sticker on an internal hotel envelope so the internal mail sorter knows "this goes to Floor 3's mail slot only" â€” works only *within* the same building's internal mail system.
+- **VLAN tag** = writing a colored sticker on an internal hotel envelope so the internal mail sorter knows "this goes to Floor 3's mail slot only" — works only *within* the same building's internal mail system.
 - **VXLAN/Geneve** = putting the entire internal hotel envelope (with its own internal addressing) inside a **second, outer envelope** addressed via the regular postal system (the physical IP network) so it can be shipped to a **different hotel building entirely** (a different physical compute host), then unwrapped there and delivered internally as if it never left.
 
 ### Comparison Table
@@ -1248,17 +1248,17 @@ Neutron networks need to be **isolated** from each other at L2, but a physical n
 
 ```
   Compute Host A                                Compute Host B
-  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”                                 â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-  â”‚   VM1      â”‚                                 â”‚   VM2      â”‚
-  â”‚ 10.0.1.5   â”‚                                 â”‚ 10.0.1.6   â”‚
-  â””â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”˜                                 â””â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”˜
-        â”‚ (original L2 frame)                          â”‚
+  ┌───────────┐                                 ┌───────────┐
+  │   VM1      │                                 │   VM2      │
+  │ 10.0.1.5   │                                 │ 10.0.1.6   │
+  └─────┬─────┘                                 └─────┬─────┘
+        │ (original L2 frame)                          │
         â–¼                                               â–¼
   br-int / br-tun                                 br-int / br-tun
-        â”‚  encapsulate in VXLAN (VNI=5001)              â”‚
-        â”‚  outer UDP/IP packet:                          â”‚
-        â”‚  src=192.168.50.10 dst=192.168.50.20           â”‚
-        â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–º Physical IP Network â—„â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+        │  encapsulate in VXLAN (VNI=5001)              │
+        │  outer UDP/IP packet:                          │
+        │  src=192.168.50.10 dst=192.168.50.20           │
+        └──────────────► Physical IP Network ◄───────────┘
                 (ordinary L3 routing/switching, unaware
                  of tenant VLANs/segments at all)
 ```
@@ -1273,13 +1273,13 @@ Neutron networks need to be **isolated** from each other at L2, but a physical n
 |---|---|---|
 | Who creates it | Cloud **admin** | Regular **project user** |
 | Maps to | An existing physical network segment (VLAN/flat) the admin has pre-configured on datacenter switches | An abstract overlay segment (VXLAN/Geneve), created on-demand |
-| Physical awareness | Admin must know the physical topology | Fully virtual â€” no physical network config needed per-network |
+| Physical awareness | Admin must know the physical topology | Fully virtual — no physical network config needed per-network |
 | Typical use | External/internet-facing networks, shared infra networks | Private per-project networks for app tiers |
 
 ### Analogy
 
-- **Provider network** = a hotel's pre-wired conference room that's *physically* patched into the building's main trunk line by the building electrician (admin) ahead of time â€” a fixed, real physical resource.
-- **Tenant network** = a guest, using the hotel's self-service app, spins up their own **virtual conference call bridge** on demand â€” no physical wiring involved, just a logical construct the PBX (Neutron/OVS) manages internally.
+- **Provider network** = a hotel's pre-wired conference room that's *physically* patched into the building's main trunk line by the building electrician (admin) ahead of time — a fixed, real physical resource.
+- **Tenant network** = a guest, using the hotel's self-service app, spins up their own **virtual conference call bridge** on demand — no physical wiring involved, just a logical construct the PBX (Neutron/OVS) manages internally.
 
 ### CLI Examples
 
@@ -1290,7 +1290,7 @@ openstack network create --provider-network-type vlan \
     --provider-segment 200 \
     provider-vlan200
 
-# Regular user creates a self-service (VXLAN) tenant network â€” no provider details needed
+# Regular user creates a self-service (VXLAN) tenant network — no provider details needed
 openstack network create my-app-network
 openstack subnet create --network my-app-network --subnet-range 10.0.5.0/24 my-app-subnet
 ```
@@ -1307,22 +1307,22 @@ A typical deployment uses a **provider network as the "external network"** (the 
 
 ### Definition
 
-A **Linux network namespace (netns)** is a kernel feature that gives a process (or group of processes) its **own completely isolated network stack** â€” its own interfaces, routing table, iptables rules, and even its own `127.0.0.1` loopback â€” separate from the host's default namespace and from every other namespace.
+A **Linux network namespace (netns)** is a kernel feature that gives a process (or group of processes) its **own completely isolated network stack** — its own interfaces, routing table, iptables rules, and even its own `127.0.0.1` loopback — separate from the host's default namespace and from every other namespace.
 
 ### Why Neutron Needs This
 
-Because different tenants can have **overlapping private IP ranges** (two projects both using `10.0.0.0/24`), Neutron **cannot** just run one shared DHCP server or one shared router on the host â€” there'd be IP collisions and ambiguous routing. Network namespaces solve this by giving **each router and each network's DHCP server its own fully isolated mini-Linux-network-stack**, as if it were a completely separate machine.
+Because different tenants can have **overlapping private IP ranges** (two projects both using `10.0.0.0/24`), Neutron **cannot** just run one shared DHCP server or one shared router on the host — there'd be IP collisions and ambiguous routing. Network namespaces solve this by giving **each router and each network's DHCP server its own fully isolated mini-Linux-network-stack**, as if it were a completely separate machine.
 
-### Analogy: Separate Phone Systems in Parallel Universes ðŸŒ€
+### Analogy: Separate Phone Systems in Parallel Universes 🌀
 
-Imagine the hotel actually contains **many parallel-universe copies of "Floor 3,"** each belonging to a different guest group, each with its own independent PBX exchange and room numbering â€” even though two different universes might both have a "Room 301," calls never get confused, because each universe's phone system is entirely self-contained and walled off from the others. A network namespace is exactly this: a private, self-contained network universe.
+Imagine the hotel actually contains **many parallel-universe copies of "Floor 3,"** each belonging to a different guest group, each with its own independent PBX exchange and room numbering — even though two different universes might both have a "Room 301," calls never get confused, because each universe's phone system is entirely self-contained and walled off from the others. A network namespace is exactly this: a private, self-contained network universe.
 
 ### The Two Main Namespace Types in Neutron
 
 | Namespace prefix | Purpose |
 |---|---|
-| `qrouter-<router-id>` | One per Neutron Router â€” contains the router's interfaces, routing table, and NAT/iptables rules |
-| `qdhcp-<network-id>` | One per Network with DHCP enabled â€” contains the `dnsmasq` process serving that network |
+| `qrouter-<router-id>` | One per Neutron Router — contains the router's interfaces, routing table, and NAT/iptables rules |
+| `qdhcp-<network-id>` | One per Network with DHCP enabled — contains the `dnsmasq` process serving that network |
 | `fip-<router-id>` (DVR) | Floating-IP namespace on compute nodes, used in Distributed Virtual Routing setups |
 
 ### Inspecting Namespaces (on a Network Node)
@@ -1342,15 +1342,15 @@ sudo ip netns exec qrouter-3f9e2a1b-... iptables -t nat -L -n
 
 ```
   Host (default namespace / OVS br-int)
-   â”‚
-   â”œâ”€â”€ qrouter-tenantA-ns  (10.0.0.0/24, tenant A's own gateway 10.0.0.1)
-   â”‚        connects Tenant A's private network to shared external net
-   â”‚
-   â””â”€â”€ qrouter-tenantB-ns  (10.0.0.0/24, tenant B's own gateway 10.0.0.1)
+   │
+   ├── qrouter-tenantA-ns  (10.0.0.0/24, tenant A's own gateway 10.0.0.1)
+   │        connects Tenant A's private network to shared external net
+   │
+   └── qrouter-tenantB-ns  (10.0.0.0/24, tenant B's own gateway 10.0.0.1)
             connects Tenant B's private network to shared external net
 
    Even though BOTH use 10.0.0.0/24 internally, their namespaces
-   never see each other's routing tables or interfaces â€” total isolation.
+   never see each other's routing tables or interfaces — total isolation.
 ```
 
 ---
@@ -1359,19 +1359,19 @@ sudo ip netns exec qrouter-3f9e2a1b-... iptables -t nat -L -n
 
 ### Definitions
 
-- **North-South traffic:** traffic flowing **into or out of the datacenter/cloud** â€” e.g., a user on the internet hitting a VM's floating IP, or a VM reaching out to the public internet. Conceptually flows "up and down" on a typical network diagram (cloud/internet drawn at the top).
-- **East-West traffic:** traffic flowing **between VMs/servers within the datacenter** â€” e.g., a web-tier VM talking to a database-tier VM. Conceptually flows "sideways" across the diagram.
+- **North-South traffic:** traffic flowing **into or out of the datacenter/cloud** — e.g., a user on the internet hitting a VM's floating IP, or a VM reaching out to the public internet. Conceptually flows "up and down" on a typical network diagram (cloud/internet drawn at the top).
+- **East-West traffic:** traffic flowing **between VMs/servers within the datacenter** — e.g., a web-tier VM talking to a database-tier VM. Conceptually flows "sideways" across the diagram.
 
-### Analogy: Hotel Guests vs. Room Service Staff ðŸ›Žï¸
+### Analogy: Hotel Guests vs. Room Service Staff 🛎️
 
-- **North-South** = guests arriving from outside the hotel (the street/internet) and going up to their rooms, or guests leaving the hotel to go outside â€” traffic crossing the hotel's front door boundary.
-- **East-West** = room service staff moving between rooms and floors *within* the hotel, or two guests on different floors calling each other internally â€” traffic that never leaves the building.
+- **North-South** = guests arriving from outside the hotel (the street/internet) and going up to their rooms, or guests leaving the hotel to go outside — traffic crossing the hotel's front door boundary.
+- **East-West** = room service staff moving between rooms and floors *within* the hotel, or two guests on different floors calling each other internally — traffic that never leaves the building.
 
 ### Why the Distinction Matters
 
 | | North-South | East-West |
 |---|---|---|
-| Typical volume in modern clouds | Smaller % | **Majority** â€” especially with microservices, most traffic is service-to-service inside the DC |
+| Typical volume in modern clouds | Smaller % | **Majority** — especially with microservices, most traffic is service-to-service inside the DC |
 | Security tooling focus | Perimeter firewalls, floating IP/NAT rules, WAFs | Security Groups, micro-segmentation, service mesh |
 | OpenStack components involved | Router's gateway interface, Floating IPs, SNAT | br-int L2 switching, or Router's internal interfaces for inter-subnet |
 | Performance concern | Bandwidth to/from external uplink | Latency & throughput between compute hosts (east-west often dominates datacenter fabric design) |
@@ -1380,13 +1380,13 @@ sudo ip netns exec qrouter-3f9e2a1b-... iptables -t nat -L -n
 
 ```
                      Internet (North)
-                          â”‚
-                 â•â•â•â•â•â•â•â•â•â–¼â•â•â•â•â•â•â•â•â•   â—„â”€â”€ NORTH-SOUTH traffic
+                          │
+                 ═════════▼═════════   ◄── NORTH-SOUTH traffic
                      Router / FIP
-                          â”‚
-        â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¼â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+                          │
+        ┌─────────────────┼─────────────────┐
         â–¼                                   â–¼
-     [Web VM] â—„â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â–º [DB VM]   â—„â”€â”€ EAST-WEST traffic
+     [Web VM] ◄══════════════════════► [DB VM]   ◄── EAST-WEST traffic
                   (same or different
                    compute hosts, via
                    br-int/VXLAN or router)
@@ -1394,7 +1394,7 @@ sudo ip netns exec qrouter-3f9e2a1b-... iptables -t nat -L -n
 
 ---
 
-## 25. VM â†’ Internet Traffic Flow
+## 25. VM → Internet Traffic Flow
 
 ### Scenario
 
@@ -1404,29 +1404,29 @@ A VM (10.0.1.5, no floating IP) sends a request to `8.8.8.8` on the public inter
 
 ```
  1. VM's guest OS sends packet: src=10.0.1.5, dst=8.8.8.8
-                â”‚
+                │
                 â–¼
- 2. Packet exits VM's vNIC â†’ tap device â†’ br-int (OVS integration bridge)
-    br-int sees dst is NOT on the local L2 segment â†’ must go to the
+ 2. Packet exits VM's vNIC → tap device → br-int (OVS integration bridge)
+    br-int sees dst is NOT on the local L2 segment → must go to the
     subnet's default gateway (the Neutron Router's internal "qr-" port)
-                â”‚
+                │
                 â–¼
  3. Packet arrives at qrouter-<id> namespace's internal interface
     (e.g., qr-abc, IP 10.0.1.1)
-                â”‚
+                │
                 â–¼
  4. Inside the router namespace, the kernel's routing table sends it out
     the gateway interface (qg-xyz) toward the external network
-                â”‚
+                │
                 â–¼
  5. SNAT (iptables MASQUERADE rule) rewrites the packet:
-    src=10.0.1.5  â”€â”€â–º  src=<router's public/floating gateway IP>, e.g. 203.0.113.5
+    src=10.0.1.5  ──►  src=<router's public/floating gateway IP>, e.g. 203.0.113.5
     (dst stays 8.8.8.8)
-                â”‚
+                │
                 â–¼
  6. Packet leaves via br-ex / physical NIC of the network node,
     out onto the real physical/external network toward the internet
-                â”‚
+                │
                 â–¼
  7. Response comes back to 203.0.113.5, router's conntrack state
     reverses the NAT (un-SNAT), delivers back to 10.0.1.5 internally
@@ -1434,11 +1434,11 @@ A VM (10.0.1.5, no floating IP) sends a request to `8.8.8.8` on the public inter
 
 ### Key Point: This is SNAT, Not Floating IP
 
-Because this VM has **no floating IP**, it uses the router's shared **SNAT** â€” many VMs behind the same router share one public source IP for outbound traffic (many-to-one NAT), just like a home router's NAT for all devices in a house.
+Because this VM has **no floating IP**, it uses the router's shared **SNAT** — many VMs behind the same router share one public source IP for outbound traffic (many-to-one NAT), just like a home router's NAT for all devices in a house.
 
 ---
 
-## 26. Internet â†’ VM Traffic Flow
+## 26. Internet → VM Traffic Flow
 
 ### Scenario
 
@@ -1448,33 +1448,33 @@ An external client on the internet connects to a VM's **Floating IP** `203.0.113
 
 ```
  1. External client sends packet: src=<client-ip>, dst=203.0.113.10:80
-                â”‚
+                │
                 â–¼
  2. Packet arrives at the network node's external interface (br-ex),
     routed there because 203.0.113.10 is advertised/routed to this
     router's gateway port
-                â”‚
+                │
                 â–¼
  3. Packet enters qrouter-<id> namespace via its gateway interface (qg-xyz)
-                â”‚
+                │
                 â–¼
  4. DNAT (iptables PREROUTING rule, installed when the floating IP was
     associated) rewrites the destination:
-    dst=203.0.113.10  â”€â”€â–º  dst=10.0.1.5
+    dst=203.0.113.10  ──►  dst=10.0.1.5
     (src stays <client-ip>)
-                â”‚
+                │
                 â–¼
  5. Router's routing table sends the now-rewritten packet out its
     internal interface (qr-abc) toward subnet 10.0.1.0/24
-                â”‚
+                │
                 â–¼
  6. Packet traverses br-int (possibly a VXLAN tunnel if the router
     namespace lives on a different physical host than the VM)
-                â”‚
+                │
                 â–¼
- 7. Packet arrives at VM's tap device â†’ vNIC â†’ guest OS's web server
+ 7. Packet arrives at VM's tap device → vNIC → guest OS's web server
     receives connection on port 80, appearing to come from <client-ip>
-                â”‚
+                │
                 â–¼
  8. Response packet reverses the whole path; conntrack un-DNATs it
     back to appear as if it came from 203.0.113.10
@@ -1482,70 +1482,70 @@ An external client on the internet connects to a VM's **Floating IP** `203.0.113
 
 ### Security Group Checkpoint
 
-Critically, **before** the packet is delivered to the VM's vNIC, it also passes the security-group-enforced conntrack/iptables rules on the **compute host** â€” if no rule allows inbound TCP/80, the packet is dropped right there, even if the router's DNAT succeeded.
+Critically, **before** the packet is delivered to the VM's vNIC, it also passes the security-group-enforced conntrack/iptables rules on the **compute host** — if no rule allows inbound TCP/80, the packet is dropped right there, even if the router's DNAT succeeded.
 
 ### Diagram Summary: The Full Round Trip
 
 ```
   Internet Client
-        â”‚  dst=203.0.113.10:80
+        │  dst=203.0.113.10:80
         â–¼
    br-ex (network node's external bridge)
         â–¼
-   qrouter-ns:  DNAT 203.0.113.10 â†’ 10.0.1.5
+   qrouter-ns:  DNAT 203.0.113.10 → 10.0.1.5
         â–¼
    br-int / VXLAN tunnel (if cross-host)
         â–¼
    Compute host: Security Group check (allow tcp/80?)
         â–¼
-   VM's tap device â†’ vNIC â†’ Guest OS â†’ Web Server (port 80)
+   VM's tap device → vNIC → Guest OS → Web Server (port 80)
 ```
 
 ---
 
-## 27. VM Creation â€” Complete End-to-End Flow
+## 27. VM Creation — Complete End-to-End Flow
 
-This section ties together **every** service and concept covered above into one master sequence â€” the single most important "systems design" narrative in OpenStack.
+This section ties together **every** service and concept covered above into one master sequence — the single most important "systems design" narrative in OpenStack.
 
 ### The Full Sequence Diagram
 
 ```
  User                nova-api        nova-conductor     nova-scheduler      Placement
-  â”‚  POST /servers        â”‚                  â”‚                  â”‚                â”‚
-  â”œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–º                  â”‚                  â”‚                â”‚
-  â”‚                       â”‚  validate quota,  â”‚                  â”‚                â”‚
-  â”‚                       â”‚  create DB record  â”‚                  â”‚                â”‚
-  â”‚                       â”‚  (state=BUILD)     â”‚                  â”‚                â”‚
-  â”‚                       â”œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–ºâ”‚                  â”‚                â”‚
-  â”‚                       â”‚                   â”‚  request host    â”‚                â”‚
-  â”‚                       â”‚                   â”œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–º                â”‚
-  â”‚                       â”‚                   â”‚                  â”‚  query resource â”‚
-  â”‚                       â”‚                   â”‚                  â”‚  inventory      â”‚
-  â”‚                       â”‚                   â”‚                  â”œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–ºâ”‚
-  â”‚                       â”‚                   â”‚                  â”‚â—„â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¤
-  â”‚                       â”‚                   â”‚                  â”‚ candidate hosts â”‚
-  â”‚                       â”‚                   â”‚                  â”‚  run Filters +   â”‚
-  â”‚                       â”‚                   â”‚                  â”‚  Weighers        â”‚
-  â”‚                       â”‚                   â”‚â—„â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¤  â†’ host-42       â”‚
-  â”‚                       â”‚                   â”‚  claim resources  â”‚                â”‚
-  â”‚                       â”‚                   â”‚  on host-42 via   â”‚                â”‚
-  â”‚                       â”‚                   â”‚  Placement         â”‚                â”‚
-  â”‚  202 Accepted          â”‚                   â”‚                  â”‚                â”‚
-  â”‚â—„â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¤                   â”‚                  â”‚                â”‚
+  │  POST /servers        │                  │                  │                │
+  ├───────────────────────►                  │                  │                │
+  │                       │  validate quota,  │                  │                │
+  │                       │  create DB record  │                  │                │
+  │                       │  (state=BUILD)     │                  │                │
+  │                       ├──────────────────►│                  │                │
+  │                       │                   │  request host    │                │
+  │                       │                   ├──────────────────►                │
+  │                       │                   │                  │  query resource │
+  │                       │                   │                  │  inventory      │
+  │                       │                   │                  ├────────────────►│
+  │                       │                   │                  │◄────────────────┤
+  │                       │                   │                  │ candidate hosts │
+  │                       │                   │                  │  run Filters +   │
+  │                       │                   │                  │  Weighers        │
+  │                       │                   │◄─────────────────┤  → host-42       │
+  │                       │                   │  claim resources  │                │
+  │                       │                   │  on host-42 via   │                │
+  │                       │                   │  Placement         │                │
+  │  202 Accepted          │                   │                  │                │
+  │◄──────────────────────┤                   │                  │                │
   (instance UUID returned; polling continues via GET /servers/{id})
 
                        nova-conductor
-                             â”‚  RPC: "build_and_run_instance"
+                             │  RPC: "build_and_run_instance"
                              â–¼
                      nova-compute (host-42)
-                             â”‚
-     â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¼â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+                             │
+     ┌───────────────────────┼───────────────────────┐
      â–¼                       â–¼                        â–¼
   Glance API             Neutron API               Cinder API
  "fetch image data"    "create port for      "create/attach boot
   (or use local cache)   this instance,        volume" (if boot-
                           assign IP+MAC"       from-volume)
-     â”‚                       â”‚                        â”‚
+     │                       │                        │
      â–¼                       â–¼                        â–¼
  image bytes cached    port created; agent      volume created;
  locally (qcow2)       notified to wire the      exported via
@@ -1553,48 +1553,48 @@ This section ties together **every** service and concept covered above into one 
                         br-int with correct
                         VLAN/VXLAN tag
 
-                             â”‚  (all three complete)
+                             │  (all three complete)
                              â–¼
                     nova-compute calls libvirt:
                     - define the VM's XML domain
                       (CPU/RAM from flavor, disk from
                        Cinder or local qcow2, NIC = tap device)
                     - libvirt/KVM boots the VM
-                             â”‚
+                             │
                              â–¼
                     cloud-init inside the VM boots,
                     fetches SSH keys/userdata from
                     169.254.169.254 (metadata service,
                     proxied via DHCP/router namespace)
-                             â”‚
+                             │
                              â–¼
                  nova-compute reports state=ACTIVE
-                 back through conductor â†’ DB updated
-                             â”‚
+                 back through conductor → DB updated
+                             │
                              â–¼
-                User polls GET /servers/{id} â†’ sees "ACTIVE"
+                User polls GET /servers/{id} → sees "ACTIVE"
                 with an assigned fixed IP
 ```
 
 ### Narrative Walkthrough (Plain English)
 
 1. **User submits request** (`openstack server create ...`) to `nova-api`, authenticated via a Keystone token.
-2. `nova-api` validates the request against the project's **quotas**, writes an initial instance record (`BUILD` state), and returns immediately (async â€” HTTP 202 Accepted). This is a classic **control-plane-first, data-plane-later** pattern.
+2. `nova-api` validates the request against the project's **quotas**, writes an initial instance record (`BUILD` state), and returns immediately (async — HTTP 202 Accepted). This is a classic **control-plane-first, data-plane-later** pattern.
 3. `nova-conductor` orchestrates: asks `nova-scheduler` to pick a host.
 4. `nova-scheduler` queries **Placement** for hosts with enough free VCPU/RAM/disk (per the chosen **Flavor**), applies **Filters** (hard constraints) then **Weighers** (soft preferences), returns the winning host.
 5. `nova-conductor` tells that host's `nova-compute` to build the instance.
 6. `nova-compute` fans out three parallel calls:
    - **Glance**: fetch the OS image bytes (or find them already cached locally).
-   - **Neutron**: create a **Port** â€” allocates an IP from the chosen **Subnet**, a MAC address, wires up security groups, and (crucially) instructs the local `neutron-openvswitch-agent` to plug a new **tap device** into **br-int**, tagged appropriately for VLAN/VXLAN isolation.
+   - **Neutron**: create a **Port** — allocates an IP from the chosen **Subnet**, a MAC address, wires up security groups, and (crucially) instructs the local `neutron-openvswitch-agent` to plug a new **tap device** into **br-int**, tagged appropriately for VLAN/VXLAN isolation.
    - **Cinder** (if boot-from-volume): creates/attaches a persistent volume as the root disk.
 7. `nova-compute` builds a **libvirt domain XML** describing the VM (vCPUs/RAM from the flavor, disk, NIC = the tap device) and asks **libvirt/KVM** to actually boot it.
-8. Inside the guest, **cloud-init** runs, reaching out to the special metadata IP `169.254.169.254` â€” this request is intercepted by the DHCP/router namespace and proxied to `nova-metadata-api`, delivering SSH keys, hostname, and any user-data script.
+8. Inside the guest, **cloud-init** runs, reaching out to the special metadata IP `169.254.169.254` — this request is intercepted by the DHCP/router namespace and proxied to `nova-metadata-api`, delivering SSH keys, hostname, and any user-data script.
 9. Once boot succeeds, `nova-compute` reports state **ACTIVE** back up through the conductor, updating the central DB.
-10. The user (polling or via event notification) sees the instance is `ACTIVE` with an assigned IP â€” ready to use.
+10. The user (polling or via event notification) sees the instance is `ACTIVE` with an assigned IP — ready to use.
 
 ### Why This "Fan-Out" Design Matters
 
-Notice how **Nova never directly manipulates networking or storage** â€” it always calls Neutron's and Cinder's own APIs, exactly as an external user would. This is the microservices principle from Section 1 in action: **strict separation of concerns**, each service owning its own domain completely, coordinated (not centralized) by Nova as the orchestrator.
+Notice how **Nova never directly manipulates networking or storage** — it always calls Neutron's and Cinder's own APIs, exactly as an external user would. This is the microservices principle from Section 1 in action: **strict separation of concerns**, each service owning its own domain completely, coordinated (not centralized) by Nova as the orchestrator.
 
 ---
 
@@ -1602,9 +1602,9 @@ Notice how **Nova never directly manipulates networking or storage** â€” it
 
 ### What is the OpenStack CLI?
 
-The `openstack` command is a **unified command-line client** that wraps the REST APIs of every core service (Nova, Neutron, Cinder, Glance, Keystone, etc.) into one consistent tool â€” so you don't need separate `nova`, `neutron`, `cinder` CLI binaries (which were the old, now-deprecated, per-project clients).
+The `openstack` command is a **unified command-line client** that wraps the REST APIs of every core service (Nova, Neutron, Cinder, Glance, Keystone, etc.) into one consistent tool — so you don't need separate `nova`, `neutron`, `cinder` CLI binaries (which were the old, now-deprecated, per-project clients).
 
-### Authentication â€” the `clouds.yaml` / RC file
+### Authentication — the `clouds.yaml` / RC file
 
 Before using the CLI, you need credentials. Two common approaches:
 
@@ -1659,7 +1659,7 @@ openstack role add --user alice --project dev member
 |---|---|
 | `--os-cloud <name>` | Use a named cloud from `clouds.yaml` |
 | `-f json` / `-f yaml` / `-f table` | Output formatting (great for scripting with `jq`) |
-| `--debug` | Show full HTTP request/response â€” invaluable for learning/troubleshooting |
+| `--debug` | Show full HTTP request/response — invaluable for learning/troubleshooting |
 | `--os-region-name` | Target a specific region in multi-region deployments |
 
 ### Debugging Tip
@@ -1667,7 +1667,7 @@ openstack role add --user alice --project dev member
 ```bash
 openstack server create ... --debug
 ```
-This prints the **exact REST API calls** being made under the hood â€” an excellent way to learn the mapping between CLI commands and the raw API (which leads directly into section 29).
+This prints the **exact REST API calls** being made under the hood — an excellent way to learn the mapping between CLI commands and the raw API (which leads directly into section 29).
 
 ---
 
@@ -1675,7 +1675,7 @@ This prints the **exact REST API calls** being made under the hood â€” an e
 
 ### The Foundation
 
-Every single OpenStack action â€” whether from the CLI, Horizon dashboard, or a Python SDK â€” ultimately becomes an **HTTP REST API call** to the relevant service's endpoint. Understanding this is key to understanding OpenStack as "just a set of well-designed REST services."
+Every single OpenStack action — whether from the CLI, Horizon dashboard, or a Python SDK — ultimately becomes an **HTTP REST API call** to the relevant service's endpoint. Understanding this is key to understanding OpenStack as "just a set of well-designed REST services."
 
 ### The Universal Pattern: Auth First, Then Act
 
@@ -1722,7 +1722,7 @@ Response:
 }
 ```
 
-### Service Catalog â€” How Clients Find Endpoints
+### Service Catalog — How Clients Find Endpoints
 
 After authenticating, Keystone returns a catalog like:
 
@@ -1741,18 +1741,18 @@ After authenticating, Keystone returns a catalog like:
 }
 ```
 
-This is exactly how a client (CLI, SDK, Horizon) knows *where* to send a "create server" request without hardcoding URLs â€” it's fully **service-discovery driven**.
+This is exactly how a client (CLI, SDK, Horizon) knows *where* to send a "create server" request without hardcoding URLs — it's fully **service-discovery driven**.
 
 ### API Versioning
 
-OpenStack APIs are versioned in the URL path (`/v2.1/`, `/v3/`) and support **microversions** (e.g., `OpenStack-API-Version: compute 2.79`) that allow incremental feature additions without breaking older clients â€” a request without a microversion header gets the minimum supported behavior.
+OpenStack APIs are versioned in the URL path (`/v2.1/`, `/v3/`) and support **microversions** (e.g., `OpenStack-API-Version: compute 2.79`) that allow incremental feature additions without breaking older clients — a request without a microversion header gets the minimum supported behavior.
 
 ### SDKs
 
 Instead of raw HTTP, most automation uses:
-- **`openstacksdk`** (Python) â€” the modern unified SDK, what the `openstack` CLI itself is built on.
-- **Terraform's `openstack` provider** â€” for infrastructure-as-code.
-- **Ansible's `openstack.cloud` collection** â€” for playbook-driven automation.
+- **`openstacksdk`** (Python) — the modern unified SDK, what the `openstack` CLI itself is built on.
+- **Terraform's `openstack` provider** — for infrastructure-as-code.
+- **Ansible's `openstack.cloud` collection** — for playbook-driven automation.
 
 ---
 
@@ -1760,13 +1760,13 @@ Instead of raw HTTP, most automation uses:
 
 ### Projects / Tenants (Recap + Depth)
 
-As covered in Section 4, a **Project** (historically called "Tenant" â€” the terms are interchangeable in OpenStack) is the fundamental **unit of resource ownership and isolation**. Every VM, network, volume, and image (unless public/shared) belongs to exactly one project.
+As covered in Section 4, a **Project** (historically called "Tenant" — the terms are interchangeable in OpenStack) is the fundamental **unit of resource ownership and isolation**. Every VM, network, volume, and image (unless public/shared) belongs to exactly one project.
 
-**Analogy:** Each project is like a **separate corporate account** at the hotel â€” Company A's bookings, room service charges, and phone bills are entirely separate from Company B's, even though they're staying in the same physical hotel.
+**Analogy:** Each project is like a **separate corporate account** at the hotel — Company A's bookings, room service charges, and phone bills are entirely separate from Company B's, even though they're staying in the same physical hotel.
 
 ### Quotas
 
-**Quotas** are per-project (and optionally per-user) limits on how many resources can be consumed â€” preventing any single tenant from exhausting the shared physical infrastructure.
+**Quotas** are per-project (and optionally per-user) limits on how many resources can be consumed — preventing any single tenant from exhausting the shared physical infrastructure.
 
 | Quota | Example Default |
 |---|---|
@@ -1788,11 +1788,11 @@ openstack quota show dev
 openstack quota set --instances 50 --cores 100 --ram 204800 dev
 ```
 
-**Analogy:** Quotas are like a hotel corporate account's **credit limit** â€” "Company A can book at most 50 rooms and spend at most $X on room service at any one time," preventing one client from starving resources for everyone else.
+**Analogy:** Quotas are like a hotel corporate account's **credit limit** — "Company A can book at most 50 rooms and spend at most $X on room service at any one time," preventing one client from starving resources for everyone else.
 
 ### Availability Zones (AZs)
 
-An **Availability Zone** is a logical grouping of compute/storage hosts, typically aligned with **physical failure domains** â€” separate power feeds, separate racks, separate rooms, or even separate buildings/datacenters.
+An **Availability Zone** is a logical grouping of compute/storage hosts, typically aligned with **physical failure domains** — separate power feeds, separate racks, separate rooms, or even separate buildings/datacenters.
 
 **Purpose:** let users deliberately **spread** critical workloads across independent failure domains, so a single power/rack/host failure doesn't take down every replica of a service.
 
@@ -1805,28 +1805,28 @@ openstack server create --availability-zone AZ2 --image ubuntu-22.04 \
     --flavor m1.small --network net1 my-vm
 ```
 
-**Analogy:** If the hotel has three separate buildings (Building A, B, C) each with **independent power and internet uplinks**, an Availability Zone is "which building." A savvy corporate guest books their team's redundant meeting rooms **across different buildings** â€” so if Building A loses power, Building B and C's meetings continue uninterrupted.
+**Analogy:** If the hotel has three separate buildings (Building A, B, C) each with **independent power and internet uplinks**, an Availability Zone is "which building." A savvy corporate guest books their team's redundant meeting rooms **across different buildings** — so if Building A loses power, Building B and C's meetings continue uninterrupted.
 
 ### How AZs Interact with Scheduling
 
-Availability Zone is one of the **hard filters** in the Nova Scheduler pipeline (Section 6) â€” the `AvailabilityZoneFilter` eliminates any host not in the requested AZ before weighing even begins. Similarly, Cinder and Neutron both support their own AZ concepts for volumes and networks, letting you build fully failure-domain-aware architectures across compute, storage, and network simultaneously.
+Availability Zone is one of the **hard filters** in the Nova Scheduler pipeline (Section 6) — the `AvailabilityZoneFilter` eliminates any host not in the requested AZ before weighing even begins. Similarly, Cinder and Neutron both support their own AZ concepts for volumes and networks, letting you build fully failure-domain-aware architectures across compute, storage, and network simultaneously.
 
 ### Putting It All Together: The Multi-Tenancy Stack
 
 ```
         Domain ("CompanyX")
-              â”‚
-     â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”€â”
+              │
+     ┌────────┴────────┐
      â–¼                  â–¼
   Project "dev"     Project "prod"
-     â”‚                  â”‚
+     │                  │
   Quota: 10 VMs      Quota: 200 VMs
-     â”‚                  â”‚
-  â”Œâ”€â”€â”´â”€â”€â”            â”Œâ”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-  â–¼     â–¼            â–¼              â–¼
+     │                  │
+  ┌──┴──┐            ┌──┴───────────┐
+  ▼     ▼            ▼              ▼
  AZ1   AZ2          AZ1            AZ2
  (VMs) (VMs)     (prod VMs,    (prod VMs,
-                  replica 1)    replica 2 â€”
+                  replica 1)    replica 2 —
                                  spread for HA)
 ```
 
@@ -1844,15 +1844,15 @@ Availability Zone is one of the **hard filters** in the Nova Scheduler pipeline 
 | **Neutron** | Software-defined networking: networks, subnets, ports, routers |
 | **Network** | Virtual L2 broadcast domain |
 | **Subnet** | IP addressing (CIDR) bound to a network |
-| **Port** | A virtual NIC â€” VM/router's attachment point |
+| **Port** | A virtual NIC — VM/router's attachment point |
 | **Router** | Virtual L3 device connecting subnets + external access |
-| **Floating IP** | 1:1 NAT mapping public IP â†” VM's private IP |
+| **Floating IP** | 1:1 NAT mapping public IP ↔ VM's private IP |
 | **Security Group** | Stateful per-port virtual firewall |
 | **DHCP (dnsmasq per-network)** | Auto-assigns IP/gateway/DNS to booting VMs |
 | **VLAN** | Physical-switch-based L2 isolation (4094 max) |
 | **VXLAN/Geneve** | Overlay tunneling for massive-scale L2 isolation over L3 |
 | **Namespace (netns)** | Isolated per-router/per-network mini network stack |
-| **North-South** | Traffic crossing the cloud boundary (internet â†” VM) |
+| **North-South** | Traffic crossing the cloud boundary (internet ↔ VM) |
 | **East-West** | Traffic between VMs inside the cloud |
 | **Flavor** | Predefined VM hardware sizing template |
 | **Project/Tenant** | Isolated resource-ownership namespace |
@@ -1861,27 +1861,27 @@ Availability Zone is one of the **hard filters** in the Nova Scheduler pipeline 
 
 ---
 
-*End of Part 1 â€” P0 Must-Know Topics. This document covers the architectural foundation needed before moving on to Part 2 (advanced topics: HA, Octavia LBaaS, Heat orchestration, Ceph integration, live migration internals, and OVN).*
-# OpenStack Deep Dive â€” Part 2
+*End of Part 1 — P0 Must-Know Topics. This document covers the architectural foundation needed before moving on to Part 2 (advanced topics: HA, Octavia LBaaS, Heat orchestration, Ceph integration, live migration internals, and OVN).*
+# OpenStack Deep Dive — Part 2
 ### Load Balancing, Storage, Virtualization, Messaging, HA, Orchestration, IaC, and Kubernetes Integration
 
 ---
 
 ## Table of Contents
 
-1. [Octavia â€” Load Balancing](#1-octavia--load-balancing)
-2. [Load Balancer â†’ Listener â†’ Pool â†’ Member](#2-load-balancer--listener--pool--member)
+1. [Octavia — Load Balancing](#1-octavia--load-balancing)
+2. [Load Balancer → Listener → Pool → Member](#2-load-balancer--listener--pool--member)
 3. [VIP & Health Monitors](#3-vip--health-monitors)
 4. [L4 vs L7 Load Balancing](#4-l4-vs-l7-load-balancing)
 5. [Ceph Integration](#5-ceph-integration)
 6. [Cinder + Ceph Architecture](#6-cinder--ceph-architecture)
 7. [KVM / QEMU](#7-kvm--qemu)
-8. [RabbitMQ â€” OpenStack Messaging](#8-rabbitmq--openstack-messaging)
+8. [RabbitMQ — OpenStack Messaging](#8-rabbitmq--openstack-messaging)
 9. [MariaDB / Galera](#9-mariadb--galera)
 10. [Memcached](#10-memcached)
 11. [HAProxy](#11-haproxy)
 12. [OpenStack Control Plane HA](#12-openstack-control-plane-ha)
-13. [Heat â€” Orchestration](#13-heat--orchestration)
+13. [Heat — Orchestration](#13-heat--orchestration)
 14. [Terraform + OpenStack](#14-terraform--openstack)
 15. [Ansible + OpenStack](#15-ansible--openstack)
 16. [OpenStack SDKs](#16-openstack-sdks)
@@ -1891,9 +1891,9 @@ Availability Zone is one of the **hard filters** in the Nova Scheduler pipeline 
 20. [Neutron CNI Concepts](#20-neutron-cni-concepts)
 21. [Kubernetes Service type=LoadBalancer + OpenStack](#21-kubernetes-service-typeloadbalancer--openstack)
 22. [Kubernetes PersistentVolumes + Cinder](#22-kubernetes-persistentvolumes--cinder)
-23. [Kubernetes â†’ OpenStack API Interaction](#23-kubernetes--openstack-api-interaction)
+23. [Kubernetes → OpenStack API Interaction](#23-kubernetes--openstack-api-interaction)
 24. [OpenStack Troubleshooting](#24-openstack-troubleshooting)
-25. [API â†’ Scheduler â†’ Compute â†’ Network â†’ Storage Debugging](#25-api--scheduler--compute--network--storage-debugging)
+25. [API → Scheduler → Compute → Network → Storage Debugging](#25-api--scheduler--compute--network--storage-debugging)
 26. [OpenStack Service-to-Service Communication](#26-openstack-service-to-service-communication)
 27. [Controller vs Compute vs Network vs Storage Node](#27-controller-node-vs-compute-node-vs-network-node-vs-storage-node)
 28. [OpenStack Deployment Architecture](#28-openstack-deployment-architecture)
@@ -1902,7 +1902,7 @@ Availability Zone is one of the **hard filters** in the Nova Scheduler pipeline 
 
 ---
 
-## 1. Octavia â€” Load Balancing
+## 1. Octavia — Load Balancing
 
 ### Definition
 Octavia is OpenStack's **Load-Balancing-as-a-Service (LBaaS v2)** project. Unlike early OpenStack load balancing (which just configured HAProxy on the controller), Octavia is **operator-driven**: it spins up **actual virtual machines (amphorae)** that run HAProxy/nginx internally, and it manages their lifecycle exactly like Nova manages tenant VMs.
@@ -1911,7 +1911,7 @@ Octavia is OpenStack's **Load-Balancing-as-a-Service (LBaaS v2)** project. Unlik
 Think of Octavia as a **hotel concierge service that hires a dedicated receptionist (amphora VM) for every event you host**. Instead of you manually setting up a reception desk (HAProxy config) yourself, you ask the concierge "I need front-desk service for my event," and it provisions a whole new receptionist, gives them a phone number (VIP), and tells them how to route guests (traffic) to different rooms (backend members).
 
 ### Why Octavia Exists
-Old Neutron-LBaaS ran HAProxy processes as network namespaces on the network node â€” this was a **single point of failure** and didn't scale. Octavia solves this by:
+Old Neutron-LBaaS ran HAProxy processes as network namespaces on the network node — this was a **single point of failure** and didn't scale. Octavia solves this by:
 - Deploying **amphora VMs** (small Nova instances, usually a cut-down Amphora image built with `diskimage-builder`)
 - Each amphora runs HAProxy (L4/L7) or a Linux kernel forwarding stack
 - Supports **Active-Standby** amphora pairs for HA
@@ -1979,7 +1979,7 @@ openstack loadbalancer member create --subnet-id <subnet-id> \
 
 ---
 
-## 2. Load Balancer â†’ Listener â†’ Pool â†’ Member
+## 2. Load Balancer → Listener → Pool → Member
 
 ### The Hierarchy (Object Model)
 
@@ -2018,7 +2018,7 @@ Load Balancer (VIP: 203.0.113.10)
 | `SOURCE_IP_PORT` | Affinity based on IP+port |
 
 ### Practical Example
-A pool can have members at **different weights** â€” a bigger VM might get weight `10` while a smaller one gets weight `5`, meaning it receives twice the traffic proportionally.
+A pool can have members at **different weights** — a bigger VM might get weight `10` while a smaller one gets weight `5`, meaning it receives twice the traffic proportionally.
 
 ```bash
 openstack loadbalancer member create --weight 10 --address 10.0.0.11 ...
@@ -2030,7 +2030,7 @@ openstack loadbalancer member create --weight 5  --address 10.0.0.12 ...
 ## 3. VIP & Health Monitors
 
 ### VIP (Virtual IP)
-The VIP is a **floating, non-machine-bound IP address** that clients connect to. It's the "front door" â€” clients never know or care which backend member actually served them.
+The VIP is a **floating, non-machine-bound IP address** that clients connect to. It's the "front door" — clients never know or care which backend member actually served them.
 
 - Allocated from a Neutron subnet (or associated with a Floating IP for external access)
 - Bound to the **active amphora**; on failover, the VIP moves to the **standby amphora** using a technique similar to VRRP (keepalived), so client-facing IP never changes.
@@ -2068,7 +2068,7 @@ openstack loadbalancer healthmonitor create \
 - `url-path`: for HTTP checks, the endpoint to hit (e.g., `/healthz`)
 
 ### Analogy
-The health monitor is a **hallway inspector who knocks on every staff member's door every 5 seconds**. If a staff member doesn't answer 3 times in a row, the inspector puts a "Do Not Disturb / Out" sign and stops sending visitors there â€” until they respond again.
+The health monitor is a **hallway inspector who knocks on every staff member's door every 5 seconds**. If a staff member doesn't answer 3 times in a row, the inspector puts a "Do Not Disturb / Out" sign and stops sending visitors there — until they respond again.
 
 ---
 
@@ -2086,8 +2086,8 @@ Client --> [TCP SYN to VIP:443] --> LB forwards raw TCP stream --> Member
 ```
 
 ### Layer 7 (Application Layer)
-- Understands **HTTP/HTTPS** â€” headers, cookies, URL paths, hostnames
-- Can route based on content: `/api/*` â†’ pool A, `/static/*` â†’ pool B
+- Understands **HTTP/HTTPS** — headers, cookies, URL paths, hostnames
+- Can route based on content: `/api/*` → pool A, `/static/*` → pool B
 - Can terminate TLS, inspect and rewrite headers, do content-based routing
 - Slightly more overhead due to parsing
 
@@ -2106,7 +2106,7 @@ Client --> HTTPS request "/api/orders" --> LB terminates TLS,
 | Use case | Databases, raw TCP services, gRPC streams | Web apps, microservices routing, API gateways |
 
 ### Analogy
-- **L4** is a mail sorter who only reads the **building number** on an envelope and drops it at the right building â€” doesn't open the letter.
+- **L4** is a mail sorter who only reads the **building number** on an envelope and drops it at the right building — doesn't open the letter.
 - **L7** is a receptionist who **opens the envelope**, reads the actual request ("I need Billing, not HR"), and routes you precisely.
 
 ---
@@ -2148,10 +2148,10 @@ Ceph is a **distributed, software-defined storage system** providing object, blo
 ```
 
 ### Why Ceph + OpenStack
-1. **Unified backend** â€” one storage cluster serves images, volumes, ephemeral disks, and objects â€” reduces operational complexity.
-2. **Copy-on-Write (CoW) cloning** â€” Glance images stored as RBD snapshots let Cinder/Nova create new volumes/VMs **instantly** without copying full image data.
-3. **Live migration friendliness** â€” because VM disks live on Ceph (network storage) rather than local disk, Nova can live-migrate VMs between compute hosts without moving the disk.
-4. **Self-healing & replication** â€” Ceph automatically replicates data (commonly 3x) across OSDs/failure domains.
+1. **Unified backend** — one storage cluster serves images, volumes, ephemeral disks, and objects — reduces operational complexity.
+2. **Copy-on-Write (CoW) cloning** — Glance images stored as RBD snapshots let Cinder/Nova create new volumes/VMs **instantly** without copying full image data.
+3. **Live migration friendliness** — because VM disks live on Ceph (network storage) rather than local disk, Nova can live-migrate VMs between compute hosts without moving the disk.
+4. **Self-healing & replication** — Ceph automatically replicates data (commonly 3x) across OSDs/failure domains.
 
 ### Analogy
 Ceph is like a **city-wide shared warehouse network** instead of every store (OpenStack service) keeping its own stockroom. Any store can request "block of shelving" (RBD), "public storage locker" (RGW/object), or "shared filing cabinet" (CephFS) from the same warehouse system, and the warehouse handles replication/backup automatically.
@@ -2161,7 +2161,7 @@ Ceph is like a **city-wide shared warehouse network** instead of every store (Op
 ## 6. Cinder + Ceph Architecture
 
 ### Definition
-Cinder is OpenStack's **Block Storage service** â€” it provides persistent volumes that can be attached to Nova instances, similar to an AWS EBS volume. When backed by Ceph, Cinder volumes are actually **RBD images**.
+Cinder is OpenStack's **Block Storage service** — it provides persistent volumes that can be attached to Nova instances, similar to an AWS EBS volume. When backed by Ceph, Cinder volumes are actually **RBD images**.
 
 ### Flow: Creating and Attaching a Volume
 
@@ -2209,7 +2209,7 @@ Cinder is OpenStack's **Block Storage service** â€” it provides persistent 
       Guest OS sees a new block device: /dev/vdb
 ```
 
-Because Ceph is **network-attached**, the compute node doesn't need local disk access to the volume â€” it connects directly to the Ceph cluster using the `rbd` driver in QEMU, which means:
+Because Ceph is **network-attached**, the compute node doesn't need local disk access to the volume — it connects directly to the Ceph cluster using the `rbd` driver in QEMU, which means:
 - **Live migration** doesn't need to copy volume data (only VM RAM/state) since the disk is already reachable from every compute node.
 - **Boot-from-volume** is efficient because Nova can boot directly from an RBD-backed volume.
 
@@ -2276,11 +2276,11 @@ libvirt (abstraction layer)
 QEMU/KVM (actual hypervisor)
 ```
 
-Nova doesn't talk to QEMU directly â€” it goes through **libvirt**, an abstraction layer that can also drive Xen, LXC, Hyper-V, and VMware, making Nova hypervisor-agnostic.
+Nova doesn't talk to QEMU directly — it goes through **libvirt**, an abstraction layer that can also drive Xen, LXC, Hyper-V, and VMware, making Nova hypervisor-agnostic.
 
 ### Analogy
-- **QEMU** is like a **movie set** â€” it builds fake props (virtual disk, virtual NIC) that look real to the actor (guest OS).
-- **KVM** is the **stunt coordinator with real physics** â€” when the actor needs to actually run (execute CPU instructions), KVM lets them use the real hardware directly instead of faking it, which is why KVM-accelerated VMs run at near-native speed instead of pure emulation speed.
+- **QEMU** is like a **movie set** — it builds fake props (virtual disk, virtual NIC) that look real to the actor (guest OS).
+- **KVM** is the **stunt coordinator with real physics** — when the actor needs to actually run (execute CPU instructions), KVM lets them use the real hardware directly instead of faking it, which is why KVM-accelerated VMs run at near-native speed instead of pure emulation speed.
 
 ### Key Commands
 ```bash
@@ -2296,26 +2296,26 @@ virsh dumpxml instance-00000001
 
 ---
 
-## 8. RabbitMQ â€” OpenStack Messaging
+## 8. RabbitMQ — OpenStack Messaging
 
 ### Definition
 RabbitMQ is the **default AMQP message broker** used by OpenStack for **asynchronous inter-service communication**. Nearly every OpenStack service (`nova`, `neutron`, `cinder`, `heat`) uses RabbitMQ via **oslo.messaging** to communicate between their own sub-components (API, scheduler, conductor, agents).
 
 ### Why Messaging Instead of Direct API Calls?
-- **Decoupling**: `nova-api` doesn't need to know which `nova-compute` host is free â€” it just publishes to a queue.
+- **Decoupling**: `nova-api` doesn't need to know which `nova-compute` host is free — it just publishes to a queue.
 - **Load leveling**: If compute nodes are busy, messages queue up instead of failing.
 - **RPC + Fanout + Notifications**: Supports request/reply (RPC), one-to-many broadcast (fanout), and event notifications (for telemetry/Ceilometer).
 
 ### Message Patterns in OpenStack
 
 ```
-1. RPC (Remote Procedure Call) â€” synchronous-style request/response over async transport
+1. RPC (Remote Procedure Call) — synchronous-style request/response over async transport
    nova-api --[RPC call: "build instance"]--> nova-conductor --> nova-scheduler
 
-2. Fanout â€” broadcast to ALL consumers (e.g., all compute nodes)
+2. Fanout — broadcast to ALL consumers (e.g., all compute nodes)
    neutron-server --[fanout: "security group updated"]--> ALL neutron-l2-agents
 
-3. Topic/Notification â€” event stream for logging/telemetry
+3. Topic/Notification — event stream for logging/telemetry
    nova-compute --[notify: "instance.create.end"]--> notification queue --> Ceilometer/Telemetry
 ```
 
@@ -2358,7 +2358,7 @@ RabbitMQ is the **office mailroom**. Instead of every employee (service) walking
 MariaDB is the relational database used by virtually all OpenStack services to store persistent state (instances, networks, volumes, flavors, users, projects). **Galera Cluster** is a **synchronous multi-master replication plugin** for MariaDB, giving OpenStack a **highly available, write-anywhere SQL cluster**.
 
 ### Why Galera (not simple master-replica)?
-- Traditional MySQL replication (master-slave) is **asynchronous** â€” a crash can lose the last transactions, and only the master can accept writes.
+- Traditional MySQL replication (master-slave) is **asynchronous** — a crash can lose the last transactions, and only the master can accept writes.
 - Galera provides **synchronous, multi-master replication**: a write must be certified across **all nodes before commit succeeds**, so any node can accept reads/writes, and there's no replication lag.
 
 ### Architecture
@@ -2382,10 +2382,10 @@ Traffic is usually routed through **HAProxy** (see Section 11) which load-balanc
 ### Quorum & Split-Brain Protection
 - Galera requires a **quorum (majority)** of nodes to remain part of the cluster.
 - With 3 nodes, if 1 node fails, the remaining 2 still form a quorum (2 out of 3) and continue serving.
-- If the cluster splits such that no partition has a majority, all nodes go **non-primary** and refuse writes â€” protecting against split-brain data corruption.
+- If the cluster splits such that no partition has a majority, all nodes go **non-primary** and refuse writes — protecting against split-brain data corruption.
 
 ### Analogy
-Galera is like **three notaries in different cities who must all stamp a contract simultaneously** before it's considered legally signed â€” this guarantees every copy is identical (synchronous), unlike a courier system where one city's copy might lag behind (async replication).
+Galera is like **three notaries in different cities who must all stamp a contract simultaneously** before it's considered legally signed — this guarantees every copy is identical (synchronous), unlike a courier system where one city's copy might lag behind (async replication).
 
 ### Example Health Check
 ```sql
@@ -2399,12 +2399,12 @@ SHOW STATUS LIKE 'wsrep_local_state_comment';  -- should be 'Synced'
 
 ### Definition
 Memcached is an **in-memory key-value caching system** used by OpenStack primarily for:
-1. **Keystone token caching** â€” avoids re-validating tokens against the DB on every API call
-2. **Nova/Neutron/Cinder API response caching** â€” reduces DB load for frequently requested, rarely changing data
-3. **oslo.cache** â€” the common library OpenStack services use to talk to Memcached
+1. **Keystone token caching** — avoids re-validating tokens against the DB on every API call
+2. **Nova/Neutron/Cinder API response caching** — reduces DB load for frequently requested, rarely changing data
+3. **oslo.cache** — the common library OpenStack services use to talk to Memcached
 
 ### Why It Matters for OpenStack Performance
-Every API request to any OpenStack service typically requires **token validation** via Keystone. Without caching, this would mean a **DB round trip on every single API call** across the entire cloud â€” a massive bottleneck at scale. Memcached absorbs this load.
+Every API request to any OpenStack service typically requires **token validation** via Keystone. Without caching, this would mean a **DB round trip on every single API call** across the entire cloud — a massive bottleneck at scale. Memcached absorbs this load.
 
 ### Diagram
 
@@ -2427,8 +2427,8 @@ Every API request to any OpenStack service typically requires **token validation
 ```
 
 ### Key Properties
-- **Not persistent** â€” pure RAM cache; if it restarts, cache is empty (rebuilt on demand â€” not a data-loss risk since Memcached is never the source of truth).
-- **Distributed** â€” typically run on all 3 controllers; clients (oslo.cache) use consistent hashing to spread keys across nodes.
+- **Not persistent** — pure RAM cache; if it restarts, cache is empty (rebuilt on demand — not a data-loss risk since Memcached is never the source of truth).
+- **Distributed** — typically run on all 3 controllers; clients (oslo.cache) use consistent hashing to spread keys across nodes.
 - Configured in `keystone.conf` / service configs:
 ```ini
 [cache]
@@ -2438,7 +2438,7 @@ memcache_servers = controller1:11211,controller2:11211,controller3:11211
 ```
 
 ### Analogy
-Memcached is the **sticky-note board at the front desk**. Instead of the receptionist calling HR (the database) every single time someone asks "is my badge still valid?", they check a sticky note that says "Badge #123 = valid until 3pm" â€” much faster, and it's fine if the board gets wiped occasionally since they can always re-ask HR.
+Memcached is the **sticky-note board at the front desk**. Instead of the receptionist calling HR (the database) every single time someone asks "is my badge still valid?", they check a sticky note that says "Badge #123 = valid until 3pm" — much faster, and it's fine if the board gets wiped occasionally since they can always re-ask HR.
 
 ---
 
@@ -2488,7 +2488,7 @@ backend nova_api_back
 ### HAProxy + Galera
 For the database, HAProxy commonly uses a **health-check script (e.g., clustercheck)** to identify the Galera node that's `Synced`, and routes traffic (often all writes) to a single healthy node to reduce certification conflicts, failing over automatically if that node goes down.
 
-### HAProxy vs Octavia â€” Don't Confuse Them
+### HAProxy vs Octavia — Don't Confuse Them
 | | HAProxy (control plane) | Octavia (tenant LBaaS) |
 |---|---|---|
 | Who manages it | Cloud operator, manually or via deployment tool (Kolla/TripleO) | Tenants, via API |
@@ -2508,7 +2508,7 @@ Control Plane High Availability means **no single controller node failure should
 ### Full HA Stack Diagram
 
 ```
-                         Keepalived (VRRP) â€” owns Virtual IP
+                         Keepalived (VRRP) — owns Virtual IP
                                      |
                     +----------------+----------------+
                     |                |                |
@@ -2528,24 +2528,24 @@ Control Plane High Availability means **no single controller node failure should
 ```
 
 ### The Layers of HA
-1. **VIP Failover** â€” Keepalived/VRRP moves the externally-facing VIP between controllers if one fails.
-2. **Stateless service HA** â€” API services (`nova-api`, `neutron-server`) are stateless, so HAProxy simply removes a dead one from rotation.
-3. **Stateful service HA** â€” MariaDB (Galera) and RabbitMQ (mirrored/quorum queues) require **clustering protocols**, not just load balancing, because they hold state.
-4. **Scheduler/Conductor HA** â€” `nova-scheduler`, `nova-conductor`, `neutron` agents can run **active-active**; RabbitMQ ensures only one consumer processes a given RPC message.
-5. **Compute Node HA** â€” Not part of "control plane" HA per se, but Nova can detect a dead compute host (via `nova-compute` heartbeat) and operators/tools can trigger **evacuation** of instances to healthy hosts.
+1. **VIP Failover** — Keepalived/VRRP moves the externally-facing VIP between controllers if one fails.
+2. **Stateless service HA** — API services (`nova-api`, `neutron-server`) are stateless, so HAProxy simply removes a dead one from rotation.
+3. **Stateful service HA** — MariaDB (Galera) and RabbitMQ (mirrored/quorum queues) require **clustering protocols**, not just load balancing, because they hold state.
+4. **Scheduler/Conductor HA** — `nova-scheduler`, `nova-conductor`, `neutron` agents can run **active-active**; RabbitMQ ensures only one consumer processes a given RPC message.
+5. **Compute Node HA** — Not part of "control plane" HA per se, but Nova can detect a dead compute host (via `nova-compute` heartbeat) and operators/tools can trigger **evacuation** of instances to healthy hosts.
 
 ### Quorum Requirement
-Both Galera and RabbitMQ (with quorum queues) require **odd-numbered clusters (typically 3)** to avoid split-brain â€” 2 nodes cannot safely determine "majority" if they disagree.
+Both Galera and RabbitMQ (with quorum queues) require **odd-numbered clusters (typically 3)** to avoid split-brain — 2 nodes cannot safely determine "majority" if they disagree.
 
 ### Analogy
-Think of Control Plane HA like a **company with three identical branch offices**, connected by a **shared, always-in-sync ledger (Galera)** and a **shared mailroom system (RabbitMQ)**. If one branch burns down, the switchboard (HAProxy/VIP) simply stops sending customers there â€” business continues uninterrupted because the other two branches have identical, synced records.
+Think of Control Plane HA like a **company with three identical branch offices**, connected by a **shared, always-in-sync ledger (Galera)** and a **shared mailroom system (RabbitMQ)**. If one branch burns down, the switchboard (HAProxy/VIP) simply stops sending customers there — business continues uninterrupted because the other two branches have identical, synced records.
 
 ---
 
-## 13. Heat â€” Orchestration
+## 13. Heat — Orchestration
 
 ### Definition
-Heat is OpenStack's **native orchestration engine**, similar to AWS CloudFormation. It takes a **declarative template (HOT â€” Heat Orchestration Template, YAML-based)** describing desired infrastructure, and Heat creates/updates/deletes all the described resources (networks, servers, volumes, security groups, floating IPs) as a single unit called a **Stack**.
+Heat is OpenStack's **native orchestration engine**, similar to AWS CloudFormation. It takes a **declarative template (HOT — Heat Orchestration Template, YAML-based)** describing desired infrastructure, and Heat creates/updates/deletes all the described resources (networks, servers, volumes, security groups, floating IPs) as a single unit called a **Stack**.
 
 ### Architecture
 
@@ -2615,21 +2615,21 @@ openstack stack delete my-stack   # tears down EVERYTHING in the stack
 | Term | Meaning |
 |---|---|
 | **Stack** | A collection of resources managed as one unit |
-| **HOT** | Heat Orchestration Template â€” the YAML DSL |
+| **HOT** | Heat Orchestration Template — the YAML DSL |
 | **Resource** | A single managed object (`OS::Nova::Server`, `OS::Cinder::Volume`, etc.) |
 | **Nested Stack** | A stack referenced as a resource inside another stack (modularity) |
 | **Auto Scaling Group** | Heat resource type that integrates with Ceilometer/Aodh alarms to scale server count |
 | **Software Config/Deployment** | Heat resources to run config scripts inside instances after boot (like cloud-init orchestration) |
 
 ### Analogy
-Heat is like an **architect's blueprint + general contractor combined**. You describe "I want a 2-story house with 3 rooms and a garage" (declarative template), and Heat figures out the order to build things (foundation before walls, walls before roof â€” i.e., dependency graph) and calls the right subcontractors (Nova for the "rooms", Neutron for the "wiring", Cinder for the "plumbing/storage").
+Heat is like an **architect's blueprint + general contractor combined**. You describe "I want a 2-story house with 3 rooms and a garage" (declarative template), and Heat figures out the order to build things (foundation before walls, walls before roof — i.e., dependency graph) and calls the right subcontractors (Nova for the "rooms", Neutron for the "wiring", Cinder for the "plumbing/storage").
 
 ---
 
 ## 14. Terraform + OpenStack
 
 ### Definition
-Terraform is a **multi-cloud Infrastructure-as-Code (IaC) tool** by HashiCorp. It supports OpenStack via the **`terraform-provider-openstack`** plugin, letting you define OpenStack resources declaratively in HCL (HashiCorp Configuration Language) â€” similar goal to Heat, but cloud-agnostic and with a much larger ecosystem.
+Terraform is a **multi-cloud Infrastructure-as-Code (IaC) tool** by HashiCorp. It supports OpenStack via the **`terraform-provider-openstack`** plugin, letting you define OpenStack resources declaratively in HCL (HashiCorp Configuration Language) — similar goal to Heat, but cloud-agnostic and with a much larger ecosystem.
 
 ### Heat vs Terraform
 | | Heat | Terraform |
@@ -2703,18 +2703,18 @@ terraform destroy  # tears down everything in state
 ```
 
 ### Analogy
-If Heat is the **in-house architect who only knows this one city's building codes (OpenStack)**, Terraform is a **freelance architect who knows building codes for every city (AWS, Azure, OpenStack, GCP)** â€” and keeps a personal notebook (state file) tracking exactly what they've built so far, so they know what changed since last time.
+If Heat is the **in-house architect who only knows this one city's building codes (OpenStack)**, Terraform is a **freelance architect who knows building codes for every city (AWS, Azure, OpenStack, GCP)** — and keeps a personal notebook (state file) tracking exactly what they've built so far, so they know what changed since last time.
 
 ---
 
 ## 15. Ansible + OpenStack
 
 ### Definition
-Ansible automates OpenStack via the **`openstack.cloud` collection** (formerly `os_*` modules), which wraps the OpenStack SDK. Unlike Terraform/Heat (declarative state management with drift tracking), Ansible is primarily a **procedural/idempotent task runner** â€” great for both **provisioning** and **configuration/deployment automation** (e.g., Kolla-Ansible and OpenStack-Ansible use it to deploy OpenStack itself).
+Ansible automates OpenStack via the **`openstack.cloud` collection** (formerly `os_*` modules), which wraps the OpenStack SDK. Unlike Terraform/Heat (declarative state management with drift tracking), Ansible is primarily a **procedural/idempotent task runner** — great for both **provisioning** and **configuration/deployment automation** (e.g., Kolla-Ansible and OpenStack-Ansible use it to deploy OpenStack itself).
 
 ### Two Different Uses of Ansible in the OpenStack World
-1. **Deploying OpenStack itself** â€” projects like **Kolla-Ansible** and **OpenStack-Ansible** use Ansible playbooks to install/configure OpenStack services (containerized or bare-metal) across controller/compute/network/storage nodes.
-2. **Managing OpenStack resources** (as a cloud consumer) â€” creating servers, networks, volumes via the `openstack.cloud` collection, similar in end-effect to Terraform but imperative in style.
+1. **Deploying OpenStack itself** — projects like **Kolla-Ansible** and **OpenStack-Ansible** use Ansible playbooks to install/configure OpenStack services (containerized or bare-metal) across controller/compute/network/storage nodes.
+2. **Managing OpenStack resources** (as a cloud consumer) — creating servers, networks, volumes via the `openstack.cloud` collection, similar in end-effect to Terraform but imperative in style.
 
 ### Example Playbook
 ```yaml
@@ -2819,7 +2819,7 @@ print(server.access_ipv4)
 | Terraform | `terraform-provider-openstack` (built on Go/gophercloud internally) |
 | Kubernetes components | Cloud Controller Manager & Cinder CSI use `gophercloud` internally |
 
-### `clouds.yaml` â€” Shared Credential Config
+### `clouds.yaml` — Shared Credential Config
 ```yaml
 clouds:
   mycloud:
@@ -2832,7 +2832,7 @@ clouds:
       project_domain_name: Default
     region_name: RegionOne
 ```
-Nearly all tools (CLI, SDK, Terraform, Ansible, K8s Cloud Provider) can read this same file â€” a **unified credential source**.
+Nearly all tools (CLI, SDK, Terraform, Ansible, K8s Cloud Provider) can read this same file — a **unified credential source**.
 
 ### Analogy
 The SDK is a **universal remote control** for OpenStack. Instead of learning the raw "infrared codes" (REST/JSON payloads) for every single button, you press a labeled button ("create_server") and the SDK translates it correctly for whichever "TV" (OpenStack service/version) you're pointed at.
@@ -2842,7 +2842,7 @@ The SDK is a **universal remote control** for OpenStack. Instead of learning the
 ## 17. Kubernetes on OpenStack
 
 ### Definition
-Running Kubernetes **on top of** OpenStack means using OpenStack as the **IaaS layer** (VMs, networks, storage) to host Kubernetes nodes, while Kubernetes manages containers **on top of** those VMs. This is one of the most common real-world patterns â€” OpenStack for infrastructure, Kubernetes for application orchestration.
+Running Kubernetes **on top of** OpenStack means using OpenStack as the **IaaS layer** (VMs, networks, storage) to host Kubernetes nodes, while Kubernetes manages containers **on top of** those VMs. This is one of the most common real-world patterns — OpenStack for infrastructure, Kubernetes for application orchestration.
 
 ### Two Layers of Orchestration
 
@@ -2866,18 +2866,18 @@ Running Kubernetes **on top of** OpenStack means using OpenStack as the **IaaS l
 ### Deployment Approaches
 | Method | Description |
 |---|---|
-| **Magnum** | OpenStack's native "Container-Orchestration-as-a-Service" â€” provisions full K8s clusters via Heat templates automatically |
+| **Magnum** | OpenStack's native "Container-Orchestration-as-a-Service" — provisions full K8s clusters via Heat templates automatically |
 | **Cluster API Provider OpenStack (CAPO)** | Modern, Kubernetes-native way to manage the lifecycle of K8s clusters running on OpenStack |
 | **kubeadm on OpenStack VMs** | Manually boot Nova VMs, then bootstrap Kubernetes with kubeadm |
 | **Managed K8s distros** (Rancher, kubespray) | Automate node provisioning against OpenStack + K8s install |
 
 ### Why This Matters
 Once Kubernetes nodes run as OpenStack VMs, Kubernetes itself needs to interact with OpenStack for two things it can't do alone:
-1. **Dynamically provisioning storage** for PersistentVolumeClaims â†’ handled by **Cinder CSI** (Section 19)
-2. **Provisioning cloud load balancers** for `Service type=LoadBalancer` and managing node metadata/zones â†’ handled by the **OpenStack Cloud Controller Manager** (Section 18)
+1. **Dynamically provisioning storage** for PersistentVolumeClaims → handled by **Cinder CSI** (Section 19)
+2. **Provisioning cloud load balancers** for `Service type=LoadBalancer` and managing node metadata/zones → handled by the **OpenStack Cloud Controller Manager** (Section 18)
 
 ### Analogy
-OpenStack is the **city's road, water, and electric grid**; Kubernetes is the **logistics company that runs delivery trucks (pods) on those roads**. The trucking company doesn't build roads â€” it just needs the city to hand it addresses (IPs), parking spots (nodes/VMs), and warehouses (storage) reliably.
+OpenStack is the **city's road, water, and electric grid**; Kubernetes is the **logistics company that runs delivery trucks (pods) on those roads**. The trucking company doesn't build roads — it just needs the city to hand it addresses (IPs), parking spots (nodes/VMs), and warehouses (storage) reliably.
 
 ---
 
@@ -2931,7 +2931,7 @@ spec:
   providerID: openstack:///<nova-instance-uuid>
 ```
 
-The `providerID` links the Kubernetes Node object directly to its backing **Nova instance UUID** â€” this is how CCM knows to clean up the Node if the VM is deleted in OpenStack.
+The `providerID` links the Kubernetes Node object directly to its backing **Nova instance UUID** — this is how CCM knows to clean up the Node if the VM is deleted in OpenStack.
 
 ### Configuration (cloud-config, used by CCM/CSI)
 ```ini
@@ -2949,7 +2949,7 @@ floating-network-id = <external-net-uuid>
 ```
 
 ### Analogy
-The CCM is a **translator/diplomat embedded inside Kubernetes' government** who speaks fluent "OpenStack" â€” whenever Kubernetes needs something from the outside infrastructure (a public phone line/LoadBalancer, or confirmation a worker still physically exists), the CCM handles the foreign paperwork so Kubernetes' own machinery stays cloud-agnostic.
+The CCM is a **translator/diplomat embedded inside Kubernetes' government** who speaks fluent "OpenStack" — whenever Kubernetes needs something from the outside infrastructure (a public phone line/LoadBalancer, or confirmation a worker still physically exists), the CCM handles the foreign paperwork so Kubernetes' own machinery stays cloud-agnostic.
 
 ---
 
@@ -3019,8 +3019,8 @@ spec:
 ```
 
 When a Pod references this PVC, the following happens automatically:
-1. `csi-provisioner` sees the PVC is unbound â†’ calls Cinder CSI controller
-2. Cinder CSI controller calls `POST /v3/volumes` on Cinder API â†’ volume created
+1. `csi-provisioner` sees the PVC is unbound → calls Cinder CSI controller
+2. Cinder CSI controller calls `POST /v3/volumes` on Cinder API → volume created
 3. Kubernetes schedules the Pod to a Node (a Nova VM)
 4. `csi-node` plugin on that Node calls Nova's **volume-attach** API to attach the Cinder volume to that specific VM
 5. Inside the VM, the new block device (e.g., `/dev/vdc`) appears; CSI node plugin formats/mounts it into the Pod
@@ -3045,7 +3045,7 @@ A **CNI (Container Network Interface)** plugin gives **pods** their network inte
 
 1. **Standard CNI overlay (most common)**: Calico, Flannel, Cilium, etc. run **independently of Neutron**, building their own pod-network overlay on top of whatever VM network Neutron provides to the Nova instances (K8s nodes). Neutron just gives each **Node VM** one IP; the CNI plugin handles all **pod-to-pod** IPs and routing itself (typically via VXLAN/IPIP overlay or BGP).
 
-2. **Kuryr-Kubernetes (Neutron-native CNI)**: A special CNI plugin that makes **pods themselves first-class Neutron ports** â€” i.e., every pod gets a **real Neutron port with a real Neutron-managed IP**, instead of an independent overlay network.
+2. **Kuryr-Kubernetes (Neutron-native CNI)**: A special CNI plugin that makes **pods themselves first-class Neutron ports** — i.e., every pod gets a **real Neutron port with a real Neutron-managed IP**, instead of an independent overlay network.
 
 ### Standard Overlay Pattern (e.g., Calico on OpenStack VMs)
 
@@ -3087,21 +3087,21 @@ A **CNI (Container Network Interface)** plugin gives **pods** their network inte
 ### Comparison
 | | Overlay CNI (Calico/Flannel) | Kuryr-Kubernetes |
 |---|---|---|
-| Pod IP visibility to Neutron | None (opaque overlay) | Full â€” every pod is a Neutron port |
+| Pod IP visibility to Neutron | None (opaque overlay) | Full — every pod is a Neutron port |
 | Performance | Overlay/tunnel overhead | Can approach near-native (with trunk ports) |
 | Security groups | CNI's own network policy | Can reuse native Neutron Security Groups per-pod |
 | Complexity | Simpler, most common | More complex; tighter OpenStack coupling |
 | IP exhaustion risk | Low (private overlay CIDR) | Higher (pods consume real Neutron subnet IPs) |
 
 ### Analogy
-The **overlay CNI approach** is like each **apartment building (Node VM)** having its own **private internal room-numbering system** (pod IPs) that the city (Neutron) doesn't track â€” mail (packets) between buildings goes through a special courier tunnel. **Kuryr** is like the city **officially registering every single room** in every building as its own street address â€” more visibility and control, but the city's address book (Neutron) has to handle a lot more entries.
+The **overlay CNI approach** is like each **apartment building (Node VM)** having its own **private internal room-numbering system** (pod IPs) that the city (Neutron) doesn't track — mail (packets) between buildings goes through a special courier tunnel. **Kuryr** is like the city **officially registering every single room** in every building as its own street address — more visibility and control, but the city's address book (Neutron) has to handle a lot more entries.
 
 ---
 
 ## 21. Kubernetes Service type=LoadBalancer + OpenStack
 
 ### Definition
-When a Kubernetes `Service` is created with `type: LoadBalancer`, the **OpenStack Cloud Controller Manager's Service Controller** (Section 18) automatically provisions a real **Octavia load balancer** (Section 1) to expose that service externally â€” bridging Kubernetes' abstraction directly to OpenStack's tenant networking.
+When a Kubernetes `Service` is created with `type: LoadBalancer`, the **OpenStack Cloud Controller Manager's Service Controller** (Section 18) automatically provisions a real **Octavia load balancer** (Section 1) to expose that service externally — bridging Kubernetes' abstraction directly to OpenStack's tenant networking.
 
 ### End-to-End Flow
 
@@ -3178,7 +3178,7 @@ This is like Kubernetes calling up **Octavia's front desk** and saying "I need a
 ## 22. Kubernetes PersistentVolumes + Cinder
 
 ### Definition
-This ties together **Cinder CSI (Section 19)** with Kubernetes' **PersistentVolume (PV) / PersistentVolumeClaim (PVC)** abstraction â€” the mechanism giving Pods **durable, network-attached storage** backed by OpenStack Cinder (often itself backed by Ceph â€” Section 6).
+This ties together **Cinder CSI (Section 19)** with Kubernetes' **PersistentVolume (PV) / PersistentVolumeClaim (PVC)** abstraction — the mechanism giving Pods **durable, network-attached storage** backed by OpenStack Cinder (often itself backed by Ceph — Section 6).
 
 ### The Abstraction Chain
 ```
@@ -3243,19 +3243,19 @@ spec:
 ```
 
 ### Key Behaviors
-- **ReadWriteOnce (RWO)**: A Cinder volume can only be attached to **one Nova VM (Node) at a time** â€” matches Cinder's own single-attach nature (unless multi-attach volume types are used).
-- **Pod rescheduling**: If a Node dies, Kubernetes must first **detach** the Cinder volume (via CSI/Nova) before it can attach it to a new Node and reschedule the Pod there â€” this can cause a delay (volume detach/attach isn't instant).
+- **ReadWriteOnce (RWO)**: A Cinder volume can only be attached to **one Nova VM (Node) at a time** — matches Cinder's own single-attach nature (unless multi-attach volume types are used).
+- **Pod rescheduling**: If a Node dies, Kubernetes must first **detach** the Cinder volume (via CSI/Nova) before it can attach it to a new Node and reschedule the Pod there — this can cause a delay (volume detach/attach isn't instant).
 - **Snapshots**: Kubernetes `VolumeSnapshot` objects can map directly to **Cinder snapshots**, which (if Ceph-backed) are near-instant CoW operations.
 
 ### Analogy
-This is the Kubernetes equivalent of ordering a **shipping container (PVC)** from a catalog (StorageClass). The **warehouse (Cinder)** builds the actual container, and when your truck (Pod's Node) is ready to load, a **crane (CSI attacher)** physically bolts the container onto that specific truck â€” and if the truck breaks down, the container must be unbolted before a new truck can pick it up.
+This is the Kubernetes equivalent of ordering a **shipping container (PVC)** from a catalog (StorageClass). The **warehouse (Cinder)** builds the actual container, and when your truck (Pod's Node) is ready to load, a **crane (CSI attacher)** physically bolts the container onto that specific truck — and if the truck breaks down, the container must be unbolted before a new truck can pick it up.
 
 ---
 
-## 23. Kubernetes â†’ OpenStack API Interaction
+## 23. Kubernetes → OpenStack API Interaction
 
 ### Definition
-This section summarizes **all the ways** Kubernetes components authenticate and call into OpenStack APIs â€” tying together CCM, Cinder CSI, and general cluster provisioning tools.
+This section summarizes **all the ways** Kubernetes components authenticate and call into OpenStack APIs — tying together CCM, Cinder CSI, and general cluster provisioning tools.
 
 ### Unified Auth Flow
 ```
@@ -3291,7 +3291,7 @@ This section summarizes **all the ways** Kubernetes components authenticate and 
 ```
 
 ### Recommended Practice: Least-Privilege Service Account
-Operators typically create a **dedicated Keystone project + user** (e.g., `k8s-cloud-provider`) with only the roles needed (`member` on relevant project, sometimes a custom `load-balancer_member` role for Octavia), rather than using admin credentials â€” following the principle of least privilege since CCM/CSI credentials live inside the cluster (as Kubernetes Secrets).
+Operators typically create a **dedicated Keystone project + user** (e.g., `k8s-cloud-provider`) with only the roles needed (`member` on relevant project, sometimes a custom `load-balancer_member` role for Octavia), rather than using admin credentials — following the principle of least privilege since CCM/CSI credentials live inside the cluster (as Kubernetes Secrets).
 
 ```bash
 openstack project create k8s-project
@@ -3317,7 +3317,7 @@ stringData:
 ```
 
 ### Analogy
-Every Kubernetes component that needs something from OpenStack carries its own **ID badge (token)**, scoped to only the **departments it's allowed to enter** (Nova for CCM's node-tracking, Cinder+Nova for CSI's storage-attach, Octavia+Neutron for load balancer management) â€” rather than a master key that opens every door in the building.
+Every Kubernetes component that needs something from OpenStack carries its own **ID badge (token)**, scoped to only the **departments it's allowed to enter** (Nova for CCM's node-tracking, Cinder+Nova for CSI's storage-attach, Octavia+Neutron for load balancer management) — rather than a master key that opens every door in the building.
 
 ---
 
@@ -3379,17 +3379,17 @@ nova instance-action-list <instance-id>       # deprecated but useful historical
 | Instance has no network | DHCP agent, L2 agent, or security group misconfig | `neutron-dhcp-agent.log`, `neutron-openvswitch-agent.log` |
 | Volume attach fails | Cinder backend unreachable, iSCSI/RBD auth issue | `cinder-volume.log`, `nova-compute.log` |
 | Slow API responses cluster-wide | Galera node desynced, RabbitMQ queue backlog, Memcached down | `wsrep_local_state_comment`, RabbitMQ mgmt UI queue depth |
-| Everything down after 1 controller reboot | HA misconfiguration â€” quorum lost | Check Galera/RabbitMQ cluster size (should tolerate N-1 failures) |
+| Everything down after 1 controller reboot | HA misconfiguration — quorum lost | Check Galera/RabbitMQ cluster size (should tolerate N-1 failures) |
 
 ### Analogy
 Troubleshooting OpenStack is like **tracing a lost package through a postal system**: first confirm the sender had valid postage (auth), then check if the local post office accepted it (API), then trace which sorting facility it went through (RabbitMQ), and finally check the central records office (database) to see the last confirmed location.
 
 ---
 
-## 25. API â†’ Scheduler â†’ Compute â†’ Network â†’ Storage Debugging
+## 25. API → Scheduler → Compute → Network → Storage Debugging
 
 ### The Canonical "Boot an Instance" Path
-This is the most important flow to understand for debugging â€” nearly every Nova issue maps to a step in this chain.
+This is the most important flow to understand for debugging — nearly every Nova issue maps to a step in this chain.
 
 ```
  1. openstack server create ...
@@ -3424,7 +3424,7 @@ This is the most important flow to understand for debugging â€” nearly ever
 
 ### Debugging at Each Stage
 
-**Stage 2 â€” nova-api**
+**Stage 2 — nova-api**
 ```bash
 # Check quota issues
 openstack quota show <project>
@@ -3432,7 +3432,7 @@ openstack quota show <project>
 tail -f /var/log/nova/nova-api.log
 ```
 
-**Stage 4 â€” nova-scheduler**
+**Stage 4 — nova-scheduler**
 ```
 Symptom: "No valid host was found" error
 Causes:
@@ -3442,7 +3442,7 @@ Causes:
 Check: nova-scheduler.log, "openstack hypervisor stats show"
 ```
 
-**Stage 5 â€” nova-compute + Neutron port**
+**Stage 5 — nova-compute + Neutron port**
 ```
 Symptom: Instance ACTIVE but "port binding failed" / no IP
 Causes:
@@ -3453,14 +3453,14 @@ Check: neutron-server.log (port creation),
        ovs-vsctl show   (inspect actual OVS bridge state on the host)
 ```
 
-**Stage 5c â€” Cinder (boot from volume)**
+**Stage 5c — Cinder (boot from volume)**
 ```
 Symptom: Instance stuck in BUILD, "block device mapping" errors
 Check: cinder-volume.log, cinder-scheduler.log
        openstack volume show <vol-id>   # check status: available/error/attaching
 ```
 
-**Stage 5d â€” libvirt/QEMU**
+**Stage 5d — libvirt/QEMU**
 ```
 Symptom: Instance in ERROR with hypervisor-level failure
 Check: /var/log/libvirt/qemu/<instance-id>.log  (on compute host)
@@ -3490,7 +3490,7 @@ Network Node(s) (if using legacy DVR/centralized routing):
 ```
 
 ### Analogy
-This flow is like **tracking a food delivery order end-to-end**: order placed (API) â†’ kitchen dispatcher decides which cook has capacity (scheduler) â†’ assigned cook actually prepares food (compute) â†’ delivery driver assigned + route calculated (network/Neutron) â†’ payment/inventory settled (storage/Cinder) â†’ order marked "delivered" (ACTIVE). A stuck order means checking exactly which stage's logbook shows the holdup.
+This flow is like **tracking a food delivery order end-to-end**: order placed (API) → kitchen dispatcher decides which cook has capacity (scheduler) → assigned cook actually prepares food (compute) → delivery driver assigned + route calculated (network/Neutron) → payment/inventory settled (storage/Cinder) → order marked "delivered" (ACTIVE). A stuck order means checking exactly which stage's logbook shows the holdup.
 
 ---
 
@@ -3499,8 +3499,8 @@ This flow is like **tracking a food delivery order end-to-end**: order placed (A
 ### Two Communication Channels
 OpenStack services talk to each other through **exactly two channels**:
 
-1. **Synchronous REST (HTTP/JSON)** â€” for direct, immediate cross-service API calls (e.g., Nova calling Neutron to create a port, or Nova calling Cinder to attach a volume)
-2. **Asynchronous RPC (RabbitMQ / oslo.messaging)** â€” for internal communication **within** a service's own components (nova-api â†’ nova-conductor â†’ nova-scheduler â†’ nova-compute)
+1. **Synchronous REST (HTTP/JSON)** — for direct, immediate cross-service API calls (e.g., Nova calling Neutron to create a port, or Nova calling Cinder to attach a volume)
+2. **Asynchronous RPC (RabbitMQ / oslo.messaging)** — for internal communication **within** a service's own components (nova-api → nova-conductor → nova-scheduler → nova-compute)
 
 ```
                     Cross-Service Calls (REST/HTTP, via Keystone-authenticated tokens)
@@ -3536,10 +3536,10 @@ Every cross-service call first requires knowing **where** the target service's A
 openstack catalog list
 # Shows each service's public/internal/admin endpoint URLs
 ```
-When `nova-compute` needs to call Neutron, it doesn't hardcode Neutron's URL â€” it asks Keystone (or uses a cached catalog) for Neutron's current **internal endpoint**, then attaches a valid token to the request.
+When `nova-compute` needs to call Neutron, it doesn't hardcode Neutron's URL — it asks Keystone (or uses a cached catalog) for Neutron's current **internal endpoint**, then attaches a valid token to the request.
 
 ### Notifications (Event-Driven, Loosely Coupled)
-Beyond direct RPC/REST, services also emit **notifications** onto RabbitMQ that other services can optionally subscribe to â€” without tight coupling:
+Beyond direct RPC/REST, services also emit **notifications** onto RabbitMQ that other services can optionally subscribe to — without tight coupling:
 ```
 nova-compute --[notify: instance.create.end]--> notification exchange
                                                         |
@@ -3563,9 +3563,9 @@ Think of it as a company where:
 
 | Node Type | Runs | Purpose |
 |---|---|---|
-| **Controller Node** | `nova-api`, `nova-scheduler`, `nova-conductor`, `neutron-server`, `cinder-api`, `cinder-scheduler`, `keystone`, `glance-api`, `horizon`, Galera, RabbitMQ, Memcached, HAProxy | The "brain" â€” accepts API requests, makes decisions, holds cluster state |
+| **Controller Node** | `nova-api`, `nova-scheduler`, `nova-conductor`, `neutron-server`, `cinder-api`, `cinder-scheduler`, `keystone`, `glance-api`, `horizon`, Galera, RabbitMQ, Memcached, HAProxy | The "brain" — accepts API requests, makes decisions, holds cluster state |
 | **Compute Node** | `nova-compute`, hypervisor (KVM/QEMU via libvirt), Neutron L2 agent (e.g. `neutron-openvswitch-agent`) | Actually runs tenant VMs |
-| **Network Node** (in classic/legacy architectures) | `neutron-l3-agent`, `neutron-dhcp-agent`, `neutron-metadata-agent`, sometimes Octavia components | Handles routing, NAT, DHCP, floating IPs â€” centralizes north-south traffic (largely replaced by **DVR â€” Distributed Virtual Routing**, which pushes this onto compute nodes instead) |
+| **Network Node** (in classic/legacy architectures) | `neutron-l3-agent`, `neutron-dhcp-agent`, `neutron-metadata-agent`, sometimes Octavia components | Handles routing, NAT, DHCP, floating IPs — centralizes north-south traffic (largely replaced by **DVR — Distributed Virtual Routing**, which pushes this onto compute nodes instead) |
 | **Storage Node** | Cinder-volume (if not Ceph), or Ceph OSD/MON/MGR daemons | Provides actual block/object storage backend |
 
 ### Visual: Classic 4-Node-Type Architecture
@@ -3590,7 +3590,7 @@ Think of it as a company where:
 ```
 
 ### Modern Trend: DVR (Distributed Virtual Routing)
-In many modern deployments, the dedicated "Network Node" role is **eliminated** â€” routing (`neutron-l3-agent` functions) is distributed onto **compute nodes** directly, so each compute node can route its own VMs' north-south traffic without a centralized bottleneck. DHCP agents may still be centralized or also distributed.
+In many modern deployments, the dedicated "Network Node" role is **eliminated** — routing (`neutron-l3-agent` functions) is distributed onto **compute nodes** directly, so each compute node can route its own VMs' north-south traffic without a centralized bottleneck. DHCP agents may still be centralized or also distributed.
 
 ```
    Legacy (Network Node = single choke point for external traffic)
@@ -3609,7 +3609,7 @@ In small deployments (e.g., DevStack, small labs), **all roles can run on a sing
 
 ### Analogy
 - **Controller Node** = the **corporate HQ** (decision-making, records, reception desk)
-- **Compute Node** = the **factory floor** (where the actual product â€” VMs â€” gets built and run)
+- **Compute Node** = the **factory floor** (where the actual product — VMs — gets built and run)
 - **Network Node** = the **shipping/receiving dock** (all goods in/out pass through, or in the modern DVR model, every factory floor has its own loading dock)
 - **Storage Node** = the **warehouse** (raw materials and finished goods storage)
 
@@ -3661,7 +3661,7 @@ In small deployments (e.g., DevStack, small labs), **all roles can run on a sing
 |---|---|
 | **Management/API network** | Controller-to-controller, controller-to-compute API/DB/RabbitMQ traffic |
 | **Tenant/overlay network** | East-west VM-to-VM traffic (VXLAN/GRE encapsulated) |
-| **External/provider network** | North-south traffic â€” floating IPs, internet access |
+| **External/provider network** | North-south traffic — floating IPs, internet access |
 | **Storage network** | Dedicated network for Cinder/Ceph traffic (often split into "public" client-facing and "cluster" replication-only networks for Ceph) |
 
 Segmenting these onto **separate physical NICs/VLANs** prevents storage replication traffic from competing with tenant VM traffic or management API calls.
@@ -3672,7 +3672,7 @@ Segmenting these onto **separate physical NICs/VLANs** prevents storage replicat
 | **Kolla-Ansible** | Deploys OpenStack as **Docker/Podman containers**, orchestrated by Ansible playbooks |
 | **OpenStack-Ansible (OSA)** | Deploys OpenStack inside **LXC containers**, orchestrated by Ansible |
 | **TripleO** ("OpenStack on OpenStack") | Uses a small "undercloud" OpenStack (with Ironic bare-metal) to deploy the production "overcloud" |
-| **DevStack** | Single-node, source-based install â€” for development/testing only, not production |
+| **DevStack** | Single-node, source-based install — for development/testing only, not production |
 | **MicroStack / OpenStack-Helm** | Snap-based or Kubernetes-based (Helm charts) deployment options |
 
 ### Scaling Dimensions of the Architecture
@@ -3705,7 +3705,7 @@ This is a **factory campus blueprint**: HQ buildings (controllers) triplicated f
 ### 1. Control Plane Scaling
 - Add more **controller nodes behind HAProxy** for API throughput (usually plateaus around 3-7 nodes before diminishing returns / DB becomes the bottleneck)
 - Split databases: run a **dedicated Galera cluster** separate from RabbitMQ hosts once load grows
-- Consider **Cells v2** in Nova â€” partitions a single OpenStack deployment's compute fleet into multiple "cells," each with its own conductor/DB, all fronted by one global API â€” used by very large deployments (thousands of hypervisors) to avoid a single giant DB/scheduler bottleneck
+- Consider **Cells v2** in Nova — partitions a single OpenStack deployment's compute fleet into multiple "cells," each with its own conductor/DB, all fronted by one global API — used by very large deployments (thousands of hypervisors) to avoid a single giant DB/scheduler bottleneck
 
 ```
                  +------------------+
@@ -3728,13 +3728,13 @@ This is a **factory campus blueprint**: HQ buildings (controllers) triplicated f
 ```
 
 ### 2. Compute Scaling
-- Simply **add more hypervisor hosts** â€” Nova's scheduler naturally spreads load
+- Simply **add more hypervisor hosts** — Nova's scheduler naturally spreads load
 - Use **host aggregates / availability zones** to logically group hardware (e.g., GPU hosts, high-memory hosts) so the scheduler can target the right hardware for the right flavor
-- Watch **oversubscription ratios** (CPU/RAM overcommit) â€” too aggressive causes noisy-neighbor problems
+- Watch **oversubscription ratios** (CPU/RAM overcommit) — too aggressive causes noisy-neighbor problems
 
 ### 3. Storage Scaling
-- **Ceph scales by adding OSD nodes** â€” more OSDs = more capacity AND more aggregate IOPS (parallelism across more disks)
-- Ceph automatically rebalances data (`CRUSH` algorithm) when new OSDs join â€” no manual data migration needed
+- **Ceph scales by adding OSD nodes** — more OSDs = more capacity AND more aggregate IOPS (parallelism across more disks)
+- Ceph automatically rebalances data (`CRUSH` algorithm) when new OSDs join — no manual data migration needed
 - For Cinder without Ceph (e.g., LVM), scaling means adding more **cinder-volume backend nodes**, each owning its own storage pool
 
 ### 4. Network Scaling
@@ -3751,7 +3751,7 @@ This is a **factory campus blueprint**: HQ buildings (controllers) triplicated f
 | Network | DVR spreads load across composes | Bigger network-node NICs (legacy model) |
 
 ### Analogy
-Scaling OpenStack is like scaling a **city**: you can build more office branches (controllers, up to a point before city hall itself becomes the bottleneck), you can zone and build more factories (compute nodes, nearly unlimited), and you can expand the warehouse district (storage nodes) â€” but you eventually also need to widen the roads (network) or the whole system jams regardless of how many buildings you've added.
+Scaling OpenStack is like scaling a **city**: you can build more office branches (controllers, up to a point before city hall itself becomes the bottleneck), you can zone and build more factories (compute nodes, nearly unlimited), and you can expand the warehouse district (storage nodes) — but you eventually also need to widen the roads (network) or the whole system jams regardless of how many buildings you've added.
 
 ---
 
@@ -3764,13 +3764,13 @@ Symptom: openstack compute service list shows host as "down"
          (Nova doesn't know for certain the VM is dead, just that the host agent stopped reporting)
 
 Recovery:
-1. Confirm the host is truly down (not just network-partitioned) â€”
+1. Confirm the host is truly down (not just network-partitioned) —
    critical, because evacuating onto a live host while the "dead" host
    is actually still running risks DUPLICATE running VMs / data corruption
 2. Fence the host if possible (power off via IPMI) to guarantee it's dead
 3. openstack compute service set --disable <dead-host> nova-compute
 4. nova evacuate (or `openstack server rebuild`/evacuate API) to rebuild
-   affected instances on healthy hosts â€” 
+   affected instances on healthy hosts — 
    NOTE: only works cleanly for boot-from-volume or shared-storage
    (e.g., Ceph-backed) instances, since ephemeral local-disk VMs
    lose their disk entirely if the host is gone
@@ -3802,7 +3802,7 @@ Symptom: Services appear "up" but API calls hang/timeout
 
 Recovery:
 1. Check RabbitMQ cluster status: rabbitmqctl cluster_status
-2. If minority partition â€” those nodes will refuse operations (by design,
+2. If minority partition — those nodes will refuse operations (by design,
    to prevent split-brain) until quorum is restored
 3. Restart/rejoin the missing node(s); with quorum queues, once quorum
    nodes are back, message processing auto-resumes
@@ -3836,13 +3836,13 @@ Recovery:
 ```
 
 ### General Recovery Principles
-1. **Never restore quorum-based systems (Galera/RabbitMQ) by force without checking for split-brain risk** â€” bootstrapping from the wrong node can silently lose data.
+1. **Never restore quorum-based systems (Galera/RabbitMQ) by force without checking for split-brain risk** — bootstrapping from the wrong node can silently lose data.
 2. **Prefer automated self-healing** (Ceph rebalancing, Galera IST/SST, RabbitMQ mirror resync) over manual intervention wherever the system supports it.
-3. **Instance evacuation only works reliably with network-backed storage** (Ceph/Cinder) â€” ephemeral local-disk instances are unrecoverable if the host disk is lost.
+3. **Instance evacuation only works reliably with network-backed storage** (Ceph/Cinder) — ephemeral local-disk instances are unrecoverable if the host disk is lost.
 4. **Always confirm true failure (fencing) before triggering evacuation**, to avoid two copies of the same VM running simultaneously with conflicting IPs.
 
 ### Analogy
-Failure recovery in OpenStack is like a **hospital's emergency protocol**: when one wing (controller/compute node) goes offline, the triage desk (HAProxy) redirects patients (traffic) to the remaining wings automatically. But if the whole hospital network goes dark simultaneously, you can't just flip the lights back on carelessly (force-bootstrap) â€” you need a careful, single "chief of staff" decision (identify the most up-to-date node) to avoid conflicting patient records (split-brain data corruption) when everything reconnects.
+Failure recovery in OpenStack is like a **hospital's emergency protocol**: when one wing (controller/compute node) goes offline, the triage desk (HAProxy) redirects patients (traffic) to the remaining wings automatically. But if the whole hospital network goes dark simultaneously, you can't just flip the lights back on carelessly (force-bootstrap) — you need a careful, single "chief of staff" decision (identify the most up-to-date node) to avoid conflicting patient records (split-brain data corruption) when everything reconnects.
 
 ---
 
@@ -3851,7 +3851,7 @@ Failure recovery in OpenStack is like a **hospital's emergency protocol**: when 
 | Concept | One-Line Takeaway |
 |---|---|
 | Octavia | Tenant load balancing via dedicated amphora VMs |
-| Listener/Pool/Member | Door â†’ Department â†’ Staff hierarchy |
+| Listener/Pool/Member | Door → Department → Staff hierarchy |
 | VIP/Health Monitor | Stable address + automatic "are you alive?" checks |
 | L4 vs L7 | Envelope routing vs reading the letter |
 | Ceph | Unified distributed storage backend for images/volumes/objects |
@@ -3871,10 +3871,10 @@ Failure recovery in OpenStack is like a **hospital's emergency protocol**: when 
 | Cinder CSI | Dynamically provisions/attaches Cinder volumes as K8s PVs |
 | Neutron CNI | Overlay CNI (independent) vs Kuryr (pods as real Neutron ports) |
 | K8s Service LB | CCM auto-provisions an Octavia LB for `type=LoadBalancer` |
-| K8s PV+Cinder | PVC â†’ CSI â†’ Cinder volume â†’ attached to Node VM â†’ mounted in Pod |
-| K8sâ†’OpenStack API | Every component authenticates via scoped Keystone tokens |
-| Troubleshooting | Check auth â†’ API â†’ agents â†’ RabbitMQ â†’ Galera, in that order |
-| APIâ†’Storage debug | Follow the exact boot chain: apiâ†’conductorâ†’schedulerâ†’computeâ†’network/storage |
+| K8s PV+Cinder | PVC → CSI → Cinder volume → attached to Node VM → mounted in Pod |
+| K8s→OpenStack API | Every component authenticates via scoped Keystone tokens |
+| Troubleshooting | Check auth → API → agents → RabbitMQ → Galera, in that order |
+| API→Storage debug | Follow the exact boot chain: api→conductor→scheduler→compute→network/storage |
 | Service-to-service | REST for cross-service, RPC for intra-service, notifications for events |
 | Node types | Controller=brain, Compute=factory, Network=dock, Storage=warehouse |
 | Deployment architecture | Segmented networks + triplicated controllers + scalable compute/storage |
